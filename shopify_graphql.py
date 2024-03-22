@@ -1,7 +1,7 @@
 import json
 import os
 import pprint
-from string import punctuation
+from slugify import slugify
 
 import shopify
 from dotenv import load_dotenv
@@ -30,15 +30,10 @@ def main():
     result = json.loads(response_text)
     pprint.pprint(result['data']['products']['nodes'][0])
 
-    def str_to_parts(s):
-        return list(filter(None, map(str.strip, s.lower().translate(str.maketrans({c: '' for c in punctuation})).split(' '))))
-
     for product in result['data']['products']['nodes']:
         title = product['title']
         variant_title = product['variants']['nodes'][0]['title']    # only one variant for each EPOKHE products
-        parts = str_to_parts(title)
-        parts += str_to_parts(variant_title)
-        new_handle = '-'.join(parts)
+        new_handle = slugify('-'.join([title, variant_title]))
         seo_title = ' | '.join([title, variant_title])
         print(product['id'])
         print(title)
