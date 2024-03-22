@@ -1,4 +1,4 @@
-epokhe_products = '''{
+query_epokhe_products = '''{
   products(first: 100, query: "vendor:EPOKHE") {
     nodes {
       id
@@ -30,7 +30,8 @@ epokhe_products = '''{
   }
 }'''
 
-mutate_product = '''mutation updateProductSEOTitle($seo_title: String!, $id: ID!, $url_handle: String) {
+query_mutate_product = '''
+mutation updateProductSEOTitle($seo_title: String!, $id: ID!, $url_handle: String) {
   productUpdate(
     input: {seo: {title: $seo_title}, id: $id, handle: $url_handle}
   ) {
