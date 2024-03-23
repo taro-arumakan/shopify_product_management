@@ -1,4 +1,5 @@
-query_epokhe_products = '''{
+query_epokhe_products = '''
+{
   products(first: 200, query: "vendor:EPOKHE", sortKey: TITLE) {
     nodes {
       id
@@ -28,7 +29,8 @@ query_epokhe_products = '''{
       }
     }
   }
-}'''
+}
+'''
 
 query_mutate_product = '''
 mutation updateProductSEOTitle($seo_title: String!, $id: ID!, $url_handle: String) {
@@ -42,7 +44,8 @@ mutation updateProductSEOTitle($seo_title: String!, $id: ID!, $url_handle: Strin
       handle
     }
   }
-}'''
+}
+'''
 
 query_update_variant_title = '''
 mutation UpdateVariantTitle ($id: ID!, $new_title: String!){
