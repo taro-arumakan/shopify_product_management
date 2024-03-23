@@ -1,11 +1,10 @@
 import json
 import os
 import pprint
-from slugify import slugify
 
 import shopify
 from dotenv import load_dotenv
-from graphql_queries import query_epokhe_products, query_mutate_product
+from graphql_queries import query_epokhe_products, query_mutate_product, query_update_variant_title
 
 def activate_shopify_session():
     shop_url = "what-youth-japan.myshopify.com"
@@ -23,6 +22,17 @@ def mutate_product(product_id: str, seo_title: str, url_handle: str) -> str:
     return response_text
 
 
+def update_variant_title(variant_id: str, title: str) -> str:
+    variables = dict(id=variant_id, new_title=title)
+    response_text = shopify.GraphQL().execute(query_update_variant_title, variables=variables)
+    return response_text
+
+
+def shorten_variant_title(variant_title):
+    parts = variant_title.split(' ')
+    return ''.join(p[0] for p in parts)
+
+
 def main():
     activate_shopify_session()
     response_text = shopify.GraphQL().execute(query_epokhe_products)
@@ -32,18 +42,17 @@ def main():
 
     for product in result['data']['products']['nodes']:
         title = product['title']
-        variant_title = product['variants']['nodes'][0]['title']    # only one variant for each EPOKHE products
-        new_handle = slugify('-'.join([title, variant_title]))
-        seo_title = ' | '.join([title, variant_title])
-        print(product['id'])
-        print(title)
-        print(variant_title)
-        print(new_handle)
-        print(seo_title)
-        print()
-        print(f'updating {title} - {variant_title}')
-        res = mutate_product(product['id'], seo_title, new_handle)
-        pprint.pprint(json.loads(res))
+        # only one variant for each EPOKHE products
+        variant_id = product['variants']['nodes'][0]['id']
+        variant_title = product['variants']['nodes'][0]['title']
+        new_variant_title = variant_title.title()
+
+        if variant_title != new_variant_title:
+            print(f'Updating {title} {variant_title} at {variant_id}')
+            print(f'  {variant_title} --> {new_variant_title}')
+            print()
+            res = update_variant_title(variant_id, new_variant_title)
+            pprint.pprint(json.loads(res))
 
 
 if __name__ == '__main__':
