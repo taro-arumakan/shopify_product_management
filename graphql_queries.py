@@ -1,6 +1,6 @@
 query_epokhe_products = '''
 {
-  products(first: 200, query: "vendor:EPOKHE", sortKey: TITLE) {
+  products(first: 200, query: "vendor:EPOKHE status:ACTIVE", sortKey: TITLE) {
     nodes {
       id
       title
@@ -8,6 +8,8 @@ query_epokhe_products = '''
         nodes {
           id
           title
+          sku
+          price
         }
       }
       onlineStoreUrl

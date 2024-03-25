@@ -64,20 +64,16 @@ def main():
 
     result = json.loads(response_text)
 
-    for product in result['data']['products']['nodes']:
-        title = product['title']
-        # only one variant for each EPOKHE products
-        variant_title = product['variants']['nodes'][0]['title']
-        new_title = title_with_shortened_variant_title(title, variant_title)
-        new_slug = slug_for(new_title, variant_title)
-        new_seo_title = f'{new_title} - {variant_title}'
-
-        print(f'{product['id']}')
-        print(f'{title} {variant_title} to {new_title}')
-        print(f'new slug is {new_slug}')
-        print(f'new seo title is {new_seo_title}')
-        mutate_product(product['id'], new_title, new_seo_title, new_slug)
-        print()
+    with open('prices20240325_after.csv', 'w') as f:
+        for product in result['data']['products']['nodes']:
+            title = product['title']
+            # only one variant for each EPOKHE products
+            variant_title = product['variants']['nodes'][0]['title']
+            title = title_without_shortened_variant_title(title, variant_title)
+            f.write('\t'.join([title.upper(),
+                            variant_title.upper(),
+                            ' '.join([title.upper(), variant_title.upper()]),
+                            product['variants']['nodes'][0]['price']]) + '\n')
 
 
 if __name__ == '__main__':
