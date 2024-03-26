@@ -34,6 +34,26 @@ query_epokhe_products = '''
 }
 '''
 
+query_epokhe_variants_by_product_query = '''
+query productsByQuery($query_string: String!)
+{
+  products(first: 200, query: $query_string, sortKey: TITLE) {
+    nodes {
+      id
+      title
+      variants(first: 15) {
+        nodes {
+          id
+          title
+          sku
+          price
+        }
+      }
+    }
+  }
+}
+'''
+
 query_mutate_product = '''
 mutation updateProductSEO($id: ID!, $title: String, $seo_title: String, $url_handle: String) {
   productUpdate(
@@ -56,6 +76,17 @@ mutation UpdateVariantTitle ($id: ID!, $new_title: String!){
     productVariant {
       id
       title
+    }
+  }
+}
+'''
+
+query_update_variant_sku = '''
+mutation UpdateVariantTitle ($id: ID!, $sku: String!){
+  productVariantUpdate(input: {id: $id, sku: $sku}) {
+    productVariant {
+      id
+      sku
     }
   }
 }

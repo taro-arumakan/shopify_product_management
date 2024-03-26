@@ -5,7 +5,7 @@ from slugify import slugify
 
 import shopify
 from dotenv import load_dotenv
-from graphql_queries import query_epokhe_products, query_mutate_product, query_update_variant_title
+from graphql_queries import query_epokhe_products, query_mutate_product, query_update_variant_title, query_epokhe_variants_by_product_query, query_update_variant_sku
 
 def activate_shopify_session():
     shop_url = "what-youth-japan.myshopify.com"
@@ -58,22 +58,44 @@ def slug_for(title, variant_title):
     return slugify(' '.join([title_without_shortened_variant_title(title, variant_title), variant_title]))
 
 
+def variant_id_and_sku_by_title(product_title: str, variant_title: str):
+    variables = dict(query_string=f'vendor:EPOKHE title:{product_title}*')
+    response_text = shopify.GraphQL().execute(
+        query_epokhe_variants_by_product_query, variables=variables)
+    for product in json.loads(response_text)['data']['products']['nodes']:
+        if product['variants']['nodes'][0]['title'] == variant_title:
+            return (product['variants']['nodes'][0]['id'], product['variants']['nodes'][0]['sku'])
+    return (None, None)
+
+
+def update_variant_sku(variant_id: str, sku: str):
+    variables = dict(id=variant_id, sku=sku)
+    response_text = shopify.GraphQL().execute(query_update_variant_sku, variables=variables)
+    return response_text
+
+
 def main():
     activate_shopify_session()
-    response_text = shopify.GraphQL().execute(query_epokhe_products)
+    import csv
+    with open('sku_20240326.tsv') as f, open('sku_20240326_out.tsv', 'w', newline='\n') as wf:
 
-    result = json.loads(response_text)
+        reader = csv.DictReader(f, delimiter='\t')
+        fieldnames = ['STYLE', 'COLOUR', 'SKU #', 'variant_id', 'current_sku']
+        writer = csv.DictWriter(wf, fieldnames=fieldnames, delimiter='\t')
+        writer.writeheader()
 
-    with open('prices20240325_after.csv', 'w') as f:
-        for product in result['data']['products']['nodes']:
-            title = product['title']
-            # only one variant for each EPOKHE products
-            variant_title = product['variants']['nodes'][0]['title']
-            title = title_without_shortened_variant_title(title, variant_title)
-            f.write('\t'.join([title.upper(),
-                            variant_title.upper(),
-                            ' '.join([title.upper(), variant_title.upper()]),
-                            product['variants']['nodes'][0]['price']]) + '\n')
+        for row in reader:
+            variant_id, current_sku = variant_id_and_sku_by_title(row['STYLE'].strip(), row['COLOUR'].strip().title())
+            row['variant_id'] = variant_id
+            row['current_sku'] = current_sku
+            row = {k: v for k, v in row.items() if k in fieldnames}
+            writer.writerow(row)
+
+            new_sku = row['SKU #']
+
+            if variant_id and current_sku != new_sku:
+                print(f"going to update {row['STYLE'].strip()} {row['COLOUR'].strip().title()}")
+                update_variant_sku(variant_id, new_sku)
 
 
 if __name__ == '__main__':
