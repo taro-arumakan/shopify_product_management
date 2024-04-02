@@ -1,6 +1,6 @@
 query_epokhe_products = '''
 {
-  products(first: 200, query: "vendor:EPOKHE status:ACTIVE", sortKey: TITLE) {
+  products(first: 200, query: "vendor:EPOKHE", sortKey: TITLE) {
     nodes {
       id
       title

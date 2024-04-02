@@ -17,6 +17,18 @@ def activate_shopify_session():
     shopify.ShopifyResource.activate_session(session)
 
 
+def epokhe_products():
+    response_text = shopify.GraphQL().execute(query_epokhe_products)
+    results = json.loads(response_text)
+    products_data = [dict(product_id=r['id'],
+                          product_title=r['title'],
+                          variant_id=r['variants']['nodes'][0]['id'],
+                          variant_title=r['variants']['nodes'][0]['title'],
+                          sku=r['variants']['nodes'][0]['sku'])
+                          for r in results['data']['products']['nodes']]
+    return products_data
+
+
 def mutate_product(product_id: str, title: str|None=None,
                                     seo_title: str|None=None,
                                     url_handle: str|None=None) -> str:
@@ -76,26 +88,9 @@ def update_variant_sku(variant_id: str, sku: str):
 
 def main():
     activate_shopify_session()
-    import csv
-    with open('sku_20240326.tsv') as f, open('sku_20240326_out.tsv', 'w', newline='\n') as wf:
-
-        reader = csv.DictReader(f, delimiter='\t')
-        fieldnames = ['STYLE', 'COLOUR', 'SKU #', 'variant_id', 'current_sku']
-        writer = csv.DictWriter(wf, fieldnames=fieldnames, delimiter='\t')
-        writer.writeheader()
-
-        for row in reader:
-            variant_id, current_sku = variant_id_and_sku_by_title(row['STYLE'].strip(), row['COLOUR'].strip().title())
-            row['variant_id'] = variant_id
-            row['current_sku'] = current_sku
-            row = {k: v for k, v in row.items() if k in fieldnames}
-            writer.writerow(row)
-
-            new_sku = row['SKU #']
-
-            if variant_id and current_sku != new_sku:
-                print(f"going to update {row['STYLE'].strip()} {row['COLOUR'].strip().title()}")
-                update_variant_sku(variant_id, new_sku)
+    for product in epokhe_products():
+        if not product['sku']:
+            print(product['product_title'], product['variant_title'])
 
 
 if __name__ == '__main__':
