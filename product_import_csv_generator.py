@@ -14,8 +14,8 @@ def update_sku_image(sku, df):
         # cover image right now is named either with _0.jpg or _1.jpg, so check both.
         s = df[df['Image Src'].str.contains(f'{sku}_{i}')]
         if not s.empty:
-            df.loc[df['Image Src'].str.contains(f'{sku}_{i}'), 'Image Src'] = f'{
-                image_url_base}/{sku}_0_product_cover.jpg'
+            df.loc[df['Image Src'].str.contains(
+                f'{sku}_{i}'), 'Image Src'] = sku_image_url(sku)
             return df
     raise RuntimeError(f'image path not found for {sku}')
 
@@ -33,14 +33,20 @@ def format_url(url):
     return url
 
 
+def sku_image_url(sku):
+    return f'{image_url_base}/{sku}_0_product_cover.jpg'
+
+
 def generate():
     df = pd.read_csv(csv_path)
 
     df['Image Src'] = df['Image Src'].apply(format_url)
 
+    df.loc[df['Variant SKU'].notnull(), 'Variant Image'] = df[df['Variant SKU'].notnull()].apply(
+        lambda x: sku_image_url(x['Variant SKU']), axis=1)
+
     for i, row in df[df['Variant SKU'].notnull()].iterrows():
         df = update_sku_image(row['Variant SKU'], df)
-        df = update_variant_image(row['Variant SKU'], df)
 
     # product update csv
     df[['Handle', 'Title', 'Image Src', 'Image Position']].to_csv(
