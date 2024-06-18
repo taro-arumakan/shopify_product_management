@@ -91,3 +91,20 @@ mutation UpdateVariantTitle ($id: ID!, $sku: String!){
   }
 }
 '''
+
+query_all_products = '''
+{
+	products(first:100) {
+		nodes{
+      id
+      title
+      variants(first:100){
+        nodes{
+          id
+          sku
+        }
+      }
+    }
+	}
+}
+'''

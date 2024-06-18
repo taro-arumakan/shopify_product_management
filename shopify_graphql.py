@@ -5,27 +5,29 @@ from slugify import slugify
 
 import shopify
 from dotenv import load_dotenv
-from graphql_queries import query_epokhe_products, query_mutate_product, query_update_variant_title, query_epokhe_variants_by_product_query, query_update_variant_sku
+from graphql_queries import query_all_products
 
 def activate_shopify_session():
-    shop_url = "what-youth-japan.myshopify.com"
+    shop_url = "rohseoul.myshopify.com"
     api_version = '2024-01'
 
     load_dotenv()   # API_KEY, API_SECRET, ACCESS_TOKEN
     ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-    session = shopify.Session(shop_url, api_version, ACCESS_TOKEN)
+    print(ACCESS_TOKEN)
+    session = shopify.Session(shop_url, api_version, token=ACCESS_TOKEN)
     shopify.ShopifyResource.activate_session(session)
 
 
-def epokhe_products():
-    response_text = shopify.GraphQL().execute(query_epokhe_products)
+def all_products():
+    response_text = shopify.GraphQL().execute(query_all_products)
     results = json.loads(response_text)
-    products_data = [dict(product_id=r['id'],
-                          product_title=r['title'],
-                          variant_id=r['variants']['nodes'][0]['id'],
-                          variant_title=r['variants']['nodes'][0]['title'],
-                          sku=r['variants']['nodes'][0]['sku'])
-                          for r in results['data']['products']['nodes']]
+    products_data = []
+    for r in results['data']['products']['nodes']:
+        product = dict(id=r['id'], title=r['title'])
+        for v in r['variants']['nodes']:
+            product.setdefault('skus', []).append(v['sku'])
+            product.setdefault('variant_ids', []).append(v['id'])
+        products_data.append(product)
     return products_data
 
 
@@ -88,10 +90,12 @@ def update_variant_sku(variant_id: str, sku: str):
 
 def main():
     activate_shopify_session()
-    for product in epokhe_products():
-        if not product['sku']:
-            print(product['product_title'], product['variant_title'])
-
+    products = all_products()
+    with open('rohseoul_products.csv', 'w') as f:
+        f.write('product_id,title,variant_id,sku\n')
+        for product in products:
+            for variant_id, sku in zip(product['variant_ids'], product['skus']):
+                f.write(f"{product['id']},{product['title']},{sku},{variant_id}\n")
 
 if __name__ == '__main__':
     main()
