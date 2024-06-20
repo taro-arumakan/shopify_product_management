@@ -1,17 +1,20 @@
 import os
 import csv
 
-image_dir = '/Users/taro/sc/rohseoul_product_images/images'
-url_base = 'https://cdn.shopify.com/s/files/1/0692/1981/1587/files/'
+products_csv = '/Users/taro/Downloads/products_export.csv'
+image_dir = '/Users/taro/Downloads/gbh_cosmetics_images'
+url_base = 'https://cdn.shopify.com/s/files/1/0655/9596/5639/files'
 
 
 def getImageURLs(sku):
+    if sku.startswith("'"):
+        sku = sku[1:]
     image_files = sorted(os.listdir(f'{image_dir}/{sku}'), key=lambda x: int(x.split('_')[1].split('.')[0]))
     for name in image_files:
-        yield f'https://cdn.shopify.com/s/files/1/0692/1981/1587/files/{name}'
+        yield f'{url_base}/{name}'
 
 
-with open(r'product_variant_list.csv') as f:
+with open(products_csv) as f:
     reader = csv.DictReader(f)
 
     with open(r'url_list.csv', 'w') as wf:

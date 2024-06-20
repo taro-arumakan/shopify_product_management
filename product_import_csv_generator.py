@@ -1,8 +1,8 @@
 import pandas as pd
 import re
 
-csv_path = '/Users/taro/Downloads/products_export_1 (1).csv'
-image_url_base = 'https://cdn.shopify.com/s/files/1/0692/1981/1587/files'
+csv_path = '/Users/taro/Downloads/products_export.csv'
+image_url_base = 'https://cdn.shopify.com/s/files/1/0655/9596/5639/files'
 url_pattern = re.compile(r'(https\://.*?_\d+)_?.*?\.jpg.*')
 
 out_products_csv_path = '/Users/taro/Downloads/products_import.csv'
