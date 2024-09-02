@@ -152,9 +152,11 @@ def upload_images_to_shopify(staged_targets, file_details):
         payload.update({param['name']: param['value'] for param in target['parameters']})
         local_path = os.path.join(IMAGES_LOCAL_DIR, file_details['name'])
         if not os.path.exists(local_path):
+          logger.debug(f'  starting download of {file_details['name']}')
           download_file_from_drive(file_details['id'], local_path)
 
         with open(local_path, 'rb') as f:
+            logger.debug(f'  starting upload of {file_details['name']}')
             response = requests.post(target['url'],
                                      files={'file': (file_details['name'], f)},
                                      data=payload)
@@ -326,7 +328,9 @@ def wait_for_media_processing_completion(product_id, timeout_minutes=10):
 
 
 def upload_and_assign_images_to_product(product_id, drive_image_details):
+    logger.info(f'number of images being downloaded/uploaded: {len(drive_image_details)}')
     staged_targets = generate_staged_upload_targets(drive_image_details)
+    logger.info(f'generated staged upload targets: {len(staged_targets)}')
     upload_images_to_shopify(staged_targets, drive_image_details)
     logger.info(f"Images uploaded for {product_id}, going to remove existing and assign.")
     remove_product_media_by_product_id(product_id)
