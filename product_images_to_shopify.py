@@ -421,8 +421,9 @@ def assign_image_to_skus(product_id, image_position, skus):
                 for variant_id in variant_ids]
     for variant in variants:
         if len(variant['media']['nodes']) > 0:
-            detach_variant_media(
-                product_id, variant['id'], variant['media']['nodes'][0]['id'])
+            detach_variant_media(product_id,
+                                 variant['id'],
+                                 variant['media']['nodes'][0]['id'])
 
     media_nodes = product_media_status(product_id)
     media_id = media_nodes[image_position]['id']
@@ -493,9 +494,7 @@ def process_product_images_to_shopify(image_prefix, product_title, drive_ids, sk
 
 
 def products_info_from_sheet(sheet_id, sheet_index=0):
-    gc = gspread_access()
-    sh = gc.open_by_key(sheet_id)
-    worksheet = sh.get_worksheet(sheet_index)
+    worksheet = gspread_access().open_by_key(sheet_id).get_worksheet(sheet_index)
     rows = worksheet.get_all_values()
 
     title_column_index = 2
@@ -517,7 +516,6 @@ def products_info_from_sheet(sheet_id, sheet_index=0):
                                  links=[]))
             current_product_title = product_title
             current_color = ''
-            skus = []
         color = row[color_column_index].strip()
         if not color:
             color = current_color
@@ -538,7 +536,7 @@ def products_info_from_sheet(sheet_id, sheet_index=0):
 def main():
     image_prefix = "20240902_upload_"
     product_details = products_info_from_sheet('1_uhGzYASjjd-lk__xaCYrlMWA8WmJugBb9NC9fKk3l8', 1)
-    for pr in product_details[9:]:
+    for pr in product_details:
         drive_ids = [pp.rsplit('/', 1)[-1] for pp in pr['links']]
         logger.info(f'''
               processing {pr['product_title']}
