@@ -15,7 +15,10 @@ SHOPNAME = os.getenv('SHOPNAME')
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/kume20240902/'
+UPLOAD_IMAGE_PREFIX = 'upload_20240925_'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/gbh20240925/'
+GSPREAD_ID = '10L3Rqrno6f4VZvJRHC5dvuZgVxKzTo3wK9KvB210JC0'
+SHEET_TITLE = '9月27日 AW APPAREL(2)'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -493,15 +496,30 @@ def process_product_images_to_shopify(image_prefix, product_title, drive_ids, sk
         assign_image_to_skus(product_id, image_position, skus)
 
 
-def products_info_from_sheet(sheet_id, sheet_index=0):
+def get_sheet_index_by_title(sheet_id, sheet_title):
+    worksheet = gspread_access().open_by_key(sheet_id)
+    for meta in worksheet.fetch_sheet_metadata()['sheets']:
+        if meta['properties']['title'] == sheet_title:
+            return meta['properties']['index']
+    raise RuntimeError(f'Did not find a sheet named {sheet_title}')
+
+
+def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     worksheet = gspread_access().open_by_key(sheet_id).get_worksheet(sheet_index)
     rows = worksheet.get_all_values()
 
-    title_column_index = 2
-    color_column_index = 3
-    sku_column_index = 5
-    link_column_index = 13
-    start_row = 4
+    if shop_name == 'kumej':
+      title_column_index = 2
+      color_column_index = 3
+      sku_column_index = 5
+      link_column_index = 13
+      start_row = 4
+    elif shop_name == 'gbhjapan':
+      title_column_index = 5
+      color_column_index = 6
+      sku_column_index = 8
+      link_column_index = 14
+      start_row = 4
 
     products = []
     current_product_title = ''
@@ -534,10 +552,12 @@ def products_info_from_sheet(sheet_id, sheet_index=0):
 
 
 def main():
-    image_prefix = "20240902_upload_"
-    product_details = products_info_from_sheet('1_uhGzYASjjd-lk__xaCYrlMWA8WmJugBb9NC9fKk3l8', 1)
+    image_prefix = UPLOAD_IMAGE_PREFIX
+    sheet_index = get_sheet_index_by_title(GSPREAD_ID, SHEET_TITLE)
+    logger.info(f'sheet index of {SHEET_TITLE} is {sheet_index}')
+    product_details = products_info_from_sheet(shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
     for pr in product_details:
-        drive_ids = [pp.rsplit('/', 1)[-1] for pp in pr['links']]
+        drive_ids = [pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '') for pp in pr['links']]
         logger.info(f'''
               processing {pr['product_title']}
               SKUs: {pr['skuss']}
