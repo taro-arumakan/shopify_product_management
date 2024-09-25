@@ -26,35 +26,44 @@ logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
 google_credentials = None
+
+
 def authenticate_google_api():
     # Authenticate to Google API using Service Account
     global google_credentials
     if not google_credentials:
-      google_credentials = Credentials.from_service_account_file(
-          GOOGLE_CREDENTIAL_PATH,
-          scopes=['https://www.googleapis.com/auth/drive',
-                  'https://www.googleapis.com/auth/spreadsheets']
-      )
+        google_credentials = Credentials.from_service_account_file(
+            GOOGLE_CREDENTIAL_PATH,
+            scopes=['https://www.googleapis.com/auth/drive',
+                    'https://www.googleapis.com/auth/spreadsheets']
+        )
     return google_credentials
 
+
 _gdrive_service = None
+
+
 def gdrive_service():
     global _gdrive_service
     if not _gdrive_service:
-      _gdrive_service = build('drive', 'v3', credentials=authenticate_google_api())
+        _gdrive_service = build('drive', 'v3', credentials=authenticate_google_api())
     return _gdrive_service
+
 
 def gspread_access():
     creds = authenticate_google_api()
     return gspread.authorize(creds)
 
+
 _gsheet_service = None
+
+
 def gsheet_service():
     global _gsheet_service
     if not _gsheet_service:
-      _gsheet_service = build(
-          'sheets', 'v4', credentials=authenticate_google_api())
+        _gsheet_service = build('sheets', 'v4', credentials=authenticate_google_api())
     return _gsheet_service
+
 
 def run_query(query, variables=None, method='post', resource='graphql'):
     url = f'https://{SHOPNAME}.myshopify.com/admin/api/2024-07/{resource}.json'
@@ -78,7 +87,8 @@ def natural_compare(k):
 
 def get_drive_image_details(folder_id, sku, image_prefix):
     service = gdrive_service()
-    results = service.files().list(q=f"'{folder_id}' in parents", pageSize=1000).execute()
+    results = service.files().list(
+        q=f"'{folder_id}' in parents", pageSize=1000).execute()
     items = results.get('files', [])
 
     # Sort files using natural order
@@ -98,6 +108,7 @@ def get_drive_image_details(folder_id, sku, image_prefix):
             res.append(file_metadata)
             sequence += 1
     return res
+
 
 def generate_staged_upload_targets(files):
     query = """
@@ -152,11 +163,12 @@ def upload_images_to_shopify(staged_targets, file_details):
             'success_action_status': '201',
             'acl': 'private',
         }
-        payload.update({param['name']: param['value'] for param in target['parameters']})
+        payload.update({param['name']: param['value']
+                       for param in target['parameters']})
         local_path = os.path.join(IMAGES_LOCAL_DIR, file_details['name'])
         if not os.path.exists(local_path):
-          logger.debug(f'  starting download of {file_details['name']}')
-          download_file_from_drive(file_details['id'], local_path)
+            logger.debug(f'  starting download of {file_details['name']}')
+            download_file_from_drive(file_details['id'], local_path)
 
         with open(local_path, 'rb') as f:
             logger.debug(f'  starting upload of {file_details['name']}')
@@ -165,7 +177,8 @@ def upload_images_to_shopify(staged_targets, file_details):
                                      data=payload)
         logger.debug(f"upload response: {response.status_code}")
         if response.status_code != 201:
-            logger.exception(f'\n\n!!! upload failed !!!\n\n{file_details}:\n{target}\n\n{response.text}\n\n')
+            logger.exception(f'\n\n!!! upload failed !!!\n\n{
+                             file_details}:\n{target}\n\n{response.text}\n\n')
 
 
 def product_id_by_title(title):
@@ -265,7 +278,8 @@ def assign_images_to_product(resource_urls, alts, product_id):
     logger.debug(json_data)
 
     if json_data['data']['productCreateMedia']['userErrors']:
-        raise Exception(f"Error during media creation: {json_data['data']['productCreateMedia']['userErrors']}")
+        raise Exception(f"Error during media creation: {
+                        json_data['data']['productCreateMedia']['userErrors']}")
 
     status = wait_for_media_processing_completion(product_id)
     if not status:
@@ -309,13 +323,16 @@ def wait_for_media_processing_completion(product_id, timeout_minutes=10):
 
     while attempts < max_attempts:
         media_nodes = product_media_status(product_id)
-        processing_items = [node for node in media_nodes if node['status'] == "PROCESSING"]
-        failed_items = [node for node in media_nodes if node['status'] == "FAILED"]
+        processing_items = [
+            node for node in media_nodes if node['status'] == "PROCESSING"]
+        failed_items = [
+            node for node in media_nodes if node['status'] == "FAILED"]
 
         if failed_items:
             logger.info("Some media failed to process:")
             for item in failed_items:
-                logger.info(f"Status: {item['status']}, Errors: {item['mediaErrors']}")
+                logger.info(f"Status: {item['status']}, Errors: {
+                            item['mediaErrors']}")
             return False
 
         if not processing_items:
@@ -331,11 +348,13 @@ def wait_for_media_processing_completion(product_id, timeout_minutes=10):
 
 
 def upload_and_assign_images_to_product(product_id, drive_image_details):
-    logger.info(f'number of images being downloaded/uploaded: {len(drive_image_details)}')
+    logger.info(
+        f'number of images being downloaded/uploaded: {len(drive_image_details)}')
     staged_targets = generate_staged_upload_targets(drive_image_details)
     logger.info(f'generated staged upload targets: {len(staged_targets)}')
     upload_images_to_shopify(staged_targets, drive_image_details)
-    logger.info(f"Images uploaded for {product_id}, going to remove existing and assign.")
+    logger.info(f"Images uploaded for {
+                product_id}, going to remove existing and assign.")
     remove_product_media_by_product_id(product_id)
     assign_images_to_product([target['resourceUrl'] for target in staged_targets],
                              alts=[f['name'] for f in drive_image_details],
@@ -358,7 +377,8 @@ def variant_id_for_sku(sku):
     json_data = response.json()
 
     if len(json_data['data']['productVariants']['nodes']) != 1:
-        raise Exception(f"Multiple variants found for {sku}: {json_data['data']['productVariants']['nodes']}")
+        raise Exception(f"Multiple variants found for {sku}: {
+                        json_data['data']['productVariants']['nodes']}")
 
     return json_data['data']['productVariants']['nodes'][0]['id']
 
@@ -486,10 +506,11 @@ def process_product_images_to_shopify(image_prefix, product_title, drive_ids, sk
 
     for drive_id, skus in zip(drive_ids, skuss):
         variant_image_positions.append(len(drive_image_details))
-        drive_image_details += get_drive_image_details(drive_id, skus[0], image_prefix)
+        drive_image_details += get_drive_image_details(
+            drive_id, skus[0], image_prefix)
 
     logger.debug(f"Drive Image Details: {drive_image_details}")
-    
+
     upload_and_assign_images_to_product(product_id, drive_image_details)
 
     for skus, image_position in zip(skuss, variant_image_positions):
@@ -509,17 +530,19 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     rows = worksheet.get_all_values()
 
     if shop_name == 'kumej':
-      title_column_index = 2
-      color_column_index = 3
-      sku_column_index = 5
-      link_column_index = 13
-      start_row = 4
+        title_column_index = 2
+        color_column_index = 3
+        sku_column_index = 5
+        link_column_index = 13
+        start_row = 4
     elif shop_name == 'gbhjapan':
-      title_column_index = 5
-      color_column_index = 6
-      sku_column_index = 8
-      link_column_index = 14
-      start_row = 4
+        title_column_index = 5
+        color_column_index = 6
+        sku_column_index = 8
+        link_column_index = 14
+        start_row = 4
+    else:
+        raise RuntimeError(f'unknown shop {shop_name}')
 
     products = []
     current_product_title = ''
@@ -555,9 +578,11 @@ def main():
     image_prefix = UPLOAD_IMAGE_PREFIX
     sheet_index = get_sheet_index_by_title(GSPREAD_ID, SHEET_TITLE)
     logger.info(f'sheet index of {SHEET_TITLE} is {sheet_index}')
-    product_details = products_info_from_sheet(shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
+    product_details = products_info_from_sheet(
+        shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
     for pr in product_details:
-        drive_ids = [pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '') for pp in pr['links']]
+        drive_ids = [pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '')
+                     for pp in pr['links']]
         logger.info(f'''
               processing {pr['product_title']}
               SKUs: {pr['skuss']}
@@ -566,13 +591,12 @@ def main():
         process_product_images_to_shopify(
             image_prefix, pr['product_title'], drive_ids, pr['skuss'])
 
-
     # product_title = 'Twisted Neck Superfine Merino Wool Cardigan';
     # drive_ids = [
     #           '1qEME0URUWETd_fepr3KJFSz2EhXCxjoJ',
     #           '1ACt4g7tqigsmXYemUCc9KnDynW20E5Iz',
     #           '15VwlvmnC7EBmOZaslyMq40KyHXcWt63g'
-    #       ];  
+    #       ];
     # skuss = [
     #     ['KM-24FW-SW01-IV-S',
     #       'KM-24FW-SW01-IV-M'],
