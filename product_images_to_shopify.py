@@ -158,6 +158,11 @@ def upload_images_to_shopify(staged_targets, file_details):
     for target, file_details in zip(staged_targets, file_details):
         logger.info(f'  processing {file_details['name']}')
 
+        local_path = os.path.join(IMAGES_LOCAL_DIR, file_details['name'])
+        if not os.path.exists(local_path):
+            logger.debug(f'  starting download of {file_details['name']}')
+            download_file_from_drive(file_details['id'], local_path)
+
         payload = {
             'Content-Type': file_details['mimeType'],
             'success_action_status': '201',
@@ -165,11 +170,6 @@ def upload_images_to_shopify(staged_targets, file_details):
         }
         payload.update({param['name']: param['value']
                        for param in target['parameters']})
-        local_path = os.path.join(IMAGES_LOCAL_DIR, file_details['name'])
-        if not os.path.exists(local_path):
-            logger.debug(f'  starting download of {file_details['name']}')
-            download_file_from_drive(file_details['id'], local_path)
-
         with open(local_path, 'rb') as f:
             logger.debug(f'  starting upload of {file_details['name']}')
             response = requests.post(target['url'],
