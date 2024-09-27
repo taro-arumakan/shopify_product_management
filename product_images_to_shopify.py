@@ -581,7 +581,7 @@ def main():
     product_details = products_info_from_sheet(
         shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
     for pr in product_details:
-        drive_ids = [pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '')
+        drive_ids = [pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '').replace('?usp=sharing', '')
                      for pp in pr['links']]
         logger.info(f'''
               processing {pr['product_title']}
