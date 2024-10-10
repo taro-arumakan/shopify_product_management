@@ -156,11 +156,11 @@ def download_file_from_drive(file_id, destination_path):
 
 def upload_images_to_shopify(staged_targets, file_details):
     for target, file_details in zip(staged_targets, file_details):
-        logger.info(f'  processing {file_details['name']}')
+        logger.info(f"  processing {file_details['name']}")
 
         local_path = os.path.join(IMAGES_LOCAL_DIR, file_details['name'])
         if not os.path.exists(local_path):
-            logger.debug(f'  starting download of {file_details['name']}')
+            logger.debug(f"  starting download of {file_details['name']}")
             download_file_from_drive(file_details['id'], local_path)
 
         payload = {
@@ -171,14 +171,13 @@ def upload_images_to_shopify(staged_targets, file_details):
         payload.update({param['name']: param['value']
                        for param in target['parameters']})
         with open(local_path, 'rb') as f:
-            logger.debug(f'  starting upload of {file_details['name']}')
+            logger.debug(f"  starting upload of {file_details['name']}")
             response = requests.post(target['url'],
                                      files={'file': (file_details['name'], f)},
                                      data=payload)
         logger.debug(f"upload response: {response.status_code}")
         if response.status_code != 201:
-            logger.exception(f'\n\n!!! upload failed !!!\n\n{
-                             file_details}:\n{target}\n\n{response.text}\n\n')
+            logger.exception(f'\n\n!!! upload failed !!!\n\n{file_details}:\n{target}\n\n{response.text}\n\n')
 
 
 def product_id_by_title(title):
@@ -278,8 +277,7 @@ def assign_images_to_product(resource_urls, alts, product_id):
     logger.debug(json_data)
 
     if json_data['data']['productCreateMedia']['userErrors']:
-        raise Exception(f"Error during media creation: {
-                        json_data['data']['productCreateMedia']['userErrors']}")
+        raise Exception(f"Error during media creation: {json_data['data']['productCreateMedia']['userErrors']}")
 
     status = wait_for_media_processing_completion(product_id)
     if not status:
@@ -331,8 +329,7 @@ def wait_for_media_processing_completion(product_id, timeout_minutes=10):
         if failed_items:
             logger.info("Some media failed to process:")
             for item in failed_items:
-                logger.info(f"Status: {item['status']}, Errors: {
-                            item['mediaErrors']}")
+                logger.info(f"Status: {item['status']}, Errors: {item['mediaErrors']}")
             return False
 
         if not processing_items:
@@ -353,8 +350,7 @@ def upload_and_assign_images_to_product(product_id, drive_image_details):
     staged_targets = generate_staged_upload_targets(drive_image_details)
     logger.info(f'generated staged upload targets: {len(staged_targets)}')
     upload_images_to_shopify(staged_targets, drive_image_details)
-    logger.info(f"Images uploaded for {
-                product_id}, going to remove existing and assign.")
+    logger.info(f"Images uploaded for {product_id}, going to remove existing and assign.")
     remove_product_media_by_product_id(product_id)
     assign_images_to_product([target['resourceUrl'] for target in staged_targets],
                              alts=[f['name'] for f in drive_image_details],
@@ -377,8 +373,7 @@ def variant_id_for_sku(sku):
     json_data = response.json()
 
     if len(json_data['data']['productVariants']['nodes']) != 1:
-        raise Exception(f"Multiple variants found for {sku}: {
-                        json_data['data']['productVariants']['nodes']}")
+        raise Exception(f"Multiple variants found for {sku}: {json_data['data']['productVariants']['nodes']}")
 
     return json_data['data']['productVariants']['nodes'][0]['id']
 
