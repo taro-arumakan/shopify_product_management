@@ -1,3 +1,4 @@
+from PIL import Image
 import io
 import logging
 import os
@@ -11,14 +12,14 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 load_dotenv(override=True)
-SHOPNAME = os.getenv('SHOPNAME')
+SHOPNAME = 'gbhjapan'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20240925_'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/gbh20240925/'
+UPLOAD_IMAGE_PREFIX = 'upload_20241028_2_'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/gbh20241028/'
 GSPREAD_ID = '10L3Rqrno6f4VZvJRHC5dvuZgVxKzTo3wK9KvB210JC0'
-SHEET_TITLE = '9月27日 AW APPAREL(2)'
+SHEET_TITLE = '10月31日 APPAREL 新作'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -143,6 +144,27 @@ def generate_staged_upload_targets(files):
     return response.json()['data']['stagedUploadsCreate']['stagedTargets']
 
 
+def resize_image_to_limit(image_path, output_path, max_megapixels=25):
+    with Image.open(image_path) as img:
+        # Calculate current image size in megapixels
+        current_megapixels = (img.width * img.height) / 1_000_000
+
+        # Check if resizing is necessary
+        if current_megapixels > max_megapixels:
+            scale_factor = (max_megapixels / current_megapixels) ** 0.5
+            new_width = int(img.width * scale_factor)
+            new_height = int(img.height * scale_factor)
+
+            # Resize the image with LANCZOS filter
+            resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+            if resized_img.mode == 'RGBA':
+                kwargs = dict(format='PNG')
+            else:
+                kwargs = dict(format='JPEG', quarity=85)
+            resized_img.save(output_path, **kwargs)
+            logger.info(f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}")
+
+
 def download_file_from_drive(file_id, destination_path):
     service = gdrive_service()
     request = service.files().get_media(fileId=file_id)
@@ -157,11 +179,13 @@ def download_file_from_drive(file_id, destination_path):
 def upload_images_to_shopify(staged_targets, file_details):
     for target, file_details in zip(staged_targets, file_details):
         logger.info(f"  processing {file_details['name']}")
-
+        if not os.path.exists(IMAGES_LOCAL_DIR):
+            os.mkdir(IMAGES_LOCAL_DIR)
         local_path = os.path.join(IMAGES_LOCAL_DIR, file_details['name'])
         if not os.path.exists(local_path):
             logger.debug(f"  starting download of {file_details['name']}")
             download_file_from_drive(file_details['id'], local_path)
+        resize_image_to_limit(local_path, local_path)
 
         payload = {
             'Content-Type': file_details['mimeType'],
@@ -177,7 +201,7 @@ def upload_images_to_shopify(staged_targets, file_details):
                                      data=payload)
         logger.debug(f"upload response: {response.status_code}")
         if response.status_code != 201:
-            logger.exception(f'\n\n!!! upload failed !!!\n\n{file_details}:\n{target}\n\n{response.text}\n\n')
+            raise RuntimeError(f'!!! upload failed !!!\n\n{file_details}:\n{target}\n\n{response.text}\n\n')
 
 
 def product_id_by_title(title):
@@ -234,8 +258,10 @@ def remove_product_media_by_product_id(product_id):
         "mediaIds": media_ids
     }
     response = run_query(query, variables)
-    logger.debug(response.json())
-    return response
+    logger.info(f'Initial media status for deletion:\n{response.json()}')
+    status = wait_for_media_processing_completion(product_id)
+    if not status:
+        raise Exception("Error during media processing")
 
 
 def assign_images_to_product(resource_urls, alts, product_id):
@@ -357,25 +383,30 @@ def upload_and_assign_images_to_product(product_id, drive_image_details):
                              product_id=product_id)
 
 
-def variant_id_for_sku(sku):
+def variant_by_sku(sku):
     query = """
     {
       productVariants(first: 10, query: "sku:'%s'") {
         nodes {
           id
           title
+          product {
+            id
+          }
         }
       }
     }
     """ % sku
-
     response = run_query(query, {})
     json_data = response.json()
+    return json_data['data']['productVariants']
 
-    if len(json_data['data']['productVariants']['nodes']) != 1:
-        raise Exception(f"Multiple variants found for {sku}: {json_data['data']['productVariants']['nodes']}")
 
-    return json_data['data']['productVariants']['nodes'][0]['id']
+def variant_id_for_sku(sku):
+    json_data = variant_by_sku(sku)
+    if len(json_data['nodes']) != 1:
+        raise Exception(f"{'Multiple' if json_data['data']['productVariants']['nodes'] else 'No'} variants found for {sku}: {json_data['data']['productVariants']['nodes']}")
+    return json_data['nodes'][0]['id']
 
 
 def variant_by_variant_id(variant_id):
@@ -431,10 +462,7 @@ def detach_variant_media(product_id, variant_id, media_id):
     return run_query(query, variables)
 
 
-def assign_image_to_skus(product_id, image_position, skus):
-    logger.info(f'assigning a variant image to {skus}')
-    variant_ids = [variant_id_for_sku(sku) for sku in skus]
-
+def assign_image_to_skus(product_id, media_id, variant_ids):
     variants = [variant_by_variant_id(variant_id)
                 for variant_id in variant_ids]
     for variant in variants:
@@ -442,10 +470,6 @@ def assign_image_to_skus(product_id, image_position, skus):
             detach_variant_media(product_id,
                                  variant['id'],
                                  variant['media']['nodes'][0]['id'])
-
-    media_nodes = product_media_status(product_id)
-    media_id = media_nodes[image_position]['id']
-
     query = """
     mutation productVariantAppendMedia($productId: ID!, $variantMedia: [ProductVariantAppendMediaInput!]!) {
       productVariantAppendMedia(productId: $productId, variantMedia: $variantMedia) {
@@ -468,6 +492,43 @@ def assign_image_to_skus(product_id, image_position, skus):
     }
 
     return run_query(query, variables)
+
+
+def assign_image_to_skus_by_position(product_id, image_position, skus):
+    logger.info(f'assigning a variant image to {skus}')
+    variant_ids = [variant_id_for_sku(sku) for sku in skus]
+
+    media_nodes = product_media_status(product_id)
+    media_id = media_nodes[image_position]['id']
+    return assign_image_to_skus(product_id, media_id, variant_ids)
+
+
+def product_media_by_sku(product_id, sku):
+    medias = product_media_status(product_id)
+    for media in medias:
+        if f'{sku}_1.jpg' in media['alt']:
+            return media
+
+
+def assign_variant_image_by_sku(skus):
+    ''' Can be multiple SKUs of the same color in different sizes '''
+    json_datas = [variant_by_sku(sku) for sku in skus]
+    for sku, json_data in zip(skus, json_datas):
+        if len(json_data['nodes']) != 1:
+            raise Exception(f"{'Multiple' if json_data['nodes'] else 'No'} variants found for {sku}: {json_data['nodes']}")
+    variants = [json_data['nodes'][0] for json_data in json_datas]
+    product_ids = list(set(variant['product']['id'] for variant in variants))
+    assert len(
+        product_ids) == 1, f'Non-unique product {product_ids} for {skus}'
+    product_id = product_ids[0]
+    variant_ids = [variant['id'] for variant in variants]
+    medias = list(
+        filter(None, [product_media_by_sku(product_id, sku) for sku in skus]))
+    if not medias:
+        raise Exception(f'No media found for {skus}')
+    media_ids = [media['id'] for media in medias]
+    assert len(media_ids) == 1, f'Non-uqnique media {media_ids} for {skus}'
+    return assign_image_to_skus(product_id, media_ids[0], variant_ids)
 
 
 def process_product_images_to_shopify(image_prefix, product_title, drive_ids, skuss):
@@ -509,7 +570,7 @@ def process_product_images_to_shopify(image_prefix, product_title, drive_ids, sk
     upload_and_assign_images_to_product(product_id, drive_image_details)
 
     for skus, image_position in zip(skuss, variant_image_positions):
-        assign_image_to_skus(product_id, image_position, skus)
+        assign_image_to_skus_by_position(product_id, image_position, skus)
 
 
 def get_sheet_index_by_title(sheet_id, sheet_title):
@@ -558,6 +619,7 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         sku = row[sku_column_index].strip()
         assert sku
         if color != current_color:
+            current_color = color
             products[-1]['skuss'].append([sku])
         else:
             products[-1]['skuss'][-1].append(sku)
@@ -573,18 +635,33 @@ def main():
     image_prefix = UPLOAD_IMAGE_PREFIX
     sheet_index = get_sheet_index_by_title(GSPREAD_ID, SHEET_TITLE)
     logger.info(f'sheet index of {SHEET_TITLE} is {sheet_index}')
-    product_details = products_info_from_sheet(
-        shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
+    product_details = products_info_from_sheet(shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
+
+    reprocess_titles, reprocess_skus = [], []
+    # reprocess_skus = ['APA4KN010RBFF',
+    #                   'APA4GL010BKFF',
+    #                   'APA4TS010GYFF']
+    reprocess_titles = ['CORDUROY STUD POINT SKIRT']
+
     for pr in product_details:
-        drive_ids = [pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '').replace('?usp=sharing', '')
-                     for pp in pr['links']]
-        logger.info(f'''
-              processing {pr['product_title']}
-              SKUs: {pr['skuss']}
-              Folders: {drive_ids}
-              ''')
-        process_product_images_to_shopify(
-            image_prefix, pr['product_title'], drive_ids, pr['skuss'])
+        drive_ids = list(dict.fromkeys(pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '').replace('?usp=sharing', '') for pp in pr['links']).keys())
+        if any(sku in skus for sku in reprocess_skus for skus in pr['skuss']) or pr['product_title'] in reprocess_titles:
+            logger.info(f'''
+                  processing {pr['product_title']}
+                  SKUs: {pr['skuss']}
+                  Folders: {drive_ids}
+                  ''')
+            process_product_images_to_shopify(
+                image_prefix, pr['product_title'], drive_ids, pr['skuss'])
+
+            for skus in pr['skuss']:
+                logger.info(f'''
+                    processing variant image for {skus}
+                    ''')
+                try:
+                    assign_variant_image_by_sku(skus)
+                except Exception as e:
+                    logger.exception(e)
 
     # product_title = 'Twisted Neck Superfine Merino Wool Cardigan';
     # drive_ids = [
