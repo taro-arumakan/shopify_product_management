@@ -12,14 +12,15 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 load_dotenv(override=True)
-SHOPNAME = 'gbhjapan'
+SHOPNAME = 'alvanas'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
+print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20241028_2_'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/gbh20241028/'
-GSPREAD_ID = '10L3Rqrno6f4VZvJRHC5dvuZgVxKzTo3wK9KvB210JC0'
-SHEET_TITLE = '10月31日 APPAREL 新作'
+UPLOAD_IMAGE_PREFIX = 'upload_20241113'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/alvana20241113/'
+GSPREAD_ID = '1WUUfxiGOcWIl863rlKf3Pl5J6WlPZX9mKQIgj8tk-_s'
+SHEET_TITLE = 'Products Master'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -216,7 +217,7 @@ def product_id_by_title(title):
     }
     """
     variables = {
-        "query_string": f"Title: '{title}'"
+        "query_string": f"title:'{title}'"
     }
     response = run_query(query, variables)
     json_data = response.json()
@@ -597,6 +598,12 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         sku_column_index = 8
         link_column_index = 14
         start_row = 4
+    elif shop_name == 'alvanas':
+        title_column_index = 1
+        color_column_index = 9
+        sku_column_index = 12
+        link_column_index = 10
+        start_row = 2
     else:
         raise RuntimeError(f'unknown shop {shop_name}')
 
@@ -617,7 +624,8 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         if not color:
             color = current_color
         sku = row[sku_column_index].strip()
-        assert sku
+        if not sku:
+            break
         if color != current_color:
             current_color = color
             products[-1]['skuss'].append([sku])
@@ -641,11 +649,13 @@ def main():
     # reprocess_skus = ['APA4KN010RBFF',
     #                   'APA4GL010BKFF',
     #                   'APA4TS010GYFF']
-    reprocess_titles = ['CORDUROY STUD POINT SKIRT']
+    # reprocess_titles = ['CORDUROY STUD POINT SKIRT']
 
     for pr in product_details:
         drive_ids = list(dict.fromkeys(pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '').replace('?usp=sharing', '') for pp in pr['links']).keys())
-        if any(sku in skus for sku in reprocess_skus for skus in pr['skuss']) or pr['product_title'] in reprocess_titles:
+        if (all((not(reprocess_skus), not(reprocess_titles))) or
+            any(sku in skus for sku in reprocess_skus for skus in pr['skuss']) or
+            pr['product_title'] in reprocess_titles):
             logger.info(f'''
                   processing {pr['product_title']}
                   SKUs: {pr['skuss']}
