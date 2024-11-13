@@ -611,6 +611,9 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     current_product_title = ''
 
     for row in rows[start_row - 1:]:  # Skip headers
+        sku = row[sku_column_index].strip()
+        if not sku:
+            break
         product_title = row[title_column_index].strip()
         if not product_title:
             product_title = current_product_title
@@ -623,9 +626,6 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         color = row[color_column_index].strip()
         if not color:
             color = current_color
-        sku = row[sku_column_index].strip()
-        if not sku:
-            break
         if color != current_color:
             current_color = color
             products[-1]['skuss'].append([sku])
