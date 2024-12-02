@@ -202,7 +202,8 @@ def upload_images_to_shopify(staged_targets, file_details):
                                      data=payload)
         logger.debug(f"upload response: {response.status_code}")
         if response.status_code != 201:
-            raise RuntimeError(f'!!! upload failed !!!\n\n{file_details}:\n{target}\n\n{response.text}\n\n')
+            logger.error(f'!!! upload failed !!!\n\n{file_details}:\n{target}\n\n{response.text}\n\n')
+            response.raise_for_status()
 
 
 def product_id_by_title(title):
@@ -519,8 +520,7 @@ def assign_variant_image_by_sku(skus):
             raise Exception(f"{'Multiple' if json_data['nodes'] else 'No'} variants found for {sku}: {json_data['nodes']}")
     variants = [json_data['nodes'][0] for json_data in json_datas]
     product_ids = list(set(variant['product']['id'] for variant in variants))
-    assert len(
-        product_ids) == 1, f'Non-unique product {product_ids} for {skus}'
+    assert len(product_ids) == 1, f'Non-unique product {product_ids} for {skus}'
     product_id = product_ids[0]
     variant_ids = [variant['id'] for variant in variants]
     medias = list(
