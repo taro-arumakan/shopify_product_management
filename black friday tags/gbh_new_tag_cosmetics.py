@@ -5,7 +5,7 @@ products = products[products['Variant SKU'].notnull()]
 products['Variant SKU'] = products['Variant SKU'].apply(lambda x: x[1:] if x.startswith("'") else x)
 products = products.ffill()
 products = products[products['Status'] == 'active']
-products = products[['Handle', 'Title', 'Option1 Name', 'Option1 Value', 'Option2 Name', 'Option2 Value', 'Variant SKU', 'Tags']]
+products = products[['Handle', 'Title', 'Option1 Name', 'Option1 Value', 'Option2 Name', 'Option2 Value', 'Option3 Name', 'Option3 Value', 'Variant SKU', 'Tags']]
 skus = products['Variant SKU'].to_list()
 
 df = pd.read_csv(r'/Users/taro/Downloads/GBH\ Japan\ EC_2024\ Black\ Friday\ -\ JP\ RRP\ \(판가\)\ COSME.csv'.replace('\\', ''), header=1)
