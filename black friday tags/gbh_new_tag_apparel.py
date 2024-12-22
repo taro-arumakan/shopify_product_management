@@ -33,4 +33,8 @@ for percentage in dict.fromkeys(df['年末年始\n割引率'].to_list()):
     print(new_tag, len(skus), len(products[cond]))
     f = partial(update_tags, new_tag=new_tag)
     products.loc[cond, 'Tags'] = products.loc[cond, 'Tags'].apply(f)
+
+s = products.groupby('Handle')['Tags'].nunique()
+assert s[s > 1].empty, f'multiple tags for a handle:\n{s[s > 1]}'
+
 products.to_csv('/Users/taro/Downloads/gbh_2024holiday_new_tags_apparel.csv', index=False)
