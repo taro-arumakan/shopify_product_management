@@ -17,8 +17,8 @@ ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20241113'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/alvana20241113/'
+UPLOAD_IMAGE_PREFIX = 'upload_20241224'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/alvana20241224/'
 GSPREAD_ID = '1WUUfxiGOcWIl863rlKf3Pl5J6WlPZX9mKQIgj8tk-_s'
 SHEET_TITLE = 'Products Master'
 
@@ -508,7 +508,7 @@ def assign_image_to_skus_by_position(product_id, image_position, skus):
 def product_media_by_sku(product_id, sku):
     medias = product_media_status(product_id)
     for media in medias:
-        if f'{sku}_1.jpg' in media['alt']:
+        if any(s in media['alt'] for s in [f'{sku}_1.jpg', f'{sku}_00']):
             return media
 
 
@@ -581,6 +581,32 @@ def get_sheet_index_by_title(sheet_id, sheet_title):
             return meta['properties']['index']
     raise RuntimeError(f'Did not find a sheet named {sheet_title}')
 
+def get_link(spreadsheet_id, row, row_num, column_num):
+    link = row[column_num]
+    if all([link, link != 'no image', not link.startswith('http')]):
+        link = get_richtext_link(spreadsheet_id, row_num, column_num)
+    return link
+
+def get_richtext_link(spreadsheet_id, row, column):
+    # Use the Google Sheets API directly for rich text data
+    from googleapiclient.discovery import build
+    service = build("sheets", "v4", credentials=authenticate_google_api())
+    import string
+    range_notation = f'{SHEET_TITLE}!{string.ascii_uppercase[column]}{row}'
+    response = service.spreadsheets().get(
+        spreadsheetId=spreadsheet_id,
+        ranges=range_notation,
+        fields="sheets(data(rowData(values)))"
+    ).execute()
+    hyperlink = (
+        response.get("sheets", [])[0]
+        .get("data", [])[0]
+        .get("rowData", [])[0]
+        .get("values", [])[0]
+        .get("hyperlink")
+    )
+    print(f"The hyperlink is: {hyperlink}")
+    return hyperlink
 
 def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     worksheet = gspread_access().open_by_key(sheet_id).get_worksheet(sheet_index)
@@ -610,7 +636,7 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     products = []
     current_product_title = ''
 
-    for row in rows[start_row - 1:]:  # Skip headers
+    for row_num, row in enumerate(rows[start_row - 1:]):  # Skip headers
         sku = row[sku_column_index].strip()
         if not sku:
             break
@@ -631,8 +657,9 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
             products[-1]['skuss'].append([sku])
         else:
             products[-1]['skuss'][-1].append(sku)
-        link = row[link_column_index].strip()
-        if link:
+        logger.info(f'retrieving link for {product_title}')
+        link = get_link(sheet_id, row, start_row + row_num, link_column_index)
+        if link and link != 'no image':
             if not link.startswith('http'):
                 logger.exception(f'\n!!! malformed URL: {link} !!!\n')
             products[-1]['links'].append(link)
@@ -664,14 +691,15 @@ def main():
             process_product_images_to_shopify(
                 image_prefix, pr['product_title'], drive_ids, pr['skuss'])
 
-            for skus in pr['skuss']:
-                logger.info(f'''
-                    processing variant image for {skus}
-                    ''')
-                try:
-                    assign_variant_image_by_sku(skus)
-                except Exception as e:
-                    logger.exception(e)
+            # handle variant medias only
+            # for skus in pr['skuss']:
+            #     logger.info(f'''
+            #         processing variant image for {skus}
+            #         ''')
+            #     try:
+            #         assign_variant_image_by_sku(skus)
+            #     except Exception as e:
+            #         logger.exception(e)
 
     # product_title = 'Twisted Neck Superfine Merino Wool Cardigan';
     # drive_ids = [
