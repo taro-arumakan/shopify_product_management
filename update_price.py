@@ -24,7 +24,8 @@ def generate_new_price_df(category):
         if len(new_price_df) == 1:
             return new_price[new_price['CODE']==sku].iloc[0]['JP RRP\nTax in'].replace('¥', '').replace(',', '').strip()
         else:
-            return products[products['Variant SKU'] == sku].iloc[0]['Variant Price']
+            loc = products[products['Variant SKU'] == sku].iloc[0]
+            return loc['Variant Price'] if np.isnan(loc['Variant Compare At Price']) else loc['Variant Compare At Price']
 
     products['New Variant Price'] = products['Variant SKU'].apply(lookup_price)
     products['New Compare At Price'] = products['Variant SKU'].apply(lookup_price)
