@@ -12,15 +12,15 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 load_dotenv(override=True)
-SHOPNAME = 'alvanas'
+SHOPNAME = 'rawrowr'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20241224'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/alvana20241224/'
-GSPREAD_ID = '1WUUfxiGOcWIl863rlKf3Pl5J6WlPZX9mKQIgj8tk-_s'
-SHEET_TITLE = 'Products Master'
+UPLOAD_IMAGE_PREFIX = 'upload_20250121'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/rawrow20250121/'
+GSPREAD_ID = '1AAW8HHGUER7t77k1I3Q4UghfrVG9kti5uuYKaTJvN2w'
+SHEET_TITLE = 'RAWROW_Products Master'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -90,7 +90,11 @@ def natural_compare(k):
 def get_drive_image_details(folder_id, sku, image_prefix):
     service = gdrive_service()
     results = service.files().list(
-        q=f"'{folder_id}' in parents", pageSize=1000).execute()
+                        q=f"'{folder_id}' in parents",
+                        pageSize=1000,
+                        includeItemsFromAllDrives=True,
+                        supportsAllDrives=True,
+                    ).execute()
     items = results.get('files', [])
 
     # Sort files using natural order
@@ -531,6 +535,38 @@ def assign_variant_image_by_sku(skus):
     assert len(media_ids) == 1, f'Non-uqnique media {media_ids} for {skus}'
     return assign_image_to_skus(product_id, media_ids[0], variant_ids)
 
+def set_product_description_metafield(product_id, description_rich_text):
+    query = '''
+    mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+    metafieldsSet(metafields: $metafields) {
+        metafields {
+        key
+        namespace
+        value
+        }
+        userErrors {
+        field
+        message
+        code
+        }
+    }
+    }
+    '''
+
+    import json
+    description_rich_text = json.dumps(description_rich_text)
+
+    variables = {
+        "metafields": [
+            {
+                "key": "product_description",
+                "namespace": "custom",
+                "ownerId": f"gid://shopify/Product/{product_id}",
+                "value": description_rich_text
+            }
+        ]
+    }
+    return run_query(query, variables)
 
 def process_product_images_to_shopify(image_prefix, product_title, drive_ids, skuss):
     """
@@ -619,10 +655,10 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         link_column_index = 13
         start_row = 4
     elif shop_name == 'gbhjapan':
-        title_column_index = 5
-        color_column_index = 6
-        sku_column_index = 8
-        link_column_index = 14
+        title_column_index = 6
+        color_column_index = 7
+        sku_column_index = 9
+        link_column_index = 15
         start_row = 4
     elif shop_name == 'alvanas':
         title_column_index = 1
@@ -630,6 +666,12 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         sku_column_index = 12
         link_column_index = 10
         start_row = 2
+    elif shop_name == 'rawrowr':
+        title_column_index = 1
+        color_column_index = 12
+        sku_column_index = 16
+        link_column_index = 14
+        start_row = 3
     else:
         raise RuntimeError(f'unknown shop {shop_name}')
 
@@ -666,6 +708,11 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     return products
 
 
+def drive_link_to_id(link):
+    return (link.rsplit('/', 1)[-1].replace('open?id=', '')
+                                   .replace('?usp=drive_link', '')
+                                   .replace('?usp=sharing', '')
+                                   .replace('&usp=drive_fs', ''))
 def main():
     image_prefix = UPLOAD_IMAGE_PREFIX
     sheet_index = get_sheet_index_by_title(GSPREAD_ID, SHEET_TITLE)
@@ -676,10 +723,11 @@ def main():
     # reprocess_skus = ['APA4KN010RBFF',
     #                   'APA4GL010BKFF',
     #                   'APA4TS010GYFF']
-    # reprocess_titles = ['CORDUROY STUD POINT SKIRT']
+    # reprocess_titles = ['R TRUNK LITE ep.3 72L / 27"',
+    #                     'R TRUNK TT HANDLE™ SILICONE GRIP']
 
     for pr in product_details:
-        drive_ids = list(dict.fromkeys(pp.rsplit('/', 1)[-1].replace('?usp=drive_link', '').replace('?usp=sharing', '') for pp in pr['links']).keys())
+        drive_ids = list(dict.fromkeys(drive_link_to_id(pp) for pp in pr['links']).keys())
         if (all((not(reprocess_skus), not(reprocess_titles))) or
             any(sku in skus for sku in reprocess_skus for skus in pr['skuss']) or
             pr['product_title'] in reprocess_titles):
@@ -716,6 +764,43 @@ def main():
     #       'KM-24FW-SW01-DBR-M']
     #   ];
 
+
+def test_set_product_descrption_metafield():
+    product_id = '8735567151345'
+    desc = {'type': 'root',
+            'children': [
+              {'children': [{'type': 'text', 'value': '商品説明'}],
+               'level': 3,
+               'type': 'heading'},
+              {'children': [{'type': 'text', 'value': ''}],
+               'type': 'paragraph'},
+              {'children': [{'type': 'text', 'value': '手入れ方法'}],
+               'level': 3,
+               'type': 'heading'},
+              {'children': [{'type': 'text', 'value': ''}],
+               'type': 'paragraph'},
+              {'children': [{'type': 'text', 'value': 'サイズ'}],
+               'level': 3,
+               'type': 'heading'},
+              {'children': [{'type': 'text',
+                             'value': 'HD(Diameter)9.53.5'}],
+               'type': 'paragraph'},
+              {'children': [{'type': 'text', 'value': '素材'}],
+               'level': 3,
+               'type': 'heading'},
+              {'children': [{'type': 'text',
+                             'value': 'SILICONE'}],
+               'type': 'paragraph'},
+              {'children': [{'type': 'text', 'value': '原産国'}],
+               'level': 3,
+               'type': 'heading'},
+              {'children': [{'type': 'text',
+                             'value': 'CHINA'}],
+               'type': 'paragraph'}],
+            }
+    import html
+    res = set_product_description_metafield(product_id, desc)
+    print(res)
 
 if __name__ == "__main__":
     main()
