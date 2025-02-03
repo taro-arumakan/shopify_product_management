@@ -12,15 +12,15 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 load_dotenv(override=True)
-SHOPNAME = 'rawrowr'
+SHOPNAME = 'gbhjapan'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20250121'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/rawrow20250121/'
-GSPREAD_ID = '1AAW8HHGUER7t77k1I3Q4UghfrVG9kti5uuYKaTJvN2w'
-SHEET_TITLE = 'RAWROW_Products Master'
+UPLOAD_IMAGE_PREFIX = 'upload_20250124'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/gbh20250124/'
+GSPREAD_ID = '10L3Rqrno6f4VZvJRHC5dvuZgVxKzTo3wK9KvB210JC0'
+SHEET_TITLE = 'APPAREL 25.01.31 without hidden'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -659,7 +659,7 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         color_column_index = 7
         sku_column_index = 9
         link_column_index = 15
-        start_row = 4
+        start_row = 1
     elif shop_name == 'alvanas':
         title_column_index = 1
         color_column_index = 9
@@ -712,7 +712,9 @@ def drive_link_to_id(link):
     return (link.rsplit('/', 1)[-1].replace('open?id=', '')
                                    .replace('?usp=drive_link', '')
                                    .replace('?usp=sharing', '')
-                                   .replace('&usp=drive_fs', ''))
+                                   .replace('&usp=drive_fs', '')
+                                   .replace('?dmr=1&ec=wgc-drive-globalnav-goto', ''))
+
 def main():
     image_prefix = UPLOAD_IMAGE_PREFIX
     sheet_index = get_sheet_index_by_title(GSPREAD_ID, SHEET_TITLE)
@@ -720,12 +722,6 @@ def main():
     product_details = products_info_from_sheet(shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
 
     reprocess_titles, reprocess_skus = [], []
-    # reprocess_skus = ['APA4KN010RBFF',
-    #                   'APA4GL010BKFF',
-    #                   'APA4TS010GYFF']
-    # reprocess_titles = ['R TRUNK LITE ep.3 72L / 27"',
-    #                     'R TRUNK TT HANDLE™ SILICONE GRIP']
-
     for pr in product_details:
         drive_ids = list(dict.fromkeys(drive_link_to_id(pp) for pp in pr['links']).keys())
         if (all((not(reprocess_skus), not(reprocess_titles))) or
@@ -738,69 +734,6 @@ def main():
                   ''')
             process_product_images_to_shopify(
                 image_prefix, pr['product_title'], drive_ids, pr['skuss'])
-
-            # handle variant medias only
-            # for skus in pr['skuss']:
-            #     logger.info(f'''
-            #         processing variant image for {skus}
-            #         ''')
-            #     try:
-            #         assign_variant_image_by_sku(skus)
-            #     except Exception as e:
-            #         logger.exception(e)
-
-    # product_title = 'Twisted Neck Superfine Merino Wool Cardigan';
-    # drive_ids = [
-    #           '1qEME0URUWETd_fepr3KJFSz2EhXCxjoJ',
-    #           '1ACt4g7tqigsmXYemUCc9KnDynW20E5Iz',
-    #           '15VwlvmnC7EBmOZaslyMq40KyHXcWt63g'
-    #       ];
-    # skuss = [
-    #     ['KM-24FW-SW01-IV-S',
-    #       'KM-24FW-SW01-IV-M'],
-    #     ['KM-24FW-SW01-MT-S',
-    #       'KM-24FW-SW01-MT-M'],
-    #     ['KM-24FW-SW01-DBR-S',
-    #       'KM-24FW-SW01-DBR-M']
-    #   ];
-
-
-def test_set_product_descrption_metafield():
-    product_id = '8735567151345'
-    desc = {'type': 'root',
-            'children': [
-              {'children': [{'type': 'text', 'value': '商品説明'}],
-               'level': 3,
-               'type': 'heading'},
-              {'children': [{'type': 'text', 'value': ''}],
-               'type': 'paragraph'},
-              {'children': [{'type': 'text', 'value': '手入れ方法'}],
-               'level': 3,
-               'type': 'heading'},
-              {'children': [{'type': 'text', 'value': ''}],
-               'type': 'paragraph'},
-              {'children': [{'type': 'text', 'value': 'サイズ'}],
-               'level': 3,
-               'type': 'heading'},
-              {'children': [{'type': 'text',
-                             'value': 'HD(Diameter)9.53.5'}],
-               'type': 'paragraph'},
-              {'children': [{'type': 'text', 'value': '素材'}],
-               'level': 3,
-               'type': 'heading'},
-              {'children': [{'type': 'text',
-                             'value': 'SILICONE'}],
-               'type': 'paragraph'},
-              {'children': [{'type': 'text', 'value': '原産国'}],
-               'level': 3,
-               'type': 'heading'},
-              {'children': [{'type': 'text',
-                             'value': 'CHINA'}],
-               'type': 'paragraph'}],
-            }
-    import html
-    res = set_product_description_metafield(product_id, desc)
-    print(res)
 
 if __name__ == "__main__":
     main()
