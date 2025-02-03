@@ -12,15 +12,15 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 load_dotenv(override=True)
-SHOPNAME = 'gbhjapan'
+SHOPNAME = 'rohseoul'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20250124'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/gbh20250124/'
-GSPREAD_ID = '10L3Rqrno6f4VZvJRHC5dvuZgVxKzTo3wK9KvB210JC0'
-SHEET_TITLE = 'APPAREL 25.01.31 without hidden'
+UPLOAD_IMAGE_PREFIX = 'upload_20250203'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/roh20250203/'
+GSPREAD_ID = '19V9vmTK8VmyNWjz6jgnbfO4nm88XkOrNRvcb7a04ydI'
+SHEET_TITLE = '20250203'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -672,6 +672,12 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         sku_column_index = 16
         link_column_index = 14
         start_row = 3
+    elif shop_name == 'rohseoul':
+        title_column_index = 3
+        color_column_index = 8
+        sku_column_index = 4
+        link_column_index = 14
+        start_row = 2
     else:
         raise RuntimeError(f'unknown shop {shop_name}')
 
