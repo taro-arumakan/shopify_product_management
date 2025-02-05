@@ -1,4 +1,94 @@
 import json
+import os
+import requests
+import gspread
+from dotenv import load_dotenv
+from google.oauth2.service_account import Credentials
+
+load_dotenv(override=True)
+SHOPNAME = 'rawrowr'
+ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
+print(ACCESS_TOKEN)
+GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
+
+GSPREAD_ID = '19V9vmTK8VmyNWjz6jgnbfO4nm88XkOrNRvcb7a04ydI'
+SHEET_TITLE = '20250203'
+
+def authenticate_google_api():
+    # Authenticate to Google API using Service Account
+    global google_credentials
+    if not google_credentials:
+        google_credentials = Credentials.from_service_account_file(
+            GOOGLE_CREDENTIAL_PATH,
+            scopes=['https://www.googleapis.com/auth/drive',
+                    'https://www.googleapis.com/auth/spreadsheets']
+        )
+    return google_credentials
+
+
+def gspread_access():
+    creds = authenticate_google_api()
+    return gspread.authorize(creds)
+
+
+def run_query(query, variables=None, method='post', resource='graphql'):
+    url = f'https://{SHOPNAME}.myshopify.com/admin/api/2024-07/{resource}.json'
+    headers = {
+        "X-Shopify-Access-Token": ACCESS_TOKEN,
+        "Content-Type": "application/json"
+    }
+    data = {
+        "query": query,
+        "variables": variables
+    }
+    return requests.post(url, headers=headers, json=data)
+
+
+def update_product_description_metafield(product_id, desc):
+    query = """
+      mutation updateProductMetafield($productSet: ProductSetInput!) {
+        productSet(synchronous:true, input: $productSet) {
+          product {
+            id
+            metafields (first:10) {
+              nodes {
+                id
+                namespace
+                key
+                value
+              }
+            }
+          }
+          userErrors {
+            field
+            code
+            message
+          }
+        }
+    }
+    """
+
+    variables = {
+      "productSet": {
+        "id": f"gid://shopify/Product/{product_id}",
+        "metafields": [
+          {
+            "id": "gid://shopify/Metafield/37315032023281",
+            "namespace": "custom",
+            "key": "product_description",
+            "type": "rich_text_field",
+            "value": json.dumps(desc)
+          }
+        ]
+      }
+    }
+
+    response = run_query(query, variables)
+    res = response.json()['data']
+    if res['productSet']['userErrors']:
+        raise RuntimeError(f"Failed to update the metafield: {res['productSet']['userErrors']}")
+    return res
+
 
 def get_product_description(desc, care, size, material, origin):
 
@@ -131,3 +221,15 @@ mutation updateProductMetafield($productSet: ProductSetInput!) {
   }
 }
 """
+
+
+def main():
+    product_id = '8735566954737'
+    product_description = get_product_description(desc, care, size, material, origin)
+    res = update_product_description_metafield(product_id, product_description)
+    import pprint
+    pprint.pprint(res)
+
+
+if __name__ == '__main__':
+    main()
