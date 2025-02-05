@@ -57,16 +57,6 @@ def gspread_access():
     return gspread.authorize(creds)
 
 
-_gsheet_service = None
-
-
-def gsheet_service():
-    global _gsheet_service
-    if not _gsheet_service:
-        _gsheet_service = build('sheets', 'v4', credentials=authenticate_google_api())
-    return _gsheet_service
-
-
 def run_query(query, variables=None, method='post', resource='graphql'):
     url = f'https://{SHOPNAME}.myshopify.com/admin/api/2024-07/{resource}.json'
     headers = {
