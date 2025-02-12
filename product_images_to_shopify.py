@@ -12,15 +12,15 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 load_dotenv(override=True)
-SHOPNAME = 'rohseoul'
+SHOPNAME = 'rawrowr'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20250203'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/roh20250203/'
-GSPREAD_ID = '19V9vmTK8VmyNWjz6jgnbfO4nm88XkOrNRvcb7a04ydI'
-SHEET_TITLE = '20250203'
+UPLOAD_IMAGE_PREFIX = 'upload_20250211'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/rawrow20250211/'
+GSPREAD_ID = '1AAW8HHGUER7t77k1I3Q4UghfrVG9kti5uuYKaTJvN2w'
+SHEET_TITLE = '20250211_v3'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -401,7 +401,7 @@ def variant_by_sku(sku):
 def variant_id_for_sku(sku):
     json_data = variant_by_sku(sku)
     if len(json_data['nodes']) != 1:
-        raise Exception(f"{'Multiple' if json_data['data']['productVariants']['nodes'] else 'No'} variants found for {sku}: {json_data['data']['productVariants']['nodes']}")
+        raise Exception(f"{'Multiple' if json_data['nodes'] else 'No'} variants found for {sku}: {json_data['nodes']}")
     return json_data['nodes'][0]['id']
 
 
@@ -661,7 +661,7 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         color_column_index = 12
         sku_column_index = 16
         link_column_index = 14
-        start_row = 3
+        start_row = 40
     elif shop_name == 'rohseoul':
         title_column_index = 3
         color_column_index = 8
