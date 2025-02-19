@@ -12,15 +12,15 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 load_dotenv(override=True)
-SHOPNAME = 'rawrowr'
+SHOPNAME = 'archive-epke'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20250211'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/rawrow20250211/'
-GSPREAD_ID = '1AAW8HHGUER7t77k1I3Q4UghfrVG9kti5uuYKaTJvN2w'
-SHEET_TITLE = '20250211_v3'
+UPLOAD_IMAGE_PREFIX = 'upload_20250218'
+IMAGES_LOCAL_DIR = '/Users/taro/Downloads/arhive-epke20250218/'
+GSPREAD_ID = '18YPrX-1CqvAxmrE1P6jrtmewkKZtiInngQw2bOTacWg'
+SHEET_TITLE = '2025.2/20 Release'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -220,6 +220,29 @@ def product_id_by_title(title):
     products = json_data['data']['products']['nodes']
     if len(products) != 1:
         raise Exception(f"Multiple products found for {title}: {products}")
+    return products[0]['id']
+
+
+def product_id_by_handle(handle):
+    query = """
+    query productsByQuery($query_string: String!) {
+      products(first: 10, query: $query_string, sortKey: TITLE) {
+        nodes {
+          id
+          handle
+        }
+      }
+    }
+    """
+    variables = {
+        "query_string": f"handle:'{handle}'"
+    }
+    response = run_query(query, variables)
+    json_data = response.json()
+
+    products = json_data['data']['products']['nodes']
+    if len(products) != 1:
+        raise Exception(f"Multiple products found for {handle}: {products}")
     return products[0]['id']
 
 
@@ -582,7 +605,12 @@ def process_product_images_to_shopify(image_prefix, product_title, drive_ids, sk
         ['KM-24FW-SW01-DBR-S', 'KM-24FW-SW01-DBR-M']
     ]
     """
-    product_id = product_id_by_title(product_title)
+    if SHOPNAME in ['rohseoul', 'archive-epke']:
+        product_handle = '-'.join(list(map(str.lower, product_title.replace(')', '').replace('(', '').split(' '))) + ['25ss'])
+        logger.info(f'product_handle: {product_handle}')
+        product_id = product_id_by_handle(product_handle)
+    else:
+        product_id = product_id_by_title(product_title)
 
     drive_image_details = []
     variant_image_positions = []
@@ -638,6 +666,7 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     worksheet = gspread_access().open_by_key(sheet_id).get_worksheet(sheet_index)
     rows = worksheet.get_all_values()
 
+    # start_row 1 base, columns are 0 base
     if shop_name == 'kumej':
         title_column_index = 2
         color_column_index = 3
@@ -661,13 +690,20 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         color_column_index = 12
         sku_column_index = 16
         link_column_index = 14
-        start_row = 40
+        start_row = 3
     elif shop_name == 'rohseoul':
+        state_column_index = 0
+        title_column_index = 4
+        color_column_index = 9
+        sku_column_index = 5
+        link_column_index = 15
+        start_row = 3
+    elif shop_name == 'archive-epke':
         title_column_index = 3
         color_column_index = 8
         sku_column_index = 4
         link_column_index = 14
-        start_row = 2
+        start_row = 3
     else:
         raise RuntimeError(f'unknown shop {shop_name}')
 
@@ -675,6 +711,16 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     current_product_title = ''
 
     for row_num, row in enumerate(rows[start_row - 1:]):  # Skip headers
+        if SHOPNAME == 'rohseoul':
+            state = row[state_column_index].strip()
+            if state != 'NEW':
+                logger.info(f'skipping row {row_num}')
+                continue
+        elif SHOPNAME == 'kumej':
+            release = row[1]
+            if release.startswith('3/10'):
+                logger.info(f'stop processing at {row_num}')
+                break
         sku = row[sku_column_index].strip()
         if not sku:
             break
@@ -718,11 +764,18 @@ def main():
     product_details = products_info_from_sheet(shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
 
     reprocess_titles, reprocess_skus = [], []
+    reprocess_from_sku = 'OVBAX25019LSK'
+
+    if reprocess_from_sku:
+        import itertools
+        all_skus = list(itertools.chain(sku for pr in product_details for skus in pr['skuss'] for sku in skus))
+        logger.info(all_skus)
     for pr in product_details:
-        drive_ids = list(dict.fromkeys(drive_link_to_id(pp) for pp in pr['links']).keys())
-        if (all((not(reprocess_skus), not(reprocess_titles))) or
+        if ((all((not(reprocess_skus), not(reprocess_titles))) or
             any(sku in skus for sku in reprocess_skus for skus in pr['skuss']) or
-            pr['product_title'] in reprocess_titles):
+            pr['product_title'] in reprocess_titles) and
+            (not reprocess_from_sku or reprocess_from_sku and any(all_skus.index(sku) >= all_skus.index(reprocess_from_sku) for skus in pr['skuss'] for sku in skus))):
+            drive_ids = list(dict.fromkeys(drive_link_to_id(pp) for pp in pr['links']).keys())
             logger.info(f'''
                   processing {pr['product_title']}
                   SKUs: {pr['skuss']}
