@@ -1,9 +1,7 @@
-import json
 import os
-import requests
-import gspread
 from dotenv import load_dotenv
-from google.oauth2.service_account import Credentials
+from shopify_utils import update_product_description_metafield, product_id_by_title
+from google_utils import gspread_access, get_sheet_index_by_title
 
 load_dotenv(override=True)
 SHOPNAME = 'rawrowr'
@@ -11,83 +9,8 @@ ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-GSPREAD_ID = '19V9vmTK8VmyNWjz6jgnbfO4nm88XkOrNRvcb7a04ydI'
-SHEET_TITLE = '20250203'
-
-def authenticate_google_api():
-    # Authenticate to Google API using Service Account
-    global google_credentials
-    if not google_credentials:
-        google_credentials = Credentials.from_service_account_file(
-            GOOGLE_CREDENTIAL_PATH,
-            scopes=['https://www.googleapis.com/auth/drive',
-                    'https://www.googleapis.com/auth/spreadsheets']
-        )
-    return google_credentials
-
-
-def gspread_access():
-    creds = authenticate_google_api()
-    return gspread.authorize(creds)
-
-
-def run_query(query, variables=None, method='post', resource='graphql'):
-    url = f'https://{SHOPNAME}.myshopify.com/admin/api/2024-07/{resource}.json'
-    headers = {
-        "X-Shopify-Access-Token": ACCESS_TOKEN,
-        "Content-Type": "application/json"
-    }
-    data = {
-        "query": query,
-        "variables": variables
-    }
-    return requests.post(url, headers=headers, json=data)
-
-
-def update_product_description_metafield(product_id, desc):
-    query = """
-      mutation updateProductMetafield($productSet: ProductSetInput!) {
-        productSet(synchronous:true, input: $productSet) {
-          product {
-            id
-            metafields (first:10) {
-              nodes {
-                id
-                namespace
-                key
-                value
-              }
-            }
-          }
-          userErrors {
-            field
-            code
-            message
-          }
-        }
-    }
-    """
-
-    variables = {
-      "productSet": {
-        "id": f"gid://shopify/Product/{product_id}",
-        "metafields": [
-          {
-            "id": "gid://shopify/Metafield/37315032023281",
-            "namespace": "custom",
-            "key": "product_description",
-            "type": "rich_text_field",
-            "value": json.dumps(desc)
-          }
-        ]
-      }
-    }
-
-    response = run_query(query, variables)
-    res = response.json()['data']
-    if res['productSet']['userErrors']:
-        raise RuntimeError(f"Failed to update the metafield: {res['productSet']['userErrors']}")
-    return res
+GSPREAD_ID = '1AAW8HHGUER7t77k1I3Q4UghfrVG9kti5uuYKaTJvN2w'
+SHEET_TITLE = '20250211_v2'
 
 
 def get_product_description(desc, care, size, material, origin):
@@ -110,123 +33,24 @@ def get_product_description(desc, care, size, material, origin):
   }
   return res
 
-desc = '''
-最も重い荷物を最も楽に運ぶ方法、R TRUNK FRAME ep.3
-
-ローローにとって、旅は移動と滞在の繰り返しです。
-移動するときは便利でなければならないというこのシンプルな本質に忠実であるために、R TRUNKは生まれました。
-SONYが開発した新素材SORPLAS™を使用し、韓国で初めてR TRUNKに適用されました。
-
-POLYCARBONATE 100
-SORPLAS™ by Sony Semiconductor Still
-SONYが開発した新素材SORPLAS™は、30%に過ぎなかったリサイクル率を99%まで引き上げました。
-リサイクル素材でありながら変形することなく堅牢で、優れた発色と高品質の仕上げが可能で、SONYの様々な製品の素材として使用されています。
-
-ゴミと戦おう #fightwaste #fightwaste
-
-TT HANDLE™ (TTハンドル)
-広く伸びたハンドルで、服やバッグなどの荷物を掛けるのに適しています。
-レザーやシリコングリップを使用して、お好みに合わせてカスタマイズすることができます。
-
-SCALE HANDLE
-トランクを持ち上げるだけで、どこでも簡単に重さを確認できます。
-*63L、88L、105Lサイズのみ適用。
-
-SILENT WHEEL
-約20dBほど騒音が少ない日本ヒノモト社のサイレントホイールを採用。
-360度スムーズに動き、手首の負担を軽減し、動線を簡単にコントロールできます。
-
-TSA LOCK
-米国運輸保安局が認証したロックで、破損することなく手荷物検査を受けることができます。
-
-HIDEEN POCKET
-紛失しがちなパスポートや財布などの小物を収納できます。
-
-INSIDE
-リサイクル抗菌素材の明るい裏地を使用し、暗い場所でも小物を見つけやすくなっています。
-伸縮性のあるゴムバンドが内側から包み込んでくれるので、荷物が乱れにくく安定して収納できます。
-'''.lstrip()
-
-care = '''
-1. 表面の汚れは柔らかい布と中性洗剤で拭いてください。
-2. 紫外線を避け、湿度、温度が低く、風通しの良い場所に保管してください。
-3. 使用後は、半日程度換気の良い場所で湿気を取り除いて保管してください。
-4. 階段、アスファルトなど表面が粗い場所で無理に使用する場合、車輪の損傷の原因になることがあります。
-5. 無理に荷物を入れて力を加えて閉める場合、フレームの変形やロックの故障などが発生する可能性があります。
-6. 本製品は防水性がありませんので、雨天時には防水カバーを必ずご使用ください。
-'''.lstrip()
-
-size = '''
-WEIGHT : 5.5kg
-
-SIZE :
-63L / 26inch 4~6days
-BODY - W46 x H70 x D25.5
-BAR HANDLE - W36.5 x H43.5
-HIDDEN POCKET - W10.5 x H16 x D2 cm
-'''.lstrip()
-
-material = '''
-OUTSIDE - POLYCARBONATE 100%
-SORPLAS™ by Sony Semiconductor Still
-INSIDE - POLYESTER
-WHEELS - PLASTIC
-'''.lstrip()
-
-origin = 'CHINA'
-
-s = get_product_description(desc, care, size, material, origin)
-
-# to copy/paste into GraphiQL UI
-print(json.dumps(s, ensure_ascii=False).replace('"', '\\"').replace('\\n', '\\\\n'))
-
-
-
-"""
-mutation updateProductMetafield($productSet: ProductSetInput!) {
-  productSet(synchronous:true, input: $productSet) {
-    product {
-      id
-      metafields (first:10) {
-        nodes {
-          id
-          namespace
-          key
-          value
-        }
-      }
-    }
-    userErrors {
-      field
-      code
-      message
-    }
-  }
-}
-"""
-
-"""
-{
-  "productSet": {
-    "id": "gid://shopify/Product/8735566954737",
-    "metafields": [
-      {
-        "id": "gid://shopify/Metafield/37315032023281",
-        "namespace": "custom",
-        "key": "product_description",
-        "type": "rich_text_field",
-        "value": "{\"type\": \"root\", \"children\": [{\"children\": [{\"type\": \"text\", \"value\": \"商品説明\"}], \"level\": 3, \"type\": \"heading\"}, {\"children\": [{\"type\": \"text\", \"value\": \"最も重い荷物を最も楽に運ぶ方法、R TRUNK FRAME ep.3\\n \\nローローにとって、旅は移動と滞在の繰り返しです。\\n移動するときは便利でなければならないというこのシンプルな本質に忠実であるために、R TRUNKは生まれました。\\nSONYが開発した新素材SORPLAS™を使用し、韓国で初めてR TRUNKに適用されました。\\n\\nPOLYCARBONATE 100\\nSORPLAS™ by Sony Semiconductor Still\\nSONYが開発した新素材SORPLAS™は、30%に過ぎなかったリサイクル率を99%まで引き上げました。\\nリサイクル素材でありながら変形することなく堅牢で、優れた発色と高品質の仕上げが可能で、SONYの様々な製品の素材として使用されています。\\n\\nゴミと戦おう #fightwaste #fightwaste\\n\\nTT HANDLE™ (TTハンドル)\\n広く伸びたハンドルで、服やバッグなどの荷物を掛けるのに適しています。\\nレザーやシリコングリップを使用して、お好みに合わせてカスタマイズすることができます。\\n\\nSCALE HANDLE\\nトランクを持ち上げるだけで、どこでも簡単に重さを確認できます。\\n*63L、88L、105Lサイズのみ適用。\\n\\nSILENT WHEEL\\n約20dBほど騒音が少ない日本ヒノモト社のサイレントホイールを採用。\\n360度スムーズに動き、手首の負担を軽減し、動線を簡単にコントロールできます。\\n\\nTSA LOCK\\n米国運輸保安局が認証したロックで、破損することなく手荷物検査を受けることができます。\\n\\nHIDEEN POCKET\\n紛失しがちなパスポートや財布などの小物を収納できます。\\n\\nINSIDE\\nリサイクル抗菌素材の明るい裏地を使用し、暗い場所でも小物を見つけやすくなっています。\\n伸縮性のあるゴムバンドが内側から包み込んでくれるので、荷物が乱れにくく安定して収納できます。\\n\"}], \"type\": \"paragraph\"}, {\"children\": [{\"type\": \"text\", \"value\": \"使用上の注意\"}], \"level\": 3, \"type\": \"heading\"}, {\"children\": [{\"type\": \"text\", \"value\": \"1. 表面の汚れは柔らかい布と中性洗剤で拭いてください。\\n2. 紫外線を避け、湿度、温度が低く、風通しの良い場所に保管してください。\\n3. 使用後は、半日程度換気の良い場所で湿気を取り除いて保管してください。\\n4. 階段、アスファルトなど表面が粗い場所で無理に使用する場合、車輪の損傷の原因になることがあります。\\n5. 無理に荷物を入れて力を加えて閉める場合、フレームの変形やロックの故障などが発生する可能性があります。\\n6. 本製品は防水性がありませんので、雨天時には防水カバーを必ずご使用ください。\\n\"}], \"type\": \"paragraph\"}, {\"children\": [{\"type\": \"text\", \"value\": \"\"}], \"type\": \"paragraph\"}, {\"children\": [{\"type\": \"text\", \"value\": \"サイズ\"}], \"level\": 3, \"type\": \"heading\"}, {\"children\": [{\"type\": \"text\", \"value\": \"WEIGHT : 5.5kg\\n\\nSIZE :\\n63L / 26inch 4~6days\\nBODY - W46 x H70 x D25.5\\nBAR HANDLE - W36.5 x H43.5\\nHIDDEN POCKET - W10.5 x H16 x D2 cm\\n\"}], \"type\": \"paragraph\"}, {\"children\": [{\"type\": \"text\", \"value\": \"素材\"}], \"level\": 3, \"type\": \"heading\"}, {\"children\": [{\"type\": \"text\", \"value\": \"OUTSIDE - POLYCARBONATE 100%\\nSORPLAS™ by Sony Semiconductor Still\\nINSIDE - POLYESTER\\nWHEELS - PLASTIC\\n\"}], \"type\": \"paragraph\"}, {\"children\": [{\"type\": \"text\", \"value\": \"原産国\"}], \"level\": 3, \"type\": \"heading\"}, {\"children\": [{\"type\": \"text\", \"value\": \"CHINA\"}], \"type\": \"paragraph\"}]}"
-      }
-    ]
-  }
-}
-"""
-
 
 def main():
-    product_id = '8735566954737'
+    sheet_index = get_sheet_index_by_title(GOOGLE_CREDENTIAL_PATH, GSPREAD_ID, SHEET_TITLE)
+    worksheet = gspread_access(GOOGLE_CREDENTIAL_PATH).open_by_key(GSPREAD_ID).get_worksheet(sheet_index)
+    rows = worksheet.get_all_values()
+
+    row = rows[-3]
+    title = row[1]
+    product_id = product_id_by_title(SHOPNAME, ACCESS_TOKEN, title)
+
+    desc = row[6]
+    care = row[8]
+    size = row[10]
+    material = row[9]
+    origin = row[11]
+
     product_description = get_product_description(desc, care, size, material, origin)
-    res = update_product_description_metafield(product_id, product_description)
+    res = update_product_description_metafield(SHOPNAME, ACCESS_TOKEN, product_id, product_description)
     import pprint
     pprint.pprint(res)
 
