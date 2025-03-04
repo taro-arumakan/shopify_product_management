@@ -62,7 +62,7 @@ def get_drive_image_details(google_credential_path, folder_id, sku, image_prefix
     res = []
     sequence = 0
 
-    for item in items:
+    for sequence, item in enumerate(items):
         if item['mimeType'].startswith('image/'):
             file_metadata = {
                 'name': f"{image_prefix}_{sku}_{str(sequence).zfill(2)}_{item['name']}",
@@ -71,7 +71,6 @@ def get_drive_image_details(google_credential_path, folder_id, sku, image_prefix
                 # 'downloadUrl': f"https://www.googleapis.com/drive/v3/files/{item['id']}?alt=media"
             }
             res.append(file_metadata)
-            sequence += 1
     return res
 
 def resize_image_to_limit(image_path, output_path, max_megapixels=25):
