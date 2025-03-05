@@ -8,6 +8,36 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
+def update_product_description(shop_name, access_token, product_id, desc):
+    query = """
+    mutation updateProductDescription($productSet: ProductSetInput!) {
+        productSet(synchronous:true, input: $productSet) {
+          product {
+            id
+            descriptionHtml
+          }
+          userErrors {
+            field
+            code
+            message
+          }
+        }
+    }
+    """
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    variables = {
+      "productSet": {
+        "id": product_id,
+        "descriptionHtml": desc
+      }
+    }
+    response = run_query(shop_name, access_token, query, variables)
+    res = response.json()['data']
+    if res['productSet']['userErrors']:
+        raise RuntimeError(f"Failed to update the description: {res['productSet']['userErrors']}")
+    return res
+
 
 def update_product_description_metafield(shop_name, access_token, product_id, desc):
     query = """
@@ -295,7 +325,7 @@ def assign_images_to_product(shop_name, access_token, resource_urls, alts, produ
     logger.debug("Initial media status:")
     logger.debug(json_data)
 
-    if json_data['data']['productCreateMedia']['userErrors']:
+    if json_data.get('errors') or json_data['data']['productCreateMedia']['userErrors']:
         raise Exception(f"Error during media creation: {json_data['data']['productCreateMedia']['userErrors']}")
 
     status = wait_for_media_processing_completion(shop_name, access_token, product_id)
@@ -454,6 +484,8 @@ def generate_staged_upload_targets(shop_name, access_token, file_names, mime_typ
 
 def upload_images_to_shopify(staged_targets, local_paths, mime_types):
     for target, local_path, mime_type in zip(staged_targets, local_paths, mime_types):
+        if mime_type in ['image/psd']:
+            continue
         file_name = local_path.rsplit('/', 1)[-1]
         logger.info(f"  processing {file_name}")
         payload = {
