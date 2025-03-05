@@ -4,13 +4,13 @@ from shopify_utils import update_product_description_metafield, product_id_by_ti
 from google_utils import gspread_access, get_sheet_index_by_title
 
 load_dotenv(override=True)
-SHOPNAME = 'rawrowr'
+SHOPNAME = 'apricot-studios'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-GSPREAD_ID = '1AAW8HHGUER7t77k1I3Q4UghfrVG9kti5uuYKaTJvN2w'
-SHEET_TITLE = '20250211_v2'
+GSPREAD_ID = '1yVzpgcrgNR7WxUYfotEnhYFMbc79l1O4rl9CamB2Kqo'
+SHEET_TITLE = 'Products Master'
 
 
 def get_product_description(desc, care, size, material, origin):
@@ -39,20 +39,23 @@ def main():
     worksheet = gspread_access(GOOGLE_CREDENTIAL_PATH).open_by_key(GSPREAD_ID).get_worksheet(sheet_index)
     rows = worksheet.get_all_values()
 
-    row = rows[-3]
-    title = row[1]
-    product_id = product_id_by_title(SHOPNAME, ACCESS_TOKEN, title)
+    for row in rows[1:]:
+      title = row[1].strip()
+      print(f'processing {title}')
+      if not title:
+         continue
+      product_id = product_id_by_title(SHOPNAME, ACCESS_TOKEN, title)
 
-    desc = row[6]
-    care = row[8]
-    size = row[10]
-    material = row[9]
-    origin = row[11]
+      desc = row[6]
+      care = row[8]
+      material = row[10]
+      size = row[12]
+      origin = row[13]
 
-    product_description = get_product_description(desc, care, size, material, origin)
-    res = update_product_description_metafield(SHOPNAME, ACCESS_TOKEN, product_id, product_description)
-    import pprint
-    pprint.pprint(res)
+      product_description = get_product_description(desc, care, size, material, origin)
+      res = update_product_description_metafield(SHOPNAME, ACCESS_TOKEN, product_id, product_description)
+      import pprint
+      pprint.pprint(res)
 
 
 if __name__ == '__main__':
