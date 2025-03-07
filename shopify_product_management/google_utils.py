@@ -103,7 +103,7 @@ def download_images_from_drive(google_credential_path, drive_image_details, loca
         if not os.path.exists(local_path):
             logger.info(f"  starting download of {file_details['name']}")
             download_file_from_drive(google_credential_path, file_details['id'], local_path)
-        resize_image_to_limit(local_path, local_path)
+            resize_image_to_limit(local_path, local_path)
         res.append(local_path)
     return res
 
