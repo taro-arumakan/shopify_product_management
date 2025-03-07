@@ -73,7 +73,7 @@ def get_drive_image_details(google_credential_path, folder_id, sku, image_prefix
             res.append(file_metadata)
     return res
 
-def resize_image_to_limit(image_path, output_path, max_megapixels=25):
+def resize_image_to_limit(image_path, output_path, max_megapixels=20):
     with Image.open(image_path) as img:
         # Calculate current image size in megapixels
         current_megapixels = (img.width * img.height) / 1_000_000
