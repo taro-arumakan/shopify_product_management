@@ -600,6 +600,79 @@ def assign_image_to_skus(shop_name, access_token, product_id, media_id, variant_
     return run_query(shop_name, access_token, query, variables)
 
 
+def location_id_by_name(shop_name, access_token, name):
+    query = '''
+    {
+      locations(first:10, query:"name:%s") {
+        nodes {
+          id
+        }
+      }
+    }
+    ''' % name
+    res = run_query(shop_name, access_token, query)
+    res = res.json()['data']['locations']['nodes']
+    assert len(res) == 1, f'{"Multiple" if res else "No"} locations found for {name}: {res}'
+    return res[0]['id']
+
+
+def inventory_item_id_by_sku(shop_name, access_token, sku):
+    query = '''
+    {
+      inventoryItems(query:"sku:%s", first:5) {
+        nodes{
+          id
+        }
+      }
+    }''' % sku
+    res = run_query(shop_name, access_token, query)
+    res = res.json()['data']['inventoryItems']['nodes']
+    assert len(res) == 1, f'{"Multiple" if res else "No"} inventoryItems found for {sku}: {res}'
+    return res[0]['id']
+
+
+def set_inventory_quantity_by_sku_and_location_id(shop_name, access_token, sku, location_id, quantity):
+    inventory_item_id = inventory_item_id_by_sku(shop_name, access_token, sku)
+    query = '''
+    mutation inventorySetQuantities($locationId: ID!, $inventoryItemId: ID!, $quantity: Int!) {
+    inventorySetQuantities(
+        input: {name: "available", ignoreCompareQuantity: true, reason: "correction",
+                quantities: [{inventoryItemId: $inventoryItemId,
+                              locationId: $locationId,
+                              quantity: $quantity}]}
+    ) {
+        inventoryAdjustmentGroup {
+        id
+        changes {
+            name
+            delta
+            quantityAfterChange
+        }
+        reason
+        }
+        userErrors {
+        message
+        code
+        field
+        }
+      }
+    }
+    '''
+    variables = {
+        "inventoryItemId": inventory_item_id,
+        "locationId": location_id,
+        "quantity": quantity
+    }
+    res = run_query(shop_name, access_token, query, variables)
+    json_data = res.json()
+    if json_data.get('errors') or json_data['data']['inventorySetQuantities']['userErrors']:
+        raise Exception(f"Error updating inventory quantity: {json_data.get('errors') or json_data['data']['inventorySetQuantities']['userErrors']}")
+    updates = json_data['data']['inventorySetQuantities']['inventoryAdjustmentGroup']
+    if not updates:
+        logger.info(f'no updates found after updating inventory of {sku} to {quantity}')
+    return updates
+
+
 def run_query(shop_name, access_token, query, variables=None, method='post', resource='graphql'):
     url = f'https://{shop_name}.myshopify.com/admin/api/2024-07/{resource}.json'
     headers = {
