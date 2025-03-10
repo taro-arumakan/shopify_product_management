@@ -1,0 +1,14 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run pytest
+        entry: /Users/taro/.pyenv/versions/3.12.2/envs/shopify/bin/pytest
+        language: system
+        types: [python]
