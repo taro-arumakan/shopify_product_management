@@ -60,6 +60,70 @@ def upload_and_assign_description_images_to_shopify(shop_name, access_token, pro
                              product_id=dummy_product_id)
     return update_product_description(shop_name, access_token, product_id, description)
 
+def file_id_by_file_name(shop_name, access_token, file_name):
+    query = '''
+
+      query {
+        files(first:10 query:"filename:'%s'") {
+          nodes {
+            id
+            ... on MediaImage {
+              image {
+                url
+              }
+            }
+          }
+        }
+      }
+      ''' % file_name.rsplit('.', 1)[0]
+    res = run_query(shop_name, access_token, query)
+    res = res.json()['data']['files']['nodes']
+    if len(res) > 1:
+        res = [r for r in res if r['image']['url'].rsplit('?', 1)[0].endswith(file_name)]
+    assert len(res) == 1, f'{"Multiple" if res else "No"} files found for {file_name}: {res}'
+    return res[0]['id']
+
+
+def _replace_image_files_with_staging(shop_name, access_token, staged_targets, local_paths, mime_types):
+    filenames = [sanitize_image_name(path.rsplit('/', 1)[-1]) for path in local_paths]
+    file_ids = [file_id_by_file_name(shop_name, access_token, filename) for filename in filenames]
+    resource_urls = [target['resourceUrl'] for target in staged_targets]
+    query = """
+      mutation FileUpdate($input: [FileUpdateInput!]!) {
+        fileUpdate(files: $input) {
+          userErrors {
+            code
+            field
+            message
+          }
+          files {
+            alt
+          }
+        }
+      }
+      """
+    medias = [{
+        "id": file_id,
+        "originalSource": url,
+        "alt": filename
+    } for file_id, url, filename in zip(file_ids, resource_urls, filenames)]
+
+    variables = {
+        "input": medias
+    }
+    res = run_query(shop_name, access_token, query, variables)
+    res = res.json()['data']['fileUpdate']
+    if res['userErrors']:
+        raise RuntimeError(f"Failed to update the files: {res['userErrors']}")
+    return res
+
+def replace_image_files(shop_name, access_token, local_paths):
+    mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
+    staged_targets = generate_staged_upload_targets(shop_name, access_token, local_paths, mime_types)
+    logger.info(f'generated staged upload targets: {len(staged_targets)}')
+    upload_images_to_shopify(staged_targets, local_paths, mime_types)
+    return _replace_image_files_with_staging(shop_name, access_token, staged_targets, local_paths, mime_types)
+
 
 def update_product_description_and_size_table_html_metafields(shop_name, access_token, product_id, desc, html_text):
     query = """
@@ -806,3 +870,18 @@ def run_query(shop_name, access_token, query, variables=None, method='post', res
         "variables": variables
     }
     return requests.post(url, headers=headers, json=data)
+
+
+
+def main():
+    import os
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
+    print(os.getenv('ACCESS_TOKEN'))
+    dirname = r'/Users/taro/Downloads/jpg追加/'
+    local_paths = [f'{dirname}{p}' for p in os.listdir(dirname) if 'product_detail_' in p]
+    replace_image_files('apricot-studios', os.getenv('ACCESS_TOKEN'), local_paths)
+
+
+if __name__ == '__main__':
+    main()
