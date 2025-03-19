@@ -8,15 +8,15 @@ from shopify_utils import (run_query, product_id_by_handle, product_id_by_title,
                            assign_image_to_skus)
 
 load_dotenv(override=True)
-SHOPNAME = 'kumej'
+SHOPNAME = 'archive-epke'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20250307'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/gbh20250307/'
-GSPREAD_ID = '1buFubQ6Ng4JzYn4JjTsv8SQ2J1Qgv1yyVrs4yQUHfE0'
-SHEET_TITLE = '25ss'
+UPLOAD_IMAGE_PREFIX = 'upload_20250310'
+IMAGES_LOCAL_DIR = f'/Users/taro/Downloads/{SHOPNAME}_{UPLOAD_IMAGE_PREFIX}/'
+GSPREAD_ID = '18YPrX-1CqvAxmrE1P6jrtmewkKZtiInngQw2bOTacWg'
+SHEET_TITLE = '2025.3/13 Release'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -192,7 +192,7 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         color_column_index = 8
         sku_column_index = 4
         link_column_index = 14
-        start_row = 3
+        start_row = 4
     else:
         raise RuntimeError(f'unknown shop {shop_name}')
 
@@ -245,7 +245,7 @@ def main():
     logger.info(f'sheet index of {SHEET_TITLE} is {sheet_index}')
     product_details = products_info_from_sheet(shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
 
-    reprocess_titles, reprocess_skus = [], []
+    reprocess_titles, reprocess_skus = ['Mini egg doughnut bag'], []
     reprocess_from_sku = ''
 
     if reprocess_from_sku:
