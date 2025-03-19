@@ -119,6 +119,36 @@ def download_file_from_drive(google_credential_path, file_id, destination_path):
         logger.debug(f"Download {int(status.progress() * 100)}%.")
 
 
+def find_folder_by_name(google_credential_path, parent_folder_id, folder_name):
+    """
+    Find a folder ID by its name inside a given parent folder.
+
+    :param google_credential_path: Path to the Google service account credentials.
+    :param parent_folder_id: ID of the parent folder where the search is performed.
+    :param folder_name: Name of the folder to search for.
+    :return: The ID of the folder if found, None otherwise.
+    """
+    service = gdrive_service(google_credential_path)
+
+    # Query for folders with the specified name inside the parent folder
+    folder_name = folder_name.replace("'", "\\'")
+    query = f"'{parent_folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and name='{folder_name}'"
+    results = service.files().list(
+        q=query,
+        pageSize=10,  # Assuming there are not too many folders with the same name
+        fields="files(id, name)",
+        includeItemsFromAllDrives=True,
+        supportsAllDrives=True,
+    ).execute()
+
+    items = results.get('files', [])
+    if items:
+        # Assuming folder names are unique within the parent folder
+        return items[0]['id']
+    else:
+        return None
+
+
 def get_sheet_index_by_title(google_credential_path, sheet_id, sheet_title):
     worksheet = gspread_access(google_credential_path).open_by_key(sheet_id)
     for meta in worksheet.fetch_sheet_metadata()['sheets']:
