@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from shopify_utils import update_product_description_metafield, product_id_by_title
-from google_utils import gspread_access, get_sheet_index_by_title
+from shopify_product_management import shopify_utils
+from shopify_product_management.google_utils import gspread_access, get_sheet_index_by_title
+from shopify_product_management.update_size_table_html_metafield import text_to_html_tables_and_paragraphs
 
 load_dotenv(override=True)
 SHOPNAME = 'apricot-studios'
@@ -13,23 +14,18 @@ GSPREAD_ID = '1yVzpgcrgNR7WxUYfotEnhYFMbc79l1O4rl9CamB2Kqo'
 SHEET_TITLE = 'Products Master'
 
 
-def get_product_description(desc, care, size, material, origin):
+def get_product_description(desc, material, origin):
 
   res = {
     'type': 'root',
-    'children': [{'children': [{'type': 'text', 'value': '商品説明'}], 'level': 3, 'type': 'heading'},
+    'children': [
                 {'children': [{'type': 'text', 'value': desc}], 'type': 'paragraph'},
-                {'children': [{'type': 'text', 'value': '使用上の注意'}], 'level': 3, 'type': 'heading'},
-                {'children': [{'type': 'text',
-                              'value': care}],
-                'type': 'paragraph'},
                 {'children': [{'type': 'text', 'value': ''}], 'type': 'paragraph'},
-                {'children': [{'type': 'text', 'value': 'サイズ'}], 'level': 3, 'type': 'heading'},
-                {'children': [{'type': 'text', 'value': size}], 'type': 'paragraph'},
-                {'children': [{'type': 'text', 'value': '素材'}], 'level': 3, 'type': 'heading'},
+                {'children': [{'type': 'text', 'value': '素材'}], 'level': 5, 'type': 'heading'},
                 {'children': [{'type': 'text', 'value': material}], 'type': 'paragraph'},
-                {'children': [{'type': 'text', 'value': '原産国'}], 'level': 3, 'type': 'heading'},
-                {'children': [{'type': 'text', 'value': origin}], 'type': 'paragraph'}],
+                {'children': [{'type': 'text', 'value': '原産国'}], 'level': 5, 'type': 'heading'},
+                {'children': [{'type': 'text', 'value': origin}], 'type': 'paragraph'}
+                ],
   }
   return res
 
@@ -41,21 +37,27 @@ def main():
 
     for row in rows[1:]:
       title = row[1].strip()
-      print(f'processing {title}')
       if not title:
          continue
-      product_id = product_id_by_title(SHOPNAME, ACCESS_TOKEN, title)
 
+      print(f'processing {title}')
       desc = row[6]
-      care = row[8]
       material = row[10]
-      size = row[12]
       origin = row[13]
 
-      product_description = get_product_description(desc, care, size, material, origin)
-      res = update_product_description_metafield(SHOPNAME, ACCESS_TOKEN, product_id, product_description)
-      import pprint
-      pprint.pprint(res)
+      product_description = get_product_description(desc, material, origin)
+      size_text = row[12]
+      size_table_html = text_to_html_tables_and_paragraphs(size_text)
+
+      if product_description and size_table_html:
+          product_id = shopify_utils.product_id_by_title(SHOPNAME, ACCESS_TOKEN, title)
+          res = shopify_utils.update_product_description_and_size_table_html_metafields(SHOPNAME, ACCESS_TOKEN, product_id, product_description, size_table_html)
+          # import pprint
+          # pprint.pprint(res)
+          # print(size_table_html)
+      else:
+          print(f'product_description or size_table_html is empty for {title}')
+          break
 
 
 if __name__ == '__main__':

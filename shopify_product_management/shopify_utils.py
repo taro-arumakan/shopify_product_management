@@ -61,6 +61,62 @@ def upload_and_assign_description_images_to_shopify(shop_name, access_token, pro
     return update_product_description(shop_name, access_token, product_id, description)
 
 
+def update_product_description_and_size_table_html_metafields(shop_name, access_token, product_id, desc, html_text):
+    query = """
+    mutation updateProductMetafield($productSet: ProductSetInput!) {
+        productSet(synchronous:true, input: $productSet) {
+          product {
+            id
+            metafields (first:10) {
+              nodes {
+                id
+                namespace
+                key
+                value
+              }
+            }
+          }
+          userErrors {
+            field
+            code
+            message
+          }
+        }
+    }
+    """
+
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    variables = {
+      "productSet": {
+        "id": product_id,
+        "metafields": [
+          {
+            "id": "gid://shopify/Metafield/37315032023281",     # product_description
+            "namespace": "custom",
+            "key": "product_description",
+            "type": "rich_text_field",
+            "value": json.dumps(desc)
+          },
+          {
+            "id": "gid://shopify/Metafield/30082966716672",     # size_table_html
+            "namespace": "custom",
+            "key": "size_table_html",
+            "type": "multi_line_text_field",
+            "value": html_text
+          }
+        ]
+      }
+    }
+
+    response = run_query(shop_name, access_token, query, variables)
+    res = response.json()['data']
+    if res['productSet']['userErrors']:
+        raise RuntimeError(f"Failed to update the metafield: {res['productSet']['userErrors']}")
+    return res
+
+
+# TODO: metafield id by namespace and key
 def update_product_description_metafield(shop_name, access_token, product_id, desc):
     query = """
     mutation updateProductMetafield($productSet: ProductSetInput!) {
@@ -107,6 +163,72 @@ def update_product_description_metafield(shop_name, access_token, product_id, de
     if res['productSet']['userErrors']:
         raise RuntimeError(f"Failed to update the metafield: {res['productSet']['userErrors']}")
     return res
+
+
+# TODO: metafield id by namespace and key
+def update_size_table_html_metafield(shop_name, access_token, product_id, html_text):
+    query = """
+    mutation updateProductMetafield($productSet: ProductSetInput!) {
+        productSet(synchronous:true, input: $productSet) {
+          product {
+            id
+            metafields (first:10) {
+              nodes {
+                id
+                namespace
+                key
+                value
+              }
+            }
+          }
+          userErrors {
+            field
+            code
+            message
+          }
+        }
+    }
+    """
+
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    variables = {
+      "productSet": {
+        "id": product_id,
+        "metafields": [
+          {
+            "id": "gid://shopify/Metafield/30082966716672",
+            "namespace": "custom",
+            "key": "size_table_html",
+            "type": "multi_line_text_field",
+            "value": html_text
+          }
+        ]
+      }
+    }
+
+    response = run_query(shop_name, access_token, query, variables)
+    res = response.json()['data']
+    if res['productSet']['userErrors']:
+        raise RuntimeError(f"Failed to update the metafield: {res['productSet']['userErrors']}")
+    return res
+
+
+def product_description_by_product_id(shop_name, access_token, product_id):
+    if isinstance(product_id, int) or product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    query = '''
+      query {
+        product(id: "%s") {
+          id
+          descriptionHtml
+        }
+      }
+    ''' % product_id
+    response = run_query(shop_name, access_token, query)
+    if response.json().get('errors'):
+        raise RuntimeError(f"Failed to get the description: {response.json()['errors']}")
+    return response.json()['data']['product']['descriptionHtml']
 
 
 def set_product_description_metafield(shop_name, access_token, product_id, description_rich_text):

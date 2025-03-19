@@ -9,6 +9,8 @@ repos:
     hooks:
       - id: pytest
         name: Run pytest
-        entry: /Users/taro/.pyenv/versions/3.12.2/envs/shopify/bin/pytest
+        entry: bash -c "echo PYTHONPATH=$PYTHONPATH && /Users/taro/.pyenv/versions/3.12.2/envs/shopify/bin/pytest"
         language: system
         types: [python]
+        env:
+          PYTHONPATH: /Users/taro/sc/shopify-snippets
