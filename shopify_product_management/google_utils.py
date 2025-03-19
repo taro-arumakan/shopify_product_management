@@ -198,3 +198,27 @@ def worksheet_rows(google_credential_path, sheet_id, sheet_title):
     sheet_index = get_sheet_index_by_title(google_credential_path, sheet_id, sheet_title)
     worksheet = gspread_access(google_credential_path).open_by_key(sheet_id).get_worksheet(sheet_index)
     return worksheet.get_all_values()
+
+
+def main():
+    import dotenv
+    import os
+    dotenv.load_dotenv(True)
+    google_credential_path = os.getenv('GOOGLE_CREDENTIAL_PATH')
+    sheet_id = '1yVzpgcrgNR7WxUYfotEnhYFMbc79l1O4rl9CamB2Kqo'
+    sheet_title = 'Products Master'
+    sheet_index = get_sheet_index_by_title(google_credential_path, sheet_id, sheet_title)
+    worksheet = gspread_access(google_credential_path).open_by_key(sheet_id).get_worksheet(sheet_index)
+
+    # TODO: should retrieve/update in a batch
+    for i in range(102, 923):
+        cell_address = f'G{i}'
+        value = worksheet.acell(cell_address).value
+        if value and '[リライト]' in value:
+            assert all(p in value for p in ['[リライト]\n', '\n[原文]']), f'G{i} does not have the expected prefix: {value}'
+            updated_value = value[value.index('[リライト]\n') + len('[リライト]\n'):value.index('\n[原文]')].strip()
+            worksheet.update_acell(cell_address, updated_value)
+
+
+if __name__ == '__main__':
+    main()
