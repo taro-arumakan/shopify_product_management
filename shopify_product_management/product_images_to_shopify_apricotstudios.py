@@ -2,10 +2,10 @@ import logging
 import os
 import string
 from dotenv import load_dotenv
-from google_utils import get_drive_image_details, get_sheet_index_by_title, get_link, download_images_from_drive, gspread_access, drive_link_to_id
-from shopify_utils import (run_query, product_id_by_handle, product_id_by_title, medias_by_product_id,
+from google_utils import get_sheet_index_by_title, gspread_access
+from shopify_utils import (run_query, product_id_by_title, medias_by_product_id,
                            generate_staged_upload_targets, upload_images_to_shopify,remove_product_media_by_product_id, assign_images_to_product,
-                           assign_image_to_skus, update_product_description)
+                           assign_image_to_skus, upload_and_assign_description_images_to_shopify)
 
 load_dotenv(override=True)
 SHOPNAME = 'apricot-studios'
@@ -24,24 +24,7 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
-def image_htmlfragment_in_description(image_name, sequence):
-    animation_classes = ['reveal_tran_bt', 'reveal_tran_rl', 'reveal_tran_lr', 'reveal_tran_tb']
-    animation_class = animation_classes[sequence % 4]
-    return f'<p class="{animation_class}"><img src="https://cdn.shopify.com/s/files/1/0745/9435/3408/files/{image_name}" alt=""></p>'
 
-
-def upload_and_assign_description_images_to_shopify(product_id, local_paths):
-    local_paths = [local_path for local_path in local_paths if not local_path.endswith('.psd')]
-    mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
-    staged_targets = generate_staged_upload_targets(SHOPNAME, ACCESS_TOKEN, local_paths, mime_types)
-    logger.info(f'generated staged upload targets: {len(staged_targets)}')
-    upload_images_to_shopify(staged_targets, local_paths, mime_types)
-    description = '\n'.join(image_htmlfragment_in_description(local_path.rsplit('/', 1)[-1], i) for i, local_path in enumerate(local_paths))
-    assign_images_to_product(SHOPNAME, ACCESS_TOKEN,
-                             [target['resourceUrl'] for target in staged_targets],
-                             alts=[local_path.rsplit('/', 1)[-1] for local_path in local_paths],
-                             product_id=DUMMY_PRODUCT)
-    return update_product_description(SHOPNAME, ACCESS_TOKEN, product_id, description)
 
 
 def upload_and_assign_images_to_product(product_id, local_paths):
