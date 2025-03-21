@@ -163,7 +163,7 @@ def main():
             detail_image_paths = download_and_rename_images_from_dropbox(pr['product_title'],
                                                                          pr['product_detail_images_link'],
                                                                          prefix=f'{image_prefix(pr['product_title'])}_product_detail')
-            upload_and_assign_description_images_to_shopify(product_id, detail_image_paths)
+            upload_and_assign_description_images_to_shopify(SHOPNAME, ACCESS_TOKEN, product_id, detail_image_paths, DUMMY_PRODUCT)
 
 if __name__ == "__main__":
     main()
