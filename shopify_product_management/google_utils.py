@@ -46,7 +46,7 @@ def natural_compare(k):
     return [convert(c) for c in re.split('([0-9]+)', k)]
 
 
-def get_drive_image_details(google_credential_path, folder_id, sku, image_prefix):
+def get_drive_image_details(google_credential_path, folder_id, download_filename_prefix, rename=True):
     service = gdrive_service(google_credential_path)
     results = service.files().list(
                         q=f"'{folder_id}' in parents",
@@ -65,10 +65,9 @@ def get_drive_image_details(google_credential_path, folder_id, sku, image_prefix
     for sequence, item in enumerate(items):
         if item['mimeType'].startswith('image/'):
             file_metadata = {
-                'name': f"{image_prefix}_{sku}_{str(sequence).zfill(2)}_{item['name']}",
+                'name': f"{download_filename_prefix}{str(sequence).zfill(2)}_{item['name']}" if rename else item['name'],
                 'mimeType': item['mimeType'],
                 'id': item['id'],
-                # 'downloadUrl': f"https://www.googleapis.com/drive/v3/files/{item['id']}?alt=media"
             }
             res.append(file_metadata)
     return res

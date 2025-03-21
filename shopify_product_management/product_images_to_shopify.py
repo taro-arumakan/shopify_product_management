@@ -141,7 +141,7 @@ def process_product_images_to_shopify(image_prefix, product_title, drive_ids, sk
 
     for drive_id, skus in zip(drive_ids, skuss):
         variant_image_positions.append(len(drive_image_details))
-        drive_image_details += get_drive_image_details(GOOGLE_CREDENTIAL_PATH, drive_id, skus[0], image_prefix)
+        drive_image_details += get_drive_image_details(GOOGLE_CREDENTIAL_PATH, drive_id, download_filename_prefix=f'{image_prefix}_{skus[0]}_')
 
     logger.debug(f"Drive Image Details: {drive_image_details}")
 

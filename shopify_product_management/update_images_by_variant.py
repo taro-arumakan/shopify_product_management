@@ -23,7 +23,7 @@ SHEET_ID = '19V9vmTK8VmyNWjz6jgnbfO4nm88XkOrNRvcb7a04ydI'
 SHEET_TITLE = '25SS'
 
 def process(sku, folder_id):
-    drive_image_details = get_drive_image_details(GOOGLE_CREDENTIAL_PATH, folder_id, sku, UPLOAD_IMAGE_PREFIX)
+    drive_image_details = get_drive_image_details(GOOGLE_CREDENTIAL_PATH, folder_id, download_filename_prefix=f'{UPLOAD_IMAGE_PREFIX}_{sku}_')
     medias = medias_by_sku(SHOPNAME, ACCESS_TOKEN, sku)
     existing_ids = [m['id'] for m in medias]
     print(f'going to replace images of {sku} with {folder_id}')
