@@ -33,7 +33,7 @@ class TestShopifyFunctions(unittest.TestCase):
 
     def test_image_htmlfragment_in_description(self):
         from shopify_product_management.shopify_utils import image_htmlfragment_in_description
-        result = image_htmlfragment_in_description('example_image.png', 2)
+        result = image_htmlfragment_in_description('example_image.png', 2, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
         self.assertIn('<p class="reveal_tran_lr">', result)
         self.assertIn('<img src="https://cdn.shopify.com/s/files/1/0745/9435/3408/files/example_image.png"', result)
 

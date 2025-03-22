@@ -43,4 +43,4 @@ for product_title, paths in paths_by_product_title.items():
   product_id = product_id_by_title(SHOPNAME, ACCESS_TOKEN, product_title)
   print(product_id)
   pprint.pprint(all_paths, width=150)
-  upload_and_assign_description_images_to_shopify(SHOPNAME, ACCESS_TOKEN, product_id, all_paths, DUMMY_PRODUCT)
+  upload_and_assign_description_images_to_shopify(SHOPNAME, ACCESS_TOKEN, product_id, all_paths, DUMMY_PRODUCT, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
