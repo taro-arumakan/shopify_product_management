@@ -5,15 +5,37 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python Debugger: Local Attach",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "."
+        }
+      ]
+    },
+    {
       "name": "Python Debugger: Current File",
       "type": "debugpy",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
       }
+    },
+    {
+      "name": "Python Debugger: Attach using Process Id",
+      "type": "debugpy",
+      "request": "attach",
+      "processId": "${command:pickProcess}",
+      "logToFile": true,
+      "redirectOutput": true
     }
   ]
 }
