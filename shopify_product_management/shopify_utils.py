@@ -371,7 +371,7 @@ def product_id_by_handle(shop_name, access_token, handle):
 
     products = json_data['data']['products']['nodes']
     if len(products) != 1:
-        raise Exception(f"Multiple products found for {handle}: {products}")
+        raise Exception(f"{'Multiple' if {products} else 'No'} products found for {handle}: {products}")
     return products[0]['id']
 
 
