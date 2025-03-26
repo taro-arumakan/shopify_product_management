@@ -8,15 +8,15 @@ from shopify_utils import (run_query, product_id_by_handle, product_id_by_title,
                            assign_image_to_skus)
 
 load_dotenv(override=True)
-SHOPNAME = 'archive-epke'
+SHOPNAME = 'kumej'
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 print(ACCESS_TOKEN)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
-UPLOAD_IMAGE_PREFIX = 'upload_20250310'
+UPLOAD_IMAGE_PREFIX = 'upload_20250326'
 IMAGES_LOCAL_DIR = f'/Users/taro/Downloads/{SHOPNAME}_{UPLOAD_IMAGE_PREFIX}/'
-GSPREAD_ID = '18YPrX-1CqvAxmrE1P6jrtmewkKZtiInngQw2bOTacWg'
-SHEET_TITLE = '2025.3/13 Release'
+GSPREAD_ID = '1buFubQ6Ng4JzYn4JjTsv8SQ2J1Qgv1yyVrs4yQUHfE0'
+SHEET_TITLE = '25ss'
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
@@ -130,9 +130,6 @@ def process_product_images_to_shopify(image_prefix, product_title, drive_ids, sk
         product_handle = '-'.join(list(map(str.lower, product_title.replace(')', '').replace('(', '').split(' '))) + ['25ss'])
         logger.info(f'product_handle: {product_handle}')
         product_id = product_id_by_handle(SHOPNAME, ACCESS_TOKEN, product_handle)
-    elif SHOPNAME in ['gbhjapan']:
-        product_handle = '-'.join(list(map(str.lower, product_title.replace(')', '').replace('(', '').split(' '))) + ['25', 'spring'])
-        product_id = product_id_by_handle(SHOPNAME, ACCESS_TOKEN, product_handle)
     else:
         product_id = product_id_by_title(SHOPNAME, ACCESS_TOKEN, product_title)
 
@@ -161,7 +158,7 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         color_column_index = 15
         sku_column_index = 18
         link_column_index = 16
-        start_row = 49
+        start_row = 103
     elif shop_name == 'gbhjapan':
         title_column_index = 5
         color_column_index = 6
@@ -205,13 +202,14 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
             if state != 'NEW':
                 logger.info(f'skipping row {row_num}')
                 continue
-        elif SHOPNAME == 'kumej':
+        elif SHOPNAME == 'gbhjapan':
             release = row[1]
-            if release.startswith('3/31'):
-                logger.info(f'stop processing at {row_num}')
-                break
+            if not release.startswith('3/17'):
+                logger.info(f'skipping row {row_num}, release is {release}')
+                continue
         sku = row[sku_column_index].strip()
         if not sku:
+            logger.warning(f'terminating at {row_num}, no sku')
             break
         product_title = row[title_column_index].strip()
         if not product_title:
@@ -245,7 +243,7 @@ def main():
     logger.info(f'sheet index of {SHEET_TITLE} is {sheet_index}')
     product_details = products_info_from_sheet(shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
 
-    reprocess_titles, reprocess_skus = ['Mini egg doughnut bag'], []
+    reprocess_titles, reprocess_skus = [], []
     reprocess_from_sku = ''
 
     if reprocess_from_sku:
