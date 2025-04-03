@@ -20,9 +20,18 @@ def duplicate_product(shop_name, access_token, product_id, new_title, include_im
                 productType
                 variants(first: 10) {
                     nodes {
-                    id
-                    title
+                        id
+                        title
+                        selectedOptions {
+                            name
+                            value
+                        }
                     }
+                }
+                options {
+                    id
+                    name
+                    values
                 }
             }
             imageJob {
@@ -51,6 +60,78 @@ def duplicate_product(shop_name, access_token, product_id, new_title, include_im
     res = res['data']
     if res['productDuplicate']['userErrors']:
         raise RuntimeError(f"Failed to duplicate the product: {res['productDuplicate']['userErrors']}")
+    return res
+
+def remove_product_variants(shop_name, access_token, product_id, variant_ids):
+    query = """
+    mutation bulkDeleteProductVariants($productId: ID!, $variantsIds: [ID!]!) {
+        productVariantsBulkDelete(productId: $productId, variantsIds: $variantsIds) {
+            product {
+                id
+                title
+            }
+            userErrors {
+                field
+                message
+            }
+        }
+    }
+    """
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    variables = {
+        "productId": product_id,
+        "variantsIds": variant_ids
+    }
+    response = run_query(shop_name, access_token, query, variables)
+    res = response.json()
+    if res.get('errors'):
+        raise RuntimeError(f"GraphQL error: {res['errors']}")
+    res = res['data']
+    if res['productVariantsBulkDelete']['userErrors']:
+        raise RuntimeError(f"Failed to update the tags: {res['productSet']['userErrors']}")
+    return res
+
+def delete_product_options(shop_name, access_token, product_id, option_ids):
+    query = """
+    mutation deleteOptions($productId: ID!, $options: [ID!]!) {
+    productOptionsDelete(productId: $productId, options: $options, strategy: DEFAULT) {
+        userErrors {
+            field
+            message
+            code
+        }
+        deletedOptionsIds
+        product {
+            id
+            options {
+                id
+                name
+                values
+                position
+                optionValues {
+                id
+                name
+                hasVariants
+                }
+            }
+        }
+    }
+    }
+    """
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    variables = {
+        "productId": product_id,
+        "options": option_ids
+    }
+    response = run_query(shop_name, access_token, query, variables)
+    res = response.json()
+    if res.get('errors'):
+        raise RuntimeError(f"Failed to delete product option: {res['errors']}")
+    res = res['data']
+    if res['productOptionsDelete']['userErrors']:
+        raise RuntimeError(f"Failed to update the tags: {res['productOptionsDelete']['userErrors']}")
     return res
 
 def update_product_tags(shop_name, access_token, product_id, tags):
@@ -508,6 +589,10 @@ def product_variants_by_product_id(shop_name, access_token, product_id):
                   }
                 }
               }
+            }
+            selectedOptions {
+                name
+                value
             }
           }
         }
