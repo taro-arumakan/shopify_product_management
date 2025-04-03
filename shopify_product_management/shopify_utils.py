@@ -479,6 +479,8 @@ def medias_by_product_id(shop_name, access_token, product_id):
       }
     }
     """
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
     variables = {"productId": product_id}
     response = run_query(shop_name, access_token, query, variables)
     json_data = response.json()
@@ -494,6 +496,7 @@ def product_variants_by_product_id(shop_name, access_token, product_id):
         productVariants(first:10, query: "product_id:%s") {
           nodes {
             id
+            title
             displayName
             sku
             media (first:50){
@@ -609,7 +612,7 @@ def assign_images_to_product(shop_name, access_token, resource_urls, alts, produ
     logger.debug(json_data)
 
     if json_data.get('errors') or json_data['data']['productCreateMedia']['userErrors']:
-        I
+        raise RuntimeError(f"Failed to assign images to product: {json_data.get('errors') or json_data['data']['productCreateMedia']['userErrors']}")
 
     status = wait_for_media_processing_completion(shop_name, access_token, product_id)
     if not status:
@@ -656,10 +659,10 @@ def check_rohseoul_media(sku, medias):
 
 def medias_by_variant_id(shop_name, access_token, variant_id):
     product_id = product_id_by_variant_id(shop_name, access_token, variant_id)
-    all_medias = medias_by_product_id(shop_name, access_token, product_id)
+    all_medias = medias_by_product_id(shop_name, access_token, product_id)      # sorted by position
     all_media_ids = [m['id'] for m in all_medias]
     all_variants = product_variants_by_product_id(shop_name, access_token, product_id)
-    assert all(check_rohseoul_media(variant['sku'], variant['media']['nodes']) for variant in all_variants), f'suspicious media found in variants of {product_id}: {all_variants}'
+    # assert all(check_rohseoul_media(variant['sku'], variant['media']['nodes']) for variant in all_variants), f'suspicious media found in variants of {product_id}: {all_variants}'
     target_variant = [v for v in all_variants if v['id'] == variant_id]
     assert len(target_variant) == 1, f"{'No' if not target_variant else 'Multiple'} target variants: target_variants"
     target_variant = target_variant[0]
@@ -667,7 +670,8 @@ def medias_by_variant_id(shop_name, access_token, variant_id):
         variant = variant_by_variant_id(shop_name, access_token, variant_id)
         return [media for media in all_medias if variant['sku'] in media['image']['url']]
     target_media_start_position = all_media_ids.index(target_variant['media']['nodes'][0]['id'])
-    all_media_start_positions = sorted([all_media_ids.index(variant['media']['nodes'][0]['id']) for variant in all_variants] + [len(all_medias)])
+    # can have multiple variants for the same media e.g. size variations
+    all_media_start_positions = sorted(set([all_media_ids.index(variant['media']['nodes'][0]['id']) for variant in all_variants] + [len(all_medias)]))
     target_media_end_position = all_media_start_positions[all_media_start_positions.index(target_media_start_position) + 1]
     return all_medias[target_media_start_position:target_media_end_position]
 
