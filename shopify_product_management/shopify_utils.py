@@ -8,6 +8,36 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
+def update_product_tags(shop_name, access_token, product_id, tags):
+    query = """
+    mutation productSet($productSet: ProductSetInput!) {
+        productSet(synchronous:true, input: $productSet) {
+          product {
+            id
+            tags
+          }
+          userErrors {
+            field
+            code
+            message
+          }
+        }
+    }
+    """
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    variables = {
+      "productSet": {
+        "id": product_id,
+        "tags": tags
+      }
+    }
+    response = run_query(shop_name, access_token, query, variables)
+    res = response.json()['data']
+    if res['productSet']['userErrors']:
+        raise RuntimeError(f"Failed to update the tags: {res['productSet']['userErrors']}")
+    return res
+
 def update_product_description(shop_name, access_token, product_id, desc):
     query = """
     mutation updateProductDescription($productSet: ProductSetInput!) {
@@ -348,7 +378,7 @@ def product_id_by_title(shop_name, access_token, title):
 
     products = json_data['data']['products']['nodes']
     if len(products) != 1:
-        raise Exception(f"Multiple products found for {title}: {products}")
+        raise Exception(f"{'Multiple' if products else 'No'} products found for {title}: {products}")
     return products[0]['id']
 
 
