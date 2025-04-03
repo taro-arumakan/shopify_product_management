@@ -8,6 +8,51 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
+def duplicate_product(shop_name, access_token, product_id, new_title, include_images=False, new_status='DRAFT'):
+    query = """
+    mutation DuplicateProduct($productId: ID!, $newTitle: String!, $includeImages: Boolean, $newStatus: ProductStatus) {
+        productDuplicate(productId: $productId, newTitle: $newTitle, includeImages: $includeImages, newStatus: $newStatus) {
+            newProduct {
+                id
+                handle
+                title
+                vendor
+                productType
+                variants(first: 10) {
+                    nodes {
+                    id
+                    title
+                    }
+                }
+            }
+            imageJob {
+                id
+                done
+            }
+            userErrors {
+                field
+                message
+            }
+        }
+    }
+    """
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    variables = {
+        'productId': product_id,
+        'newTitle': new_title,
+        'includeImages': include_images,
+        'newStatus': new_status
+    }
+    response = run_query(shop_name, access_token, query, variables)
+    res = response.json()
+    if res.get('errors'):
+        raise RuntimeError(f"GraphQL error: {res['errors']}")
+    res = res['data']
+    if res['productDuplicate']['userErrors']:
+        raise RuntimeError(f"Failed to duplicate the product: {res['productDuplicate']['userErrors']}")
+    return res
+
 def update_product_tags(shop_name, access_token, product_id, tags):
     query = """
     mutation productSet($productSet: ProductSetInput!) {
