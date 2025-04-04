@@ -53,11 +53,7 @@ def duplicate_product(shop_name, access_token, product_id, new_title, include_im
         'includeImages': include_images,
         'newStatus': new_status
     }
-    response = run_query(shop_name, access_token, query, variables)
-    res = response.json()
-    if res.get('errors'):
-        raise RuntimeError(f"GraphQL error: {res['errors']}")
-    res = res['data']
+    res = run_query(shop_name, access_token, query, variables)
     if res['productDuplicate']['userErrors']:
         raise RuntimeError(f"Failed to duplicate the product: {res['productDuplicate']['userErrors']}")
     return res
@@ -83,11 +79,7 @@ def remove_product_variants(shop_name, access_token, product_id, variant_ids):
         "productId": product_id,
         "variantsIds": variant_ids
     }
-    response = run_query(shop_name, access_token, query, variables)
-    res = response.json()
-    if res.get('errors'):
-        raise RuntimeError(f"GraphQL error: {res['errors']}")
-    res = res['data']
+    res = run_query(shop_name, access_token, query, variables)
     if res['productVariantsBulkDelete']['userErrors']:
         raise RuntimeError(f"Failed to update the tags: {res['productSet']['userErrors']}")
     return res
@@ -125,11 +117,7 @@ def delete_product_options(shop_name, access_token, product_id, option_ids):
         "productId": product_id,
         "options": option_ids
     }
-    response = run_query(shop_name, access_token, query, variables)
-    res = response.json()
-    if res.get('errors'):
-        raise RuntimeError(f"Failed to delete product option: {res['errors']}")
-    res = res['data']
+    res = run_query(shop_name, access_token, query, variables)
     if res['productOptionsDelete']['userErrors']:
         raise RuntimeError(f"Failed to update the tags: {res['productOptionsDelete']['userErrors']}")
     return res
@@ -158,8 +146,7 @@ def update_product_tags(shop_name, access_token, product_id, tags):
         "tags": tags
       }
     }
-    response = run_query(shop_name, access_token, query, variables)
-    res = response.json()['data']
+    res = run_query(shop_name, access_token, query, variables)
     if res['productSet']['userErrors']:
         raise RuntimeError(f"Failed to update the tags: {res['productSet']['userErrors']}")
     return res
@@ -188,8 +175,7 @@ def update_product_description(shop_name, access_token, product_id, desc):
         "descriptionHtml": desc
       }
     }
-    response = run_query(shop_name, access_token, query, variables)
-    res = response.json()['data']
+    res = run_query(shop_name, access_token, query, variables)
     if res['productSet']['userErrors']:
         raise RuntimeError(f"Failed to update the description: {res['productSet']['userErrors']}")
     return res
@@ -233,7 +219,7 @@ def file_id_by_file_name(shop_name, access_token, file_name):
       }
       ''' % file_name.rsplit('.', 1)[0]
     res = run_query(shop_name, access_token, query)
-    res = res.json()['data']['files']['nodes']
+    res = res['files']['nodes']
     if len(res) > 1:
         res = [r for r in res if r['image']['url'].rsplit('?', 1)[0].endswith(file_name)]
     assert len(res) == 1, f'{"Multiple" if res else "No"} files found for {file_name}: {res}'
@@ -268,10 +254,9 @@ def _replace_image_files_with_staging(shop_name, access_token, staged_targets, l
         "input": medias
     }
     res = run_query(shop_name, access_token, query, variables)
-    res = res.json()['data']['fileUpdate']
-    if res['userErrors']:
-        raise RuntimeError(f"Failed to update the files: {res['userErrors']}")
-    return res
+    if res['fileUpdate']['userErrors']:
+        raise RuntimeError(f"Failed to update the files: {res['fileUpdate']['userErrors']}")
+    return res['fileUpdate']
 
 def replace_image_files(shop_name, access_token, local_paths):
     mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
@@ -329,8 +314,7 @@ def update_product_description_and_size_table_html_metafields(shop_name, access_
       }
     }
 
-    response = run_query(shop_name, access_token, query, variables)
-    res = response.json()['data']
+    res = run_query(shop_name, access_token, query, variables)
     if res['productSet']['userErrors']:
         raise RuntimeError(f"Failed to update the metafield: {res['productSet']['userErrors']}")
     return res
@@ -378,8 +362,7 @@ def update_product_description_metafield(shop_name, access_token, product_id, de
       }
     }
 
-    response = run_query(shop_name, access_token, query, variables)
-    res = response.json()['data']
+    res = run_query(shop_name, access_token, query, variables)
     if res['productSet']['userErrors']:
         raise RuntimeError(f"Failed to update the metafield: {res['productSet']['userErrors']}")
     return res
@@ -427,8 +410,7 @@ def update_size_table_html_metafield(shop_name, access_token, product_id, html_t
       }
     }
 
-    response = run_query(shop_name, access_token, query, variables)
-    res = response.json()['data']
+    res = run_query(shop_name, access_token, query, variables)
     if res['productSet']['userErrors']:
         raise RuntimeError(f"Failed to update the metafield: {res['productSet']['userErrors']}")
     return res
@@ -445,10 +427,8 @@ def product_description_by_product_id(shop_name, access_token, product_id):
         }
       }
     ''' % product_id
-    response = run_query(shop_name, access_token, query)
-    if response.json().get('errors'):
-        raise RuntimeError(f"Failed to get the description: {response.json()['errors']}")
-    return response.json()['data']['product']['descriptionHtml']
+    res = run_query(shop_name, access_token, query)
+    return res['product']['descriptionHtml']
 
 
 def set_product_description_metafield(shop_name, access_token, product_id, description_rich_text):
@@ -499,10 +479,8 @@ def product_id_by_title(shop_name, access_token, title):
     variables = {
         "query_string": f"title:'{title}'"
     }
-    response = run_query(shop_name, access_token, query, variables)
-    json_data = response.json()
-
-    products = json_data['data']['products']['nodes']
+    res = run_query(shop_name, access_token, query, variables)
+    products = res['products']['nodes']
     if len(products) != 1:
         raise Exception(f"{'Multiple' if products else 'No'} products found for {title}: {products}")
     return products[0]['id']
@@ -522,10 +500,8 @@ def product_id_by_handle(shop_name, access_token, handle):
     variables = {
         "query_string": f"handle:'{handle}'"
     }
-    response = run_query(shop_name, access_token, query, variables)
-    json_data = response.json()
-
-    products = json_data['data']['products']['nodes']
+    res = run_query(shop_name, access_token, query, variables)
+    products = res['products']['nodes']
     if len(products) != 1:
         raise Exception(f"{'Multiple' if {products} else 'No'} products found for {handle}: {products}")
     return products[0]['id']
@@ -563,9 +539,8 @@ def medias_by_product_id(shop_name, access_token, product_id):
     if product_id.isnumeric():
         product_id = f'gid://shopify/Product/{product_id}'
     variables = {"productId": product_id}
-    response = run_query(shop_name, access_token, query, variables)
-    json_data = response.json()
-    return json_data['data']['product']['media']['nodes']
+    res = run_query(shop_name, access_token, query, variables)
+    return res['product']['media']['nodes']
 
 
 def product_variants_by_product_id(shop_name, access_token, product_id):
@@ -599,7 +574,7 @@ def product_variants_by_product_id(shop_name, access_token, product_id):
       }
     """ % product_id
     res = run_query(shop_name, access_token, query)
-    return res.json()['data']['productVariants']['nodes']
+    return res['productVariants']['nodes']
 
 
 def product_id_by_variant_id(shop_name, access_token, variant_id):
@@ -617,7 +592,7 @@ def product_id_by_variant_id(shop_name, access_token, variant_id):
       }
     """ % variant_id
     res = run_query(shop_name, access_token, query)
-    return res.json()['data']['productVariant']['product']['id']
+    return res['productVariant']['product']['id']
 
 
 def remove_product_media_by_product_id(shop_name, access_token, product_id, media_ids=None):
@@ -651,8 +626,8 @@ def remove_product_media_by_product_id(shop_name, access_token, product_id, medi
         "productId": product_id,
         "mediaIds": media_ids
     }
-    response = run_query(shop_name, access_token, query, variables)
-    logger.info(f'Initial media status for deletion:\n{response.json()}')
+    res = run_query(shop_name, access_token, query, variables)
+    logger.info(f'Initial media status for deletion:\n{res}')
     status = wait_for_media_processing_completion(shop_name, access_token, product_id)
     if not status:
         raise Exception("Error during media processing")
@@ -690,14 +665,13 @@ def assign_images_to_product(shop_name, access_token, resource_urls, alts, produ
         "productId": product_id
     }
 
-    response = run_query(shop_name, access_token, mutation_query, variables)
-    json_data = response.json()
+    res = run_query(shop_name, access_token, mutation_query, variables)
 
     logger.debug("Initial media status:")
-    logger.debug(json_data)
+    logger.debug(res)
 
-    if json_data.get('errors') or json_data['data']['productCreateMedia']['userErrors']:
-        raise RuntimeError(f"Failed to assign images to product: {json_data.get('errors') or json_data['data']['productCreateMedia']['userErrors']}")
+    if res['productCreateMedia']['userErrors']:
+        raise RuntimeError(f"Failed to assign images to product: {res['productCreateMedia']['userErrors']}")
 
     status = wait_for_media_processing_completion(shop_name, access_token, product_id)
     if not status:
@@ -780,16 +754,15 @@ def variant_by_sku(shop_name, access_token, sku):
       }
     }
     """ % sku
-    response = run_query(shop_name, access_token, query)
-    json_data = response.json()
-    return json_data['data']['productVariants']
+    res = run_query(shop_name, access_token, query)
+    return res['productVariants']
 
 
 def product_id_by_sku(shop_name, access_token, sku):
-    json_data = variant_by_sku(shop_name, access_token, sku)
-    if len(json_data['nodes']) != 1:
-        raise Exception(f"{'Multiple' if json_data['nodes'] else 'No'} variants found for {sku}: {json_data['nodes']}")
-    return json_data['nodes'][0]['product']['id']
+    res = variant_by_sku(shop_name, access_token, sku)
+    if len(res['nodes']) != 1:
+        raise Exception(f"{'Multiple' if res['nodes'] else 'No'} variants found for {sku}: {res['nodes']}")
+    return res['nodes'][0]['product']['id']
 
 
 def variant_by_variant_id(shop_name, access_token, variant_id):
@@ -808,17 +781,15 @@ def variant_by_variant_id(shop_name, access_token, variant_id):
     }
     """ % variant_id
 
-    response = run_query(shop_name, access_token, query, {})
-    json_response = response.json()
-
-    return json_response['data']['productVariant']
+    res = run_query(shop_name, access_token, query, {})
+    return res['productVariant']
 
 
 def variant_id_by_sku(shop_name, access_token, sku):
-    json_data = variant_by_sku(shop_name, access_token, sku)
-    if len(json_data['nodes']) != 1:
-        raise Exception(f"{'Multiple' if json_data['nodes'] else 'No'} variants found for {sku}: {json_data['nodes']}")
-    return json_data['nodes'][0]['id']
+    res = variant_by_sku(shop_name, access_token, sku)
+    if len(res['nodes']) != 1:
+        raise Exception(f"{'Multiple' if res['nodes'] else 'No'} variants found for {sku}: {res['nodes']}")
+    return res['nodes'][0]['id']
 
 
 def generate_staged_upload_targets(shop_name, access_token, file_names, mime_types):
@@ -850,8 +821,8 @@ def generate_staged_upload_targets(shop_name, access_token, file_names, mime_typ
         } for file_name, mime_type in zip(file_names, mime_types)]
     }
 
-    response = run_query(shop_name, access_token, query, variables)
-    return response.json()['data']['stagedUploadsCreate']['stagedTargets']
+    res = run_query(shop_name, access_token, query, variables)
+    return res['stagedUploadsCreate']['stagedTargets']
 
 
 def upload_images_to_shopify(staged_targets, local_paths, mime_types):
@@ -961,7 +932,7 @@ def location_id_by_name(shop_name, access_token, name):
     }
     ''' % name
     res = run_query(shop_name, access_token, query)
-    res = res.json()['data']['locations']['nodes']
+    res = res['locations']['nodes']
     assert len(res) == 1, f'{"Multiple" if res else "No"} locations found for {name}: {res}'
     return res[0]['id']
 
@@ -976,7 +947,7 @@ def inventory_item_id_by_sku(shop_name, access_token, sku):
       }
     }''' % sku
     res = run_query(shop_name, access_token, query)
-    res = res.json()['data']['inventoryItems']['nodes']
+    res = res['inventoryItems']['nodes']
     assert len(res) == 1, f'{"Multiple" if res else "No"} inventoryItems found for {sku}: {res}'
     return res[0]['id']
 
@@ -1014,10 +985,9 @@ def set_inventory_quantity_by_sku_and_location_id(shop_name, access_token, sku, 
         "quantity": quantity
     }
     res = run_query(shop_name, access_token, query, variables)
-    json_data = res.json()
-    if json_data.get('errors') or json_data['data']['inventorySetQuantities']['userErrors']:
-        raise Exception(f"Error updating inventory quantity: {json_data.get('errors') or json_data['data']['inventorySetQuantities']['userErrors']}")
-    updates = json_data['data']['inventorySetQuantities']['inventoryAdjustmentGroup']
+    if res['inventorySetQuantities']['userErrors']:
+        raise Exception(f"Error updating inventory quantity: {res['inventorySetQuantities']['userErrors']}")
+    updates = res['inventorySetQuantities']['inventoryAdjustmentGroup']
     if not updates:
         logger.info(f'no updates found after updating inventory of {sku} to {quantity}')
     return updates
@@ -1033,9 +1003,11 @@ def run_query(shop_name, access_token, query, variables=None, method='post', res
         "query": query,
         "variables": variables
     }
-    return requests.post(url, headers=headers, json=data)
-
-
+    response = requests.post(url, headers=headers, json=data)
+    res = response.json()
+    if error := res.get('error'):
+        raise RuntimeError(f'Error running the query: {error}\n\n{query}\n\n{variables}')
+    return res['data']
 
 def main():
     import os

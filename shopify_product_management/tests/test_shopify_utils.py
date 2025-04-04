@@ -5,10 +5,7 @@ class TestShopifyFunctions(unittest.TestCase):
 
     @patch('shopify_product_management.shopify_utils.run_query')
     def test_update_product_description(self, mock_run_query):
-        # Mocking API response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            'data': {
+        mock_run_query.return_value = {
                 'productSet': {
                     'product': {
                         'id': 'gid://shopify/Product/12345',
@@ -17,8 +14,6 @@ class TestShopifyFunctions(unittest.TestCase):
                     'userErrors': []
                 }
             }
-        }
-        mock_run_query.return_value = mock_response
 
         from shopify_product_management.shopify_utils import update_product_description
         result = update_product_description('shop_name', 'access_token', '12345', '<p>New Description</p>')
@@ -39,17 +34,13 @@ class TestShopifyFunctions(unittest.TestCase):
 
     @patch('shopify_product_management.shopify_utils.run_query')
     def test_product_id_by_title(self, mock_run_query):
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            'data': {
-                'products': {
-                    'nodes': [
-                        {'id': 'gid://shopify/Product/12345', 'title': 'Test Product'}
-                    ]
-                }
+        mock_run_query.return_value = {
+            'products': {
+                'nodes': [
+                    {'id': 'gid://shopify/Product/12345', 'title': 'Test Product'}
+                ]
             }
         }
-        mock_run_query.return_value = mock_response
 
         from shopify_product_management.shopify_utils import product_id_by_title
         product_id = product_id_by_title('shop_name', 'access_token', 'Test Product')
@@ -59,9 +50,7 @@ class TestShopifyFunctions(unittest.TestCase):
 
     @patch('shopify_product_management.shopify_utils.run_query')
     def test_remove_product_media_by_product_id_no_media(self, mock_run_query):
-        mock_response = MagicMock()
-        mock_response.json.return_value = {'data': {'product': {'media': {'nodes': []}}}}
-        mock_run_query.return_value = mock_response
+        mock_run_query.return_value = {'product': {'media': {'nodes': []}}}
 
         from shopify_product_management.shopify_utils import remove_product_media_by_product_id
         result = remove_product_media_by_product_id('shop_name', 'access_token', '12345')
@@ -72,17 +61,13 @@ class TestShopifyFunctions(unittest.TestCase):
     @patch('shopify_product_management.shopify_utils.run_query')
     @patch('shopify_product_management.shopify_utils.medias_by_product_id')
     def test_assign_images_to_product(self, mock_medias_by_product_id, mock_run_query):
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            'data': {
-                'productCreateMedia': {
-                    'media': [{'alt': 'image1', 'status': 'READY'}],
-                    'userErrors': [],
-                    'product': {'id': 'gid://shopify/Product/12345', 'title': 'Test Product'}
-                }
+        mock_run_query.return_value = {
+            'productCreateMedia': {
+                'media': [{'alt': 'image1', 'status': 'READY'}],
+                'userErrors': [],
+                'product': {'id': 'gid://shopify/Product/12345', 'title': 'Test Product'}
             }
         }
-        mock_run_query.return_value = mock_response
         mock_medias_by_product_id.return_value = [
             {
                 'alt': 'upload_20250218_KM-25SS-JP01-IV-S_00_2차_44.jpg',
@@ -113,16 +98,12 @@ class TestShopifyFunctions(unittest.TestCase):
 
     @patch('shopify_product_management.shopify_utils.run_query')
     def test_set_product_description_metafield(self, mock_run_query):
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            'data': {
-                'metafieldsSet': {
-                    'metafields': [{'key': 'product_description', 'namespace': 'custom', 'value': 'Updated'}],
-                    'userErrors': []
-                }
+        mock_run_query.return_value = {
+            'metafieldsSet': {
+                'metafields': [{'key': 'product_description', 'namespace': 'custom', 'value': 'Updated'}],
+                'userErrors': []
             }
         }
-        mock_run_query.return_value = mock_response
 
         from shopify_product_management.shopify_utils import set_product_description_metafield
         result = set_product_description_metafield('shop_name', 'access_token', '12345', {'rich_text': 'Updated'})
