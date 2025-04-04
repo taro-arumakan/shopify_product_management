@@ -122,13 +122,13 @@ def delete_product_options(shop_name, access_token, product_id, option_ids):
         raise RuntimeError(f"Failed to update the tags: {res['productOptionsDelete']['userErrors']}")
     return res
 
-def update_product_tags(shop_name, access_token, product_id, tags):
+def update_product_attribute(shop_name, access_token, product_id, attribute_name, attribute_value):
     query = """
     mutation productSet($productSet: ProductSetInput!) {
         productSet(synchronous:true, input: $productSet) {
           product {
             id
-            tags
+            %s
           }
           userErrors {
             field
@@ -137,48 +137,29 @@ def update_product_tags(shop_name, access_token, product_id, tags):
           }
         }
     }
-    """
+    """ % attribute_name
     if product_id.isnumeric():
         product_id = f'gid://shopify/Product/{product_id}'
     variables = {
       "productSet": {
         "id": product_id,
-        "tags": tags
+        attribute_name: attribute_value
       }
     }
     res = run_query(shop_name, access_token, query, variables)
     if res['productSet']['userErrors']:
-        raise RuntimeError(f"Failed to update the tags: {res['productSet']['userErrors']}")
+        raise RuntimeError(f"Failed to update {attribute_name}: {res['productSet']['userErrors']}")
     return res
 
+def update_product_tags(shop_name, access_token, product_id, tags):
+    return update_product_attribute(shop_name, access_token, product_id, 'tags', tags)
+
 def update_product_description(shop_name, access_token, product_id, desc):
-    query = """
-    mutation updateProductDescription($productSet: ProductSetInput!) {
-        productSet(synchronous:true, input: $productSet) {
-          product {
-            id
-            descriptionHtml
-          }
-          userErrors {
-            field
-            code
-            message
-          }
-        }
-    }
-    """
-    if product_id.isnumeric():
-        product_id = f'gid://shopify/Product/{product_id}'
-    variables = {
-      "productSet": {
-        "id": product_id,
-        "descriptionHtml": desc
-      }
-    }
-    res = run_query(shop_name, access_token, query, variables)
-    if res['productSet']['userErrors']:
-        raise RuntimeError(f"Failed to update the description: {res['productSet']['userErrors']}")
-    return res
+    return update_product_attribute(shop_name, access_token, product_id, 'descriptionHtml', desc)
+
+def update_product_handle(shop_name, access_token, product_id, handle):
+    return update_product_attribute(shop_name, access_token, product_id, 'handle', handle)
+
 
 def sanitize_image_name(image_name):
     return image_name.replace(' ', '_').replace('[', '').replace(']', '_').replace('(', '').replace(')', '')
