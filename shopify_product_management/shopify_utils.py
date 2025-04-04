@@ -467,12 +467,17 @@ def product_by_query(shop_name, access_token, query_string):
         raise Exception(f"{'Multiple' if products else 'No'} products found for {title}: {products}")
     return products[0]
 
-def product_id_by_title(shop_name, access_token, title):
-    return product_by_query(shop_name, access_token, f"title:'{title}'")['id']
+def product_by_title(shop_name, access_token, title):
+    return product_by_query(shop_name, access_token, f"title:'{title}'")
 
+def product_id_by_title(shop_name, access_token, title):
+    return product_by_title(shop_name, access_token, title)['id']
+
+def product_by_handle(shop_name, access_token, handle):
+    return product_by_query(shop_name, access_token, f"handle:'{handle}'")
 
 def product_id_by_handle(shop_name, access_token, handle):
-    return product_by_query(shop_name, access_token, f"handle:'{handle}'")['id']
+    return product_by_handle(shop_name, access_token, handle)['id']
 
 
 def medias_by_product_id(shop_name, access_token, product_id):
