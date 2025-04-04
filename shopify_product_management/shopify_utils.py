@@ -8,6 +8,7 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
+
 def duplicate_product(shop_name, access_token, product_id, new_title, include_images=False, new_status='DRAFT'):
     query = """
     mutation DuplicateProduct($productId: ID!, $newTitle: String!, $includeImages: Boolean, $newStatus: ProductStatus) {
@@ -247,6 +248,76 @@ def replace_image_files(shop_name, access_token, local_paths):
     return _replace_image_files_with_staging(shop_name, access_token, staged_targets, local_paths, mime_types)
 
 
+def update_product_metafield(shop_name, access_token, product_id, metafield_namespace, metafield_key, value):
+    query = """
+    mutation updateProductMetafield($input: ProductInput!) {
+        productUpdate(input: $input) {
+          product {
+            id
+            metafields (first:10) {
+              nodes {
+                id
+                namespace
+                key
+                value
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+    }
+    """
+
+    if product_id.isnumeric():
+        product_id = f'gid://shopify/Product/{product_id}'
+    variables = {
+      "input": {
+        "id": product_id,
+        "metafields": [
+          {
+            "namespace": metafield_namespace,
+            "key": metafield_key,
+            "value": value
+          }
+        ]
+      }
+    }
+    res = run_query(shop_name, access_token, query, variables)
+    if user_errors := res['productUpdate']['userErrors']:
+        raise RuntimeError(f"Failed to update the metafield: {user_errors}")
+    return res
+
+
+def update_variation_value_metafield(shop_name, access_token, product_id, variation_value):
+    return update_product_metafield(shop_name, access_token, product_id, 'custom', 'variation_value', variation_value)
+
+def update_variation_products_metafield(shop_name, access_token, product_id, variation_product_ids):
+    return update_product_metafield(shop_name, access_token, product_id, 'custom', 'variation_products', json.dumps(variation_product_ids))
+
+def update_product_description_metafield(shop_name, access_token, product_id, desc):
+    return update_product_metafield(shop_name, access_token, product_id, 'custom', 'product_description', json.dumps(desc))
+
+def update_size_table_html_metafield(shop_name, access_token, product_id, html_text):
+    return update_product_metafield(shop_name, access_token, product_id, 'custom', 'size_table_html', html_text)
+
+def metafield_id_by_namespace_and_key(shop_name, access_token, namespace, key, owner_type='PRODUCT'):
+    query = '''
+      query {
+        metafieldDefinitions(first:10, ownerType:%s, namespace:"%s", key:"%s") {
+          nodes {
+            id
+          }
+        }
+      }
+    ''' % (owner_type, namespace, key)
+    res = run_query(shop_name, access_token, query)
+    res = res['metafieldDefinitions']['nodes']
+    assert len(res) == 1, f'{"Multiple" if res else "No"} metafields found for {namespace}:{key}: {res}'
+    return res[0]['id']
+
 def update_product_description_and_size_table_html_metafields(shop_name, access_token, product_id, desc, html_text):
     query = """
     mutation updateProductMetafield($productSet: ProductSetInput!) {
@@ -273,19 +344,21 @@ def update_product_description_and_size_table_html_metafields(shop_name, access_
 
     if product_id.isnumeric():
         product_id = f'gid://shopify/Product/{product_id}'
+    product_description_mf_id = metafield_id_by_namespace_and_key(shop_name, access_token, 'custom', 'product_description')
+    size_table_html_mf_id = metafield_id_by_namespace_and_key(shop_name, access_token, 'custom', 'size_table_html')
     variables = {
       "productSet": {
         "id": product_id,
         "metafields": [
           {
-            "id": "gid://shopify/Metafield/37315032023281",     # product_description
+            "id": product_description_mf_id,
             "namespace": "custom",
             "key": "product_description",
             "type": "rich_text_field",
             "value": json.dumps(desc)
           },
           {
-            "id": "gid://shopify/Metafield/30082966716672",     # size_table_html
+            "id": size_table_html_mf_id,
             "namespace": "custom",
             "key": "size_table_html",
             "type": "multi_line_text_field",
@@ -302,7 +375,7 @@ def update_product_description_and_size_table_html_metafields(shop_name, access_
 
 
 # TODO: metafield id by namespace and key
-def update_product_description_metafield(shop_name, access_token, product_id, desc):
+def old_update_product_description_metafield(shop_name, access_token, product_id, desc):
     query = """
     mutation updateProductMetafield($productSet: ProductSetInput!) {
         productSet(synchronous:true, input: $productSet) {
@@ -350,7 +423,7 @@ def update_product_description_metafield(shop_name, access_token, product_id, de
 
 
 # TODO: metafield id by namespace and key
-def update_size_table_html_metafield(shop_name, access_token, product_id, html_text):
+def old_update_size_table_html_metafield(shop_name, access_token, product_id, html_text):
     query = """
     mutation updateProductMetafield($productSet: ProductSetInput!) {
         productSet(synchronous:true, input: $productSet) {
@@ -449,13 +522,21 @@ def set_product_description_metafield(shop_name, access_token, product_id, descr
 def product_by_query(shop_name, access_token, query_string):
     query = """
     query productsByQuery($query_string: String!) {
-      products(first: 10, query: $query_string, sortKey: TITLE) {
-        nodes {
-          id
-          title
-          handle
+        products(first: 10, query: $query_string, sortKey: TITLE) {
+            nodes {
+                id
+                title
+                handle
+                metafields (first:10) {
+                    nodes {
+                        id
+                        namespace
+                        key
+                        value
+                    }
+                }
+            }
         }
-      }
     }
     """
     variables = {
@@ -464,7 +545,7 @@ def product_by_query(shop_name, access_token, query_string):
     res = run_query(shop_name, access_token, query, variables)
     products = res['products']['nodes']
     if len(products) != 1:
-        raise Exception(f"{'Multiple' if products else 'No'} products found for {title}: {products}")
+        raise Exception(f"{'Multiple' if products else 'No'} products found for {query_string}: {products}")
     return products[0]
 
 def product_by_title(shop_name, access_token, title):
@@ -978,8 +1059,8 @@ def run_query(shop_name, access_token, query, variables=None, method='post', res
     }
     response = requests.post(url, headers=headers, json=data)
     res = response.json()
-    if error := res.get('error'):
-        raise RuntimeError(f'Error running the query: {error}\n\n{query}\n\n{variables}')
+    if errors := res.get('errors'):
+        raise RuntimeError(f'Error running the query: {errors}\n\n{query}\n\n{variables}')
     return res['data']
 
 def main():
