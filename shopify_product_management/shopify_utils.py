@@ -446,46 +446,33 @@ def set_product_description_metafield(shop_name, access_token, product_id, descr
     return run_query(shop_name, access_token, query, variables)
 
 
-def product_id_by_title(shop_name, access_token, title):
+def product_by_query(shop_name, access_token, query_string):
     query = """
     query productsByQuery($query_string: String!) {
       products(first: 10, query: $query_string, sortKey: TITLE) {
         nodes {
           id
           title
-        }
-      }
-    }
-    """
-    variables = {
-        "query_string": f"title:'{title}'"
-    }
-    res = run_query(shop_name, access_token, query, variables)
-    products = res['products']['nodes']
-    if len(products) != 1:
-        raise Exception(f"{'Multiple' if products else 'No'} products found for {title}: {products}")
-    return products[0]['id']
-
-
-def product_id_by_handle(shop_name, access_token, handle):
-    query = """
-    query productsByQuery($query_string: String!) {
-      products(first: 10, query: $query_string, sortKey: TITLE) {
-        nodes {
-          id
           handle
         }
       }
     }
     """
     variables = {
-        "query_string": f"handle:'{handle}'"
+        "query_string": query_string
     }
     res = run_query(shop_name, access_token, query, variables)
     products = res['products']['nodes']
     if len(products) != 1:
-        raise Exception(f"{'Multiple' if {products} else 'No'} products found for {handle}: {products}")
-    return products[0]['id']
+        raise Exception(f"{'Multiple' if products else 'No'} products found for {title}: {products}")
+    return products[0]
+
+def product_id_by_title(shop_name, access_token, title):
+    return product_by_query(shop_name, access_token, f"title:'{title}'")['id']
+
+
+def product_id_by_handle(shop_name, access_token, handle):
+    return product_by_query(shop_name, access_token, f"handle:'{handle}'")['id']
 
 
 def medias_by_product_id(shop_name, access_token, product_id):
