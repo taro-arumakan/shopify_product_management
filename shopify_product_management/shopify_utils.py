@@ -8,6 +8,42 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
+def _remove_unrelated_medias(shop_name, access_token, new_product_id, variant_ids_to_keep):
+    all_medias = medias_by_product_id(shop_name, access_token, new_product_id)
+    keep_medias = medias_by_variant_id(shop_name, access_token, variant_ids_to_keep[0])
+    media_ids_to_remove = [m['id'] for m in all_medias if m['id'] not in [km['id'] for km in keep_medias]]
+    remove_product_media_by_product_id(shop_name, access_token, new_product_id, media_ids_to_remove)
+
+def product_variants_to_products(shop_name, access_token, product_title, new_status='DRAFT'):
+    product = product_by_title(shop_name, access_token, product_title)
+    product_id = product['id']
+    product_handle = product['handle']
+    variants = product_variants_by_product_id(shop_name, access_token, product_id)
+    color_options = set([so['value'] for v in variants for so in v['selectedOptions'] if so['name'] == 'カラー'])
+
+    new_product_ids = []
+    for color_option in color_options:
+        res = duplicate_product(shop_name, access_token, product_id, product_title, True, new_status)
+        new_product = res['productDuplicate']['newProduct']
+        new_product_id = new_product['id']
+        logger.info(f"Duplicated product ID: {new_product_id}")
+        new_product_ids.append(new_product_id)
+        new_product_handle = '-'.join([product_handle, '-'.join(color_option.lower().split(' '))])
+        color_option_id = [o['id'] for o in new_product['options'] if o['name']=='カラー']
+        assert len(color_option_id) == 1, f"{'Multiple' if color_option_id else 'No'} option カラー for {new_product_id}"
+        color_option_id = color_option_id[0]
+        new_variants = new_product['variants']['nodes']
+        variant_ids_to_keep = [v['id'] for v in new_variants if any(so['name']=='カラー' and so['value']==color_option for so in v['selectedOptions'])]
+        variant_ids_to_remove = [v['id'] for v in new_variants if v['id'] not in variant_ids_to_keep]
+
+        _remove_unrelated_medias(shop_name, access_token, new_product_id, variant_ids_to_keep)
+        remove_product_variants(shop_name, access_token, new_product_id, variant_ids_to_remove)
+        delete_product_options(shop_name, access_token, new_product_id, [color_option_id])
+        update_product_handle(shop_name, access_token, new_product_id, new_product_handle)
+        update_variation_value_metafield(shop_name, access_token, new_product_id, color_option)
+
+    for new_product_id in new_product_ids:
+        update_variation_products_metafield(shop_name, access_token, new_product_id, new_product_ids)
 
 def duplicate_product(shop_name, access_token, product_id, new_title, include_images=False, new_status='DRAFT'):
     query = """
