@@ -97,16 +97,17 @@ class TestShopifyFunctions(unittest.TestCase):
         mock_run_query.assert_called_once()
 
     @patch('shopify_product_management.shopify_utils.run_query')
-    def test_set_product_description_metafield(self, mock_run_query):
+    def test_update_product_description_metafield(self, mock_run_query):
         mock_run_query.return_value = {
-            'metafieldsSet': {
-                'metafields': [{'key': 'product_description', 'namespace': 'custom', 'value': 'Updated'}],
+            'productUpdate': {
+                'product': {'metafields': [{'key': 'product_description',
+                                            'namespace': 'custom',
+                                            'value': 'Updated'}]},
                 'userErrors': []
             }
         }
-
-        from shopify_product_management.shopify_utils import set_product_description_metafield
-        result = set_product_description_metafield('shop_name', 'access_token', '12345', {'rich_text': 'Updated'})
+        from shopify_product_management.shopify_utils import update_product_description_metafield
+        result = update_product_description_metafield('shop_name', 'access_token', '12345', {'rich_text': 'Updated'})
 
         self.assertIsNotNone(result)
         mock_run_query.assert_called_once()
