@@ -1,9 +1,12 @@
-import unittest
-from unittest.mock import patch, MagicMock
+import os
+print(os.getcwd())
 
+import unittest
+from unittest.mock import patch
+from shopify_graphql_client.client import ShopifyGraphqlClient
 class TestShopifyFunctions(unittest.TestCase):
 
-    @patch('shopify_product_management.shopify_utils.run_query')
+    @patch.object(ShopifyGraphqlClient, 'run_query')
     def test_update_product_description(self, mock_run_query):
         mock_run_query.return_value = {
                 'productSet': {
@@ -22,17 +25,17 @@ class TestShopifyFunctions(unittest.TestCase):
         mock_run_query.assert_called_once()
 
     def test_sanitize_image_name(self):
-        from shopify_product_management.shopify_utils import sanitize_image_name
+        from shopify_graphql_client.product_attributes_management import sanitize_image_name
         result = sanitize_image_name('Dummy Product [Special Edition]_product_details_01.png')
         self.assertEqual(result, 'Dummy_Product_Special_Edition__product_details_01.png')
 
     def test_image_htmlfragment_in_description(self):
-        from shopify_product_management.shopify_utils import image_htmlfragment_in_description
+        from shopify_graphql_client.product_attributes_management import image_htmlfragment_in_description
         result = image_htmlfragment_in_description('example_image.png', 2, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
         self.assertIn('<p class="reveal_tran_lr">', result)
         self.assertIn('<img src="https://cdn.shopify.com/s/files/1/0745/9435/3408/files/example_image.png"', result)
 
-    @patch('shopify_product_management.shopify_utils.run_query')
+    @patch.object(ShopifyGraphqlClient, 'run_query')
     def test_product_id_by_title(self, mock_run_query):
         mock_run_query.return_value = {
             'products': {
@@ -48,7 +51,7 @@ class TestShopifyFunctions(unittest.TestCase):
         self.assertEqual(product_id, 'gid://shopify/Product/12345')
         mock_run_query.assert_called_once()
 
-    @patch('shopify_product_management.shopify_utils.run_query')
+    @patch.object(ShopifyGraphqlClient, 'run_query')
     def test_remove_product_media_by_product_id_no_media(self, mock_run_query):
         mock_run_query.return_value = {'product': {'media': {'nodes': []}}}
 
@@ -58,8 +61,8 @@ class TestShopifyFunctions(unittest.TestCase):
         self.assertTrue(result)
         mock_run_query.assert_called_once()
 
-    @patch('shopify_product_management.shopify_utils.run_query')
-    @patch('shopify_product_management.shopify_utils.medias_by_product_id')
+    @patch.object(ShopifyGraphqlClient, 'run_query')
+    @patch.object(ShopifyGraphqlClient, 'medias_by_product_id')
     def test_assign_images_to_product(self, mock_medias_by_product_id, mock_run_query):
         mock_run_query.return_value = {
             'productCreateMedia': {
@@ -96,7 +99,7 @@ class TestShopifyFunctions(unittest.TestCase):
         self.assertIsNone(result)  # No exception raised means success
         mock_run_query.assert_called_once()
 
-    @patch('shopify_product_management.shopify_utils.run_query')
+    @patch.object(ShopifyGraphqlClient, 'run_query')
     def test_update_product_description_metafield(self, mock_run_query):
         mock_run_query.return_value = {
             'productUpdate': {
