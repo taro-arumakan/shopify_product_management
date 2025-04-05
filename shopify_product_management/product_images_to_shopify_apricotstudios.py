@@ -2,81 +2,16 @@ import logging
 import os
 import string
 from dotenv import load_dotenv
+from dropbox_utils import download_and_rename_images_from_dropbox
 from google_utils import get_sheet_index_by_title, gspread_access
-from shopify_utils import (run_query, product_id_by_title, medias_by_product_id,
-                           generate_staged_upload_targets, upload_images_to_shopify,remove_product_media_by_product_id, assign_images_to_product,
-                           assign_image_to_skus, upload_and_assign_description_images_to_shopify)
-
-load_dotenv(override=True)
-SHOPNAME = 'apricot-studios'
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-print(ACCESS_TOKEN)
-GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
-
-UPLOAD_IMAGE_PREFIX = 'upload_20250304'
-IMAGES_LOCAL_DIR = '/Users/taro/Downloads/apricotstudios_20250304/'
-GSPREAD_ID = '1yVzpgcrgNR7WxUYfotEnhYFMbc79l1O4rl9CamB2Kqo'
-SHEET_TITLE = 'Products Master'
-DUMMY_PRODUCT = 'gid://shopify/Product/9032277197056'
+from shopify_graphql_client.client import ShopifyGraphqlClient
 
 logger = logging.getLogger(__name__)
-stream_handler = logging.StreamHandler()
-logger.addHandler(stream_handler)
+logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
 
-
-
-
-def upload_and_assign_images_to_product(product_id, local_paths):
-    mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
-    staged_targets = generate_staged_upload_targets(SHOPNAME, ACCESS_TOKEN, local_paths, mime_types)
-    logger.info(f'generated staged upload targets: {len(staged_targets)}')
-    upload_images_to_shopify(staged_targets, local_paths, mime_types)
-    logger.info(f"Images uploaded for {product_id}, going to remove existing and assign.")
-    remove_product_media_by_product_id(SHOPNAME, ACCESS_TOKEN, product_id)
-    assign_images_to_product(SHOPNAME, ACCESS_TOKEN,
-                             [target['resourceUrl'] for target in staged_targets],
-                             alts=[local_path.rsplit('/', 1)[-1] for local_path in local_paths],
-                             product_id=product_id)
-
-
-def variant_by_sku(sku):
-    query = """
-    {
-      productVariants(first: 10, query: "sku:'%s'") {
-        nodes {
-          id
-          title
-          product {
-            id
-          }
-        }
-      }
-    }
-    """ % sku
-    response = run_query(SHOPNAME, ACCESS_TOKEN, query, {})
-    json_data = response.json()
-    return json_data['data']['productVariants']
-
-
-def variant_id_for_sku(sku):
-    json_data = variant_by_sku(sku)
-    if len(json_data['nodes']) != 1:
-        raise Exception(f"{'Multiple' if json_data['nodes'] else 'No'} variants found for {sku}: {json_data['nodes']}")
-    return json_data['nodes'][0]['id']
-
-
-def assign_image_to_skus_by_position(product_id, image_position, skus):
-    logger.info(f'assigning a variant image to {skus}')
-    variant_ids = [variant_id_for_sku(sku) for sku in skus]
-
-    media_nodes = medias_by_product_id(SHOPNAME, ACCESS_TOKEN, product_id)
-    media_id = media_nodes[image_position]['id']
-    return assign_image_to_skus(SHOPNAME, ACCESS_TOKEN, product_id, media_id, variant_ids)
-
-
-def products_info_from_sheet(sheet_id, sheet_index=0):
-    worksheet = gspread_access(GOOGLE_CREDENTIAL_PATH).open_by_key(sheet_id).get_worksheet(sheet_index)
+def products_info_from_sheet(sheet_id, google_credential_path, sheet_index=0):
+    worksheet = gspread_access(google_credential_path).open_by_key(sheet_id).get_worksheet(sheet_index)
     rows = worksheet.get_all_values()
 
     # start_row 1 base, columns are 0 base
@@ -127,7 +62,18 @@ def image_prefix(title):
     return title.translate(str.maketrans(string.punctuation, '_' * len(string.punctuation)))
 
 def main():
-    from dropbox_utils import download_and_rename_images_from_dropbox
+    load_dotenv(override=True)
+    SHOPNAME = 'apricot-studios'
+    ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
+    print(ACCESS_TOKEN)
+    GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
+
+    IMAGES_LOCAL_DIR = '/Users/taro/Downloads/apricotstudios_20250304/'
+    GSPREAD_ID = '1yVzpgcrgNR7WxUYfotEnhYFMbc79l1O4rl9CamB2Kqo'
+    SHEET_TITLE = 'Products Master'
+    DUMMY_PRODUCT = 'gid://shopify/Product/9032277197056'
+
+    sgc = ShopifyGraphqlClient(SHOPNAME, ACCESS_TOKEN)
     sheet_index = get_sheet_index_by_title(GOOGLE_CREDENTIAL_PATH, GSPREAD_ID, SHEET_TITLE)
     logger.info(f'sheet index of {SHEET_TITLE} is {sheet_index}')
     product_details = products_info_from_sheet(sheet_id=GSPREAD_ID, sheet_index=sheet_index)
@@ -145,25 +91,26 @@ def main():
             pr['product_title'] in reprocess_titles) and
             (not reprocess_from_sku or reprocess_from_sku and any(all_skus.index(sku) >= all_skus.index(reprocess_from_sku) for skus in pr['skuss'] for sku in skus))):
 
-            image_pathss = [download_and_rename_images_from_dropbox(pr['product_title'],
+            image_pathss = [download_and_rename_images_from_dropbox(os.path.join(IMAGES_LOCAL_DIR, pr['product_title']),
                                                                     pr['product_main_images_link'],
                                                                     prefix=f'{image_prefix(pr['product_title'])}_product_main')]
             for skus, variant_image_link in zip(pr['skuss'], pr['variant_images_links']):
-                image_pathss += [download_and_rename_images_from_dropbox(pr['product_title'], variant_image_link, skus[0])]
+                image_pathss += [download_and_rename_images_from_dropbox(os.path.join(IMAGES_LOCAL_DIR, pr['product_title']),
+                                                                         variant_image_link,
+                                                                         skus[0])]
             import pprint
             pprint.pprint(image_pathss)
-            product_id = product_id_by_title(SHOPNAME, ACCESS_TOKEN, pr['product_title'])
+            product_id = sgc.product_id_by_title(pr['product_title'])
             image_position = len(image_pathss[0])
-            upload_and_assign_images_to_product(product_id, sum(image_pathss, []))
+            sgc.upload_and_assign_images_to_product(product_id, sum(image_pathss, []))
             for variant_image_paths, skus in zip(image_pathss[1:], pr['skuss']):
                 print(f'assing variant image at position {image_position} to {skus}')
-                assign_image_to_skus_by_position(product_id, image_position, skus)
+                sgc.assign_image_to_skus_by_position(product_id, image_position, skus)
                 image_position += len(variant_image_paths)
-
             detail_image_paths = download_and_rename_images_from_dropbox(pr['product_title'],
                                                                          pr['product_detail_images_link'],
                                                                          prefix=f'{image_prefix(pr['product_title'])}_product_detail')
-            upload_and_assign_description_images_to_shopify(SHOPNAME, ACCESS_TOKEN, product_id, detail_image_paths, DUMMY_PRODUCT, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
+            sgc.upload_and_assign_description_images_to_shopify(product_id, detail_image_paths, DUMMY_PRODUCT, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
 
 if __name__ == "__main__":
     main()
