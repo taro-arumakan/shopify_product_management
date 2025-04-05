@@ -2,9 +2,6 @@ import os
 import requests
 import zipfile
 
-# Replace with the shared folder link or its identifier
-SHARED_LINK = "https://www.dropbox.com/scl/fo/bibk56d42ghgspxlkl02v/AI9ioS1MDfB1Ddf75ykbrag?rlkey=nwwunqjbko9ts7ik9cqx5uxmq&e=1"
-
 def download_images_from_dropbox(shared_link, output_path):
 
     shared_link = shared_link.replace('&dl=0', '') + '&dl=1'
