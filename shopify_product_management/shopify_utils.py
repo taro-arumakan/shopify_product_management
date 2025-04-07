@@ -8,8 +8,8 @@ logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
 
-def product_variants_to_products(shop_name, access_token, product_title, new_status='DRAFT'):
-    return ShopifyGraphqlClient(shop_name, access_token).product_variants_to_products(product_title, new_status)
+def product_variants_to_products(shop_name, access_token, product_title):
+    return ShopifyGraphqlClient(shop_name, access_token).product_variants_to_products(product_title)
 
 def update_product_attribute(shop_name, access_token, product_id, attribute_name, attribute_value):
     return ShopifyGraphqlClient(shop_name, access_token).update_product_attribute(product_id, attribute_name, attribute_value)
