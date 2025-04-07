@@ -43,3 +43,22 @@ class ShopifyGraphqlClient(InventoryManagement,
         res = response.json()
         if errors := res.get('errors'):
             raise RuntimeError(f'Error running the query: {errors}\n\n{query}\n\n{variables}')
+        return res['data']
+
+
+def main():
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
+    import os
+    access_token = os.getenv('ACCESS_TOKEN')
+    print(access_token)
+    shop_name = 'rawrowr'
+    client = ShopifyGraphqlClient(shop_name, access_token)
+    local_dir = r'/Users/taro/Downloads/rawrow_replace'
+    paths = [os.path.join(local_dir, file) for file in os.listdir(local_dir) if file.endswith('.gif')]
+    import pprint
+    res = client.replace_image_files(paths)
+    pprint.pprint(res)
+
+if __name__ == '__main__':
+    main()
