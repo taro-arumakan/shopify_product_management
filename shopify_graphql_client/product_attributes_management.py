@@ -26,29 +26,28 @@ class ProductAttributesManagement:
 
     def update_product_attribute(self, product_id, attribute_name, attribute_value):
         query = """
-        mutation productSet($productSet: ProductSetInput!) {
-            productSet(synchronous:true, input: $productSet) {
+        mutation productUpdate($input: ProductInput!) {
+            productUpdate(input: $input) {
                 product {
                     id
                     %s
                 }
                 userErrors {
                     field
-                    code
                     message
                 }
             }
         }
         """ % attribute_name
         variables = {
-        "productSet": {
+        "input": {
             "id": self.sanitize_id(product_id),
             attribute_name: attribute_value
         }
         }
         res = self.run_query(query, variables)
-        if res['productSet']['userErrors']:
-            raise RuntimeError(f"Failed to update {attribute_name}: {res['productSet']['userErrors']}")
+        if res['productUpdate']['userErrors']:
+            raise RuntimeError(f"Failed to update {attribute_name}: {res['productUpdate']['userErrors']}")
         return res
 
     def update_product_tags(self, product_id, tags):
@@ -59,6 +58,9 @@ class ProductAttributesManagement:
 
     def update_product_handle(self, product_id, handle):
         return self.update_product_attribute(product_id, 'handle', handle)
+
+    def update_product_theme_template(self, product_id, template_suffix):
+        return self.update_product_attribute(product_id, 'templateSuffix', template_suffix)
 
     def upload_and_assign_description_images_to_shopify(self, product_id, local_paths, dummy_product_id, shopify_url_prefix):
         """

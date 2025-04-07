@@ -29,6 +29,7 @@ class ProductVariantsToProducts:
             self.delete_product_options(new_product_id, [color_option_id])
             self.update_product_handle(new_product_id, new_product_handle)
             self.update_variation_value_metafield(new_product_id, color_option)
+            self.update_product_theme_template(new_product_id, 'variants-as-products')
 
         for new_product_id in new_product_ids:
             self.update_variation_products_metafield(new_product_id, new_product_ids)
