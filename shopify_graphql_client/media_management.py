@@ -89,7 +89,7 @@ class MediaManagement:
             }
         }
         ''' % file_name.rsplit('.', 1)[0]
-        res = self.un_query(query)
+        res = self.run_query(query)
         res = res['files']['nodes']
         if len(res) > 1:
             res = [r for r in res if r['image']['url'].rsplit('?', 1)[0].endswith(file_name)]
@@ -338,7 +338,7 @@ class MediaManagement:
         staged_targets = self.generate_staged_upload_targets(local_paths, mime_types)
         self.logger.info(f'generated staged upload targets: {len(staged_targets)}')
         self.upload_images_to_shopify(staged_targets, local_paths, mime_types)
-        return self._replace_image_files_with_staging(staged_targets, local_paths, mime_types)
+        return self._replace_image_files_with_staging(staged_targets, local_paths)
 
     def _replace_image_files_with_staging(self, staged_targets, local_paths):
         filenames = [sanitize_image_name(path.rsplit('/', 1)[-1]) for path in local_paths]
@@ -347,14 +347,14 @@ class MediaManagement:
         query = """
         mutation FileUpdate($input: [FileUpdateInput!]!) {
             fileUpdate(files: $input) {
-            userErrors {
-                code
-                field
-                message
-            }
-            files {
-                alt
-            }
+                userErrors {
+                    code
+                    field
+                    message
+                }
+                files {
+                    alt
+                }
             }
         }
         """
@@ -368,4 +368,6 @@ class MediaManagement:
             "input": medias
         }
         res = self.run_query(query, variables)
+        if res['fileUpdate']['userErrors']:
+            raise RuntimeError(f"Failed to assign images to product: {res['fileUpdate']['userErrors']}")
         return res['fileUpdate']
