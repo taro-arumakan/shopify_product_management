@@ -9,12 +9,12 @@ def get_product_description(desc, material, origin):
   res = {
     'type': 'root',
     'children': [
-                {'children': [{'type': 'text', 'value': desc}], 'type': 'paragraph'},
+                {'children': [{'type': 'text', 'value': desc.strip('\"')}], 'type': 'paragraph'},
                 {'children': [{'type': 'text', 'value': ''}], 'type': 'paragraph'},
                 {'children': [{'type': 'text', 'value': '素材'}], 'level': 5, 'type': 'heading'},
-                {'children': [{'type': 'text', 'value': material}], 'type': 'paragraph'},
+                {'children': [{'type': 'text', 'value': material.strip('\"')}], 'type': 'paragraph'},
                 {'children': [{'type': 'text', 'value': '原産国'}], 'level': 5, 'type': 'heading'},
-                {'children': [{'type': 'text', 'value': origin}], 'type': 'paragraph'}
+                {'children': [{'type': 'text', 'value': origin.strip('\"')}], 'type': 'paragraph'}
                 ],
   }
   return res
@@ -40,9 +40,9 @@ def main():
          continue
 
       print(f'processing {title}')
-      desc = row[6].strip('\"')
-      material = row[10].strip('\"')
-      origin = row[13].strip('\"')
+      desc = row[6]
+      material = row[10]
+      origin = row[13]
 
       product_description = get_product_description(desc, material, origin)
       size_text = row[12]
