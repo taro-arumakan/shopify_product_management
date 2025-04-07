@@ -4,16 +4,6 @@ from shopify_product_management import shopify_utils
 from shopify_product_management.google_utils import gspread_access, get_sheet_index_by_title
 from shopify_product_management.update_size_table_html_metafield import text_to_html_tables_and_paragraphs
 
-load_dotenv(override=True)
-SHOPNAME = 'apricot-studios'
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-print(ACCESS_TOKEN)
-GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
-
-GSPREAD_ID = '1yVzpgcrgNR7WxUYfotEnhYFMbc79l1O4rl9CamB2Kqo'
-SHEET_TITLE = 'Products Master'
-
-
 def get_product_description(desc, material, origin):
 
   res = {
@@ -31,6 +21,15 @@ def get_product_description(desc, material, origin):
 
 
 def main():
+    load_dotenv(override=True)
+    SHOPNAME = 'apricot-studios'
+    ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
+    print(ACCESS_TOKEN)
+    GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
+
+    GSPREAD_ID = '1yVzpgcrgNR7WxUYfotEnhYFMbc79l1O4rl9CamB2Kqo'
+    SHEET_TITLE = 'Products Master'
+
     sheet_index = get_sheet_index_by_title(GOOGLE_CREDENTIAL_PATH, GSPREAD_ID, SHEET_TITLE)
     worksheet = gspread_access(GOOGLE_CREDENTIAL_PATH).open_by_key(GSPREAD_ID).get_worksheet(sheet_index)
     rows = worksheet.get_all_values()
@@ -41,9 +40,9 @@ def main():
          continue
 
       print(f'processing {title}')
-      desc = row[6]
-      material = row[10]
-      origin = row[13]
+      desc = row[6].strip('\"')
+      material = row[10].strip('\"')
+      origin = row[13].strip('\"')
 
       product_description = get_product_description(desc, material, origin)
       size_text = row[12]
