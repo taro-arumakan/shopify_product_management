@@ -2,107 +2,16 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from google_utils import get_drive_image_details, get_sheet_index_by_title, get_link, download_images_from_drive, gspread_access, drive_link_to_id
-from shopify_utils import (run_query, product_id_by_handle, product_id_by_title, medias_by_product_id,
-                           generate_staged_upload_targets, upload_images_to_shopify,remove_product_media_by_product_id, assign_images_to_product,
-                           assign_image_to_skus)
+import google_utils
+from shopify_graphql_client.client import ShopifyGraphqlClient
 
-load_dotenv(override=True)
-SHOPNAME = 'kumej'
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-print(ACCESS_TOKEN)
-GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
-
-UPLOAD_IMAGE_PREFIX = 'upload_20250326'
-IMAGES_LOCAL_DIR = f'/Users/taro/Downloads/{SHOPNAME}_{UPLOAD_IMAGE_PREFIX}/'
-GSPREAD_ID = '1buFubQ6Ng4JzYn4JjTsv8SQ2J1Qgv1yyVrs4yQUHfE0'
-SHEET_TITLE = '25ss'
 
 logger = logging.getLogger(__name__)
-stream_handler = logging.StreamHandler()
-logger.addHandler(stream_handler)
+logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
 
 
-def upload_and_assign_images_to_product(product_id, drive_image_details):
-    logger.info(f'number of images being downloaded/uploaded: {len(drive_image_details)}')
-    file_names = [file_details['name'] for file_details in drive_image_details]
-    local_paths = download_images_from_drive(GOOGLE_CREDENTIAL_PATH, drive_image_details, IMAGES_LOCAL_DIR)
-    mime_types = [file_details['mimeType'] for file_details in drive_image_details]
-    staged_targets = generate_staged_upload_targets(SHOPNAME, ACCESS_TOKEN, file_names, mime_types)
-    logger.info(f'generated staged upload targets: {len(staged_targets)}')
-    upload_images_to_shopify(staged_targets, local_paths, mime_types)
-    logger.info(f"Images uploaded for {product_id}, going to remove existing and assign.")
-    remove_product_media_by_product_id(SHOPNAME, ACCESS_TOKEN, product_id)
-    assign_images_to_product(SHOPNAME, ACCESS_TOKEN,
-                             [target['resourceUrl'] for target in staged_targets],
-                             alts=[f['name'] for f in drive_image_details],
-                             product_id=product_id)
-
-
-def variant_by_sku(sku):
-    query = """
-    {
-      productVariants(first: 10, query: "sku:'%s'") {
-        nodes {
-          id
-          title
-          product {
-            id
-          }
-        }
-      }
-    }
-    """ % sku
-    response = run_query(SHOPNAME, ACCESS_TOKEN, query, {})
-    json_data = response.json()
-    return json_data['data']['productVariants']
-
-
-def variant_id_for_sku(sku):
-    json_data = variant_by_sku(sku)
-    if len(json_data['nodes']) != 1:
-        raise Exception(f"{'Multiple' if json_data['nodes'] else 'No'} variants found for {sku}: {json_data['nodes']}")
-    return json_data['nodes'][0]['id']
-
-
-def assign_image_to_skus_by_position(product_id, image_position, skus):
-    logger.info(f'assigning a variant image to {skus}')
-    variant_ids = [variant_id_for_sku(sku) for sku in skus]
-
-    media_nodes = medias_by_product_id(SHOPNAME, ACCESS_TOKEN, product_id)
-    media_id = media_nodes[image_position]['id']
-    return assign_image_to_skus(SHOPNAME, ACCESS_TOKEN, product_id, media_id, variant_ids)
-
-
-def product_media_by_sku(product_id, sku):      # TODO move to utils
-    medias = medias_by_product_id(SHOPNAME, ACCESS_TOKEN, product_id)
-    for media in medias:
-        if any(s in media['alt'] for s in [f'{sku}_1.jpg', f'{sku}_00']):
-            return media
-
-
-def assign_variant_image_by_sku(skus):
-    ''' Can be multiple SKUs of the same color in different sizes '''
-    json_datas = [variant_by_sku(sku) for sku in skus]
-    for sku, json_data in zip(skus, json_datas):
-        if len(json_data['nodes']) != 1:
-            raise Exception(f"{'Multiple' if json_data['nodes'] else 'No'} variants found for {sku}: {json_data['nodes']}")
-    variants = [json_data['nodes'][0] for json_data in json_datas]
-    product_ids = list(set(variant['product']['id'] for variant in variants))
-    assert len(product_ids) == 1, f'Non-unique product {product_ids} for {skus}'
-    product_id = product_ids[0]
-    variant_ids = [variant['id'] for variant in variants]
-    medias = list(
-        filter(None, [product_media_by_sku(SHOPNAME, ACCESS_TOKEN, product_id, sku) for sku in skus]))
-    if not medias:
-        raise Exception(f'No media found for {skus}')
-    media_ids = [media['id'] for media in medias]
-    assert len(media_ids) == 1, f'Non-uqnique media {media_ids} for {skus}'
-    return assign_image_to_skus(SHOPNAME, ACCESS_TOKEN, product_id, media_ids[0], variant_ids)
-
-
-def process_product_images_to_shopify(image_prefix, product_title, drive_ids, skuss):
+def process_product_images_to_shopify(sgc, google_credential_path, image_prefix, product_title, drive_ids, skuss, images_local_dir):
     """
     Processes and uploads images for a product to Shopify, associating them with
     specific SKUs based on their positions within provided Google Drive folders.
@@ -126,32 +35,30 @@ def process_product_images_to_shopify(image_prefix, product_title, drive_ids, sk
         ['KM-24FW-SW01-DBR-S', 'KM-24FW-SW01-DBR-M']
     ]
     """
-    if SHOPNAME in ['rohseoul', 'archive-epke']:
+    if sgc.shop_name in ['rohseoul', 'archive-epke']:
         product_handle = '-'.join(list(map(str.lower, product_title.replace(')', '').replace('(', '').split(' '))) + ['25ss'])
         logger.info(f'product_handle: {product_handle}')
-        product_id = product_id_by_handle(SHOPNAME, ACCESS_TOKEN, product_handle)
+        product_id = sgc.product_id_by_handle(product_handle)
     else:
-        product_id = product_id_by_title(SHOPNAME, ACCESS_TOKEN, product_title)
+        product_id = sgc.product_id_by_title(product_title)
 
     drive_image_details = []
     variant_image_positions = []
 
     for drive_id, skus in zip(drive_ids, skuss):
         variant_image_positions.append(len(drive_image_details))
-        drive_image_details += get_drive_image_details(GOOGLE_CREDENTIAL_PATH, drive_id, download_filename_prefix=f'{image_prefix}_{skus[0]}_')
+        drive_image_details += google_utils.get_drive_image_details(google_credential_path, drive_id, download_filename_prefix=f'{image_prefix}_{skus[0]}_')
 
     logger.debug(f"Drive Image Details: {drive_image_details}")
-
-    upload_and_assign_images_to_product(product_id, drive_image_details)
+    local_paths = google_utils.download_images_from_drive(google_credential_path, drive_image_details, images_local_dir)
+    sgc.upload_and_assign_images_to_product(product_id, local_paths)
 
     for skus, image_position in zip(skuss, variant_image_positions):
-        assign_image_to_skus_by_position(product_id, image_position, skus)
+        sgc.assign_image_to_skus_by_position(product_id, image_position, skus)
 
 
-def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
-    worksheet = gspread_access(GOOGLE_CREDENTIAL_PATH).open_by_key(sheet_id).get_worksheet(sheet_index)
-    rows = worksheet.get_all_values()
-
+def products_info_from_sheet(google_credential_path, shop_name, sheet_id, sheet_name):
+    rows = google_utils.get_rows(google_credential_path, sheet_id, sheet_name)
     # start_row 1 base, columns are 0 base
     if shop_name == 'kumej':
         title_column_index = 2
@@ -197,12 +104,12 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
     current_product_title = ''
 
     for row_num, row in enumerate(rows[start_row - 1:]):  # Skip headers
-        if SHOPNAME == 'rohseoul':
+        if shop_name == 'rohseoul':
             state = row[state_column_index].strip()
             if state != 'NEW':
                 logger.info(f'skipping row {row_num}')
                 continue
-        elif SHOPNAME == 'gbhjapan':
+        elif shop_name == 'gbhjapan':
             release = row[1]
             if not release.startswith('3/17'):
                 logger.info(f'skipping row {row_num}, release is {release}')
@@ -229,7 +136,7 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
         else:
             products[-1]['skuss'][-1].append(sku)
         logger.info(f'retrieving link for {product_title}')
-        link = get_link(GOOGLE_CREDENTIAL_PATH, sheet_id, SHEET_TITLE, row, start_row + row_num, link_column_index)
+        link = google_utils.get_link(google_credential_path, sheet_id, sheet_name, row, start_row + row_num, link_column_index)
         if link and link != 'no image':
             if not link.startswith('http'):
                 logger.exception(f'\n!!! malformed URL: {link} !!!\n')
@@ -238,10 +145,23 @@ def products_info_from_sheet(shop_name, sheet_id, sheet_index=0):
 
 
 def main():
+    load_dotenv(override=True)
+    SHOPNAME = 'rawrowr'
+    ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
+    sgc = ShopifyGraphqlClient(SHOPNAME, ACCESS_TOKEN)
+    print(ACCESS_TOKEN)
+    GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
+
+    UPLOAD_IMAGE_PREFIX = 'upload_20250408'
+    IMAGES_LOCAL_DIR = f'/Users/taro/Downloads/{SHOPNAME}_{UPLOAD_IMAGE_PREFIX}/'
+    GSPREAD_ID = '1AAW8HHGUER7t77k1I3Q4UghfrVG9kti5uuYKaTJvN2w'
+    SHEET_TITLE = '20250211_v3'
     image_prefix = UPLOAD_IMAGE_PREFIX
-    sheet_index = get_sheet_index_by_title(GOOGLE_CREDENTIAL_PATH, GSPREAD_ID, SHEET_TITLE)
-    logger.info(f'sheet index of {SHEET_TITLE} is {sheet_index}')
-    product_details = products_info_from_sheet(shop_name=SHOPNAME, sheet_id=GSPREAD_ID, sheet_index=sheet_index)
+
+    product_details = products_info_from_sheet(google_credential_path=GOOGLE_CREDENTIAL_PATH,
+                                               shop_name=SHOPNAME,
+                                               sheet_id=GSPREAD_ID,
+                                               sheet_name=SHEET_TITLE)
 
     reprocess_titles, reprocess_skus = [], []
     reprocess_from_sku = ''
@@ -255,14 +175,13 @@ def main():
             any(sku in skus for sku in reprocess_skus for skus in pr['skuss']) or
             pr['product_title'] in reprocess_titles) and
             (not reprocess_from_sku or reprocess_from_sku and any(all_skus.index(sku) >= all_skus.index(reprocess_from_sku) for skus in pr['skuss'] for sku in skus))):
-            drive_ids = list(dict.fromkeys(drive_link_to_id(pp) for pp in pr['links']).keys())
+            drive_ids = list(dict.fromkeys(google_utils.drive_link_to_id(pp) for pp in pr['links']).keys())
             logger.info(f'''
                   processing {pr['product_title']}
                   SKUs: {pr['skuss']}
                   Folders: {drive_ids}
                   ''')
-            process_product_images_to_shopify(
-                image_prefix, pr['product_title'], drive_ids, pr['skuss'])
+            process_product_images_to_shopify(sgc, GOOGLE_CREDENTIAL_PATH, image_prefix, pr['product_title'], drive_ids, pr['skuss'], IMAGES_LOCAL_DIR)
 
 if __name__ == "__main__":
     main()
