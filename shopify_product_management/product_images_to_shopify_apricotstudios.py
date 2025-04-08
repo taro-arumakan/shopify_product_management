@@ -78,39 +78,27 @@ def main():
     logger.info(f'sheet index of {SHEET_TITLE} is {sheet_index}')
     product_details = products_info_from_sheet(sheet_id=GSPREAD_ID, sheet_index=sheet_index)
 
-    reprocess_titles, reprocess_skus = [], []
-    reprocess_from_sku = ''
-
-    if reprocess_from_sku:
-        import itertools
-        all_skus = list(itertools.chain(sku for pr in product_details for skus in pr['skuss'] for sku in skus))
-
     for pr in product_details:
-        if ((all((not(reprocess_skus), not(reprocess_titles))) or
-            any(sku in skus for sku in reprocess_skus for skus in pr['skuss']) or
-            pr['product_title'] in reprocess_titles) and
-            (not reprocess_from_sku or reprocess_from_sku and any(all_skus.index(sku) >= all_skus.index(reprocess_from_sku) for skus in pr['skuss'] for sku in skus))):
-
-            image_pathss = [download_and_rename_images_from_dropbox(os.path.join(IMAGES_LOCAL_DIR, pr['product_title']),
-                                                                    pr['product_main_images_link'],
-                                                                    prefix=f'{image_prefix(pr['product_title'])}_product_main')]
-            for skus, variant_image_link in zip(pr['skuss'], pr['variant_images_links']):
-                image_pathss += [download_and_rename_images_from_dropbox(os.path.join(IMAGES_LOCAL_DIR, pr['product_title']),
-                                                                         variant_image_link,
-                                                                         skus[0])]
-            import pprint
-            pprint.pprint(image_pathss)
-            product_id = sgc.product_id_by_title(pr['product_title'])
-            image_position = len(image_pathss[0])
-            sgc.upload_and_assign_images_to_product(product_id, sum(image_pathss, []))
-            for variant_image_paths, skus in zip(image_pathss[1:], pr['skuss']):
-                print(f'assing variant image at position {image_position} to {skus}')
-                sgc.assign_image_to_skus_by_position(product_id, image_position, skus)
-                image_position += len(variant_image_paths)
-            detail_image_paths = download_and_rename_images_from_dropbox(pr['product_title'],
-                                                                         pr['product_detail_images_link'],
-                                                                         prefix=f'{image_prefix(pr['product_title'])}_product_detail')
-            sgc.upload_and_assign_description_images_to_shopify(product_id, detail_image_paths, DUMMY_PRODUCT, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
+        image_pathss = [download_and_rename_images_from_dropbox(os.path.join(IMAGES_LOCAL_DIR, pr['product_title']),
+                                                                pr['product_main_images_link'],
+                                                                prefix=f'{image_prefix(pr['product_title'])}_product_main')]
+        for skus, variant_image_link in zip(pr['skuss'], pr['variant_images_links']):
+            image_pathss += [download_and_rename_images_from_dropbox(os.path.join(IMAGES_LOCAL_DIR, pr['product_title']),
+                                                                        variant_image_link,
+                                                                        skus[0])]
+        import pprint
+        pprint.pprint(image_pathss)
+        product_id = sgc.product_id_by_title(pr['product_title'])
+        image_position = len(image_pathss[0])
+        sgc.upload_and_assign_images_to_product(product_id, sum(image_pathss, []))
+        for variant_image_paths, skus in zip(image_pathss[1:], pr['skuss']):
+            print(f'assing variant image at position {image_position} to {skus}')
+            sgc.assign_image_to_skus_by_position(product_id, image_position, skus)
+            image_position += len(variant_image_paths)
+        detail_image_paths = download_and_rename_images_from_dropbox(pr['product_title'],
+                                                                        pr['product_detail_images_link'],
+                                                                        prefix=f'{image_prefix(pr['product_title'])}_product_detail')
+        sgc.upload_and_assign_description_images_to_shopify(product_id, detail_image_paths, DUMMY_PRODUCT, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
 
 if __name__ == "__main__":
     main()
