@@ -28,7 +28,7 @@ class ProductQueries:
         res = self.run_query(query, variables)
         products = res['products']['nodes']
         if len(products) != 1:
-            raise Exception(f"{'Multiple' if products else 'No'} products found for {query_string}: {products}")
+            raise RuntimeError(f"{'Multiple' if products else 'No'} products found for {query_string}: {products}")
         return products[0]
 
     def product_by_title(self, title):
