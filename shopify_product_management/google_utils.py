@@ -97,20 +97,38 @@ def resize_image_to_limit(image_path, output_path, max_megapixels=20):
             resized_img.save(output_path, **kwargs)
             logger.info(f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}")
 
+def download_and_process_image(google_credential_path, file_details, local_dir):
+    local_path = os.path.join(local_dir, file_details['name'])
+    if not os.path.exists(local_path):
+        logger.info(f"  starting download of {file_details['name']} to {local_path}")
+        download_file_from_drive(google_credential_path, file_details['id'], local_path)
+        resize_image_to_limit(local_path, local_path)
+    return local_path
+
+def download_images_from_drive_parallel(google_credential_path, drive_image_details, local_dir, max_workers=5):
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    if not os.path.exists(local_dir):
+        os.mkdir(local_dir)
+
+    results = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_file = {
+            executor.submit(download_and_process_image, google_credential_path, file_details, local_dir): file_details
+            for file_details in drive_image_details
+        }
+        for future in as_completed(future_to_file):
+            try:
+                local_path = future.result()
+                results.append(local_path)
+            except Exception as e:
+                logger.error(f"Error downloading file {future_to_file[future]['name']}: {e}")
+                raise e
+    return results
 
 def download_images_from_drive(google_credential_path, drive_image_details, local_dir):
     if not os.path.exists(local_dir):
         os.mkdir(local_dir)
-    res = []
-    for file_details in drive_image_details:
-        local_path = os.path.join(local_dir, file_details['name'])
-        if not os.path.exists(local_path):
-            logger.info(f"  starting download of {file_details['name']} to {local_path}")
-            download_file_from_drive(google_credential_path, file_details['id'], local_path)
-            resize_image_to_limit(local_path, local_path)
-        res.append(local_path)
-    return res
-
+    return [download_and_process_image(google_credential_path, file_details, local_dir) for file_details in drive_image_details]
 
 def download_file_from_drive(google_credential_path, file_id, destination_path):
     service = gdrive_service(google_credential_path)
