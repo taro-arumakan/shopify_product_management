@@ -13,6 +13,11 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
+def get_rows(google_credential_path, sheet_id, sheet_name):
+    sheet_index = get_sheet_index_by_title(google_credential_path, sheet_id, sheet_name)
+    worksheet = gspread_access(google_credential_path).open_by_key(sheet_id).get_worksheet(sheet_index)
+    return worksheet.get_all_values()
+
 google_credentials = None
 def authenticate_google_api(google_credential_path):
     # Authenticate to Google API using Service Account

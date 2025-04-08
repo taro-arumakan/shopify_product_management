@@ -50,6 +50,9 @@ class ProductAttributesManagement:
             raise RuntimeError(f"Failed to update {attribute_name}: {res['productUpdate']['userErrors']}")
         return res
 
+    def update_product_title(self, product_id, title):
+        return self.update_product_attribute(product_id, 'title', title)
+
     def update_product_tags(self, product_id, tags):
         return self.update_product_attribute(product_id, 'tags', tags)
 
