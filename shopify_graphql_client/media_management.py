@@ -151,6 +151,8 @@ class MediaManagement:
         if not status:
             raise Exception("Error during media processing")
 
+        return res
+
     def assign_image_to_skus_by_position(self, product_id, image_position, skus):
         self.logger.info(f'assigning a variant image to {skus}')
         variant_ids = [self.variant_id_by_sku(sku) for sku in skus]
@@ -221,6 +223,7 @@ class MediaManagement:
         status = self.wait_for_media_processing_completion(product_id)
         if not status:
             raise Exception("Error during media processing")
+        return res
 
     def detach_variant_media(self, product_id, variant_id, media_id):
         query = """
@@ -283,7 +286,20 @@ class MediaManagement:
         res = self.run_query(query, variables)
         return res['stagedUploadsCreate']['stagedTargets']
 
+    def upload_and_assign_images_to_product(self, product_id, local_paths):
+        file_names = [local_path.rsplit('/', 1)[-1] for local_path in local_paths]
+        mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
+        staged_targets = self.generate_staged_upload_targets(file_names, mime_types)
+        self.logger.info(f'generated staged upload targets: {len(staged_targets)}')
+        res1 = self.upload_images_to_shopify(staged_targets, local_paths, mime_types)
+        res2 = self.remove_product_media_by_product_id(product_id)
+        res3 = self.assign_images_to_product([target['resourceUrl'] for target in staged_targets],
+                                            alts=file_names,
+                                            product_id=product_id)
+        return [res1, res2, res3]
+
     def upload_images_to_shopify(self, staged_targets, local_paths, mime_types):
+        res = []
         for target, local_path, mime_type in zip(staged_targets, local_paths, mime_types):
             if mime_type in ['image/psd']:
                 continue
@@ -305,6 +321,8 @@ class MediaManagement:
             if response.status_code != 201:
                 self.logger.error(f'!!! upload failed !!!\n\n{local_path}:\n{target}\n\n{response.text}\n\n')
                 response.raise_for_status()
+            res.append(response)
+        return res
 
     def wait_for_media_processing_completion(self, product_id, timeout_minutes=10):
         poll_interval = 5  # Poll every 5 seconds

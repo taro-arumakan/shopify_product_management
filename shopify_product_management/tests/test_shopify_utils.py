@@ -9,7 +9,7 @@ class TestShopifyFunctions(unittest.TestCase):
     @patch.object(ShopifyGraphqlClient, 'run_query')
     def test_update_product_description(self, mock_run_query):
         mock_run_query.return_value = {
-                'productSet': {
+                'productUpdate': {
                     'product': {
                         'id': 'gid://shopify/Product/12345',
                         'descriptionHtml': '<p>New Description</p>'
@@ -21,7 +21,7 @@ class TestShopifyFunctions(unittest.TestCase):
         from shopify_product_management.shopify_utils import update_product_description
         result = update_product_description('shop_name', 'access_token', '12345', '<p>New Description</p>')
 
-        self.assertEqual(result['productSet']['product']['descriptionHtml'], '<p>New Description</p>')
+        self.assertEqual(result['productUpdate']['product']['descriptionHtml'], '<p>New Description</p>')
         mock_run_query.assert_called_once()
 
     def test_sanitize_image_name(self):
@@ -96,7 +96,10 @@ class TestShopifyFunctions(unittest.TestCase):
         alts = ['image1']
         result = assign_images_to_product('shop_name', 'access_token', resource_urls, alts, 'gid://shopify/Product/12345')
 
-        self.assertIsNone(result)  # No exception raised means success
+        self.assertDictEqual(result, {'productCreateMedia':
+                                        {'media': [{'alt': 'image1', 'status': 'READY'}],
+                                         'userErrors': [],
+                                         'product': {'id': 'gid://shopify/Product/12345', 'title': 'Test Product'}}})
         mock_run_query.assert_called_once()
 
     @patch.object(ShopifyGraphqlClient, 'run_query')
