@@ -4,6 +4,7 @@ from shopify_graphql_client.inventory_management import InventoryManagement
 from shopify_graphql_client.media_management import MediaManagement
 from shopify_graphql_client.metafields_management import MetafieldsManagement
 from shopify_graphql_client.product_attributes_management import ProductAttributesManagement
+from shopify_graphql_client.product_create import ProductCreate
 from shopify_graphql_client.product_queries import ProductQueries
 from shopify_graphql_client.product_variants_to_products import ProductVariantsToProducts
 
@@ -12,8 +13,9 @@ logger.addHandler(logging.StreamHandler())
 
 class ShopifyGraphqlClient(InventoryManagement,
                            MediaManagement,
-                           ProductQueries,
                            ProductAttributesManagement,
+                           ProductCreate,
+                           ProductQueries,
                            ProductVariantsToProducts,MetafieldsManagement):
     def __init__(self, shop_name, access_token):
         self.logger = logger
