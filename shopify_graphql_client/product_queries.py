@@ -32,7 +32,7 @@ class ProductQueries:
         return products[0]
 
     def product_by_title(self, title):
-        return self.product_by_query(f"title:'{title}'")
+        return self.product_by_query(f"title:'{title.replace("'", "\\'")}'")
 
     def product_id_by_title(self, title):
         return self.product_by_title(title)['id']
