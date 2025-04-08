@@ -164,7 +164,7 @@ def main():
                                                sheet_name=SHEET_TITLE)
 
     reprocess_titles, reprocess_skus = [], []
-    reprocess_from_sku = ''
+    reprocess_from_sku = 'RSL7513BKZF'
 
     if reprocess_from_sku:
         import itertools
