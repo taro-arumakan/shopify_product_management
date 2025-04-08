@@ -2,6 +2,7 @@ import io
 import logging
 import os
 import re
+import string
 import gspread
 from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2.service_account import Credentials
@@ -248,6 +249,28 @@ def main():
             # TODO: should batch_update
             worksheet.update_acell(cell_address, updated_value)
 
+
+def get_column_indexes(shop_name):
+    if shop_name == 'archive-epke':
+        return dict(
+            start_row = 2,          # 0 base
+            title_column = string.ascii_lowercase.index('d'),
+            column_product_attrs = dict(
+                release_date=string.ascii_lowercase.index('c'),
+                collection=string.ascii_lowercase.index('f'),
+                category=string.ascii_lowercase.index('h'),
+                description=string.ascii_lowercase.index('q'),
+                size_text=string.ascii_lowercase.index('t'),
+                material=string.ascii_lowercase.index('u'),
+                made_in=string.ascii_lowercase.index('v')
+                ),
+            column_variant_attrs = dict(
+                sku=string.ascii_lowercase.index('e'),
+                color=string.ascii_lowercase.index('i'),
+                price=string.ascii_lowercase.index('l'),
+                drive_link=string.ascii_lowercase.index('o'),
+                )
+        )
 
 if __name__ == '__main__':
     main()

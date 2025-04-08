@@ -35,8 +35,14 @@ def process_product_images_to_shopify(sgc, google_credential_path, image_prefix,
         ['KM-24FW-SW01-DBR-S', 'KM-24FW-SW01-DBR-M']
     ]
     """
-    if sgc.shop_name in ['rohseoul', 'archive-epke']:
+    if sgc.shop_name in ['rohseoul']:
         product_handle = '-'.join(list(map(str.lower, product_title.replace(')', '').replace('(', '').split(' '))) + ['25ss'])
+        logger.info(f'product_handle: {product_handle}')
+        product_id = sgc.product_id_by_handle(product_handle)
+    elif sgc.shop_name in ['archive-epke']:
+        product_handle = '-'.join(list(map(str.lower, product_title.replace(')', '').replace('(', '').split(' '))))
+        if product_handle == 'took-bag':
+            product_handle = 'took-bag-1'
         logger.info(f'product_handle: {product_handle}')
         product_id = sgc.product_id_by_handle(product_handle)
     else:
@@ -96,7 +102,7 @@ def products_info_from_sheet(google_credential_path, shop_name, sheet_id, sheet_
         color_column_index = 8
         sku_column_index = 4
         link_column_index = 14
-        start_row = 4
+        start_row = 3
     else:
         raise RuntimeError(f'unknown shop {shop_name}')
 
@@ -146,17 +152,17 @@ def products_info_from_sheet(google_credential_path, shop_name, sheet_id, sheet_
 
 def main():
     load_dotenv(override=True)
-    SHOPNAME = 'rawrowr'
-    ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
+    SHOPNAME = 'archive-epke'
+    ACCESS_TOKEN = os.getenv(f'{SHOPNAME}-ACCESS_TOKEN')
     sgc = ShopifyGraphqlClient(SHOPNAME, ACCESS_TOKEN)
     print(ACCESS_TOKEN)
-    GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
+    GSPREAD_ID = os.getenv(f'{SHOPNAME}-GSPREAD_ID')
 
-    UPLOAD_IMAGE_PREFIX = 'upload_20250408'
+    UPLOAD_IMAGE_PREFIX = 'upload_20250409'
     IMAGES_LOCAL_DIR = f'/Users/taro/Downloads/{SHOPNAME}_{UPLOAD_IMAGE_PREFIX}/'
-    GSPREAD_ID = '1AAW8HHGUER7t77k1I3Q4UghfrVG9kti5uuYKaTJvN2w'
-    SHEET_TITLE = '20250211_v3'
-    image_prefix = UPLOAD_IMAGE_PREFIX
+    SHEET_TITLE = '2025.4/10 Release'
+
+    GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
     product_details = products_info_from_sheet(google_credential_path=GOOGLE_CREDENTIAL_PATH,
                                                shop_name=SHOPNAME,
@@ -164,7 +170,7 @@ def main():
                                                sheet_name=SHEET_TITLE)
 
     reprocess_titles, reprocess_skus = [], []
-    reprocess_from_sku = 'RSL7513BKZF'
+    reprocess_from_sku = ''
 
     if reprocess_from_sku:
         import itertools
@@ -181,7 +187,7 @@ def main():
                   SKUs: {pr['skuss']}
                   Folders: {drive_ids}
                   ''')
-            process_product_images_to_shopify(sgc, GOOGLE_CREDENTIAL_PATH, image_prefix, pr['product_title'], drive_ids, pr['skuss'], IMAGES_LOCAL_DIR)
+            process_product_images_to_shopify(sgc, GOOGLE_CREDENTIAL_PATH, UPLOAD_IMAGE_PREFIX, pr['product_title'], drive_ids, pr['skuss'], IMAGES_LOCAL_DIR)
 
 if __name__ == "__main__":
     main()
