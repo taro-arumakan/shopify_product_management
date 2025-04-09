@@ -67,3 +67,41 @@ class MetafieldsManagement:
         res = res['metafieldDefinitions']['nodes']
         assert len(res) == 1, f'{"Multiple" if res else "No"} metafields found for {namespace}:{key}: {res}'
         return res[0]['id']
+
+    def product_metafield_value_by_product_id(self, product_id, namespace='custom', key='product_description'):
+        query = '''
+        query ProductMetafield($namespace: String!, $key: String!, $ownerId: ID!) {
+            product(id: $ownerId) {
+                metafieldValue: metafield(namespace: $namespace, key: $key) {
+                    value
+                }
+            }
+        }
+        '''
+        variables = {
+            'ownerId': product_id,
+            'namespace': namespace,
+            'key': key
+        }
+        res = self.run_query(query, variables)
+        return res['product']['metafieldValue']['value']
+
+    def convert_rich_text_to_html(self, json_value):
+        def render_node(node):
+            node_type = node.get("type")
+            if node_type == "root":
+                return "".join(render_node(child) for child in node.get("children", []))
+            elif node_type == "paragraph":
+                content = "".join(render_node(child) for child in node.get("children", []))
+                return f"<p>{content}</p>"
+            elif node_type == "heading":
+                level = node.get("level", 1)
+                content = "".join(render_node(child) for child in node.get("children", []))
+                return f"<h{level}>{content}</h{level}>"
+            elif node_type == "text":
+                return node.get("value", "")
+            else:
+                raise RuntimeError(f'unhandled node type: {node_type}')
+
+        parsed = json.loads(json_value)
+        return render_node(parsed)
