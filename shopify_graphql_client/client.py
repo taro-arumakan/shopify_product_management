@@ -1,5 +1,6 @@
 import logging
 import requests
+from shopify_graphql_client.collection_queries import CollectionQueries
 from shopify_graphql_client.inventory_management import InventoryManagement
 from shopify_graphql_client.media_management import MediaManagement
 from shopify_graphql_client.metafields_management import MetafieldsManagement
@@ -12,7 +13,8 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.DEBUG)
 
-class ShopifyGraphqlClient(InventoryManagement,
+class ShopifyGraphqlClient(CollectionQueries,
+                           InventoryManagement,
                            MediaManagement,
                            ProductAttributesManagement,
                            ProductCreate,
