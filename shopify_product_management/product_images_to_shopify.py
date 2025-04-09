@@ -152,7 +152,7 @@ def products_info_from_sheet(google_credential_path, shop_name, sheet_id, sheet_
 
 def main():
     load_dotenv(override=True)
-    SHOPNAME = 'archive-epke'
+    SHOPNAME = 'rawrowr'
     ACCESS_TOKEN = os.getenv(f'{SHOPNAME}-ACCESS_TOKEN')
     sgc = ShopifyGraphqlClient(SHOPNAME, ACCESS_TOKEN)
     print(ACCESS_TOKEN)
@@ -160,7 +160,7 @@ def main():
 
     UPLOAD_IMAGE_PREFIX = 'upload_20250409'
     IMAGES_LOCAL_DIR = f'/Users/taro/Downloads/{SHOPNAME}_{UPLOAD_IMAGE_PREFIX}/'
-    SHEET_TITLE = '2025.4/10 Release'
+    SHEET_TITLE = '20250211_v3'
 
     GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
@@ -169,7 +169,8 @@ def main():
                                                sheet_id=GSPREAD_ID,
                                                sheet_name=SHEET_TITLE)
 
-    reprocess_titles, reprocess_skus = [], []
+    reprocess_titles = ['R BAG CITY WALKER HELMET 010', 'R BAG CITY WALKER TOTE 010', 'R BAG CITY WALKER CROSS 010', ]
+    reprocess_skus = []
     reprocess_from_sku = ''
 
     if reprocess_from_sku:
