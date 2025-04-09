@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 import time
 import statistics
@@ -100,7 +101,7 @@ class MediaManagement:
         mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
         staged_targets = self.generate_staged_upload_targets(local_paths, mime_types)
         self.logger.info(f'generated staged upload targets: {len(staged_targets)}')
-        self.upload_images_to_shopify(staged_targets, local_paths, mime_types)
+        self.upload_images_to_shopify_parallel(staged_targets, local_paths, mime_types)
         self.logger.info(f"Images uploaded for {product_id}, going to remove existing and assign.")
         self.remove_product_media_by_product_id(product_id)
         self.assign_images_to_product([target['resourceUrl'] for target in staged_targets],
@@ -298,31 +299,53 @@ class MediaManagement:
                                             product_id=product_id)
         return [res1, res2, res3]
 
-    def upload_images_to_shopify(self, staged_targets, local_paths, mime_types):
-        res = []
-        for target, local_path, mime_type in zip(staged_targets, local_paths, mime_types):
-            if mime_type in ['image/psd']:
-                continue
-            file_name = local_path.rsplit('/', 1)[-1]
-            self.logger.info(f"  processing {file_name}")
-            payload = {
-                'Content-Type': mime_type,
-                'success_action_status': '201',
-                'acl': 'private',
-            }
-            payload.update({param['name']: param['value']
-                        for param in target['parameters']})
+    def upload_image(self, target, local_path, mime_type):
+        file_name = local_path.rsplit('/', 1)[-1]
+        self.logger.info(f"  processing {file_name}")
+        payload = {
+            'Content-Type': mime_type,
+            'success_action_status': '201',
+            'acl': 'private',
+        }
+        payload.update({param['name']: param['value'] for param in target['parameters']})
+        try:
             with open(local_path, 'rb') as f:
                 self.logger.debug(f"  starting upload of {local_path}")
-                response = requests.post(target['url'],
-                                        files={'file': (file_name, f)},
-                                        data=payload)
+                response = requests.post(
+                    target['url'],
+                    files={'file': (file_name, f)},
+                    data=payload
+                )
             self.logger.debug(f"upload response: {response.status_code}")
             if response.status_code != 201:
                 self.logger.error(f'!!! upload failed !!!\n\n{local_path}:\n{target}\n\n{response.text}\n\n')
                 response.raise_for_status()
-            res.append(response)
-        return res
+            return response
+        except Exception as e:
+            self.logger.error(f"Error uploading {local_path}: {e}")
+            raise
+
+    def upload_images_to_shopify_parallel(self, staged_targets, local_paths, mime_types, max_workers=5):
+        results = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_upload = {
+                executor.submit(self.upload_image, local_path, mime_type): (target, local_path)
+                for target, local_path, mime_type in zip(staged_targets, local_paths, mime_types)
+            }
+            for future in as_completed(future_to_upload):
+                try:
+                    response = future.result()
+                    if response is not None:
+                        results.append(response)
+                except Exception as e:
+                    target, path = future_to_upload[future]
+                    self.logger.error(f"Error uploading file {path}: {e}")
+
+        return results
+
+
+    def upload_images_to_shopify(self, staged_targets, local_paths, mime_types):
+        return [self.upload_image(target, local_path, mime_type) for target, local_path, mime_type in zip(staged_targets, local_paths, mime_types)]
 
     def wait_for_media_processing_completion(self, product_id, timeout_minutes=10):
         poll_interval = 5  # Poll every 5 seconds
