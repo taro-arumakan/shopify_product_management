@@ -169,7 +169,7 @@ def main():
                                                sheet_id=GSPREAD_ID,
                                                sheet_name=SHEET_TITLE)
 
-    reprocess_titles = ['R BAG CITY WALKER HELMET 010', 'R BAG CITY WALKER TOTE 010', 'R BAG CITY WALKER CROSS 010', ]
+    reprocess_titles = []
     reprocess_skus = []
     reprocess_from_sku = ''
 
