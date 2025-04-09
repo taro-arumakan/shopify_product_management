@@ -56,8 +56,8 @@ class InventoryManagement:
 
     def activate_inventory_item(self, inventory_item_id, location_id, available=0):
         query = '''
-        mutation ActivateInventoryItem($inventoryItemId: ID!, $locationId: ID!, $available: Int) {
-          inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId, available: $available) {
+        mutation ActivateInventoryItem($inventoryItemId: ID!, $locationId: ID!%s) {
+          inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId%s) {
                 inventoryLevel {
                     id
                     quantities(names: ["available"]) {
@@ -77,12 +77,13 @@ class InventoryManagement:
                 }
             }
         }
-        '''
+        ''' % ((', $available: Int', ', available: $available') if available else ('', ''))
         variables = {
             'inventoryItemId': inventory_item_id,
             'locationId': location_id,
-            'available': available
             }
+        if available:
+            variables['available'] = available
         res = self.run_query(query, variables)
         if user_errors := res['inventoryActivate']['userErrors']:
             raise RuntimeError(f'Failed to activate an inventory item: {user_errors}')

@@ -22,7 +22,7 @@ class ShopifyGraphqlClient(InventoryManagement,
         self.logger = logger
         self.shop_name = shop_name
         self.access_token = access_token
-        self.base_url = f"https://{shop_name}.myshopify.com/admin/api/graphql.json"
+        self.base_url = f"https://{shop_name}.myshopify.com/admin/api/2025-04/graphql.json"
 
     def sanitize_id(self, identifier, prefix='Product'):
         if identifier.isnumeric():
