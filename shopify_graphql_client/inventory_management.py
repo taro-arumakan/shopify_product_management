@@ -19,6 +19,75 @@ class InventoryManagement:
         assert len(res) == 1, f'{"Multiple" if res else "No"} locations found for {name}: {res}'
         return res[0]['id']
 
+    def enable_and_activate_inventory(self, sku, location_names):
+        inventory_item_id = self.inventory_item_id_by_sku(sku)
+        ress = [self.enable_inventory_tracking(inventory_item_id)]
+        for location_name in location_names:
+            ress.append(self.activate_inventory_item(inventory_item_id,
+                                                     self.location_id_by_name(location_name)))
+        return ress
+
+    def enable_inventory_tracking(self, inventory_item_id):
+        query = """
+        mutation inventoryItemUpdate($id: ID!) {
+            inventoryItemUpdate(id: $id, input: {
+                                                   tracked: true
+                                                }) {
+                inventoryItem {
+                    id
+                    tracked
+                }
+                userErrors {
+                    message
+                }
+            }
+        }
+        """
+        variables = {
+            'id': inventory_item_id,
+            'input': {
+                'tracked': "true"
+            }
+        }
+        res = self.run_query(query, variables)
+        if res['inventoryItemUpdate']['userErrors']:
+            raise Exception(f"Error updating inventory quantity: {res['inventoryItemUpdate']['userErrors']}")
+        return res['inventoryItemUpdate']['inventoryItem']
+
+    def activate_inventory_item(self, inventory_item_id, location_id, available=0):
+        query = '''
+        mutation ActivateInventoryItem($inventoryItemId: ID!, $locationId: ID!, $available: Int) {
+          inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId, available: $available) {
+                inventoryLevel {
+                    id
+                    quantities(names: ["available"]) {
+                        name
+                        quantity
+                    }
+                    item {
+                        id
+                    }
+                    location {
+                        id
+                    }
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        '''
+        variables = {
+            'inventoryItemId': inventory_item_id,
+            'locationId': location_id,
+            'available': available
+            }
+        res = self.run_query(query, variables)
+        if user_errors := res['inventoryActivate']['userErrors']:
+            raise RuntimeError(f'Failed to activate an inventory item: {user_errors}')
+        return res['inventoryActivate']['inventoryLevel']
+
     def inventory_item_id_by_sku(self, sku):
         query = '''
         {
