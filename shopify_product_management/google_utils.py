@@ -17,7 +17,7 @@ logger.setLevel(logging.INFO)
 def get_rows(google_credential_path, sheet_id, sheet_name):
     sheet_index = get_sheet_index_by_title(google_credential_path, sheet_id, sheet_name)
     worksheet = gspread_access(google_credential_path).open_by_key(sheet_id).get_worksheet(sheet_index)
-    return worksheet.get_all_values()
+    return worksheet.get_all_values(value_render_option=gspread.utils.ValueRenderOption.unformatted)
 
 google_credentials = None
 def authenticate_google_api(google_credential_path):
@@ -48,13 +48,12 @@ def gspread_access(google_credential_path):
 def natural_compare(k):
     def convert(text):
         return int(text) if text.isdigit() else text.lower()
-
     return [convert(c) for c in re.split('([0-9]+)', k)]
 
-def drive_images_to_local(google_credential_path, folder_id, local_dir, filename_prefix=''):
+def drive_images_to_local(google_credential_path, folder_id, local_dir, filename_prefix='', sort_key_func=natural_compare):
     os.makedirs(local_dir, exist_ok=True)
-    image_details = get_drive_image_details(google_credential_path, folder_id, filename_prefix)
-    image_details.sort(key=lambda f: natural_compare(f['name']))        # sort by natural order
+    image_details = get_drive_image_details(google_credential_path, folder_id)
+    image_details.sort(key=lambda f: sort_key_func(f['name']))        # sort by natural order
     file_ids = [image['id'] for image in image_details]
     local_paths = [os.path.join(local_dir, f"{filename_prefix}_{str(seq).zfill(3)}_{image['name']}") for seq, image in enumerate(image_details)]
     return [download_and_process_image(google_credential_path, file_id, local_path) for file_id, local_path in zip(file_ids, local_paths)]
