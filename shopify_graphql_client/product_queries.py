@@ -18,6 +18,17 @@ class ProductQueries:
                             value
                         }
                     }
+                    variants (first:10) {
+                        nodes {
+                            id
+                            title
+                            sku
+                            selectedOptions {
+                                name
+                                value
+                            }
+                        }
+                    }
                 }
             }
         }
