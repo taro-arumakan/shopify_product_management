@@ -107,12 +107,12 @@ class ProductCreate:
         res += '</tr></tbody></table>'
         return res
 
-    def get_description_html(self, description, product_care, material, size_text, made_in):
+    def get_description_html(self, description, product_care, material, size_text, made_in, get_size_table_html_func=None):
         description = self.escape_html(description)
         product_care = self.escape_html(product_care)
         material = self.escape_html(material)
         made_in = self.escape_html(made_in)
-        size_table = self.get_size_table_html(size_text)
+        size_table = (get_size_table_html_func or self.get_size_table_html)(size_text)
 
         description_html = product_description_template()
         description_html = description_html.replace('${DESCRIPTION}', description)
