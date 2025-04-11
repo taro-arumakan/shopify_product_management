@@ -97,17 +97,6 @@ class MediaManagement:
         assert len(res) == 1, f'{"Multiple" if res else "No"} files found for {file_name}: {res}'
         return res[0]['id']
 
-    def upload_and_assign_images_to_product(self, product_id, local_paths):
-        mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
-        staged_targets = self.generate_staged_upload_targets(local_paths, mime_types)
-        self.logger.info(f'generated staged upload targets: {len(staged_targets)}')
-        self.upload_images_to_shopify_parallel(staged_targets, local_paths, mime_types)
-        self.logger.info(f"Images uploaded for {product_id}, going to remove existing and assign.")
-        self.remove_product_media_by_product_id(product_id)
-        self.assign_images_to_product([target['resourceUrl'] for target in staged_targets],
-                                      alts=[local_path.rsplit('/', 1)[-1] for local_path in local_paths],
-                                      product_id=product_id)
-
     def assign_images_to_product(self, resource_urls, alts, product_id):
         mutation_query = """
         mutation productCreateMedia($media: [CreateMediaInput!]!, $productId: ID!) {
@@ -292,7 +281,7 @@ class MediaManagement:
         mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
         staged_targets = self.generate_staged_upload_targets(file_names, mime_types)
         self.logger.info(f'generated staged upload targets: {len(staged_targets)}')
-        res1 = self.upload_images_to_shopify(staged_targets, local_paths, mime_types)
+        res1 = self.upload_images_to_shopify_parallel(staged_targets, local_paths, mime_types)
         res2 = self.remove_product_media_by_product_id(product_id)
         res3 = self.assign_images_to_product([target['resourceUrl'] for target in staged_targets],
                                             alts=file_names,
@@ -325,11 +314,11 @@ class MediaManagement:
             self.logger.error(f"Error uploading {local_path}: {e}")
             raise
 
-    def upload_images_to_shopify_parallel(self, staged_targets, local_paths, mime_types, max_workers=5):
+    def upload_images_to_shopify_parallel(self, staged_targets, local_paths, mime_types, max_workers=10):
         results = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_upload = {
-                executor.submit(self.upload_image, local_path, mime_type): (target, local_path)
+                executor.submit(self.upload_image, target, local_path, mime_type): local_path
                 for target, local_path, mime_type in zip(staged_targets, local_paths, mime_types)
             }
             for future in as_completed(future_to_upload):
@@ -338,9 +327,8 @@ class MediaManagement:
                     if response is not None:
                         results.append(response)
                 except Exception as e:
-                    target, path = future_to_upload[future]
-                    self.logger.error(f"Error uploading file {path}: {e}")
-
+                    local_path = future_to_upload[future]
+                    self.logger.error(f"Error uploading file {local_path}: {e}")
         return results
 
 
