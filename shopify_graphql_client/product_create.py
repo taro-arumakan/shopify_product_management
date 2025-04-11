@@ -5,6 +5,63 @@ class ProductCreate:
     """
     A class to handle GraphQL queries related to products creation in Shopify, inherited by the ShopifyGraphqlClient class.
     """
+    def product_create_default_variant(self, title, description_html, vendor, tags, price, sku, handle=None, status='DRAFT', template_suffix=None, metafields=None):
+        query = """
+        mutation productSet($input: ProductSetInput!) {
+            productSet(synchronous: true, input: $input) {
+                product {
+                    id
+                    title
+                    handle
+                    tags
+                    vendor
+                    status
+                    templateSuffix
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        variables = {
+            "input": {
+                "title": title,
+                "descriptionHtml": description_html,
+                "vendor": vendor,
+                "tags": tags,
+                "status": status,
+                "productOptions": [{
+                    'name': 'Title',
+                    'values': [{'name': "Default Title"}]
+                }],
+                "variants": [{
+                    'price': price,
+                    'sku': sku,
+                    'taxable': True,
+                    'position': 1,
+                    "optionValues": [
+                        {
+                            "optionName": "Title",
+                            "name": "Default Title"
+                        }
+                    ]
+                }]
+            }
+        }
+        if handle:
+            variables["input"]["handle"] = handle
+        if template_suffix:
+            variables["input"]["templateSuffix"] = template_suffix
+        if metafields:
+            variables["input"]["metafields"] = metafields
+
+        res = self.run_query(query, variables)
+        if errors := res['productSet']['userErrors']:
+            raise RuntimeError(f"Product creation failed: {errors}")
+        return res['productSet']['product']
+
     def product_create(self, title, description_html, vendor, tags, handle=None, status='DRAFT', template_suffix=None, metafields=None, option_lists=None):
         query = """
         mutation productSet($input: ProductSetInput!) {
