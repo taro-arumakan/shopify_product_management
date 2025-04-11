@@ -2,7 +2,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-import google_utils
+from shopify_product_management import google_utils
 from shopify_graphql_client.client import ShopifyGraphqlClient
 
 
@@ -48,15 +48,13 @@ def process_product_images_to_shopify(sgc, google_credential_path, image_prefix,
     else:
         product_id = sgc.product_id_by_title(product_title)
 
-    drive_image_details = []
+    local_paths = []
     variant_image_positions = []
 
     for drive_id, skus in zip(drive_ids, skuss):
-        variant_image_positions.append(len(drive_image_details))
-        drive_image_details += google_utils.get_drive_image_details(google_credential_path, drive_id, download_filename_prefix=f'{image_prefix}_{skus[0]}_')
+        variant_image_positions.append(len(local_paths))
+        local_paths += google_utils.drive_images_to_local(google_credential_path, drive_id, images_local_dir, download_filename_prefix=f'{image_prefix}_{skus[0]}_')
 
-    logger.debug(f"Drive Image Details: {drive_image_details}")
-    local_paths = google_utils.download_images_from_drive(google_credential_path, drive_image_details, images_local_dir)
     sgc.upload_and_assign_images_to_product(product_id, local_paths)
 
     for skus, image_position in zip(skuss, variant_image_positions):

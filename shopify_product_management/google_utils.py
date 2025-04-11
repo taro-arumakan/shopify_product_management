@@ -51,8 +51,15 @@ def natural_compare(k):
 
     return [convert(c) for c in re.split('([0-9]+)', k)]
 
+def drive_images_to_local(google_credential_path, folder_id, local_dir, filename_prefix=''):
+    os.makedirs(local_dir, exist_ok=True)
+    image_details = get_drive_image_details(google_credential_path, folder_id, filename_prefix)
+    image_details.sort(key=lambda f: natural_compare(f['name']))        # sort by natural order
+    file_ids = [image['id'] for image in image_details]
+    local_paths = [os.path.join(local_dir, f"{filename_prefix}_{str(seq).zfill(3)}_{image['name']}") for seq, image in enumerate(image_details)]
+    return [download_and_process_image(google_credential_path, file_id, local_path) for file_id, local_path in zip(file_ids, local_paths)]
 
-def get_drive_image_details(google_credential_path, folder_id, download_filename_prefix, rename=True):
+def get_drive_image_details(google_credential_path, folder_id):
     service = gdrive_service(google_credential_path)
     results = service.files().list(
                         q=f"'{folder_id}' in parents",
@@ -61,22 +68,7 @@ def get_drive_image_details(google_credential_path, folder_id, download_filename
                         supportsAllDrives=True,
                     ).execute()
     items = results.get('files', [])
-
-    # Sort files using natural order
-    items.sort(key=lambda f: natural_compare(f['name']))
-
-    res = []
-    sequence = 0
-
-    for sequence, item in enumerate(items):
-        if item['mimeType'].startswith('image/'):
-            file_metadata = {
-                'name': f"{download_filename_prefix}{str(sequence).zfill(2)}_{item['name']}" if rename else item['name'],
-                'mimeType': item['mimeType'],
-                'id': item['id'],
-            }
-            res.append(file_metadata)
-    return res
+    return [item for item in items if item['mimeType'].startswith('image/')]
 
 def resize_image_to_limit(image_path, output_path, max_megapixels=20):
     with Image.open(image_path) as img:
@@ -98,38 +90,12 @@ def resize_image_to_limit(image_path, output_path, max_megapixels=20):
             resized_img.save(output_path, **kwargs)
             logger.info(f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}")
 
-def download_and_process_image(google_credential_path, file_details, local_dir):
-    local_path = os.path.join(local_dir, file_details['name'])
+def download_and_process_image(google_credential_path, file_id, local_path):
     if not os.path.exists(local_path):
-        logger.info(f"  starting download of {file_details['name']} to {local_path}")
-        download_file_from_drive(google_credential_path, file_details['id'], local_path)
+        logger.info(f"  starting download of {file_id} to {local_path}")
+        download_file_from_drive(google_credential_path, file_id, local_path)
         resize_image_to_limit(local_path, local_path)
     return local_path
-
-def download_images_from_drive_parallel(google_credential_path, drive_image_details, local_dir, max_workers=5):
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    if not os.path.exists(local_dir):
-        os.mkdir(local_dir)
-
-    results = []
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_file = {
-            executor.submit(download_and_process_image, google_credential_path, file_details, local_dir): file_details
-            for file_details in drive_image_details
-        }
-        for future in as_completed(future_to_file):
-            try:
-                local_path = future.result()
-                results.append(local_path)
-            except Exception as e:
-                logger.error(f"Error downloading file {future_to_file[future]['name']}: {e}")
-                raise e
-    return results
-
-def download_images_from_drive(google_credential_path, drive_image_details, local_dir):
-    if not os.path.exists(local_dir):
-        os.mkdir(local_dir)
-    return [download_and_process_image(google_credential_path, file_details, local_dir) for file_details in drive_image_details]
 
 def download_file_from_drive(google_credential_path, file_id, destination_path):
     service = gdrive_service(google_credential_path)
