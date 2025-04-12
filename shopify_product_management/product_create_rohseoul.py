@@ -12,7 +12,7 @@ def get_value(row, column_index, column_name):
     if column_name in ['release_date'] and isinstance(v, int):
         assert isinstance(v, int), f'expected int for {column_name}, got {type(v)}: {v}'
         v = str(datetime.date(1900, 1, 1) + datetime.timedelta(days=v))
-    elif column_name in ['price']:
+    elif column_name in ['price', 'stock']:
         assert isinstance(v, int), f'expected int for {column_name}, got {type(v)}: {v}'
     else:
         assert isinstance(v, str), f'expected str for {column_name}, got {type(v)}: {v}'
@@ -36,6 +36,7 @@ def product_info_lists_from_sheet(google_credential_path, sheet_id, sheet_name):
         sku=string.ascii_lowercase.index('f'),
         color=string.ascii_lowercase.index('j'),
         price=string.ascii_lowercase.index('m'),
+        stock=string.ascii_lowercase.index('n'),
         drive_link=string.ascii_lowercase.index('p'),
         )
     res = []
@@ -100,6 +101,13 @@ def create_products(sgc:ShopifyGraphqlClient, product_info_list, vendor):
         ress.append(create_a_product(sgc, product_info, vendor, description_html_map))
     return ress
 
+def update_stocks(sgc:ShopifyGraphqlClient, product_info_list):
+    location_id = sgc.location_id_by_name('Shop location')
+    return [sgc.set_inventory_quantity_by_sku_and_location_id(product_info['sku'],
+                                                              location_id,
+                                                              product_info['stock'])
+            for product_info in product_info_list]
+
 def sort_key_func(k):
     def convert(text):
         return int(text) if text.isdigit() else text.lower()
@@ -120,8 +128,10 @@ def main():
     product_info_list = product_info_lists_from_sheet(cred.google_credential_path, cred.google_sheet_id, '25SS 2차오픈(4월)(Summer 25)')
     sgc = ShopifyGraphqlClient(cred.shop_name, cred.access_token)
     import pprint
-    # ress = create_products(sgc, product_info_list, cred.shop_name)
-    # pprint.pprint(ress)
+    ress = create_products(sgc, product_info_list, cred.shop_name)
+    pprint.pprint(ress)
+    ress = update_stocks(sgc, product_info_list)
+    pprint.pprint(ress)
     ress = []
     for product_info in product_info_list:
         assert product_info['drive_link'], f"no drive link for {product_info['title']}"
