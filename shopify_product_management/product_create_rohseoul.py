@@ -1,32 +1,17 @@
-import datetime
 import logging
 import re
 import string
+from google_api_interface import GoogleApiInterface
 from shopify_graphql_client.client import ShopifyGraphqlClient
-from shopify_product_management.google_utils import get_rows, drive_link_to_id, drive_images_to_local
 
-logging.getLogger().setLevel(logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
-def get_value(row, column_index, column_name):
-    v = row[column_index]
-    if column_name in ['release_date'] and isinstance(v, int):
-        assert isinstance(v, int), f'expected int for {column_name}, got {type(v)}: {v}'
-        v = str(datetime.date(1900, 1, 1) + datetime.timedelta(days=v))
-    elif column_name in ['price', 'stock']:
-        assert isinstance(v, int), f'expected int for {column_name}, got {type(v)}: {v}'
-    else:
-        assert isinstance(v, str), f'expected str for {column_name}, got {type(v)}: {v}'
-        v = v.strip()
-    return v
-
-def product_info_lists_from_sheet(google_credential_path, sheet_id, sheet_name):
-    rows = get_rows(google_credential_path, sheet_id=sheet_id, sheet_name=sheet_name)
-
-    start_row = 16           # 0 base
-    title_column = string.ascii_lowercase.index('e')
+def product_info_lists_from_sheet(gai:GoogleApiInterface, sheet_id, sheet_name):
+    start_row = 2
     column_product_attrs = dict(
         status=string.ascii_lowercase.index('a'),
         release_date=string.ascii_lowercase.index('c'),
+        title=string.ascii_lowercase.index('e'),
         collection=string.ascii_lowercase.index('g'),
         category=string.ascii_lowercase.index('h'),
         description=string.ascii_lowercase.index('r'),
@@ -39,19 +24,7 @@ def product_info_lists_from_sheet(google_credential_path, sheet_id, sheet_name):
         stock=string.ascii_lowercase.index('n'),
         drive_link=string.ascii_lowercase.index('p'),
         )
-    res = []
-    for row in rows[start_row:]:
-        if row[column_product_attrs['status']].strip() != 'NEW':
-            logging.info('skipping row %s', row[title_column])
-            continue
-        title = row[title_column]
-        product_dict = dict(title=title)
-        for k, ci in column_product_attrs.items():
-            product_dict[k] = get_value(row, ci, k)
-        product_dict['handle'] = '-'.join(title.lower().split(' ') + product_dict['color'].lower().split(' '))
-        res.append(product_dict)                        # done processing the last product
-    return res
-
+    return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs)
 
 def get_size_table_html(size_text):
     lines = list(filter(None, map(str.strip, size_text.split('\n'))))
@@ -77,6 +50,7 @@ def get_description_html(sgc:ShopifyGraphqlClient, description, material, size_t
     return sgc.get_description_html(description, product_care, material, size_text, made_in, get_size_table_html_func=get_size_table_html)
 
 def create_a_product(sgc:ShopifyGraphqlClient, product_info, vendor, description_html_map):
+    logging.info(f'creating {product_info["title"]}')
     description_html = description_html_map[product_info['title']]
     tags = ','.join([product_info['release_date'], product_info['collection'], product_info['category']])
     res = sgc.product_create_default_variant(handle=product_info['handle'],
@@ -102,6 +76,7 @@ def create_products(sgc:ShopifyGraphqlClient, product_info_list, vendor):
     return ress
 
 def update_stocks(sgc:ShopifyGraphqlClient, product_info_list):
+    logging.info('updating inventory')
     location_id = sgc.location_id_by_name('Shop location')
     return [sgc.set_inventory_quantity_by_sku_and_location_id(product_info['sku'],
                                                               location_id,
@@ -113,21 +88,23 @@ def sort_key_func(k):
         return int(text) if text.isdigit() else text.lower()
     return ['0'] if k.split('.')[0] == 'b1' else [convert(c) for c in re.split('([0-9]+)', k)]
 
-def process_product_images(sgc:ShopifyGraphqlClient, product_info, google_credential_path):
+def process_product_images(sgc:ShopifyGraphqlClient, gai:GoogleApiInterface, product_info):
     product_id = sgc.product_id_by_sku(product_info['sku'])
-    drive_id = drive_link_to_id(product_info['drive_link'])
-    local_paths = drive_images_to_local(google_credential_path, drive_id,
-                                        '/Users/taro/Downloads/rohseoul20250411/',
-                                        f'upload_20250411_{product_info['sku']}',
-                                        sort_key_func=sort_key_func)
+    drive_id = gai.drive_link_to_id(product_info['drive_link'])
+    local_paths = gai.drive_images_to_local(drive_id,
+                                            '/Users/taro/Downloads/rohseoul20250411/',
+                                            f'upload_20250411_{product_info['sku']}',
+                                            sort_key_func=sort_key_func)
     return sgc.upload_and_assign_images_to_product(product_id, local_paths)
 
 def main():
     from utils import credentials
-    cred = credentials('rohseoul')
-    product_info_list = product_info_lists_from_sheet(cred.google_credential_path, cred.google_sheet_id, '25SS 2차오픈(4월)(Summer 25)')
-    sgc = ShopifyGraphqlClient(cred.shop_name, cred.access_token)
     import pprint
+    cred = credentials('rohseoul')
+    gai = GoogleApiInterface(cred.google_credential_path)
+    product_info_list = product_info_lists_from_sheet(gai, cred.google_sheet_id, '25SS 2차오픈(4월)(Summer 25)')
+    product_info_list = [product_info for product_info in product_info_list if product_info['status'] == 'NEW']
+    sgc = ShopifyGraphqlClient(cred.shop_name, cred.access_token)
     ress = create_products(sgc, product_info_list, cred.shop_name)
     pprint.pprint(ress)
     ress = update_stocks(sgc, product_info_list)
@@ -135,7 +112,7 @@ def main():
     ress = []
     for product_info in product_info_list:
         assert product_info['drive_link'], f"no drive link for {product_info['title']}"
-        ress.append(process_product_images(sgc, product_info, cred.google_credential_path))
+        ress.append(process_product_images(sgc, gai, product_info))
     pprint.pprint(ress)
 
 if __name__ == '__main__':
