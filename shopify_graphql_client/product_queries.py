@@ -64,6 +64,9 @@ class ProductQueries:
     def product_id_by_handle(self, handle):
         return self.product_by_handle(handle)['id']
 
+    def products_by_tag(self, tag):
+        return self.products_by_query(f"tag:'{tag}'")
+
     def product_variants_by_product_id(self, product_id):
         product_id = self.sanitize_id(product_id)
         product_id = product_id.rsplit('/', 1)[-1]
