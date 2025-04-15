@@ -10,6 +10,7 @@ class ProductQueries:
                     id
                     title
                     handle
+                    tags
                     metafields (first:10) {
                         nodes {
                             id
@@ -44,6 +45,9 @@ class ProductQueries:
         if len(products) != 1:
             raise RuntimeError(f"{'Multiple' if products else 'No'} products found for {query_string}: {products}")
         return products[0]
+
+    def product_by_id(self, identifier):
+        return self.products_by_query(f"id:'{identifier.rsplit('/', 1)[-1]}'")[0]
 
     def products_by_title(self, title):
         return self.products_by_query(f"title:'{title.replace("'", "\\'")}'")
