@@ -5,7 +5,7 @@ class ProductQueries:
     def products_by_query(self, query_string):
         query = """
         query productsByQuery($query_string: String!) {
-            products(first: 10, query: $query_string, sortKey: TITLE) {
+            products(first: 100, query: $query_string, sortKey: TITLE) {
                 nodes {
                     id
                     title
@@ -38,6 +38,7 @@ class ProductQueries:
             "query_string": query_string
         }
         res = self.run_query(query, variables)
+        assert len(res) < 100, f"Too many products found for {query_string}: {len(res)}"
         return res['products']['nodes']
 
     def product_by_query(self, query_string):
