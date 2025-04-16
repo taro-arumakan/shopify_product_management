@@ -88,3 +88,14 @@ class GoogleDriveApiInterface:
         if items and len(items) > 1:
             raise RuntimeError(f"Multiple folders found with the name '{folder_name}' in parent folder '{parent_folder_id}'.")
         return items[0]['id']
+
+    def list_folders(self, parent_folder_id):
+        query = f"'{parent_folder_id}' in parents and mimeType='application/vnd.google-apps.folder'"
+        results = self.drive_service.files().list(
+                q=query,
+                pageSize=1000,
+                fields="files(id, name)",
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+            ).execute()
+        return results['files']
