@@ -1,5 +1,5 @@
-from shopify_graphql_client import ShopifyGraphqlClient
-import google_utils
+import shopify_graphql_client
+import google_api_interface
 
 import re
 import string
@@ -22,13 +22,10 @@ def get_updated_description(sgc, product_id):
     return updated_description
 
 def main():
-    from dotenv import load_dotenv
-    import os
-    assert load_dotenv(dotenv_path='.env', override=True)
     shop_name = 'apricot-studios'
-    access_token = os.getenv(f'{shop_name}-ACCESS_TOKEN')
-    sgc = ShopifyGraphqlClient(shop_name, access_token)
-    rows = google_utils.get_rows(os.environ["GOOGLE_CREDENTIAL_PATH"], os.environ[f'{shop_name}-GSPREAD_ID'], 'Products Master')
+    sgc = shopify_graphql_client.get(shop_name)
+    gai = google_api_interface.get(shop_name)
+    rows = gai.worksheet_rows(gai.sheet_id, 'Products Master')
     for row in rows[1:]:
         title = row[string.ascii_lowercase.index('b')].strip()
         if title:

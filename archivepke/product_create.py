@@ -42,7 +42,7 @@ def create_a_product(sgc, product_info, vendor):
                               vendor=vendor, tags=tags, option_lists=options)
 
 def main():
-    from shopify_product_management.utils import credentials
+    from utils import credentials
     cred = credentials('archive-epke')
     gai = GoogleApiInterface(cred.google_credential_path)
     product_info_list = product_info_lists_from_sheet(gai, cred.google_sheet_id, '2025.4/10 Release')

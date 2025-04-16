@@ -1,18 +1,8 @@
-import os
 import re
-from dotenv import load_dotenv
-from shopify_product_management import shopify_utils
-from shopify_product_management.google_utils import gspread_access, get_sheet_index_by_title
+import shopify_graphql_client
+import google_api_interface
 
-load_dotenv(override=True)
 SHOPNAME = 'apricot-studios'
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-print(ACCESS_TOKEN)
-GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
-
-GSPREAD_ID = '1yVzpgcrgNR7WxUYfotEnhYFMbc79l1O4rl9CamB2Kqo'
-SHEET_TITLE = 'Products Master'
-
 
 def is_digit(s):
     try:
@@ -81,11 +71,10 @@ def text_to_html_tables_and_paragraphs(text):
     return html_output
 
 
-
 def main():
-    sheet_index = get_sheet_index_by_title(GOOGLE_CREDENTIAL_PATH, GSPREAD_ID, SHEET_TITLE)
-    worksheet = gspread_access(GOOGLE_CREDENTIAL_PATH).open_by_key(GSPREAD_ID).get_worksheet(sheet_index)
-    rows = worksheet.get_all_values()
+    gai = google_api_interface.get(SHOPNAME)
+    rows = gai.worksheet_rows(gai.sheet_id, 'Product Master')
+    sgc = shopify_graphql_client.get(SHOPNAME)
 
     for row in rows[1:]:
         title = row[1].strip()
@@ -98,10 +87,10 @@ def main():
 
         size_table_html = text_to_html_tables_and_paragraphs(size_text)
         print(size_table_html)
-        # product_id = shopify_utils.product_id_by_title(SHOPNAME, ACCESS_TOKEN, title)
-        # res = shopify_utils.update_size_table_html_metafield(SHOPNAME, ACCESS_TOKEN, product_id, size_table_html)
-        # print(res)
-        # break
+        product_id = sgc.product_id_by_title(title)
+        res = sgc.update_size_table_html_metafield(product_id, size_table_html)
+        print(res)
+        break
     print('done updating')
 
 if __name__ == '__main__':
