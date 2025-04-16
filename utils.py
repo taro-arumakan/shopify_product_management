@@ -1,6 +1,13 @@
 import os
 from dotenv import load_dotenv
-from collections import namedtuple
+from dataclasses import dataclass
+
+@dataclass
+class Credentials:
+    shop_name: str
+    access_token: str
+    google_credential_path: str
+    google_sheet_id: str
 
 def credentials(shop_name):
     assert(load_dotenv(override=True))
@@ -13,5 +20,4 @@ def credentials(shop_name):
             'google_credential_path': google_credential_path,
             'google_sheet_id': google_sheet_id
         }
-    cred = namedtuple('Credentials', res.keys())
-    return cred(*res.values())
+    return Credentials(**res)
