@@ -1,25 +1,21 @@
-from shopify_graphql_client.client import ShopifyGraphqlClient
-from google_utils import get_rows
+import pprint
 import string
+import google_api_interface
+import shopify_graphql_client
+
 
 def main():
-    from dotenv import load_dotenv
-    import os
-    import pprint
 
-    load_dotenv(override=True, dotenv_path='.env')
     shop_name = 'archive-epke'
-    access_token = os.getenv(f'{shop_name}-ACCESS_TOKEN')
-    sgc = ShopifyGraphqlClient(shop_name, access_token)
-
-    sheet_id = os.getenv(f'{shop_name}-GSPREAD_ID')
     sheet_name = '2025.4/10 Release'
-    google_credential_path = os.getenv('GOOGLE_CREDENTIAL_PATH')
+    gai = google_api_interface.get(shop_name)
+    rows = gai.worksheet_rows(gai.sheet_id, sheet_name)
 
-    rows = get_rows(google_credential_path, sheet_id=sheet_id, sheet_name=sheet_name)
+    sgc = shopify_graphql_client.get(shop_name)
 
     location_names = ['Archivépke Warehouse', 'Envycube Warehouse']
     aw_location_id = sgc.location_id_by_name(location_names[0])
+
     for row in rows[2:]:
         sku = row[string.ascii_lowercase.index('e')]
         print(sku)
