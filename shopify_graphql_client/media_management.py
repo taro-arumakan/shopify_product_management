@@ -335,7 +335,7 @@ class MediaManagement:
         return [self.upload_image(target, local_path, mime_type) for target, local_path, mime_type in zip(staged_targets, local_paths, mime_types)]
 
     def wait_for_media_processing_completion(self, product_id, timeout_minutes=10):
-        poll_interval = 1  # Poll every 1 second
+        poll_interval = .5  # Poll every 0.5 second
         max_attempts = int((timeout_minutes * 60) / poll_interval)
         attempts = 0
 
