@@ -2,24 +2,29 @@ import datetime
 import gspread
 
 class GoogleSheetsApiInterface:
-    def to_products_list(self, sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map=None):
+    def to_products_list(self, sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map=None, handle_suffix=None, row_filter_func=None):
         if not variant_attr_column_map:
+            # TODO this is wrong - for color options as products brand such as KUME, they still have size variants.
             res = self.variants_as_products_list(sheet_id, sheet_title, start_row, product_attr_column_map)
         else:
-            res = self.products_with_variants_list(sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map)
+            res = self.products_with_variants_list(sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map, handle_suffix, row_filter_func)
         return res
 
-    def products_with_variants_list(self, sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map):
+    def products_with_variants_list(self, sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map, handle_suffix=None, row_filter_func=None):
         rows = self.worksheet_rows(sheet_id, sheet_title)
         current_title = ''
         res = []
         for row in rows[start_row:]:
-            title = row[product_attr_column_map['title']]
+            if row_filter_func and not row_filter_func(row):
+                continue
+            title = row[product_attr_column_map['title']].strip()
             if title != current_title:
                 if current_title:
                     res.append(product_dict)            # done processing all variants of a product
                 current_title, product_dict = title, {}
                 product_dict['title'] = title
+                if handle_suffix:
+                    product_dict['handle'] = '-'.join(title.lower().split(' ') + [handle_suffix])
                 for k, ci in product_attr_column_map.items():
                     product_dict[k] = self.get_cell_value(row, ci, k)
             for k, ci in variant_attr_column_map.items():
