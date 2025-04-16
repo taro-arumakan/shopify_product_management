@@ -20,6 +20,14 @@ def get_product_description(desc, material, size_text, origin):
   }
   return res
 
+def get_product_care(product_care_text):
+    res = {
+        'type': 'root',
+        'children': [
+            {'children': [{'type': 'text', 'value': product_care_text.strip('\"')}], 'type': 'paragraph'},
+        ]
+    }
+    return res
 
 def main():
     shop_name = 'rawrowr'
@@ -37,11 +45,18 @@ def main():
         size_text = row[string.ascii_lowercase.index('k')]
         origin = row[string.ascii_lowercase.index('l')]
 
+        product_care_text = row[string.ascii_lowercase.index('i')]
+
         product_description = get_product_description(desc, material, size_text, origin)
-        assert product_description, f'product_description is empty  for {title}'
+        product_care = get_product_care(product_care_text)
+
+        assert product_description and product_care, f'product_description or product_care is empty for {title}'
         product_id = sgc.product_id_by_title(title)
         res1 = sgc.update_product_description_metafield(product_id, product_description)
-        pprint.pprint(res1)
+
+        res2 = sgc.update_product_care_metafield(product_id, product_care)
+
+        pprint.pprint([res1, res2])
 
 
 if __name__ == '__main__':

@@ -50,6 +50,9 @@ class MetafieldsManagement:
     def update_product_description_metafield(self, product_id, desc):
         return self.update_product_metafield(product_id, 'custom', 'product_description', json.dumps(desc))
 
+    def update_product_care_metafield(self, product_id, product_care):
+        return self.update_product_metafield(product_id, 'custom', 'product_care', json.dumps(product_care))
+
     def update_size_table_html_metafield(self, product_id, html_text):
         return self.update_product_metafield(product_id, 'custom', 'size_table_html', html_text)
 
