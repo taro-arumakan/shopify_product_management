@@ -57,7 +57,7 @@ class GoogleSheetsApiInterface:
         v = row[column_index]
         if column_name in ['release_date'] and isinstance(v, int):
             assert isinstance(v, int), f'expected int for {column_name}, got {type(v)}: {v}'
-            v = str(datetime.date(1900, 1, 1) + datetime.timedelta(days=v))
+            v = str(datetime.date(1899, 12, 30) + datetime.timedelta(days=v))
         elif column_name in ['price', 'stock']:
             assert isinstance(v, (int, float)), f'expected int for {column_name}, got {type(v)}: {v}'
             v = int(v)
