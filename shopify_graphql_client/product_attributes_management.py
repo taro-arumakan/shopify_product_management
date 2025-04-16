@@ -1,12 +1,3 @@
-def sanitize_image_name(image_name):
-    return image_name.replace(' ', '_').replace('[', '').replace(']', '_').replace('(', '').replace(')', '')
-
-def image_htmlfragment_in_description(image_name, sequence, shopify_url_prefix):
-    animation_classes = ['reveal_tran_bt', 'reveal_tran_rl', 'reveal_tran_lr', 'reveal_tran_tb']
-    animation_class = animation_classes[sequence % 4]
-    return f'<p class="{animation_class}"><img src="{shopify_url_prefix}/files/{sanitize_image_name(image_name)}" alt=""></p>'
-
-
 class ProductAttributesManagement:
     """
     Product attributes management queries. Inherited by the ShopifyGraphqlClient class.
@@ -75,8 +66,16 @@ class ProductAttributesManagement:
         staged_targets = self.generate_staged_upload_targets(local_paths, mime_types)
         self.logger.info(f'generated staged upload targets: {len(staged_targets)}')
         self.upload_images_to_shopify(staged_targets, local_paths, mime_types)
-        description = '\n'.join(image_htmlfragment_in_description(local_path.rsplit('/', 1)[-1], i, shopify_url_prefix) for i, local_path in enumerate(local_paths))
+        description = '\n'.join(self.image_htmlfragment_in_description(local_path.rsplit('/', 1)[-1], i, shopify_url_prefix) for i, local_path in enumerate(local_paths))
         self.assign_images_to_product([target['resourceUrl'] for target in staged_targets],
                                        alts=[local_path.rsplit('/', 1)[-1] for local_path in local_paths],
                                        product_id=dummy_product_id)
         return self.update_product_description(product_id, description)
+
+    def sanitize_image_name(self, image_name):
+        return image_name.replace(' ', '_').replace('[', '').replace(']', '_').replace('(', '').replace(')', '')
+
+    def image_htmlfragment_in_description(self, image_name, sequence, shopify_url_prefix):
+        animation_classes = ['reveal_tran_bt', 'reveal_tran_rl', 'reveal_tran_lr', 'reveal_tran_tb']
+        animation_class = animation_classes[sequence % 4]
+        return f'<p class="{animation_class}"><img src="{shopify_url_prefix}/files/{self.sanitize_image_name(image_name)}" alt=""></p>'

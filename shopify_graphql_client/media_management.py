@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 import time
 import statistics
-from shopify_graphql_client.product_attributes_management import sanitize_image_name
 
 def is_evenly_spaced_stddev(lst, max_stddev=1.0):
     if len(lst) < 3:
@@ -370,7 +369,7 @@ class MediaManagement:
         return self._replace_image_files_with_staging(staged_targets, local_paths)
 
     def _replace_image_files_with_staging(self, staged_targets, local_paths):
-        filenames = [sanitize_image_name(path.rsplit('/', 1)[-1]) for path in local_paths]
+        filenames = [self.sanitize_image_name(path.rsplit('/', 1)[-1]) for path in local_paths]
         file_ids = [self.file_id_by_file_name(filename) for filename in filenames]
         resource_urls = [target['resourceUrl'] for target in staged_targets]
         query = """

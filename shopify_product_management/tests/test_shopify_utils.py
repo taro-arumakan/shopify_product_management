@@ -25,13 +25,15 @@ class TestShopifyFunctions(unittest.TestCase):
         mock_run_query.assert_called_once()
 
     def test_sanitize_image_name(self):
-        from shopify_graphql_client.product_attributes_management import sanitize_image_name
-        result = sanitize_image_name('Dummy Product [Special Edition]_product_details_01.png')
+        from shopify_graphql_client import ShopifyGraphqlClient
+        sgc = ShopifyGraphqlClient('dummy_shop_name', 'dummy_access_token')
+        result = sgc.sanitize_image_name('Dummy Product [Special Edition]_product_details_01.png')
         self.assertEqual(result, 'Dummy_Product_Special_Edition__product_details_01.png')
 
     def test_image_htmlfragment_in_description(self):
-        from shopify_graphql_client.product_attributes_management import image_htmlfragment_in_description
-        result = image_htmlfragment_in_description('example_image.png', 2, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
+        from shopify_graphql_client import ShopifyGraphqlClient
+        sgc = ShopifyGraphqlClient('dummy_shop_name', 'dummy_access_token')
+        result = sgc.image_htmlfragment_in_description('example_image.png', 2, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
         self.assertIn('<p class="reveal_tran_lr">', result)
         self.assertIn('<img src="https://cdn.shopify.com/s/files/1/0745/9435/3408/files/example_image.png"', result)
 
