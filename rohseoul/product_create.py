@@ -54,18 +54,19 @@ def get_description_html(sgc:ShopifyGraphqlClient, description, material, size_t
 5: アルコール、オイル、香水、化粧品などにより製品が損傷することがありますので、ご使用の際はご注意ください。'''
     return sgc.get_description_html(description, product_care, material, size_text, made_in, get_size_table_html_func=get_size_table_html)
 
+def populate_option(product_info, option1_key):
+    return [[{option1_key: option1[option1_key]}, option1['price'], option1['sku']] for option1 in product_info['options']]
+
 def create_a_product(sgc:ShopifyGraphqlClient, product_info, vendor, description_html_map):
     logging.info(f'creating {product_info["title"]}')
     description_html = description_html_map[product_info['title']]
     tags = ','.join([product_info['release_date'], product_info['collection'], product_info['category']])
-    options = [[{'カラー': color}, price, sku] for color, price, sku
-               in zip(product_info['color'], product_info['price'], product_info['sku'])]
-
+    options = populate_option(product_info, 'カラー')
     res = sgc.product_create(title=product_info['title'],
                              handle=product_info['handle'],
                              description_html=description_html,
                              vendor=vendor, tags=tags, option_lists=options)
-    res2 = [sgc.enable_and_activate_inventory(sku, []) for sku in product_info['sku']]
+    res2 = [sgc.enable_and_activate_inventory(variant_info['sku'], []) for variant_info in product_info['options']]
     return (res, res2)
 
 def create_products(sgc:ShopifyGraphqlClient, product_info_list, vendor):
@@ -83,7 +84,9 @@ def create_products(sgc:ShopifyGraphqlClient, product_info_list, vendor):
 def update_stocks(sgc:ShopifyGraphqlClient, product_info_list):
     logging.info('updating inventory')
     location_id = sgc.location_id_by_name('Shop location')
-    sku_stock_map = {sku: stock for product_info in product_info_list for sku, stock in zip(product_info['sku'], product_info['stock'])}
+    sku_stock_map = {sku: stock for product_info in product_info_list
+                                for variant_info in product_info['options']
+                                for sku, stock in zip(variant_info['sku'], variant_info['stock'])}
     return [sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
             for sku, stock in sku_stock_map.items()]
 
@@ -94,27 +97,26 @@ def sort_key_func(k):
 
 def process_product_images(sgc:ShopifyGraphqlClient, gai:GoogleApiInterface, product_info, handle_suffix):
     product_id = sgc.product_id_by_handle('-'.join(product_info['title'].lower().split(' ') + [handle_suffix]))
-    drive_ids = [gai.drive_link_to_id(drive_id) for drive_id in product_info['drive_link']]
-    skuss = [[sku] for sku in product_info['sku']]
-
     local_paths = []
-    variant_image_positions = []
+    image_position = 0
+    for variant in product_info['options']:
+        assert variant['drive_link'], f"no drive link for {product_info['title'], {variant}}"
+        drive_id = gai.drive_link_to_id(variant['drive_link'])
+        skus = [variant['sku']]
 
-    for drive_id, skus in zip(drive_ids, skuss):
-        variant_image_positions.append(len(local_paths))
+        image_position += len(local_paths)
         local_paths += gai.drive_images_to_local(drive_id,
-                                                 '/Users/taro/Downloads/rohseoul20250411/',
-                                                 f'upload_20250411_{skus[0]}',
-                                                 sort_key_func=sort_key_func)
-    ress = []
-    ress.append(sgc.upload_and_assign_images_to_product(product_id, local_paths))
-    for skus, image_position in zip(skuss, variant_image_positions):
+                                                '/Users/taro/Downloads/rohseoul20250417_test/',
+                                                f'upload_20250411_{skus[0]}',
+                                                sort_key_func=sort_key_func)
+        ress = []
+        ress.append(sgc.upload_and_assign_images_to_product(product_id, local_paths))
         ress.append(sgc.assign_image_to_skus_by_position(product_id, image_position, skus))
-    return ress
+        return ress
 
 
 def main():
-    handle_suffix = '25ss-2nd'
+    handle_suffix = 'dummy-test'
     from utils import credentials
     import pprint
     cred = credentials('rohseoul')
@@ -124,8 +126,8 @@ def main():
     product_info_list = [product_info for product_info in product_info_list if product_info['status'] == 'NEW']
     assert len_list == len(product_info_list)
     sgc = ShopifyGraphqlClient(cred.shop_name, cred.access_token)
-    # ress = create_products(sgc, product_info_list, cred.shop_name)
-    # pprint.pprint(ress)
+    ress = create_products(sgc, product_info_list, cred.shop_name)
+    pprint.pprint(ress)
     # ress = update_stocks(sgc, product_info_list)
     # pprint.pprint(ress)
     ress = []
@@ -134,7 +136,6 @@ def main():
         if product_info['title'] == reprocess_from_title:
             break
     for product_info in product_info_list[index:]:
-        assert product_info['drive_link'], f"no drive link for {product_info['title']}"
         ress.append(process_product_images(sgc, gai, product_info, handle_suffix))
     pprint.pprint(ress)
 

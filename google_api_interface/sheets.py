@@ -2,34 +2,29 @@ import datetime
 import gspread
 
 class GoogleSheetsApiInterface:
-    def to_products_list(self, sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map=None, handle_suffix=None, row_filter_func=None):
-        if not variant_attr_column_map:
-            # TODO this is wrong - for color options as products brand such as KUME, they still have size variants.
-            res = self.variants_as_products_list(sheet_id, sheet_title, start_row, product_attr_column_map)
-        else:
-            res = self.products_with_variants_list(sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map, handle_suffix, row_filter_func)
-        return res
-
-    def products_with_variants_list(self, sheet_id, sheet_title, start_row, product_attr_column_map, variant_attr_column_map, handle_suffix=None, row_filter_func=None):
+    def to_products_list(self, sheet_id, sheet_title, start_row, product_attr_column_map,
+                                                                 option1_attr_column_map=None,
+                                                                 option2_attr_column_map=None,
+                                                                 handle_suffix=None,
+                                                                 row_filter_func=None):
+        def update_list(target_list, column_map, row):
+            for i, (k, ci) in enumerate((column_map or {}).items()):
+                if value := self.get_cell_value(row, ci, k):
+                    if i == 0:
+                        if not target_list or target_list[-1].get(k) != value:
+                            target_list.append({k: value})
+                    elif value:
+                        target_list[-1][k] = value
         rows = self.worksheet_rows(sheet_id, sheet_title)
-        current_title = ''
         res = []
         for row in rows[start_row:]:
             if row_filter_func and not row_filter_func(row):
                 continue
-            title = row[product_attr_column_map['title']].strip()
-            if title != current_title:
-                if current_title:
-                    res.append(product_dict)            # done processing all variants of a product
-                current_title, product_dict = title, {}
-                product_dict['title'] = title
-                if handle_suffix:
-                    product_dict['handle'] = '-'.join(title.lower().split(' ') + [handle_suffix])
-                for k, ci in product_attr_column_map.items():
-                    product_dict[k] = self.get_cell_value(row, ci, k)
-            for k, ci in variant_attr_column_map.items():
-                product_dict.setdefault(k, []).append(self.get_cell_value(row, ci, k))
-        res.append(product_dict)                        # done processing the last product
+            update_list(res, product_attr_column_map, row)
+            if handle_suffix and 'handle' not in res[-1]:
+                res[-1]['handle'] = '-'.join(res[-1]['title'].lower().split(' ') + [handle_suffix])
+            update_list(res[-1].setdefault('options', []), option1_attr_column_map, row)
+            update_list(res[-1]['options'][-1].setdefault('options', []), option2_attr_column_map, row)
         return res
 
     def variants_as_products_list(self, sheet_id, sheet_title, start_row, product_attr_column_map, new_only=False):
