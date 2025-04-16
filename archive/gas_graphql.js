@@ -2,7 +2,7 @@ const SHOPNAME = "yyy"
 const ACCESS_TOKEN = "xxx";
 
 function testReq() {
-  const query = `{  
+  const query = `{
      products(first: 3) {
        edges {
          node {
@@ -291,7 +291,7 @@ function removeProductMediaByProductId(productId) {
             message
           }
         }
-      }  
+      }
     `
 
     variables = {
@@ -432,7 +432,7 @@ function processProductImagesToShopify(imagePrefix, productTitle, driveIds, skus
    * @param {string} productTitle - The title of the product in Shopify. Used to retrieve the product ID.
    * @param {string[]} driveIds - An array of Google Drive folder IDs, each containing images for different color variants of the product.
    * @param {string[][]} skuss - A nested array of SKUs. Each inner array corresponds to a Google Drive folder and contains SKUs for different sizes of the same color variant.
-   * 
+   *
    * Example:
    *  productTitle = 'Twisted Neck Superfine Merino Wool Cardigan'
    *  driveIds = [
@@ -445,7 +445,7 @@ function processProductImagesToShopify(imagePrefix, productTitle, driveIds, skus
    *    ['KM-24FW-SW01-MT-S', 'KM-24FW-SW01-MT-M'],
    *    ['KM-24FW-SW01-DBR-S', 'KM-24FW-SW01-DBR-M']
    *  ]
-   * 
+   *
    * This will:
    *  1. Add all images from the three folders to the product 'Twisted Neck Superfine Merino Wool Cardigan'.
    *  2. Assign the first image from each folder as the variant image for the corresponding SKUs.

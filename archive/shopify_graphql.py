@@ -5,7 +5,7 @@ from slugify import slugify
 
 import shopify
 from dotenv import load_dotenv
-from graphql_queries import query_all_products
+from archive.graphql_queries import query_all_products
 
 def activate_shopify_session():
     shop_url = "rohseoul.myshopify.com"
