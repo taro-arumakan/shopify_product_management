@@ -38,7 +38,7 @@ def sku_quantity_map_from_sheet(shop_name, sheet_title):
     for row in rows[columns['start_row']:]:
         assert row[columns['sku_index']] not in res, f'same sku found in multiple rows!!: {row}'
         if not row[1].startswith('3/31'):
-            logger.info(f'skipping row: {row[0]} {row[1]}')
+            logging.info(f'skipping row: {row[0]} {row[1]}')
         else:
             res[row[columns['sku_index']]] = int(row[columns['quantity_index']])
     return res
