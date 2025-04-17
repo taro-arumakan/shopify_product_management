@@ -33,7 +33,7 @@ class ProductQueries:
                 }
             }
         }
-        """ % f"\n{'\n'.join(additional_fields)}" if additional_fields else ''
+        """ % (f"\n{'\n'.join(additional_fields)}" if additional_fields else '')
         variables = {
             "query_string": query_string
         }
