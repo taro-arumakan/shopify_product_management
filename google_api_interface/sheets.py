@@ -27,27 +27,6 @@ class GoogleSheetsApiInterface:
             update_list(res[-1]['options'][-1].setdefault('options', []), option2_attr_column_map, row)
         return res
 
-    def variants_as_products_list(self, sheet_id, sheet_title, start_row, product_attr_column_map, new_only=False):
-        rows = self.worksheet_rows(sheet_id, sheet_title)
-        res = []
-        value_by_attr_by_product = {}
-        for row in rows[start_row:]:
-            title = row[product_attr_column_map['title']]
-            if new_only and row[product_attr_column_map['status']].strip() != 'NEW':
-                self.logger.info(f'skipping row {title}')
-                continue
-            product_dict = dict(title=title)
-            for k, ci in product_attr_column_map.items():
-                product_dict[k] = self.get_cell_value(row, ci, k)
-                if not product_dict[k]:
-                    if k not in ['status']:
-                        product_dict[k] = value_by_attr_by_product[k][title]    # fallback to previously processed value for that title
-                else:
-                    value_by_attr_by_product.setdefault(k, {}).setdefault(title, product_dict[k])
-            product_dict['handle'] = '-'.join(title.lower().split(' ') + product_dict['color'].lower().split(' '))
-            res.append(product_dict)                        # done processing the last product
-        return res
-
     def get_cell_value(self, row, column_index, column_name):
         v = row[column_index]
         if column_name in ['release_date'] and isinstance(v, int):
