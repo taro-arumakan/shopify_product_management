@@ -44,6 +44,8 @@ class ShopifyGraphqlClient(CollectionQueries,
         res = response.json()
         if errors := res.get('errors'):
             raise RuntimeError(f'Error running the query: {errors}\n\n{query}\n\n{variables}')
+        if warnings := [r.get('warnings') for r in res.get('extensions', {}).get('search', [])]:
+            raise RuntimeError(f'Warning running the query: {warnings}\n\n{query}\n\n{variables}')
         return res['data']
 
 
