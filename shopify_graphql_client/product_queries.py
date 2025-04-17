@@ -2,7 +2,7 @@ class ProductQueries:
     """
     A class to handle GraphQL queries related to products in Shopify, inherited by the ShopifyGraphqlClient class.
     """
-    def products_by_query(self, query_string):
+    def products_by_query(self, query_string, additional_fields=None):
         query = """
         query productsByQuery($query_string: String!) {
             products(first: 100, query: $query_string, sortKey: TITLE) {
@@ -10,7 +10,7 @@ class ProductQueries:
                     id
                     title
                     handle
-                    tags
+                    tags%s
                     metafields (first:10) {
                         nodes {
                             id
@@ -33,13 +33,14 @@ class ProductQueries:
                 }
             }
         }
-        """
+        """ % f"\n{'\n'.join(additional_fields)}" if additional_fields else ''
         variables = {
             "query_string": query_string
         }
         res = self.run_query(query, variables)
+        res = res['products']['nodes']
         assert len(res) < 100, f"Too many products found for {query_string}: {len(res)}"
-        return res['products']['nodes']
+        return res
 
     def product_by_query(self, query_string):
         products = self.products_by_query(query_string)
