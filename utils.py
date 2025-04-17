@@ -1,3 +1,4 @@
+from client import Client
 def credentials(shop_name):
     import os
     from dotenv import load_dotenv
@@ -22,8 +23,7 @@ def credentials(shop_name):
 
 def client(shop_name):
     cred = credentials(shop_name)
-    import client
-    return client.Client(
+    return Client(
         shop_name=cred.shop_name,
         access_token=cred.access_token,
         google_credential_path=cred.google_credential_path,
