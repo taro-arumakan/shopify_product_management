@@ -44,53 +44,8 @@ def main():
 
 def product_description_template():
     return r"""<!DOCTYPE html>
-<html>
-
-<head>
-  <style type="text/css">
-    #alvanaProduct h3 {
-      margin: 40px 0 16px;
-      padding-left: 12px;
-      border-left: 3px solid #000000;
-      color: #000000;
-      text-align: left;
-    }
-
-    #alvanaProduct p {
-      margin: 8px 0;
-      line-height: 1.6em;
-    }
-    #alvanaProduct table {
-      width: 100%;
-      margin-top: 16px;
-      border-collapse: collapse;
-    }
-    #alvanaProduct th {
-      border: 1px solid #e2e2e2;
-      text-align: center;
-      padding: 5px;
-    }
-
-    #alvanaProduct td {
-      border: 1px solid #e2e2e2;
-      text-align: center;
-      padding: 5px;
-    }
-
-    #alvanaProduct tr {
-      border: 1px solid #e2e2e2;
-    }
-
-    #alvanaProduct .table_title {
-      background-color: rgba(18, 18, 18, 0.04);
-      font-weight: bold;
-    }
-  </style>
-</head>
-
-<body>
+<html><body>
   <div id="alvanaProduct">
-    <h3>商品説明</h3>
     <p>${DESCRIPTION}</p>
     <br>
     <table width="100%">
@@ -105,17 +60,8 @@ def product_description_template():
         </tr>
       </tbody>
     </table>
-    <h3>その他注意事項</h3>
-    <ul>
-      <li>お使いのPC・携帯等端末の環境により、実際の製品と画像の色味が若干異なる場合がございます。予めご了承ください。</li>
-      <li>独自の計測法で採寸しております。多少の誤差はご了承下さい。</li>
-      <li>注文が殺到した場合、決済システムの都合上、在庫切れ後に決済確定され、ご注文をキャンセルさせていただくことがございます。キャンセルする場合はメールにてご連絡致します。予めご了承ください。</li>
-      <li>住所不定と長期不在などによって返送された場合はキャンセル扱いとなります。</li>
-      <li>配送に関する注意事項をご確認下さい。</li>
-    </ul>
   </div>
 </body>
-
 </html>"""
 
 if __name__ == '__main__':
