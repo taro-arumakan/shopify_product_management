@@ -2,10 +2,7 @@ import string
 import utils
 from alvana.size_text_to_html_table import size_text_to_html_table
 
-def get_description(row):
-    product_description = row[string.ascii_uppercase.index('E')].strip()
-    made_in = row[string.ascii_uppercase.index('I')].strip()
-    material = row[string.ascii_uppercase.index('G')].strip()
+def get_description(product_description, material, made_in):
     description_html = product_description_template()
     description_html = description_html.replace('${DESCRIPTION}', product_description)
     description_html = description_html.replace('${MATERIAL}', material)
@@ -35,7 +32,10 @@ def main():
         size_table_html = size_text_to_html_table(row[string.ascii_uppercase.index('H')].strip())
         res = client.update_size_table_html_metafield(product_id, size_table_html)
         print(res)
-        res = client.update_product_description(product_id, get_description(row))
+        product_description = row[string.ascii_uppercase.index('E')].strip()
+        made_in = row[string.ascii_uppercase.index('I')].strip()
+        material = row[string.ascii_uppercase.index('G')].strip()
+        res = client.update_product_description(product_id, get_description(product_description, material, made_in))
         print(res)
         res = client.update_product_care_metafield(product_id, get_product_care(row[string.ascii_uppercase.index('F')].strip()))
         print(res)

@@ -7,9 +7,9 @@ class GoogleSheetsApiInterface:
                                                                  option2_attr_column_map=None,
                                                                  handle_suffix=None,
                                                                  row_filter_func=None):
-        def update_list(target_list, column_map, row):
+        def update_list(target_list, column_map, row, row_num):
             for i, (k, ci) in enumerate((column_map or {}).items()):
-                if value := self.get_cell_value(row, ci, k):
+                if value := self.get_cell_value(row, ci, k, row_num, sheet_id, sheet_title):
                     if i == 0:
                         if not target_list or target_list[-1].get(k) != value:
                             target_list.append({k: value})
@@ -17,27 +17,34 @@ class GoogleSheetsApiInterface:
                         target_list[-1][k] = value
         rows = self.worksheet_rows(sheet_id, sheet_title)
         res = []
-        for row in rows[start_row:]:
+        for index, row in enumerate(rows[start_row:]):
             if row_filter_func and not row_filter_func(row):
                 continue
-            update_list(res, product_attr_column_map, row)
+            sheet_row_num = index + start_row + 1
+            update_list(res, product_attr_column_map, row, sheet_row_num)
             if handle_suffix and 'handle' not in res[-1]:
                 res[-1]['handle'] = '-'.join(res[-1]['title'].lower().split(' ') + [handle_suffix])
-            update_list(res[-1].setdefault('options', []), option1_attr_column_map, row)
-            update_list(res[-1]['options'][-1].setdefault('options', []), option2_attr_column_map, row)
+            update_list(res[-1].setdefault('options', []), option1_attr_column_map, row, sheet_row_num)
+            update_list(res[-1]['options'][-1].setdefault('options', []), option2_attr_column_map, row, sheet_row_num)
         return res
 
-    def get_cell_value(self, row, column_index, column_name):
+    def get_cell_value(self, row, column_index, column_name, row_num, sheet_id, sheet_title):
         v = row[column_index]
-        if column_name in ['release_date'] and isinstance(v, int):
-            assert isinstance(v, int), f'expected int for {column_name}, got {type(v)}: {v}'
-            v = str(datetime.date(1899, 12, 30) + datetime.timedelta(days=v))
-        elif column_name in ['price', 'stock']:
-            assert isinstance(v, (int, float)), f'expected int for {column_name}, got {type(v)}: {v}'
-            v = int(v)
-        else:
-            assert isinstance(v, str), f'expected str for {column_name}, got {type(v)}: {v}'
-            v = v.strip()
+        if v or v == 0:
+            if column_name in ['release_date'] and isinstance(v, int):
+                assert isinstance(v, int), f'expected int for {column_name}, got {type(v)}: {v}'
+                v = str(datetime.date(1899, 12, 30) + datetime.timedelta(days=v))
+            elif column_name in ['price', 'stock']:
+                assert isinstance(v, (int, float)), f'expected int for {column_name}, got {type(v)}: {v}'
+                v = int(v)
+            elif column_name in ['サイズ']:
+                v = str(v).strip()
+            elif column_name == 'drive_link':
+                if all([v, v != 'no image', not v.startswith('http')]):
+                    v = self.get_richtext_link(sheet_id, sheet_title, row_num, column_index)
+            else:
+                assert isinstance(v, str), f'expected str for {column_name}, got {type(v)}: {v}'
+                v = v.strip()
         return v
 
 
