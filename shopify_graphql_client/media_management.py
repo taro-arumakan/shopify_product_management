@@ -101,6 +101,7 @@ class MediaManagement:
         mutation productCreateMedia($media: [CreateMediaInput!]!, $productId: ID!) {
             productCreateMedia(media: $media, productId: $productId) {
                 media {
+                    id
                     alt
                     mediaContentType
                     status

@@ -148,17 +148,3 @@ class GoogleSheetsApiInterface:
             drive_ids.append(self.drive_link_to_id(variant['drive_link']))
             skuss.append(self.get_child_variant_skus(variant))
         return drive_ids, skuss
-
-    def process_product_images(self, product_info, local_dir, local_prefix):
-        product_id = self.product_id_by_title(product_info['title'])
-        local_paths = []
-        image_positions = []
-        drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
-        for drive_id, skus in zip(drive_links, skuss):
-            image_positions.append(len(local_paths))
-            local_paths += self.drive_images_to_local(drive_id, local_dir, f'{local_prefix}{skus[0]}')
-        ress = []
-        ress.append(self.upload_and_assign_images_to_product(product_id, local_paths))
-        for image_position, skus in zip(image_positions, skuss):
-            ress.append(self.assign_image_to_skus_by_position(product_id, image_position, skus))
-        return ress
