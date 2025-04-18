@@ -42,36 +42,36 @@ class ProductQueries:
         assert len(res) < 100, f"Too many products found for {query_string}: {len(res)}"
         return res
 
-    def product_by_query(self, query_string):
-        products = self.products_by_query(query_string)
+    def product_by_query(self, query_string, additional_fields=None):
+        products = self.products_by_query(query_string, additional_fields)
         if len(products) != 1:
             raise RuntimeError(f"{'Multiple' if products else 'No'} products found for {query_string}: {products}")
         return products[0]
 
-    def product_by_id(self, identifier):
-        return self.products_by_query(f"id:'{identifier.rsplit('/', 1)[-1]}'")[0]
+    def product_by_id(self, identifier, additional_fields=None):
+        return self.products_by_query(f"id:'{identifier.rsplit('/', 1)[-1]}'", additional_fields)[0]
 
-    def products_by_title(self, title):
-        return self.products_by_query(f"title:'{title.replace("'", "\\'")}'")
+    def products_by_title(self, title, additional_fields=None):
+        return self.products_by_query(f"title:'{title.replace("'", "\\'")}'", additional_fields)
 
     def product_ids_by_title(self, title):
         res = self.products_by_title(title)
         return [r['id'] for r in res]
 
-    def product_by_title(self, title):
-        return self.product_by_query(f"title:'{title.replace("'", "\\'")}'")
+    def product_by_title(self, title, additional_fields=None):
+        return self.product_by_query(f"title:'{title.replace("'", "\\'")}'", additional_fields)
 
     def product_id_by_title(self, title):
         return self.product_by_title(title)['id']
 
-    def product_by_handle(self, handle):
-        return self.product_by_query(f"handle:'{handle}'")
+    def product_by_handle(self, handle, additional_fields=None):
+        return self.product_by_query(f"handle:'{handle}'", additional_fields)
 
     def product_id_by_handle(self, handle):
         return self.product_by_handle(handle)['id']
 
-    def products_by_tag(self, tag):
-        return self.products_by_query(f"tag:'{tag}'")
+    def products_by_tag(self, tag, additional_fields=None):
+        return self.products_by_query(f"tag:'{tag}'", additional_fields)
 
     def product_variants_by_product_id(self, product_id):
         product_id = self.sanitize_id(product_id)
