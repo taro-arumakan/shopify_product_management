@@ -13,7 +13,9 @@ def main():
     for product_info in product_info_list:
         if product_info['title'] in titles:
             print(f'processing {product_info["title"]}')
-            ress.append(process_product_images(c, product_info))
+            ress.append(c.process_product_images(product_info,
+                                                 local_dir='/Users/taro/Downloads/alvana20250418/',
+                                                 local_prefix='upload_20250418_'))
     pprint.pprint(ress)
 
 

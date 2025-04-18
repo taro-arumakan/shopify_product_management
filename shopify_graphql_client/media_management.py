@@ -276,17 +276,19 @@ class MediaManagement:
         res = self.run_query(query, variables)
         return res['stagedUploadsCreate']['stagedTargets']
 
-    def upload_and_assign_images_to_product(self, product_id, local_paths):
+    def upload_and_assign_images_to_product(self, product_id, local_paths, remove_existings=True):
         file_names = [local_path.rsplit('/', 1)[-1] for local_path in local_paths]
         mime_types = [f'image/{local_path.rsplit('.', 1)[-1].lower()}' for local_path in local_paths]
         staged_targets = self.generate_staged_upload_targets(file_names, mime_types)
         self.logger.info(f'generated staged upload targets: {len(staged_targets)}')
-        res1 = self.upload_images_to_shopify_parallel(staged_targets, local_paths, mime_types)
-        res2 = self.remove_product_media_by_product_id(product_id)
-        res3 = self.assign_images_to_product([target['resourceUrl'] for target in staged_targets],
+        ress = []
+        ress.append(self.upload_images_to_shopify_parallel(staged_targets, local_paths, mime_types))
+        if remove_existings:
+            ress.append(self.remove_product_media_by_product_id(product_id))
+        ress.append(self.assign_images_to_product([target['resourceUrl'] for target in staged_targets],
                                             alts=file_names,
-                                            product_id=product_id)
-        return [res1, res2, res3]
+                                            product_id=product_id))
+        return ress
 
     def upload_image(self, target, local_path, mime_type):
         file_name = local_path.rsplit('/', 1)[-1]
