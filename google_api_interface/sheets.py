@@ -92,3 +92,73 @@ class GoogleSheetsApiInterface:
         sheet_index = self.get_sheet_index_by_title(sheet_id, sheet_title)
         worksheet = self.gspread_client.open_by_key(sheet_id).get_worksheet(sheet_index)
         return worksheet.get_all_values(value_render_option=gspread.utils.ValueRenderOption.unformatted)
+
+    def get_variants_level_info(self, product_info, key='sku'):
+        if key in product_info:
+            variants_info = [product_info]
+        elif (o1 := product_info['options']) and key in o1[0]:
+            variants_info = product_info['options']
+        elif (o2 := product_info['options'][0]['options']) and key in o2[0]:
+            variants_info = sum([options2 for options1 in product_info['options'] for options2 in options1['options']], [])
+        else:
+            raise ValueError(f'No variant {key} found in product info: {product_info}')
+        return variants_info
+
+    def get_sku_stocks_map(self, product_info):
+        variants_info = self.get_variants_level_info(product_info)
+        return {variant['sku']: variant['stock'] for variant in variants_info}
+
+    def update_stocks(self, product_info_list, location_name):
+        self.logger.info('updating inventory')
+        location_id = self.location_id_by_name(location_name)
+        sku_stock_map = {}
+        [sku_stock_map.update(self.get_sku_stocks_map(product_info)) for product_info in product_info_list]
+        return [self.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
+                for sku, stock in sku_stock_map.items()]
+
+    def populate_option(self, product_info):
+        option1_key, option2_key = None, None
+        if (option1 := product_info['options']):
+            option1_key = list(option1[0].keys())[0]
+            if (option2 := option1[0]['options']):
+                option2_key = list(option2[0].keys())[0]
+        if option2_key:
+            return [[{option1_key: option1[option1_key], option2_key: option2[option2_key]}, option2['price'], option2['sku']]
+                        for option1 in product_info['options'] for option2 in option1['options']]
+        if option1_key:
+            return [[{option1_key: option1[option1_key]}, option1['price'], option1['sku']]
+                        for option1 in product_info['options']]
+        return []
+
+    def get_child_variant_skus(self, variant_info):
+        if 'sku' in variant_info:
+            return [variant_info['sku']]
+        if (o1 := variant_info['options']) and 'sku' in o1[0]:
+            return [option1['sku'] for option1 in variant_info['options']]
+        if (o2 := variant_info['options'][0]['options']) and 'sku' in o2[0]:
+            return [option2['sku'] for option1 in variant_info['options'] for option2 in option1['options']]
+        raise ValueError(f'No sku found in variant info: {variant_info}')
+
+    def populate_drive_ids_and_skuss(self, product_info):
+        skuss = []
+        drive_ids = []
+        image_level_variant = self.get_variants_level_info(product_info, key='drive_link')
+        for variant in image_level_variant:
+            assert variant['drive_link'], f"no drive link for {product_info['title'], {variant}}"
+            drive_ids.append(self.drive_link_to_id(variant['drive_link']))
+            skuss.append(self.get_child_variant_skus(variant))
+        return drive_ids, skuss
+
+    def process_product_images(self, product_info, local_dir, local_prefix):
+        product_id = self.product_id_by_title(product_info['title'])
+        local_paths = []
+        image_positions = []
+        drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
+        for drive_id, skus in zip(drive_links, skuss):
+            image_positions.append(len(local_paths))
+            local_paths += self.drive_images_to_local(drive_id, local_dir, f'{local_prefix}{skus[0]}')
+        ress = []
+        ress.append(self.upload_and_assign_images_to_product(product_id, local_paths))
+        for image_position, skus in zip(image_positions, skuss):
+            ress.append(self.assign_image_to_skus_by_position(product_id, image_position, skus))
+        return ress
