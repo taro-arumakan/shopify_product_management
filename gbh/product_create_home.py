@@ -64,6 +64,7 @@ def update_stocks(sgc:utils.Client, product_info_list, location_name):
     return [sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
             for sku, stock in sku_stock_map.items()]
 
+""" moved to client
 def process_product_images(client:utils.Client, product_info):
     product_id = client.product_id_by_title(product_info['title'])
     local_paths = []
@@ -79,6 +80,7 @@ def process_product_images(client:utils.Client, product_info):
     for image_position, skus in zip(image_positions, skuss):
         ress.append(client.assign_image_to_skus_by_position(product_id, image_position, skus))
     return ress
+"""
 
 def main():
     client = utils.client('gbhjapan')

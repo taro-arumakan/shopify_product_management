@@ -1,9 +1,8 @@
 import string
-from shopify_graphql_client.client import ShopifyGraphqlClient
-from google_api_interface import GoogleApiInterface
+import utils
 
 
-def product_info_lists_from_sheet(gai:GoogleApiInterface, sheet_id, sheet_title):
+def product_info_lists_from_sheet(gai:utils.Client, sheet_id, sheet_title):
     start_row = 2           # 0 base
     column_product_attrs = dict(
         title=string.ascii_lowercase.index('d'),
@@ -42,16 +41,13 @@ def create_a_product(sgc, product_info, vendor):
                               vendor=vendor, tags=tags, option_lists=options)
 
 def main():
-    from utils import credentials
-    cred = credentials('archive-epke')
-    gai = GoogleApiInterface(cred.google_credential_path)
-    product_info_list = product_info_lists_from_sheet(gai, cred.google_sheet_id, '2025.4/10 Release')
-    sgc = ShopifyGraphqlClient(cred.shop_name, cred.access_token)
+    client = utils.client('archive-epke')
+    product_info_list = product_info_lists_from_sheet(client, client.google_sheet_id, '2025.4/10 Release')
     import pprint
     ress = []
     for product_info in product_info_list:
         pprint.pprint(product_info)
-        res = create_a_product(sgc, product_info, 'archive-epke')
+        res = create_a_product(client, product_info, 'archive-epke')
         ress.append(res)
     pprint.pprint(ress)
 
