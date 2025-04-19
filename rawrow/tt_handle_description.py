@@ -108,9 +108,10 @@ lines = '''/*
 image_file_names = [line.strip().replace('"image": "shopify://shop_images/', '')[:-1] for line in lines if line.strip().startswith('"image": "shopify://shop_images/')]
 print(image_file_names)
 
-from shopify_product_management.shopify_utils import image_htmlfragment_in_description
+import utils
+client = utils.client('rawrowr')
 SHOPIFY_FILE_URL_PREFIX = 'https://cdn.shopify.com/s/files/1/0726/9187/6081/'
-paths = [image_htmlfragment_in_description(image_file_name, i, SHOPIFY_FILE_URL_PREFIX) for i, image_file_name in enumerate(image_file_names)]
+paths = [client.image_htmlfragment_in_description(image_file_name, i, SHOPIFY_FILE_URL_PREFIX) for i, image_file_name in enumerate(image_file_names)]
 import pprint
 pprint.pprint(paths, width=200)
 description = '\n'.join(paths)

@@ -1,7 +1,6 @@
 import pprint
 import string
-import google_api_interface
-import shopify_graphql_client
+import utils
 
 def get_product_description(desc, material, size_text, origin):
 
@@ -31,9 +30,8 @@ def get_product_care(product_care_text):
 
 def main():
     shop_name = 'rawrowr'
-    gai = google_api_interface.get(shop_name)
-    rows = gai.worksheet_rows(gai.sheet_id, '20250211_v3')
-    sgc = shopify_graphql_client.get(shop_name)
+    client = utils.client(shop_name)
+    rows = client.worksheet_rows(client.sheet_id, '20250211_v3')
     for row in rows[2:]:
         title = row[1].strip()
         if not title:
@@ -51,10 +49,9 @@ def main():
         product_care = get_product_care(product_care_text)
 
         assert product_description and product_care, f'product_description or product_care is empty for {title}'
-        product_id = sgc.product_id_by_title(title)
-        res1 = sgc.update_product_description_metafield(product_id, product_description)
-
-        res2 = sgc.update_product_care_metafield(product_id, product_care)
+        product_id = client.product_id_by_title(title)
+        res1 = client.update_product_description_metafield(product_id, product_description)
+        res2 = client.update_product_care_metafield(product_id, product_care)
 
         pprint.pprint([res1, res2])
 

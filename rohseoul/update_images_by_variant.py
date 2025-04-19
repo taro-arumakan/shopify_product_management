@@ -1,6 +1,5 @@
 import logging
 import pprint
-from dotenv import load_dotenv
 import utils
 
 logger = logging.getLogger(__name__)
@@ -38,7 +37,7 @@ def process(client:utils.Client, sku, folder_id):
 
 def main():
     client = utils.client('rohseoul')
-    rows = client.worksheet_rows(cred.google_sheet_id, '25SS 2차오픈(4월)(Summer 25)')
+    rows = client.worksheet_rows(client.google_sheet_id, '25SS 2차오픈(4월)(Summer 25)')
     sku_column_index = 5
     state_column_index = 0
     drive_link_column_index = 15

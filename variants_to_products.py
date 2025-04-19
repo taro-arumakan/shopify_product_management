@@ -1,4 +1,3 @@
-import os
 import utils
 
 def main():

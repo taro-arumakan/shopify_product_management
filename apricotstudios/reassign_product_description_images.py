@@ -1,6 +1,6 @@
 import os
 import pprint
-import shopify_graphql_client
+import utils
 
 DUMMY_PRODUCT = 'gid://shopify/Product/9035094130944'
 
@@ -28,7 +28,7 @@ def main():
                             not p.endswith('.psd') and
                             not p in ignore_names]
         all_paths = sorted(paths + other_paths, key=lambda x: int(x.rsplit('/', 1)[-1].split('_')[-1].split('.')[0]))
-        sgc = shopify_graphql_client.get('apricot-studidos')
+        sgc = utils.client('apricot-studidos')
         product_id = sgc.product_id_by_title(product_title)
         print(product_id)
         pprint.pprint(all_paths, width=150)
