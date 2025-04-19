@@ -2,8 +2,8 @@ import logging
 import gspread
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
-from google_api_interface.drive import GoogleDriveApiInterface
-from google_api_interface.sheets import GoogleSheetsApiInterface
+from helpers.google_api_interface.drive import GoogleDriveApiInterface
+from helpers.google_api_interface.sheets import GoogleSheetsApiInterface
 
 class GoogleApiInterface(GoogleDriveApiInterface, GoogleSheetsApiInterface):
     def __init__(self, google_credential_path, sheet_id=None):

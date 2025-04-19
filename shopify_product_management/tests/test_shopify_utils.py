@@ -3,7 +3,7 @@ print(os.getcwd())
 
 import unittest
 from unittest.mock import patch
-from shopify_graphql_client.client import ShopifyGraphqlClient
+from helpers.shopify_graphql_client.client import ShopifyGraphqlClient
 class TestShopifyFunctions(unittest.TestCase):
 
     @patch.object(ShopifyGraphqlClient, 'run_query')
@@ -25,13 +25,13 @@ class TestShopifyFunctions(unittest.TestCase):
         mock_run_query.assert_called_once()
 
     def test_sanitize_image_name(self):
-        from shopify_graphql_client import ShopifyGraphqlClient
+        from helpers.shopify_graphql_client import ShopifyGraphqlClient
         sgc = ShopifyGraphqlClient('dummy_shop_name', 'dummy_access_token')
         result = sgc.sanitize_image_name('Dummy Product [Special Edition]_product_details_01.png')
         self.assertEqual(result, 'Dummy_Product_Special_Edition__product_details_01.png')
 
     def test_image_htmlfragment_in_description(self):
-        from shopify_graphql_client import ShopifyGraphqlClient
+        from helpers.shopify_graphql_client import ShopifyGraphqlClient
         sgc = ShopifyGraphqlClient('dummy_shop_name', 'dummy_access_token')
         result = sgc.image_htmlfragment_in_description('example_image.png', 2, 'https://cdn.shopify.com/s/files/1/0745/9435/3408')
         self.assertIn('<p class="reveal_tran_lr">', result)

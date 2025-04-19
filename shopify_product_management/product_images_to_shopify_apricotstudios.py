@@ -2,9 +2,9 @@ import logging
 import os
 import string
 from dotenv import load_dotenv
-from dropbox_utils import download_and_rename_images_from_dropbox
+from helpers.dropbox_utils import download_and_rename_images_from_dropbox
 from google_utils import get_sheet_index_by_title, gspread_access
-from shopify_graphql_client.client import ShopifyGraphqlClient
+from helpers.shopify_graphql_client.client import ShopifyGraphqlClient
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())

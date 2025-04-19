@@ -1,4 +1,4 @@
-import shopify_graphql_client
+import utils
 tags_mapping = {
     '2024 BF 10% OFF APPAREL': '2024 BF 10% OFF APPAREL',
     '2024 BF 10% OFF COSMETICS': '2024 BF 10% OFF COSMETICS',
@@ -58,7 +58,7 @@ def get_tag(tag):
         assert tag in tags_mapping.values(), "Tag not found in mapping"
         return tag
 def main():
-    sgc = shopify_graphql_client.get('gbhjapan')
+    sgc = utils.client('gbhjapan')
     for b, a in tags_mapping.items():
         if b != a:
             print(f'processing {b}')

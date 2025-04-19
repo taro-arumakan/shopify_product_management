@@ -1,13 +1,13 @@
 import logging
 import requests
-from shopify_graphql_client.collection_queries import CollectionQueries
-from shopify_graphql_client.inventory_management import InventoryManagement
-from shopify_graphql_client.media_management import MediaManagement
-from shopify_graphql_client.metafields_management import MetafieldsManagement
-from shopify_graphql_client.product_attributes_management import ProductAttributesManagement
-from shopify_graphql_client.product_create import ProductCreate
-from shopify_graphql_client.product_queries import ProductQueries
-from shopify_graphql_client.product_variants_to_products import ProductVariantsToProducts
+from helpers.shopify_graphql_client.collection_queries import CollectionQueries
+from helpers.shopify_graphql_client.inventory_management import InventoryManagement
+from helpers.shopify_graphql_client.media_management import MediaManagement
+from helpers.shopify_graphql_client.metafields_management import MetafieldsManagement
+from helpers.shopify_graphql_client.product_attributes_management import ProductAttributesManagement
+from helpers.shopify_graphql_client.product_create import ProductCreate
+from helpers.shopify_graphql_client.product_queries import ProductQueries
+from helpers.shopify_graphql_client.product_variants_to_products import ProductVariantsToProducts
 
 class ShopifyGraphqlClient(CollectionQueries,
                            InventoryManagement,

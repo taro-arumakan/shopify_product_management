@@ -1,6 +1,5 @@
 import pprint
-import google_api_interface
-import shopify_graphql_client
+import utils
 from update_size_table_html_metafield import text_to_html_tables_and_paragraphs
 
 def get_product_description(desc, material, origin):
@@ -21,9 +20,8 @@ def get_product_description(desc, material, origin):
 
 def main():
     SHEET_TITLE = 'Products Master'
-    gai = google_api_interface.get('apricot-studios')
-    rows = gai.worksheet_rows(gai.sheet_id, SHEET_TITLE)
-    sgc = shopify_graphql_client.get('apricot-studios')
+    client = utils.client('apricot-studios')
+    rows = client.worksheet_rows(client.sheet_id, SHEET_TITLE)
     for row in rows[1:]:
         title = row[1].strip()
         if not title:
@@ -36,8 +34,8 @@ def main():
 
         product_description = get_product_description(desc, material, origin)
         if product_description:
-            product_id = sgc.product_id_by_title(title)
-            res1 = sgc.update_product_description_metafield(product_id, product_description)
+            product_id = client.product_id_by_title(title)
+            res1 = client.update_product_description_metafield(product_id, product_description)
             pprint.pprint(res1)
         else:
             print(f'product_description or size_table_html is empty for {title}')

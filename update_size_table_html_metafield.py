@@ -1,6 +1,5 @@
 import re
-import shopify_graphql_client
-import google_api_interface
+import utils
 
 SHOPNAME = 'apricot-studios'
 
@@ -72,9 +71,8 @@ def text_to_html_tables_and_paragraphs(text):
 
 
 def main():
-    gai = google_api_interface.get(SHOPNAME)
-    rows = gai.worksheet_rows(gai.sheet_id, 'Product Master')
-    sgc = shopify_graphql_client.get(SHOPNAME)
+    client = utils.client(SHOPNAME)
+    rows = client.worksheet_rows(client.sheet_id, 'Product Master')
 
     for row in rows[1:]:
         title = row[1].strip()
@@ -87,8 +85,8 @@ def main():
 
         size_table_html = text_to_html_tables_and_paragraphs(size_text)
         print(size_table_html)
-        product_id = sgc.product_id_by_title(title)
-        res = sgc.update_size_table_html_metafield(product_id, size_table_html)
+        product_id = client.product_id_by_title(title)
+        res = client.update_size_table_html_metafield(product_id, size_table_html)
         print(res)
         break
     print('done updating')

@@ -1,4 +1,4 @@
-from shopify_graphql_client.client import ShopifyGraphqlClient
+from helpers.shopify_graphql_client.client import ShopifyGraphqlClient
 
 def get(shop_name):
     from utils import credentials

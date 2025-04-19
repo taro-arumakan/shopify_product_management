@@ -1,4 +1,4 @@
-from google_api_interface.interface import GoogleApiInterface
+from helpers.google_api_interface.interface import GoogleApiInterface
 
 def get(shop_name):
     from utils import credentials

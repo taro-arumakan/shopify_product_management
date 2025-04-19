@@ -1,8 +1,7 @@
 import logging
 import pprint
 
-import google_api_interface
-import shopify_graphql_client
+import utils
 
 SHOPNAME = 'kumej'
 SHEET_TITLE = '25ss'
@@ -29,8 +28,8 @@ def column_map(shop_name):
 
 
 def sku_quantity_map_from_sheet(shop_name, sheet_title):
-    gai = google_api_interface.get(shop_name)
-    rows = gai.worksheet_rows(gai.sheet_id, sheet_title)
+    client = utils.client(shop_name)
+    rows = client.worksheet_rows(client.sheet_id, sheet_title)
 
     columns = column_map(shop_name)
 
@@ -51,15 +50,15 @@ def main():
     sku_quantity_map = sku_quantity_map_from_sheet(SHOPNAME, SHEET_TITLE)
 
     pprint.pprint(sku_quantity_map)
-    sgc = shopify_graphql_client.get(SHOPNAME)
-    location_id = sgc.location_id_by_name('KUME Warehouse')
+    client = utils.client(SHOPNAME)
+    location_id = client.location_id_by_name('KUME Warehouse')
     assert location_id, 'location id not found'
 
     for sku, quantity in sku_quantity_map.items():
         if sku in skip_skus:
             logging.info(f'skipping update of {sku}')
         else:
-            res = sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, quantity)
+            res = client.set_inventory_quantity_by_sku_and_location_id(sku, location_id, quantity)
             logging.info(f'updated {sku} to {quantity}: {res}')
 
 

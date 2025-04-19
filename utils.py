@@ -1,4 +1,4 @@
-from client import Client
+from helpers.client import Client
 def credentials(shop_name):
     import os
     from dotenv import load_dotenv

@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from shopify_product_management import google_utils
-from shopify_graphql_client.client import ShopifyGraphqlClient
+from helpers.shopify_graphql_client.client import ShopifyGraphqlClient
 
 
 logger = logging.getLogger(__name__)

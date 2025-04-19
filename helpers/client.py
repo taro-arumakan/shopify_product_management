@@ -1,5 +1,5 @@
-from shopify_graphql_client import ShopifyGraphqlClient
-from google_api_interface.interface import GoogleApiInterface
+from helpers.shopify_graphql_client import ShopifyGraphqlClient
+from helpers.google_api_interface.interface import GoogleApiInterface
 
 class Client(ShopifyGraphqlClient, GoogleApiInterface):
     def __init__(self, shop_name, access_token, google_credential_path, sheet_id=None):

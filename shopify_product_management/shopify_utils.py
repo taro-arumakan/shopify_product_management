@@ -1,6 +1,6 @@
 import json
 import logging
-from shopify_graphql_client.client import ShopifyGraphqlClient
+from helpers.shopify_graphql_client.client import ShopifyGraphqlClient
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
