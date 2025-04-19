@@ -24,6 +24,7 @@ class ProductQueries:
                             id
                             title
                             sku
+                            price
                             selectedOptions {
                                 name
                                 value
