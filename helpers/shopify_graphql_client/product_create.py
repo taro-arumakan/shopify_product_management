@@ -1,6 +1,5 @@
 import re
 
-
 class ProductCreate:
     """
     A class to handle GraphQL queries related to products creation in Shopify, inherited by the ShopifyGraphqlClient class.
@@ -152,17 +151,43 @@ class ProductCreate:
             text = text.replace(k, v)
         return text
 
-    def get_size_table_html(self, size_text):
+    @staticmethod
+    def get_size_table_html(size_text):
         kv_pairs = list(map(str.strip, re.split('[\n/]', size_text)))
         headers, values = zip(*[kv_pair.split(' ') for kv_pair in kv_pairs])
-        res = '<table><thead><tr>'
+        return ProductCreate.generate_table_html(headers, values)
+
+    @staticmethod
+    def generate_table_html(headers, rows):
+        spaces = '            '
+        html = """
+            <table border="1" style="border-collapse: collapse; text-align: left;">
+              <thead>
+                <tr>""".replace(spaces, '')
+
         for header in headers:
-            res += f'<th>{header}</th>'
-        res += '</tr></thead><tbody><tr>'
-        for value in values:
-            res += f'<td>{value}</td>'
-        res += '</tr></tbody></table>'
-        return res
+            html += """
+                  <th>{header}</th>""".replace(spaces, '')
+
+        html += """
+                </tr>
+              </thead>
+              <tbody>""".replace(spaces, '')
+
+        for row in rows:
+            html += """
+                <tr>""".replace(spaces, '')
+            for v in row:
+                html += f"""
+                  <td>{v}</td>""".replace(spaces, '')
+            html += """
+                </tr>""".replace(spaces, '')
+
+        html += """
+              </tbody>
+            </table>""".replace(spaces, '')
+
+        return html
 
     def get_description_html(self, description, product_care, material, size_text, made_in, get_size_table_html_func=None):
         description = self.escape_html(description)
