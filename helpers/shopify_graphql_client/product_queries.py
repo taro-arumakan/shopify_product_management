@@ -74,26 +74,26 @@ class ProductQueries:
     def products_by_tag(self, tag, additional_fields=None):
         return self.products_by_query(f"tag:'{tag}'", additional_fields)
 
-    def product_variants_by_product_id(self, product_id):
-        product_id = self.sanitize_id(product_id)
-        product_id = product_id.rsplit('/', 1)[-1]
+    def product_variants_by_query(self, query):
         query = """
         {
-            productVariants(first:10, query: "product_id:%s") {
+            productVariants(first:100, query: "%s") {
             nodes {
                 id
                 title
                 displayName
                 sku
+                price
+                compareAtPrice
                 media (first:50){
-                nodes{
-                    id
-                    ... on MediaImage {
-                    image{
-                        url
+                    nodes{
+                        id
+                        ... on MediaImage {
+                            image{
+                                url
+                            }
+                        }
                     }
-                    }
-                }
                 }
                 selectedOptions {
                     name
@@ -102,20 +102,28 @@ class ProductQueries:
             }
             }
         }
-        """ % product_id
+        """ % query
         res = self.run_query(query)
         return res['productVariants']['nodes']
+
+    def product_variants_by_product_id(self, product_id):
+        product_id = self.sanitize_id(product_id)
+        product_id = product_id.rsplit('/', 1)[-1]
+        return self.product_variants_by_query(f'product_id:{product_id}')
+
+    def product_variants_by_tag(self, tag):
+        return self.product_variants_by_query(f"tag:'{tag}'")
 
     def product_id_by_variant_id(self, variant_id):
         variant_id = self.sanitize_id(variant_id, 'ProductVariant')
         query = """
         {
             productVariant(id:"%s") {
-            displayName,
-            product{
-                title
-                id
-            }
+                displayName,
+                product{
+                    title
+                    id
+                }
             }
         }
         """ % variant_id
@@ -129,21 +137,7 @@ class ProductQueries:
         return res['nodes'][0]['product']['id']
 
     def variant_by_sku(self, sku):
-        query = """
-        {
-        productVariants(first: 10, query: "sku:'%s'") {
-            nodes {
-                id
-                title
-                product {
-                    id
-                }
-            }
-        }
-        }
-        """ % sku
-        res = self.run_query(query)
-        return res['productVariants']
+        return self.product_variants_by_query(f'sku:{sku}')
 
     def variant_by_variant_id(self, variant_id):
         query = """
