@@ -24,8 +24,10 @@ class GoogleSheetsApiInterface:
             update_list(res, product_attr_column_map, row, sheet_row_num)
             if handle_suffix and 'handle' not in res[-1]:
                 res[-1]['handle'] = '-'.join(res[-1]['title'].lower().split(' ') + [handle_suffix])
-            update_list(res[-1].setdefault('options', []), option1_attr_column_map, row, sheet_row_num)
-            update_list(res[-1]['options'][-1].setdefault('options', []), option2_attr_column_map, row, sheet_row_num)
+            if option1_attr_column_map:
+                update_list(res[-1].setdefault('options', []), option1_attr_column_map, row, sheet_row_num)
+            if option2_attr_column_map:
+                update_list(res[-1]['options'][-1].setdefault('options', []), option2_attr_column_map, row, sheet_row_num)
         return res
 
     def get_cell_value(self, row, column_index, column_name, row_num, sheet_id, sheet_title):
@@ -99,7 +101,7 @@ class GoogleSheetsApiInterface:
         elif (o1 := product_info['options']) and key in o1[0]:
             variants_info = product_info['options']
         elif (o2 := product_info['options'][0]['options']) and key in o2[0]:
-            variants_info = sum([options2 for options1 in product_info['options'] for options2 in options1['options']], [])
+            variants_info = [options2 for options1 in product_info['options'] for options2 in options1['options']]
         else:
             raise ValueError(f'No variant {key} found in product info: {product_info}')
         return variants_info
@@ -118,9 +120,9 @@ class GoogleSheetsApiInterface:
 
     def populate_option(self, product_info):
         option1_key, option2_key = None, None
-        if (option1 := product_info['options']):
+        if (option1 := product_info.get('options')):
             option1_key = list(option1[0].keys())[0]
-            if (option2 := option1[0]['options']):
+            if (option2 := option1[0].get('options')):
                 option2_key = list(option2[0].keys())[0]
         if option2_key:
             return [[{option1_key: option1[option1_key], option2_key: option2[option2_key]}, option2['price'], option2['sku']]

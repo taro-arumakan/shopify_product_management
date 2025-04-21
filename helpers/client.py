@@ -19,3 +19,26 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             variant_ids = [self.variant_id_by_sku(sku) for sku in skus]
             ress.append(self.assign_image_to_skus(product_id, variant_media_id, variant_ids))
         return ress
+
+    def create_a_product(self, product_info, vendor, description_html, tags, location_names):
+        self.logger.info(f'creating {product_info["title"]}')
+        options = self.populate_option(product_info)
+        if options:
+            res = self.product_create(title=product_info['title'],
+                                      description_html=description_html,
+                                      vendor=vendor, tags=tags, option_lists=options)
+        else:
+            res = self.product_create_default_variant(product_info['title'],
+                                                      description_html,
+                                                      vendor=vendor,
+                                                      tags=tags,
+                                                      price=product_info['price'],
+                                                      sku=product_info['sku'])
+        res2 = self._enable_and_activate_inventory(product_info, location_names, options)
+        return (res, res2)
+
+    def _enable_and_activate_inventory(self, product_info, location_names, options=None):
+        options = options or self.populate_option(product_info)
+        skus = [option[2] for option in options] if options else [product_info['sku']]
+        res2 = [self.enable_and_activate_inventory(sku, location_names) for sku in skus]
+        return res2
