@@ -1,3 +1,18 @@
+def size_table_html(size_text):
+    rows = []
+    headers = []
+    row_values = []
+
+    header_values = size_text.split('\n')
+
+    for header_value in header_values:
+        header, value = header_value.split('：')
+        if header.strip() not in headers:
+            headers.append(header.strip())
+        row_values.append(value.strip())
+    rows.append(row_values)
+    return generate_html(headers, rows)
+
 def size_table_html_from_size_dict(size_text_dict):
     rows = []
     headers = ['']
@@ -12,7 +27,9 @@ def size_table_html_from_size_dict(size_text_dict):
                 headers.append(header.strip())
             row_values.append(value.strip())
         rows.append(row_values)
+    return generate_html(headers, rows)
 
+def generate_html(headers, rows):
     # Generate HTML table
     html = """
 <table border="1" style="border-collapse: collapse; text-align: left;">
