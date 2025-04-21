@@ -79,3 +79,37 @@ class ProductAttributesManagement:
         animation_classes = ['reveal_tran_bt', 'reveal_tran_rl', 'reveal_tran_lr', 'reveal_tran_tb']
         animation_class = animation_classes[sequence % 4]
         return f'<p class="{animation_class}"><img src="{shopify_url_prefix}/files/{self.sanitize_image_name(image_name)}" alt=""></p>'
+
+    def update_variant_price_by_variant_id(self, product_id, variant_ids, prices, compare_at_prices):
+        query = '''
+        mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+            productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                product {
+                    id
+                }
+                productVariants {
+                    id
+                    price
+                    compareAtPrice
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        '''
+        variables = {
+            "productId": product_id,
+            "variants": [
+                {
+                    "id": variant_id,
+                    "price": price,
+                    "compareAtPrice": compare_at_price
+                }
+                for variant_id, price, compare_at_price in zip(variant_ids, prices, compare_at_prices)]
+            }
+        res = self.run_query(query, variables)
+        if user_errors := res['productVariantsBulkUpdate']['userErrors']:
+            raise RuntimeError(f'Failed to update prices: f{user_errors}')
+        return res['productVariantsBulkUpdate']
