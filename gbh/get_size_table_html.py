@@ -1,6 +1,6 @@
 def size_table_html_from_size_dict(size_text_dict):
     rows = []
-    headers = ['Size']
+    headers = ['']
 
     for size, size_text in size_text_dict.items():
         row_values = [size]
