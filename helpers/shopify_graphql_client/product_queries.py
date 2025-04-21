@@ -132,9 +132,9 @@ class ProductQueries:
 
     def product_id_by_sku(self, sku):
         res = self.variant_by_sku(sku)
-        if len(res['nodes']) != 1:
-            raise Exception(f"{'Multiple' if res['nodes'] else 'No'} variants found for {sku}: {res['nodes']}")
-        return res['nodes'][0]['product']['id']
+        if len(res) != 1:
+            raise Exception(f"{'Multiple' if res['nodes'] else 'No'} variants found for {sku}: {res}")
+        return res[0]['product']['id']
 
     def variant_by_sku(self, sku):
         return self.product_variants_by_query(f'sku:{sku}')
@@ -160,6 +160,6 @@ class ProductQueries:
 
     def variant_id_by_sku(self, sku):
         res = self.variant_by_sku(sku)
-        if len(res['nodes']) != 1:
-            raise Exception(f"{'Multiple' if res['nodes'] else 'No'} variants found for {sku}: {res['nodes']}")
-        return res['nodes'][0]['id']
+        if len(res) != 1:
+            raise Exception(f"{'Multiple' if res else 'No'} variants found for {sku}: {res}")
+        return res[0]['id']
