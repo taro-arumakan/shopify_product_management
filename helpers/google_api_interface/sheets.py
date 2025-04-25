@@ -39,7 +39,7 @@ class GoogleSheetsApiInterface:
             elif column_name in ['price', 'stock']:
                 assert isinstance(v, (int, float)), f'expected int for {column_name}, got {type(v)}: {v}'
                 v = int(v)
-            elif column_name in ['サイズ']:
+            elif column_name in ['サイズ', 'sku']:
                 v = str(v).strip()
             elif column_name == 'drive_link':
                 if all([v, v != 'no image', not v.startswith('http')]):
