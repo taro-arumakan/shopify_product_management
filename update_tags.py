@@ -1,11 +1,11 @@
 import utils
 tags_map = {
-    'standard': 'Standard Line',
+    'COSME': 'COSMETICS',
     }
 
 def main():
-    sgc = utils.client('archive-epke')
-    for a, b in tags_map.items():
+    sgc = utils.client('gbhjapan')
+    for a in tags_map:
         products = sgc.products_by_tag(a)
         for product in products:
             tags = product['tags']
