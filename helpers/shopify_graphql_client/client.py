@@ -1,4 +1,3 @@
-import logging
 import requests
 from helpers.shopify_graphql_client.collection_queries import CollectionQueries
 from helpers.shopify_graphql_client.inventory_management import InventoryManagement
@@ -49,6 +48,7 @@ class ShopifyGraphqlClient(CollectionQueries,
 
 
 def main():
+    import logging
     logging.basicConfig(level=logging.INFO)
     from dotenv import load_dotenv
     load_dotenv(override=True)
