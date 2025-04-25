@@ -1,7 +1,10 @@
+import logging
+
 class ProductQueries:
     """
     A class to handle GraphQL queries related to products in Shopify, inherited by the ShopifyGraphqlClient class.
     """
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
     def products_by_query(self, query_string, additional_fields=None):
         query = """
         query productsByQuery($query_string: String!) {

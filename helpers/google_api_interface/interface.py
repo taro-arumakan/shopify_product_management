@@ -1,4 +1,3 @@
-import logging
 import gspread
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
@@ -14,4 +13,3 @@ class GoogleApiInterface(GoogleDriveApiInterface, GoogleSheetsApiInterface):
         self.sheets_service = build('sheets', 'v4', credentials=self.credentials)
         self.gspread_client = gspread.authorize(self.credentials)
         self.sheet_id = sheet_id
-        self.logger = logging.getLogger(__name__)

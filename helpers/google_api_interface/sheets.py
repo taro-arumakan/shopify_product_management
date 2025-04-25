@@ -1,7 +1,10 @@
 import datetime
+import logging
 import gspread
 
 class GoogleSheetsApiInterface:
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
+
     def to_products_list(self, sheet_id, sheet_title, start_row, product_attr_column_map,
                                                                  option1_attr_column_map=None,
                                                                  option2_attr_column_map=None,

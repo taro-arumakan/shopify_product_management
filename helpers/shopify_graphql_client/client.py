@@ -17,7 +17,6 @@ class ShopifyGraphqlClient(CollectionQueries,
                            ProductQueries,
                            ProductVariantsToProducts,MetafieldsManagement):
     def __init__(self, shop_name, access_token):
-        self.logger = logging.getLogger(__name__)
         self.shop_name = shop_name
         self.access_token = access_token
         self.base_url = f"https://{shop_name}.myshopify.com/admin/api/2025-04/graphql.json"
