@@ -33,7 +33,7 @@ def product_info_list_from_sheet_color_and_size(gai:utils.Client, sheet_id, shee
     return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs,
                                 option1_attrs, option2_attrs)
 
-def create_a_product(sgc:utils.Client, product_info, vendor, size_texts=None, get_size_table_html_func=None):
+def create_a_product(sgc:utils.Client, product_info, vendor, size_texts=None, get_size_table_html_func=None, additional_tags=None):
     logging.info(f'creating {product_info["title"]}')
     description_html = sgc.get_description_html(description=product_info['description'],
                                                 product_care=product_info['product_care'],
@@ -41,14 +41,14 @@ def create_a_product(sgc:utils.Client, product_info, vendor, size_texts=None, ge
                                                 size_text=size_texts or product_info['size_text'],
                                                 made_in=product_info['made_in'],
                                                 get_size_table_html_func=get_size_table_html_func)
-    tags = ','.join([product_info['category'], product_info['category2'], product_info['release_date'], 'New Arrival', '25SS (Summer)'])
+    tags = ','.join([product_info['category'], product_info['category2'], product_info['release_date']] + additional_tags or [])
     return sgc.create_a_product(product_info=product_info, vendor=vendor, description_html=description_html, tags=tags, location_names=['Shop location'])
 
-def create_products(sgc:utils.Client, product_info_list, vendor, get_size_table_html_func=None):
+def create_products(sgc:utils.Client, product_info_list, vendor, get_size_table_html_func=None, additional_tags=None):
     ress = []
     for product_info in product_info_list:
         size_texts = {option2['サイズ']: option2['size_text'] for option1 in product_info['options'] for option2 in option1['options']}
-        ress.append(create_a_product(sgc, product_info, vendor, size_texts=size_texts, get_size_table_html_func=get_size_table_html_func))
+        ress.append(create_a_product(sgc, product_info, vendor, size_texts=size_texts, get_size_table_html_func=get_size_table_html_func, additional_tags=additional_tags))
     ress2 = update_stocks(sgc, product_info_list, ['Shop location'])
     return ress, ress2
 
@@ -68,7 +68,7 @@ def main():
     client = utils.client('gbhjapan')
     vendor = 'GBH'
     product_info_list = product_info_list_from_sheet_color_and_size(client, client.sheet_id, 'APPAREL SS 25.04.28')
-    ress = create_products(client, product_info_list, vendor, size_table_html_from_size_dict_space_pairs)
+    ress = create_products(client, product_info_list, vendor, size_table_html_from_size_dict_space_pairs, additional_tags=['New Arrival', '25SS (Summer)'])
     pprint.pprint(ress)
     ress = []
     for product_info in product_info_list:
