@@ -98,23 +98,6 @@ def update_stocks(sgc:utils.Client, product_info_list, location_name):
     return [sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
             for sku, stock in sku_stock_map.items()]
 
-""" moved to client
-def process_product_images(client:utils.Client, product_info):
-    product_id = client.product_id_by_title(product_info['title'])
-    local_paths = []
-    image_positions = []
-    drive_links, skuss = client.populate_drive_ids_and_skuss(product_info)
-    for drive_id, skus in zip(drive_links, skuss):
-        image_positions.append(len(local_paths))
-        local_paths += client.drive_images_to_local(drive_id,
-                                                    '/Users/taro/Downloads/gbh20250418/',
-                                                    f'upload_202504187_{skus[0]}')
-    ress = []
-    ress.append(client.upload_and_assign_images_to_product(product_id, local_paths))
-    for image_position, skus in zip(image_positions, skuss):
-        ress.append(client.assign_image_to_skus_by_position(product_id, image_position, skus))
-    return ress
-"""
 
 def main():
     import pprint
