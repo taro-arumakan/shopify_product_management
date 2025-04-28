@@ -1,4 +1,3 @@
-import logging
 import requests
 from helpers.shopify_graphql_client.collection_queries import CollectionQueries
 from helpers.shopify_graphql_client.inventory_management import InventoryManagement
@@ -17,7 +16,6 @@ class ShopifyGraphqlClient(CollectionQueries,
                            ProductQueries,
                            ProductVariantsToProducts,MetafieldsManagement):
     def __init__(self, shop_name, access_token):
-        self.logger = logging.getLogger(__name__)
         self.shop_name = shop_name
         self.access_token = access_token
         self.base_url = f"https://{shop_name}.myshopify.com/admin/api/2025-04/graphql.json"
@@ -50,6 +48,7 @@ class ShopifyGraphqlClient(CollectionQueries,
 
 
 def main():
+    import logging
     logging.basicConfig(level=logging.INFO)
     from dotenv import load_dotenv
     load_dotenv(override=True)

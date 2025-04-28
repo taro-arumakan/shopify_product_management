@@ -1,7 +1,7 @@
 import io
 import os
 import re
-import shlex
+import logging
 from googleapiclient.http import MediaIoBaseDownload
 from PIL import Image
 
@@ -9,6 +9,8 @@ class GoogleDriveApiInterface:
     '''
     Google Drive API Interface, inherited by GoogleApiInterface.
     '''
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
+
     @staticmethod
     def natural_compare(k):
         def convert(text):

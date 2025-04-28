@@ -1,7 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import requests
+import logging
 import time
 import statistics
+import requests
 
 def is_evenly_spaced_stddev(lst, max_stddev=1.0):
     if len(lst) < 3:
@@ -11,6 +12,7 @@ def is_evenly_spaced_stddev(lst, max_stddev=1.0):
 
 
 class MediaManagement:
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
     def medias_by_product_id(self, product_id):
         query = """
         query ProductMediaStatusByID($productId: ID!) {
@@ -316,7 +318,7 @@ class MediaManagement:
             self.logger.error(f"Error uploading {local_path}: {e}")
             raise
 
-    def upload_images_to_shopify_parallel(self, staged_targets, local_paths, mime_types, max_workers=10):
+    def upload_images_to_shopify_parallel(self, staged_targets, local_paths, mime_types, max_workers=20):
         results = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_upload = {

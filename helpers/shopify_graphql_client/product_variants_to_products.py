@@ -1,7 +1,10 @@
+import logging
+
 class ProductVariantsToProducts:
     """
     Defines workflow and required queries to convert product variants to standalone products. Inherited by the ShopifyGraphqlClient class.
     """
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
     def product_variants_to_products(self, product_title, option_name='カラー', new_status='DRAFT'):
         product = self.product_by_title(product_title)
         product_id = product['id']

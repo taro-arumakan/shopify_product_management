@@ -1,7 +1,10 @@
+import logging
+
 class ProductAttributesManagement:
     """
     Product attributes management queries. Inherited by the ShopifyGraphqlClient class.
     """
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
     def product_description_by_product_id(self, product_id):
         product_id = self.sanitize_id(product_id)
         query = '''

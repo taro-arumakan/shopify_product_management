@@ -1,4 +1,6 @@
+import logging
 class CollectionQueries:
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
     def products_by_collection_id(self, collection_id):
         query = '''
         query ProductsByCollection ($id: ID!) {

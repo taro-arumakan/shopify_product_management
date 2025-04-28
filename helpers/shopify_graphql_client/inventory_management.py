@@ -1,7 +1,10 @@
+import logging
+
 class InventoryManagement:
     """
     This class provides methods to manage inventory in a Shopify store. Inherited by the ShopifyGraphqlClient class.
     """
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
 
     """ inventory management """
     def location_id_by_name(self, name):

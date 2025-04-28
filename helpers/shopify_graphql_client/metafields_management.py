@@ -1,9 +1,10 @@
 import json
-
+import logging
 class MetafieldsManagement:
     """
     This class provides methods to manage metafields in Shopify using GraphQL. Inherited by the ShopifyGraphqlClient class.
     """
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
     def update_product_metafield(self, product_id, metafield_namespace, metafield_key, value):
         query = """
         mutation updateProductMetafield($input: ProductInput!) {

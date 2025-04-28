@@ -1,7 +1,10 @@
 import datetime
+import logging
 import gspread
 
 class GoogleSheetsApiInterface:
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
+
     def to_products_list(self, sheet_id, sheet_title, start_row, product_attr_column_map,
                                                                  option1_attr_column_map=None,
                                                                  option2_attr_column_map=None,
@@ -39,7 +42,7 @@ class GoogleSheetsApiInterface:
             elif column_name in ['price', 'stock']:
                 assert isinstance(v, (int, float)), f'expected int for {column_name}, got {type(v)}: {v}'
                 v = int(v)
-            elif column_name in ['サイズ']:
+            elif column_name in ['サイズ', 'sku']:
                 v = str(v).strip()
             elif column_name == 'drive_link':
                 if all([v, v != 'no image', not v.startswith('http')]):

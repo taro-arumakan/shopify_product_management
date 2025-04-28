@@ -1,9 +1,12 @@
+import logging
 import re
 
 class ProductCreate:
     """
     A class to handle GraphQL queries related to products creation in Shopify, inherited by the ShopifyGraphqlClient class.
     """
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
+
     def product_create_default_variant(self, title, description_html, vendor, tags, price, sku, handle=None, status='DRAFT', template_suffix=None, metafields=None):
         query = """
         mutation productSet($input: ProductSetInput!) {
