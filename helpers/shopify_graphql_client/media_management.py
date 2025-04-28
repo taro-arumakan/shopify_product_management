@@ -4,7 +4,7 @@ import time
 import statistics
 import requests
 
-def is_evenly_spaced_stddev(lst, max_stddev=1.0):
+def is_evenly_spaced_stddev(lst, max_stddev=6.0):
     if len(lst) < 3:
         return True
     diffs = [b - a for a, b in zip(lst, lst[1:])]
