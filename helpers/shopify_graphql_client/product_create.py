@@ -236,35 +236,6 @@ class ProductCreate:
             raise RuntimeError(f"Product variants creation failed: {errors}")
         return res['productVariantsBulkCreate']['productVariants']
 
-    def collection_create(self, collection_title, product_ids):
-        query = '''
-        mutation createCollection($input: CollectionInput!) {
-            collectionCreate(input: $input) {
-                collection {
-                    id
-                    products(first: 30) {
-                        nodes {
-                            id
-                            title
-                        }
-                    }
-                }
-                userErrors {
-                    message
-                    field
-                }
-            }
-        }
-        '''
-        variables = {
-            "input": {
-                "title": collection_title,
-                "products": [self.sanitize_id(product_id) for product_id in product_ids]
-            }
-        }
-        res = self.run_query(query, variables)
-        if errors := res['collectionCreate']['userErrors']:
-            raise RuntimeError(f"Product variants creation failed: {errors}")
 
 def product_description_template():
     return """<!DOCTYPE html>
