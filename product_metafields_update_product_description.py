@@ -1,6 +1,6 @@
 import pprint
 import utils
-from update_size_table_html_metafield import text_to_html_tables_and_paragraphs
+from product_metafields_update_size_table_html import text_to_html_tables_and_paragraphs
 
 def get_product_description(desc, material, origin):
 
