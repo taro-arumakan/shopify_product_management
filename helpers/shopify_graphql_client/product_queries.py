@@ -56,7 +56,10 @@ class ProductQueries:
         return self.products_by_query(f"id:'{identifier.rsplit('/', 1)[-1]}'", additional_fields)[0]
 
     def products_by_title(self, title, additional_fields=None):
-        return self.products_by_query(f"title:'{title.replace("'", "\\'")}'", additional_fields)
+        products = self.products_by_query(f"title:'{title.replace("'", "\\'")}'", additional_fields)
+        if len(products) == 0:
+            raise RuntimeError(f"No products found for {title}")
+        return products
 
     def product_ids_by_title(self, title):
         res = self.products_by_title(title)
