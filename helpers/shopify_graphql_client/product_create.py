@@ -169,7 +169,7 @@ class ProductCreate:
                 <tr>""".replace(spaces, '')
 
         for header in headers:
-            html += """
+            html += f"""
                   <th>{header}</th>""".replace(spaces, '')
 
         html += """
