@@ -1,6 +1,7 @@
 import os
 import requests
 import zipfile
+from helpers.google_api_interface.drive import GoogleDriveApiInterface
 
 def download_images_from_dropbox(shared_link, output_path):
 
@@ -8,8 +9,7 @@ def download_images_from_dropbox(shared_link, output_path):
     res = requests.get(shared_link)
     with open(f'{output_path}.zip', 'wb') as of:
         of.write(res.content)
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
+    os.makedirs(output_path, exist_ok=True)
     with zipfile.ZipFile(f'{output_path}.zip') as zipref:
         zipref.extractall(output_path)
     os.remove(f'{output_path}.zip')
@@ -20,18 +20,17 @@ def rename_files(srcdir, destdir, prefix):
         target = f'{destdir}/{prefix}_{str(i).zfill(2)}_{fname}'
         os.rename(f'{srcdir}/{fname}', target)
         res.append(target)
+        GoogleDriveApiInterface.resize_image_to_limit(target, target)
     return res
 
 def download_and_rename_images_from_dropbox(output_path, images_link, prefix, tempdir='tmp'):
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
+    os.makedirs(output_path, exist_ok=True)
     download_images_from_dropbox(images_link, tempdir)
     return rename_files(tempdir, output_path, prefix)
 
 
 def download_files(product_name, main_images_link, detail_images_link, sku_imageslink_map, tempdir='tmp'):
-    if not os.path.exists(product_name):
-        os.mkdir(product_name)
+    os.makedirs(product_name, exist_ok=True)
     download_images_from_dropbox(main_images_link, tempdir)
     rename_files(tempdir, product_name, 'product_main')
 
