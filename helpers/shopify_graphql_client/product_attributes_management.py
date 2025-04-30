@@ -83,7 +83,7 @@ class ProductAttributesManagement:
         animation_class = animation_classes[sequence % 4]
         return f'<p class="{animation_class}"><img src="{shopify_url_prefix}/files/{self.sanitize_image_name(image_name)}" alt=""></p>'
 
-    def update_variant_price_by_variant_id(self, product_id, variant_ids, prices, compare_at_prices):
+    def variants_bulk_update(self, variables):
         query = '''
         mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
             productVariantsBulkUpdate(productId: $productId, variants: $variants) {
@@ -102,6 +102,12 @@ class ProductAttributesManagement:
             }
         }
         '''
+        res = self.run_query(query, variables)
+        if user_errors := res['productVariantsBulkUpdate']['userErrors']:
+            raise RuntimeError(f'Failed to update prices: f{user_errors}')
+        return res['productVariantsBulkUpdate']
+
+    def update_variant_price_by_variant_id(self, product_id, variant_ids, prices, compare_at_prices):
         variables = {
             "productId": product_id,
             "variants": [
@@ -112,7 +118,18 @@ class ProductAttributesManagement:
                 }
                 for variant_id, price, compare_at_price in zip(variant_ids, prices, compare_at_prices)]
             }
-        res = self.run_query(query, variables)
-        if user_errors := res['productVariantsBulkUpdate']['userErrors']:
-            raise RuntimeError(f'Failed to update prices: f{user_errors}')
-        return res['productVariantsBulkUpdate']
+        return self.variants_bulk_update(variables)
+
+    def update_variant_sku_by_variant_id(self, product_id, variant_ids, skus):
+        variables = {
+            "productId": product_id,
+            "variants": [
+                {
+                    "id": variant_id,
+                    "inventoryItem": {
+                        "sku": sku,
+                    }
+                }
+                for variant_id, sku in zip(variant_ids, skus)]
+            }
+        return self.variants_bulk_update(variables)
