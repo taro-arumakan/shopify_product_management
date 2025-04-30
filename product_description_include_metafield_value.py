@@ -19,6 +19,11 @@ def get_updated_description(sgc:utils.Client, product_id):
     updated_description += f'\n</{fb_sync_description_element}>'
     return updated_description
 
+def update_description_include_metafield_value(client, title):
+    product_id = client.product_id_by_title(title)
+    updated_description = get_updated_description(client, product_id)
+    return client.update_product_description(product_id, updated_description)
+
 def main():
     shop_name = 'apricot-studios'
     client = utils.client(shop_name)

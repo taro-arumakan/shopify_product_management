@@ -18,6 +18,11 @@ def get_product_description(desc, material, origin):
   return res
 
 
+def update_product_description_metafield(client:utils.Client, title, desc, material, origin):
+    product_description = get_product_description(desc, material, origin)
+    product_id = client.product_id_by_title(title)
+    return client.update_product_description_metafield(product_id, product_description)
+
 def main():
     SHEET_TITLE = 'Products Master'
     client = utils.client('apricot-studios')

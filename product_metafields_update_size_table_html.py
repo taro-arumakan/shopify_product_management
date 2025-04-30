@@ -69,6 +69,9 @@ def text_to_html_tables_and_paragraphs(text):
             html_output += f"<p>{' '.join(paragraph)}</p>\n"
     return html_output
 
+def update_size_table_html_metafield(client:utils.Client, title, size_table_html):
+    product_id = client.product_id_by_title(title)
+    return client.update_size_table_html_metafield(product_id, size_table_html)
 
 def main():
     client = utils.client(SHOPNAME)
