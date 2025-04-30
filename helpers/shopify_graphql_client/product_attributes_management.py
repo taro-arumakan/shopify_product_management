@@ -133,3 +133,17 @@ class ProductAttributesManagement:
                 for variant_id, sku in zip(variant_ids, skus)]
             }
         return self.variants_bulk_update(variables)
+
+    def update_variant_inventory_track_by_variant_id(self, product_id, variant_ids, inventory_track_tfs):
+        variables = {
+            "productId": product_id,
+            "variants": [
+                {
+                    "id": variant_id,
+                    "inventoryItem": {
+                        "tracked": tf,
+                    }
+                }
+                for variant_id, tf in zip(variant_ids, inventory_track_tfs)]
+            }
+        return self.variants_bulk_update(variables)
