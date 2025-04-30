@@ -51,7 +51,8 @@ class GoogleDriveApiInterface:
             status, done = downloader.next_chunk()
             self.logger.debug(f"Download {int(status.progress() * 100)}%.")
 
-    def resize_image_to_limit(self, image_path, output_path, max_megapixels=20):
+    @staticmethod
+    def resize_image_to_limit(image_path, output_path, max_megapixels=20):
         with Image.open(image_path) as img:
             current_megapixels = (img.width * img.height) / 1_000_000
             if current_megapixels > max_megapixels:
@@ -65,7 +66,7 @@ class GoogleDriveApiInterface:
                 else:
                     kwargs = dict(format='JPEG', quarity=85)
                 resized_img.save(output_path, **kwargs)
-                self.logger.info(f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}")
+                GoogleDriveApiInterface.logger.info(f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}")
 
     def find_folder_id_by_name(self, parent_folder_id, folder_name):
         """
