@@ -1,7 +1,9 @@
+import logging
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
 
 class Client(ShopifyGraphqlClient, GoogleApiInterface):
+    logger = logging.getLogger(f"{__module__}.{__qualname__}")
     def __init__(self, shop_name, access_token, google_credential_path, sheet_id=None):
         ShopifyGraphqlClient.__init__(self, shop_name=shop_name, access_token=access_token)
         GoogleApiInterface.__init__(self, google_credential_path=google_credential_path, sheet_id=sheet_id)
