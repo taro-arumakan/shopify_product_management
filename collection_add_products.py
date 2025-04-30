@@ -31,6 +31,7 @@ def main():
         'Tweed Short Sleeve Blouse',
         'Lace Embroiered Puff Sleeves Blouse',
         'Halter Layering Tencel Sweater',
+        '[Women] Wrinkle Free Over-Fit Shirt',
     ]
     c = utils.client('kumej')
     collection = c.collection_by_title('HANKYU UMEDA COLLECTION')
