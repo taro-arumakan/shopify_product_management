@@ -34,6 +34,11 @@ class ProductQueries:
                             }
                         }
                     }
+                    media (first:100) {
+                        nodes {
+                            id
+                        }
+                    }
                 }
             }
         }

@@ -98,6 +98,32 @@ class MediaManagement:
         assert len(res) == 1, f'{"Multiple" if res else "No"} files found for {file_name}: {res}'
         return res[0]['id']
 
+    def assign_existing_image_to_products_by_id(self, media_id, product_ids):
+        query = """
+        mutation FileUpdate($input: [FileUpdateInput!]!) {
+            fileUpdate(files: $input) {
+                userErrors {
+                    code
+                    field
+                    message
+                }
+                files {
+                    alt
+                }
+            }
+        }
+        """
+        variables = {
+            'input': {
+                'id': media_id,
+                'referencesToAdd': [self.sanitize_id(product_id) for product_id in product_ids]
+            }
+        }
+        res = self.run_query(query, variables)
+        if user_errors := res['fileUpdate']['userErrors']:
+            raise RuntimeError(f'Failed to assign media to products: {user_errors}')
+        return res
+
     def assign_images_to_product(self, resource_urls, alts, product_id):
         mutation_query = """
         mutation productCreateMedia($media: [CreateMediaInput!]!, $productId: ID!) {
