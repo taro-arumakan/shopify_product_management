@@ -5,95 +5,59 @@ import utils
 from gbh.get_size_table_html import size_table_html_from_size_dict, size_table_html
 
 logging.basicConfig(level=logging.INFO)
+column_indices = dict(
+    release_date=string.ascii_lowercase.index('b'),
+    category=string.ascii_lowercase.index('d'),
+    category2=string.ascii_lowercase.index('e'),
+    title=string.ascii_lowercase.index('f'),
+    sku=string.ascii_lowercase.index('i'),
+    price=string.ascii_lowercase.index('l'),
+    stock=string.ascii_lowercase.index('m'),
+    drive_link=string.ascii_lowercase.index('o'),
+    description=string.ascii_lowercase.index('r'),
+    product_care=string.ascii_lowercase.index('t'),
+    size_text=string.ascii_lowercase.index('v'),
+    material=string.ascii_lowercase.index('w'),
+    made_in=string.ascii_lowercase.index('x'),
+    )
+column_indices['カラー'] = string.ascii_lowercase.index('g')
+column_indices['Scent'] = string.ascii_lowercase.index('g')
+column_indices['サイズ'] = string.ascii_lowercase.index('h')
 
 def product_info_list_from_sheet_no_options(gai:utils.Client, sheet_id, sheet_name, raw_filter_func):
     start_row = 2
-    column_product_attrs = dict(
-        title=string.ascii_lowercase.index('f'),
-        category=string.ascii_lowercase.index('d'),
-        category2=string.ascii_lowercase.index('e'),
-        release_date=string.ascii_lowercase.index('b'),
-        description=string.ascii_lowercase.index('q'),
-        product_care=string.ascii_lowercase.index('s'),
-        material=string.ascii_lowercase.index('v'),
-        made_in=string.ascii_lowercase.index('w'),
-        drive_link=string.ascii_lowercase.index('o'),
-        size_text=string.ascii_lowercase.index('u'),
-        price=string.ascii_lowercase.index('l'),
-        sku=string.ascii_lowercase.index('i'),
-        stock=string.ascii_lowercase.index('m'),
-    )
+    column_product_attrs = ['title', 'category', 'category2', 'release_date', 'description', 'product_care', 'material', 'made_in', 'drive_link', 'size_text', 'price', 'sku', 'stock']
+    column_product_attrs = {attr: column_indices[attr] for attr in column_product_attrs}
     return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs, row_filter_func=raw_filter_func)
 
 def product_info_list_from_sheet_scent_and_size_options(gai:utils.Client, sheet_id, sheet_name, titles):
     start_row = 2
-    column_product_attrs = dict(
-        title=string.ascii_lowercase.index('f'),
-        category=string.ascii_lowercase.index('d'),
-        category2=string.ascii_lowercase.index('e'),
-        release_date=string.ascii_lowercase.index('b'),
-        description=string.ascii_lowercase.index('r'),
-        product_care=string.ascii_lowercase.index('t'),
-        material=string.ascii_lowercase.index('w'),
-        made_in=string.ascii_lowercase.index('x'),
-        drive_link=string.ascii_lowercase.index('o'),
-        size_text=string.ascii_lowercase.index('v'),
-        )
-    option1_attrs = {'Scent': string.ascii_lowercase.index('g')}
-    option2_attrs = {'サイズ': string.ascii_lowercase.index('h')}
-    option2_attrs.update(
-        price=string.ascii_lowercase.index('l'),
-        sku=string.ascii_lowercase.index('i'),
-        stock=string.ascii_lowercase.index('m'),
-    )
-    return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs,
-                                option1_attrs, option2_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
+    column_product_attrs = ['title', 'category', 'category2', 'release_date', 'description', 'product_care', 'material', 'made_in', 'drive_link', 'size_text']
+    option1_attrs = ['Scent']
+    option2_attrs = ['サイズ', 'price', 'sku', 'stock']
+    return gai.to_products_list(sheet_id, sheet_name, start_row,
+                                {attr: column_indices[attr] for attr in column_product_attrs},
+                                {attr: column_indices[attr] for attr in option1_attrs},
+                                {attr: column_indices[attr] for attr in option2_attrs},
+                                row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
 
 def product_info_list_from_sheet_size_options(gai:utils.Client, sheet_id, sheet_name, titles):
     start_row = 2
-    column_product_attrs = dict(
-        title=string.ascii_lowercase.index('f'),
-        category=string.ascii_lowercase.index('d'),
-        category2=string.ascii_lowercase.index('e'),
-        release_date=string.ascii_lowercase.index('b'),
-        description=string.ascii_lowercase.index('q'),
-        product_care=string.ascii_lowercase.index('s'),
-        material=string.ascii_lowercase.index('v'),
-        made_in=string.ascii_lowercase.index('w'),
-        )
-    option1_attrs = {'サイズ': string.ascii_lowercase.index('h')}
-    option1_attrs.update(
-        drive_link=string.ascii_lowercase.index('o'),
-        price=string.ascii_lowercase.index('l'),
-        sku=string.ascii_lowercase.index('i'),
-        stock=string.ascii_lowercase.index('m'),
-        size_text=string.ascii_lowercase.index('u'),
-    )
-    return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs,
-                                option1_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
+    column_product_attrs = ['title', 'category', 'category2', 'release_date', 'description', 'product_care', 'material', 'made_in']
+    option1_attrs = ['サイズ', 'drive_link', 'price', 'sku', 'stock', 'size_text']
+    return gai.to_products_list(sheet_id, sheet_name, start_row,
+                                {attr: column_indices[attr] for attr in column_product_attrs},
+                                {attr: column_indices[attr] for attr in option1_attrs},
+                                row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
 
 def product_info_list_from_sheet_color_options(gai:utils.Client, sheet_id, sheet_name, titles):
     start_row = 2
-    column_product_attrs = dict(
-        title=string.ascii_lowercase.index('f'),
-        category=string.ascii_lowercase.index('d'),
-        category2=string.ascii_lowercase.index('e'),
-        release_date=string.ascii_lowercase.index('b'),
-        description=string.ascii_lowercase.index('r'),
-        product_care=string.ascii_lowercase.index('t'),
-        material=string.ascii_lowercase.index('w'),
-        made_in=string.ascii_lowercase.index('x'),
-        size_text=string.ascii_lowercase.index('v'),
-        )
-    option1_attrs = {'カラー': string.ascii_lowercase.index('g')}
-    option1_attrs.update(
-        drive_link=string.ascii_lowercase.index('o'),
-        price=string.ascii_lowercase.index('l'),
-        sku=string.ascii_lowercase.index('i'),
-        stock=string.ascii_lowercase.index('m'),
-    )
-    return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs,
-                                option1_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
+    column_product_attrs = ['title', 'category', 'category2', 'release_date', 'description', 'product_care', 'material', 'made_in', 'size_text']
+    option1_attrs = ['カラー', 'drive_link', 'price', 'sku', 'stock']
+    return gai.to_products_list(sheet_id, sheet_name, start_row,
+                                {attr: column_indices[attr] for attr in column_product_attrs},
+                                {attr: column_indices[attr] for attr in option1_attrs},
+                                row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
 
 def create_a_product(sgc:utils.Client, product_info, vendor, size_texts=None, get_size_table_html_func=None):
     logging.info(f'creating {product_info["title"]}')
