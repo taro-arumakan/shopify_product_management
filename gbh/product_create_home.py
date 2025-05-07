@@ -25,19 +25,19 @@ def product_info_list_from_sheet_no_options(gai:utils.Client, sheet_id, sheet_na
     )
     return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs, row_filter_func=raw_filter_func)
 
-def product_info_list_from_sheet_scent_and_size_options(gai:utils.Client, sheet_id, sheet_name, titles_with_scent_and_size_options):
+def product_info_list_from_sheet_scent_and_size_options(gai:utils.Client, sheet_id, sheet_name, titles):
     start_row = 2
     column_product_attrs = dict(
         title=string.ascii_lowercase.index('f'),
         category=string.ascii_lowercase.index('d'),
         category2=string.ascii_lowercase.index('e'),
         release_date=string.ascii_lowercase.index('b'),
-        description=string.ascii_lowercase.index('q'),
-        product_care=string.ascii_lowercase.index('s'),
-        material=string.ascii_lowercase.index('v'),
-        made_in=string.ascii_lowercase.index('w'),
+        description=string.ascii_lowercase.index('r'),
+        product_care=string.ascii_lowercase.index('t'),
+        material=string.ascii_lowercase.index('w'),
+        made_in=string.ascii_lowercase.index('x'),
         drive_link=string.ascii_lowercase.index('o'),
-        size_text=string.ascii_lowercase.index('u'),
+        size_text=string.ascii_lowercase.index('v'),
         )
     option1_attrs = {'Scent': string.ascii_lowercase.index('g')}
     option2_attrs = {'サイズ': string.ascii_lowercase.index('h')}
@@ -47,9 +47,9 @@ def product_info_list_from_sheet_scent_and_size_options(gai:utils.Client, sheet_
         stock=string.ascii_lowercase.index('m'),
     )
     return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs,
-                                option1_attrs, option2_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles_with_scent_and_size_options)
+                                option1_attrs, option2_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
 
-def product_info_list_from_sheet_size_options(gai:utils.Client, sheet_id, sheet_name, titles_with_size_options):
+def product_info_list_from_sheet_size_options(gai:utils.Client, sheet_id, sheet_name, titles):
     start_row = 2
     column_product_attrs = dict(
         title=string.ascii_lowercase.index('f'),
@@ -70,20 +70,20 @@ def product_info_list_from_sheet_size_options(gai:utils.Client, sheet_id, sheet_
         size_text=string.ascii_lowercase.index('u'),
     )
     return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs,
-                                option1_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles_with_size_options)
+                                option1_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
 
-def product_info_list_from_sheet_color_options(gai:utils.Client, sheet_id, sheet_name, titles_with_color_options):
+def product_info_list_from_sheet_color_options(gai:utils.Client, sheet_id, sheet_name, titles):
     start_row = 2
     column_product_attrs = dict(
         title=string.ascii_lowercase.index('f'),
         category=string.ascii_lowercase.index('d'),
         category2=string.ascii_lowercase.index('e'),
         release_date=string.ascii_lowercase.index('b'),
-        description=string.ascii_lowercase.index('q'),
-        product_care=string.ascii_lowercase.index('s'),
-        material=string.ascii_lowercase.index('v'),
-        made_in=string.ascii_lowercase.index('w'),
-        size_text=string.ascii_lowercase.index('u'),
+        description=string.ascii_lowercase.index('r'),
+        product_care=string.ascii_lowercase.index('t'),
+        material=string.ascii_lowercase.index('w'),
+        made_in=string.ascii_lowercase.index('x'),
+        size_text=string.ascii_lowercase.index('v'),
         )
     option1_attrs = {'カラー': string.ascii_lowercase.index('g')}
     option1_attrs.update(
@@ -93,7 +93,7 @@ def product_info_list_from_sheet_color_options(gai:utils.Client, sheet_id, sheet
         stock=string.ascii_lowercase.index('m'),
     )
     return gai.to_products_list(sheet_id, sheet_name, start_row, column_product_attrs,
-                                option1_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles_with_color_options)
+                                option1_attrs, row_filter_func=lambda row: row[string.ascii_lowercase.index('f')] in titles)
 
 def create_a_product(sgc:utils.Client, product_info, vendor, size_texts=None, get_size_table_html_func=None):
     logging.info(f'creating {product_info["title"]}')
