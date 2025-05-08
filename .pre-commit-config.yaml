@@ -16,4 +16,4 @@ repos:
         name: Run pytest
         language: system
         types: [python]
-        entry: bash -c echo "python --version" && pytest
+        entry: /Users/taro/.pyenv/versions/3.13.3/envs/.venv_shopify/bin/pytest

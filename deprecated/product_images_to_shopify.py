@@ -1,22 +1,18 @@
 """
 largely moved to product_create.py of each brand and helpder classes.
-TEST
 """
 
 import logging
 import os
 
-from dotenv import load_dotenv
-from helpers.shopify_graphql_client.client import ShopifyGraphqlClient
-
+import utils
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def process_product_images_to_shopify(
-    sgc,
-    google_credential_path,
+    sgc: utils.Client,
     image_prefix,
     product_title,
     drive_ids,
@@ -79,8 +75,7 @@ def process_product_images_to_shopify(
 
     for drive_id, skus in zip(drive_ids, skuss):
         variant_image_positions.append(len(local_paths))
-        local_paths += google_utils.drive_images_to_local(
-            google_credential_path,
+        local_paths += sgc.drive_images_to_local(
             drive_id,
             images_local_dir,
             download_filename_prefix=f"{image_prefix}_{skus[0]}_",
@@ -92,59 +87,59 @@ def process_product_images_to_shopify(
         sgc.assign_image_to_skus_by_position(product_id, image_position, skus)
 
 
-def products_info_from_sheet(google_credential_path, shop_name, sheet_id, sheet_name):
-    rows = google_utils.get_rows(google_credential_path, sheet_id, sheet_name)
+def products_info_from_sheet(client: utils.Client, sheet_name):
+    rows = client.worksheet_rows(client.sheet_id, sheet_name)
     # start_row 1 base, columns are 0 base
-    if shop_name == "kumej":
+    if client.shop_name == "kumej":
         title_column_index = 2
         color_column_index = 15
         sku_column_index = 18
         link_column_index = 16
         start_row = 103
-    elif shop_name == "gbhjapan":
+    elif client.shop_name == "gbhjapan":
         title_column_index = 5
         color_column_index = 6
         sku_column_index = 8
         link_column_index = 14
         start_row = 3
-    elif shop_name == "alvanas":
+    elif client.shop_name == "alvanas":
         title_column_index = 1
         color_column_index = 9
         sku_column_index = 12
         link_column_index = 10
         start_row = 2
-    elif shop_name == "rawrowr":
+    elif client.shop_name == "rawrowr":
         title_column_index = 1
         color_column_index = 12
         sku_column_index = 16
         link_column_index = 14
         start_row = 3
-    elif shop_name == "rohseoul":
+    elif client.shop_name == "rohseoul":
         state_column_index = 0
         title_column_index = 4
         color_column_index = 9
         sku_column_index = 5
         link_column_index = 15
         start_row = 3
-    elif shop_name == "archive-epke":
+    elif client.shop_name == "archive-epke":
         title_column_index = 3
         color_column_index = 8
         sku_column_index = 4
         link_column_index = 14
         start_row = 3
     else:
-        raise RuntimeError(f"unknown shop {shop_name}")
+        raise RuntimeError(f"unknown shop {client.shop_name}")
 
     products = []
     current_product_title = ""
 
     for row_num, row in enumerate(rows[start_row - 1 :]):  # Skip headers
-        if shop_name == "rohseoul":
+        if client.shop_name == "rohseoul":
             state = row[state_column_index].strip()
             if state != "NEW":
                 logger.info(f"skipping row {row_num}")
                 continue
-        elif shop_name == "gbhjapan":
+        elif client.shop_name == "gbhjapan":
             release = row[1]
             if not release.startswith("3/17"):
                 logger.info(f"skipping row {row_num}, release is {release}")
@@ -169,9 +164,8 @@ def products_info_from_sheet(google_credential_path, shop_name, sheet_id, sheet_
         else:
             products[-1]["skuss"][-1].append(sku)
         logger.info(f"retrieving link for {product_title}")
-        link = google_utils.get_link(
-            google_credential_path,
-            sheet_id,
+        link = client.get_link(
+            client.sheet_id,
             sheet_name,
             row,
             start_row + row_num,
@@ -185,23 +179,18 @@ def products_info_from_sheet(google_credential_path, shop_name, sheet_id, sheet_
 
 
 def main():
-    load_dotenv(override=True)
-    SHOPNAME = "rawrowr"
-    ACCESS_TOKEN = os.getenv(f"{SHOPNAME}-ACCESS_TOKEN")
-    sgc = ShopifyGraphqlClient(SHOPNAME, ACCESS_TOKEN)
-    print(ACCESS_TOKEN)
-    GSPREAD_ID = os.getenv(f"{SHOPNAME}-GSPREAD_ID")
+    client = utils.client("rawrowr")
 
     UPLOAD_IMAGE_PREFIX = "upload_20250409"
-    IMAGES_LOCAL_DIR = f"/Users/taro/Downloads/{SHOPNAME}_{UPLOAD_IMAGE_PREFIX}/"
+    IMAGES_LOCAL_DIR = (
+        f"/Users/taro/Downloads/{client.shop_name}_{UPLOAD_IMAGE_PREFIX}/"
+    )
     SHEET_TITLE = "20250211_v3"
 
     GOOGLE_CREDENTIAL_PATH = os.getenv("GOOGLE_CREDENTIAL_PATH")
 
     product_details = products_info_from_sheet(
-        google_credential_path=GOOGLE_CREDENTIAL_PATH,
-        shop_name=SHOPNAME,
-        sheet_id=GSPREAD_ID,
+        client,
         sheet_name=SHEET_TITLE,
     )
 
@@ -233,9 +222,7 @@ def main():
             )
         ):
             drive_ids = list(
-                dict.fromkeys(
-                    google_utils.drive_link_to_id(pp) for pp in pr["links"]
-                ).keys()
+                dict.fromkeys(client.drive_link_to_id(pp) for pp in pr["links"]).keys()
             )
             logger.info(
                 f"""
@@ -245,7 +232,7 @@ def main():
                   """
             )
             process_product_images_to_shopify(
-                sgc,
+                client,
                 GOOGLE_CREDENTIAL_PATH,
                 UPLOAD_IMAGE_PREFIX,
                 pr["product_title"],
