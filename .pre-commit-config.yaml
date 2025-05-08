@@ -16,4 +16,4 @@ repos:
         name: Run pytest
         language: system
         types: [python]
-        entry: pytest
+        entry: bash -c echo "python --version" && pytest

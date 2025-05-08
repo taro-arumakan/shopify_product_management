@@ -6,7 +6,6 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from shopify_product_management import google_utils
 from helpers.shopify_graphql_client.client import ShopifyGraphqlClient
 
 
