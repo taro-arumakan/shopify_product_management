@@ -1,5 +1,6 @@
 """
 largely moved to product_create.py of each brand and helpder classes.
+TEST
 """
 
 import logging
