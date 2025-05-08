@@ -17,3 +17,4 @@ repos:
         language: system
         types: [python]
         entry: /Users/taro/.pyenv/versions/3.13.3/envs/.venv_shopify/bin/pytest
+        args: ["tests"]
