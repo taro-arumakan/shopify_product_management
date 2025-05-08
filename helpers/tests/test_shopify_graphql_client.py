@@ -18,8 +18,8 @@ class TestShopifyFunctions(unittest.TestCase):
                 }
             }
 
-        from shopify_product_management.shopify_utils import update_product_description
-        result = update_product_description('shop_name', 'access_token', '12345', '<p>New Description</p>')
+        client = ShopifyGraphqlClient(shop_name='dummy', access_token='dummy')
+        result = client.update_product_description('12345', '<p>New Description</p>')
 
         self.assertEqual(result['productUpdate']['product']['descriptionHtml'], '<p>New Description</p>')
         mock_run_query.assert_called_once()
@@ -47,8 +47,8 @@ class TestShopifyFunctions(unittest.TestCase):
             }
         }
 
-        from shopify_product_management.shopify_utils import product_id_by_title
-        product_id = product_id_by_title('shop_name', 'access_token', 'Test Product')
+        client = ShopifyGraphqlClient(shop_name='dummy', access_token='dummy')
+        product_id = client.product_id_by_title('Test Product')
 
         self.assertEqual(product_id, 'gid://shopify/Product/12345')
         mock_run_query.assert_called_once()
@@ -57,8 +57,8 @@ class TestShopifyFunctions(unittest.TestCase):
     def test_remove_product_media_by_product_id_no_media(self, mock_run_query):
         mock_run_query.return_value = {'product': {'media': {'nodes': []}}}
 
-        from shopify_product_management.shopify_utils import remove_product_media_by_product_id
-        result = remove_product_media_by_product_id('shop_name', 'access_token', '12345')
+        client = ShopifyGraphqlClient(shop_name='dummy', access_token='dummy')
+        result = client.remove_product_media_by_product_id('12345')
 
         self.assertTrue(result)
         mock_run_query.assert_called_once()
@@ -93,10 +93,10 @@ class TestShopifyFunctions(unittest.TestCase):
                 'status': 'READY'
             }]
 
-        from shopify_product_management.shopify_utils import assign_images_to_product
+        client = ShopifyGraphqlClient(shop_name='dummy', access_token='dummy')
         resource_urls = ['https://example.com/image1.png']
         alts = ['image1']
-        result = assign_images_to_product('shop_name', 'access_token', resource_urls, alts, 'gid://shopify/Product/12345')
+        result = client.assign_images_to_product(resource_urls, alts, 'gid://shopify/Product/12345')
 
         self.assertDictEqual(result, {'productCreateMedia':
                                         {'media': [{'alt': 'image1', 'status': 'READY'}],
@@ -114,8 +114,8 @@ class TestShopifyFunctions(unittest.TestCase):
                 'userErrors': []
             }
         }
-        from shopify_product_management.shopify_utils import update_product_description_metafield
-        result = update_product_description_metafield('shop_name', 'access_token', '12345', {'rich_text': 'Updated'})
+        client = ShopifyGraphqlClient(shop_name='dummy', access_token='dummy')
+        result = client.update_product_description_metafield('12345', {'rich_text': 'Updated'})
 
         self.assertIsNotNone(result)
         mock_run_query.assert_called_once()
