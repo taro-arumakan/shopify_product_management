@@ -1,5 +1,5 @@
 import logging
-from .exceptions import (
+from helpers.exceptions import (
     MultipleProductsFoundException,
     NoProductsFoundException,
     MultipleVariantsFoundException,
@@ -63,13 +63,11 @@ class ProductQueries:
     def product_by_query(self, query_string, additional_fields=None):
         products = self.products_by_query(query_string, additional_fields)
         if len(products) != 1:
-            raise (
-                (
-                    MultipleProductsFoundException
-                    if products
-                    else NoProductsFoundException
-                ),
-                f"{'Multiple' if products else 'No'} products found for {query_string}: {products}",
+            ex = (
+                MultipleProductsFoundException if products else NoProductsFoundException
+            )
+            raise ex(
+                f"{'Multiple' if products else 'No'} products found for {query_string}: {products}"
             )
         return products[0]
 
@@ -112,28 +110,33 @@ class ProductQueries:
             """
         {
             productVariants(first:100, query: "%s") {
-            nodes {
-                id
-                title
-                displayName
-                sku
-                price
-                compareAtPrice
-                media (first:50){
-                    nodes{
-                        id
-                        ... on MediaImage {
-                            image{
-                                url
+                nodes {
+                    id
+                    title
+                    displayName
+                    sku
+                    price
+                    compareAtPrice
+                    media (first:5){
+                        nodes{
+                            id
+                            ... on MediaImage {
+                                image{
+                                    url
+                                }
                             }
                         }
                     }
+                    selectedOptions {
+                        name
+                        value
+                    }
+                    product {
+                        id
+                        title
+                        status
+                    }
                 }
-                selectedOptions {
-                    name
-                    value
-                }
-            }
             }
         }
         """
@@ -150,58 +153,28 @@ class ProductQueries:
     def product_variants_by_tag(self, tag):
         return self.product_variants_by_query(f"tag:'{tag}'")
 
+    def variant_by_variant_id(self, variant_id):
+        variant_id = self.sanitize_id(variant_id, "ProductVariant").rsplit("/", 1)[-1]
+        if len(res := self.product_variants_by_query(f"id:{variant_id}")) != 1:
+            ex = MultipleVariantsFoundException if res else NoVariantsFoundException
+            raise ex(
+                f"{'Multiple' if res else 'No'} variants found for {variant_id}: {res}"
+            )
+        return res[0]
+
+    def variant_by_sku(self, sku):
+        if len(res := self.product_variants_by_query(f"sku:{sku}")) != 1:
+            ex = MultipleVariantsFoundException if res else NoVariantsFoundException
+            raise ex(f"{'Multiple' if res else 'No'} variants found for {sku}: {res}")
+        return res[0]
+
+    def variant_id_by_sku(self, sku):
+        return self.variant_by_sku(sku)["id"]
+
     def product_id_by_variant_id(self, variant_id):
-        variant_id = self.sanitize_id(variant_id, "ProductVariant")
-        query = (
-            """
-        {
-            productVariant(id:"%s") {
-                displayName,
-                product{
-                    title
-                    id
-                }
-            }
-        }
-        """
-            % variant_id
-        )
-        res = self.run_query(query)
-        return res["productVariant"]["product"]["id"]
+        variant = self.variant_by_variant_id(variant_id)
+        return variant["product"]["id"]
 
     def product_id_by_sku(self, sku):
         variant_id = self.variant_id_by_sku(sku)
         return self.product_id_by_variant_id(variant_id)
-
-    def variant_by_sku(self, sku):
-        if len(res := self.product_variants_by_query(f"sku:{sku}")) != 1:
-            raise (
-                MultipleVariantsFoundException if res else NoVariantsFoundException,
-                f"{'Multiple' if res else 'No'} variants found for {sku}: {res}",
-            )
-        return res[0]
-
-    def variant_by_variant_id(self, variant_id):
-        query = (
-            """
-        {
-            productVariant(id: "%s") {
-                id
-                title
-                sku
-                media(first: 5) {
-                    nodes {
-                        id
-                    }
-                }
-            }
-        }
-        """
-            % variant_id
-        )
-
-        res = self.run_query(query, {})
-        return res["productVariant"]
-
-    def variant_id_by_sku(self, sku):
-        return self.variant_by_sku(sku)["id"]

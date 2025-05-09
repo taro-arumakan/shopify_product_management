@@ -17,7 +17,11 @@ repos:
         language: python
         types: [python]
         entry: pytest
-        args: ["tests"]
+        args:
+          - "--strict-config"
+          - "--rootdir=."
+          - "-c=pytest.ini"
+          - "tests"
         additional_dependencies:
           - pytest
           - requests
