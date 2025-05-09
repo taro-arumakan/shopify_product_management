@@ -17,6 +17,7 @@ repos:
         language: python
         types: [python]
         entry: pytest
+        pass_filenames: false
         args:
           - "--strict-config"
           - "--rootdir=."

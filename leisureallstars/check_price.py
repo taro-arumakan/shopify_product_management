@@ -25,12 +25,11 @@ for sku, price in zip(df["スタイルナンバー"], df["上代（税込）"]):
     if price:
         try:
             variant = client.variant_by_sku(sku)
-        except RuntimeError as ex:
-            if "Multiple" in str(ex):
-                print(ex)
-                multiple_sksu.append((sku, price))
-            else:
-                skus_not_found.append(sku)
+        except utils.MultipleVariantsFoundException as ex:
+            print(ex)
+            multiple_sksu.append((sku, price))
+        except utils.NoVariantsFoundException:
+            skus_not_found.append(sku)
         else:
             s_price = int(variant["price"])
             if price != s_price:
