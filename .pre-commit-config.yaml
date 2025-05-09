@@ -14,7 +14,10 @@ repos:
     hooks:
       - id: pytest
         name: Run pytest
-        language: system
+        language: python
         types: [python]
-        entry: /Users/taro/.pyenv/versions/3.13.3/envs/.venv_shopify/bin/pytest
+        entry: pytest
         args: ["tests"]
+        additional_dependencies:
+          - pytest
+          - requests

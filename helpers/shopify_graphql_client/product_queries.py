@@ -1,4 +1,10 @@
 import logging
+from .exceptions import (
+    MultipleProductsFoundException,
+    NoProductsFoundException,
+    MultipleVariantsFoundException,
+    NoVariantsFoundException,
+)
 
 
 class ProductQueries:
@@ -57,8 +63,13 @@ class ProductQueries:
     def product_by_query(self, query_string, additional_fields=None):
         products = self.products_by_query(query_string, additional_fields)
         if len(products) != 1:
-            raise RuntimeError(
-                f"{'Multiple' if products else 'No'} products found for {query_string}: {products}"
+            raise (
+                (
+                    MultipleProductsFoundException
+                    if products
+                    else NoProductsFoundException
+                ),
+                f"{'Multiple' if products else 'No'} products found for {query_string}: {products}",
             )
         return products[0]
 
@@ -72,7 +83,7 @@ class ProductQueries:
             f"title:'{title.replace("'", "\\'")}'", additional_fields
         )
         if len(products) == 0:
-            raise RuntimeError(f"No products found for {title}")
+            raise NoProductsFoundException(f"No products found for {title}")
         return products
 
     def product_ids_by_title(self, title):
@@ -164,8 +175,9 @@ class ProductQueries:
 
     def variant_by_sku(self, sku):
         if len(res := self.product_variants_by_query(f"sku:{sku}")) != 1:
-            raise RuntimeError(
-                f"{'Multiple' if res else 'No'} variants found for {sku}: {res}"
+            raise (
+                MultipleVariantsFoundException if res else NoVariantsFoundException,
+                f"{'Multiple' if res else 'No'} variants found for {sku}: {res}",
             )
         return res[0]
 
