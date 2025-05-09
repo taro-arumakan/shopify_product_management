@@ -63,10 +63,9 @@ class ProductQueries:
     def product_by_query(self, query_string, additional_fields=None):
         products = self.products_by_query(query_string, additional_fields)
         if len(products) != 1:
-            ex = (
+            raise (
                 MultipleProductsFoundException if products else NoProductsFoundException
-            )
-            raise ex(
+            )(
                 f"{'Multiple' if products else 'No'} products found for {query_string}: {products}"
             )
         return products[0]
@@ -105,7 +104,7 @@ class ProductQueries:
     def products_by_tag(self, tag, additional_fields=None):
         return self.products_by_query(f"tag:'{tag}'", additional_fields)
 
-    def product_variants_by_query(self, query):
+    def product_variants_by_query(self, query, filter_archived=True):
         query = (
             """
         {
@@ -143,7 +142,12 @@ class ProductQueries:
             % query
         )
         res = self.run_query(query)
-        return res["productVariants"]["nodes"]
+        res = res["productVariants"]["nodes"]
+        if filter_archived:
+            # Shopify API ignores product_status filter on productVariants query
+            self.logger.info("Filtering ARCHIVED products' variants")
+            res = [r for r in res if r["product"]["status"] != "ARCHIVED"]
+        return res
 
     def product_variants_by_product_id(self, product_id):
         product_id = self.sanitize_id(product_id)
@@ -156,16 +160,16 @@ class ProductQueries:
     def variant_by_variant_id(self, variant_id):
         variant_id = self.sanitize_id(variant_id, "ProductVariant").rsplit("/", 1)[-1]
         if len(res := self.product_variants_by_query(f"id:{variant_id}")) != 1:
-            ex = MultipleVariantsFoundException if res else NoVariantsFoundException
-            raise ex(
+            raise (MultipleVariantsFoundException if res else NoVariantsFoundException)(
                 f"{'Multiple' if res else 'No'} variants found for {variant_id}: {res}"
             )
         return res[0]
 
     def variant_by_sku(self, sku):
         if len(res := self.product_variants_by_query(f"sku:{sku}")) != 1:
-            ex = MultipleVariantsFoundException if res else NoVariantsFoundException
-            raise ex(f"{'Multiple' if res else 'No'} variants found for {sku}: {res}")
+            raise (MultipleVariantsFoundException if res else NoVariantsFoundException)(
+                f"{'Multiple' if res else 'No'} variants found for {sku}: {res}"
+            )
         return res[0]
 
     def variant_id_by_sku(self, sku):
