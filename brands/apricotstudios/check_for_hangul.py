@@ -1,5 +1,6 @@
 import os
 import re
+import easyocr
 import pytesseract
 from PIL import Image
 import utils
@@ -8,6 +9,12 @@ from brands.apricotstudios.product_create import (
     product_info_list_from_sheet_color_and_size,
 )
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+LOCAL_ROOT = "/Users/taro/Downloads/20250509_apricotstudios"
+
 korean_pattern = re.compile(r"[\uac00-\ud7a3]")
 
 
@@ -15,11 +22,100 @@ def contains_korean_characters(text):
     return bool(korean_pattern.search(text))
 
 
-import logging
+def is_model_info_image_pytesseract(image):
+    extracted_text = pytesseract.image_to_string(image, lang="eng")
+    return "model info" in extracted_text.lower()
 
-logging.basicConfig(level=logging.INFO)
 
-LOCAL_ROOT = "/Users/taro/Downloads/apricotstudios_20250509_details"
+def check_image_for_korean_pytesseract(image):
+    extracted_text = pytesseract.image_to_string(image, lang="kor")
+    return contains_korean_characters(extracted_text)
+
+
+def is_model_info_image_eo(file_path, reader=None):
+    reader = reader or easyocr.Reader(["en"])
+    results = reader.readtext(file_path, detail=0)
+    return "model info" in " ".join(results).lower()
+
+
+def check_image_for_korean_eo(file_path, reader=None):
+    reader = reader or easyocr.Reader(["ko"])
+    results = reader.readtext(
+        file_path,
+        detail=0,
+        text_threshold=0.99,  # ↑ from default 0.7 (strict confidence)
+        #   low_text=0.5,         # ↑ from default 0.4 (tighter text regions)
+        #   contrast_ths=0.3,     # ↑ from default 0.1 (ignore low-contrast areas)
+        #    link_threshold=0.5,  # ↑ from default 0.4 (strict word grouping)
+        allowlist="".join([chr(c) for c in range(0xAC00, 0xD7A3 + 1)]),
+    )  # Hangul-only))
+    return contains_korean_characters("".join(results))
+
+
+def check_pytesseract(paths):
+    logging.info("Checking images with pytesseract...")
+    result = {}
+    for path in paths:
+        logging.info(f"Checking {path}")
+        try:
+            image = Image.open(path)
+            if is_model_info_image_pytesseract(image):
+                result.setdefault("model_info", []).append(path)
+            elif check_image_for_korean_pytesseract(image):
+                result.setdefault(True, []).append(path)
+        except Exception as e:
+            print(f"Error processing {path} with pytesseract: {e}")
+    return result
+
+
+def check_eo(paths):
+    logging.info("Checking images with EasyOCR...")
+    reader_en = easyocr.Reader(["en"])
+    reader_ko = easyocr.Reader(["ko"])
+    result = {}
+    for path in paths:
+        logging.info(f"Checking {path}")
+        try:
+            if is_model_info_image_eo(path, reader_en):
+                result.setdefault("model_info", []).append(path)
+            elif check_image_for_korean_eo(path, reader_ko):
+                result.setdefault(True, []).append(path)
+        except Exception as e:
+            print(f"Error processing {path} with EasyOCR: {e}")
+    return result
+
+
+def check_all_both(paths):
+    # result_pytesseract = check_pytesseract(paths)
+    # print("!!! pytesseract !!!")
+    # print("model_info")
+    # for path in result_pytesseract["model_info"]:
+    #     print(path)
+
+    # print()
+    # print("possible hangul")
+    # for path in result_pytesseract[True]:
+    #     print(path)
+
+    # print()
+    # print()
+    result_eo = check_eo(paths)
+    print("!!! EasyOCR !!!")
+    print("model_info")
+    for path in result_eo["model_info"]:
+        print(path)
+    print()
+    print("possible hangul")
+    for path in result_eo[True]:
+        print(path)
+
+
+def check_images():
+    image_dirs = [
+        f"{LOCAL_ROOT}/{p}" for p in sorted(os.listdir(LOCAL_ROOT)) if p != ".DS_Store"
+    ]
+    image_paths = [f"{d}/{p}" for d in image_dirs for p in sorted(os.listdir(d))]
+    check_all_both(image_paths)
 
 
 def download():
@@ -36,45 +132,9 @@ def download():
         )
 
 
-def is_model_info_image(image):
-    extracted_text = pytesseract.image_to_string(image, lang="eng")
-    return "model info" in extracted_text.lower()
-
-
-def check_image_for_korean(file_path):
-    try:
-        image = Image.open(file_path)
-        if is_model_info_image(image):
-            return "model_info"
-        extracted_text = pytesseract.image_to_string(image, lang="kor")
-        return contains_korean_characters(extracted_text)
-    except Exception as e:
-        print(f"Error processing {file_path}: {e}")
-
-
-def check_all():
-    image_dirs = [
-        f"{LOCAL_ROOT}/{p}" for p in sorted(os.listdir(LOCAL_ROOT)) if p != ".DS_Store"
-    ]
-    result = {}
-    for d in image_dirs:
-        image_paths = [f"{d}/{p}" for p in sorted(os.listdir(d))]
-        for path in image_paths:
-            result.setdefault(check_image_for_korean(path), []).append(path)
-    print("model_info")
-    for path in result["model_info"]:
-        print(path)
-
-    print()
-    print()
-    print("possible hangul")
-    for path in result[True]:
-        print(path)
-
-
 def main():
-    download()
-    check_all()
+    # download()
+    check_images()
 
 
 if __name__ == "__main__":
