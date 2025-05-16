@@ -10,6 +10,7 @@ def size_text_to_html_table(size_text):
     [4] 着丈 90 / 肩幅 xxx / 袖丈 yyy
     """
     size_expression = re.compile(r"\[(\w+)\]\s+(.*)")
+    header_value_expression = re.compile(r"([^\d]+)\s*([\d\.]+)")
 
     rows = []
     headers = ["Size"]
@@ -19,10 +20,12 @@ def size_text_to_html_table(size_text):
         if not match:
             raise RuntimeError(f"Invalid size text format: {line}")
         row_values = [match.group(1)]
-        header_values = match.group(2).split(" / ")
+        header_value_pairs = [p.strip() for p in match.group(2).split("/")]
 
-        for header_value in header_values:
-            header, value = header_value.split(" ")
+        for header_value_pair in header_value_pairs:
+            header, value = header_value_expression.match(
+                header_value_pair.strip()
+            ).groups()
             if header.strip() not in headers:
                 headers.append(header.strip())
             row_values.append(value.strip())

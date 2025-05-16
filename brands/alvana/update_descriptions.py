@@ -1,6 +1,6 @@
 import string
 import utils
-from alvana.size_text_to_html_table import size_text_to_html_table
+from brands.alvana.size_text_to_html_table import size_text_to_html_table
 
 
 def get_description(product_description, material, made_in):
@@ -39,9 +39,11 @@ def main():
             continue
         print(f"processing {title}")
         product_id = client.product_id_by_title(title)
-        # size_table_html = size_text_to_html_table(row[string.ascii_uppercase.index('H')].strip())
-        # res = client.update_size_table_html_metafield(product_id, size_table_html)
-        # print(res)
+        size_text = row[string.ascii_uppercase.index("H")].strip()
+        if size_text:
+            size_table_html = size_text_to_html_table(size_text)
+            res = client.update_size_table_html_metafield(product_id, size_table_html)
+            print(res)
         product_description = row[string.ascii_uppercase.index("E")].strip()
         if not product_description.startswith("#N/A"):
             made_in = row[string.ascii_uppercase.index("I")].strip()
