@@ -6,13 +6,13 @@ from helpers.exceptions import (
     NoVariantsFoundException,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class ProductQueries:
     """
     A class to handle GraphQL queries related to products in Shopify, inherited by the ShopifyGraphqlClient class.
     """
-
-    logger = logging.getLogger(f"{__module__}.{__qualname__}")
 
     def products_by_query(self, query_string, additional_fields=None):
         query = """
@@ -145,7 +145,7 @@ class ProductQueries:
         res = res["productVariants"]["nodes"]
         if filter_archived:
             # Shopify API ignores product_status filter on productVariants query
-            self.logger.info("Filtering ARCHIVED products' variants")
+            logger.info("Filtering ARCHIVED products' variants")
             res = [r for r in res if r["product"]["status"] != "ARCHIVED"]
         return res
 

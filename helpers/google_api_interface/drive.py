@@ -5,51 +5,70 @@ import logging
 from googleapiclient.http import MediaIoBaseDownload
 from PIL import Image
 
+logger = logging.getLogger(__name__)
+
+
 class GoogleDriveApiInterface:
-    '''
+    """
     Google Drive API Interface, inherited by GoogleApiInterface.
-    '''
-    logger = logging.getLogger(f"{__module__}.{__qualname__}")
+    """
 
     @staticmethod
     def natural_compare(k):
         def convert(text):
             return int(text) if text.isdigit() else text.lower()
-        return [convert(c) for c in re.split('([0-9]+)', k)]
 
-    def drive_images_to_local(self, folder_id, local_dir, filename_prefix='', sort_key_func=natural_compare):
+        return [convert(c) for c in re.split("([0-9]+)", k)]
+
+    def drive_images_to_local(
+        self, folder_id, local_dir, filename_prefix="", sort_key_func=natural_compare
+    ):
         os.makedirs(local_dir, exist_ok=True)
         image_details = self.get_drive_image_details(folder_id)
-        image_details.sort(key=lambda f: sort_key_func(f['name']))        # sort by natural order
-        file_ids = [image['id'] for image in image_details]
-        local_paths = [os.path.join(local_dir, f"{filename_prefix}_{str(seq).zfill(3)}_{image['name']}") for seq, image in enumerate(image_details)]
-        return [self.download_and_process_image(file_id, local_path) for file_id, local_path in zip(file_ids, local_paths)]
+        image_details.sort(
+            key=lambda f: sort_key_func(f["name"])
+        )  # sort by natural order
+        file_ids = [image["id"] for image in image_details]
+        local_paths = [
+            os.path.join(
+                local_dir, f"{filename_prefix}_{str(seq).zfill(3)}_{image['name']}"
+            )
+            for seq, image in enumerate(image_details)
+        ]
+        return [
+            self.download_and_process_image(file_id, local_path)
+            for file_id, local_path in zip(file_ids, local_paths)
+        ]
 
     def get_drive_image_details(self, folder_id):
-        results = self.drive_service.files().list(
-                            q=f"'{folder_id}' in parents",
-                            pageSize=1000,
-                            includeItemsFromAllDrives=True,
-                            supportsAllDrives=True,
-                        ).execute()
-        items = results.get('files', [])
-        return [item for item in items if item['mimeType'].startswith('image/')]
+        results = (
+            self.drive_service.files()
+            .list(
+                q=f"'{folder_id}' in parents",
+                pageSize=1000,
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+            )
+            .execute()
+        )
+        items = results.get("files", [])
+        return [item for item in items if item["mimeType"].startswith("image/")]
 
     def download_and_process_image(self, file_id, local_path):
         if not os.path.exists(local_path):
-            self.logger.info(f"  starting download of {file_id} to {local_path}")
+            logger.info(f"  starting download of {file_id} to {local_path}")
             self.download_file_from_drive(file_id, local_path)
             self.resize_image_to_limit(local_path, local_path)
         return local_path
 
     def download_file_from_drive(self, file_id, destination_path):
         request = self.drive_service.files().get_media(fileId=file_id)
-        fh = io.FileIO(destination_path, 'wb')
+        fh = io.FileIO(destination_path, "wb")
         downloader = MediaIoBaseDownload(fh, request)
         done = False
         while done is False:
             status, done = downloader.next_chunk()
-            self.logger.debug(f"Download {int(status.progress() * 100)}%.")
+            logger.debug(f"Download {int(status.progress() * 100)}%.")
 
     @staticmethod
     def resize_image_to_limit(image_path, output_path, max_megapixels=20):
@@ -61,12 +80,14 @@ class GoogleDriveApiInterface:
                 new_height = int(img.height * scale_factor)
 
                 resized_img = img.resize((new_width, new_height), Image.LANCZOS)
-                if resized_img.mode == 'RGBA':
-                    kwargs = dict(format='PNG')
+                if resized_img.mode == "RGBA":
+                    kwargs = dict(format="PNG")
                 else:
-                    kwargs = dict(format='JPEG', quarity=85)
+                    kwargs = dict(format="JPEG", quarity=85)
                 resized_img.save(output_path, **kwargs)
-                GoogleDriveApiInterface.logger.info(f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}")
+                GoogleDriveApiInterface.logger.info(
+                    f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}"
+                )
 
     def find_folder_id_by_name(self, parent_folder_id, folder_name):
         """
@@ -79,26 +100,36 @@ class GoogleDriveApiInterface:
         # Query for folders with the specified name inside the parent folder
         folder_name = folder_name.replace("'", "\\'")
         query = f"'{parent_folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and name='{folder_name}'"
-        results = self.drive_service.files().list(
-            q=query,
-            pageSize=10,  # Assuming there are not too many folders with the same name
-            fields="files(id, name)",
-            includeItemsFromAllDrives=True,
-            supportsAllDrives=True,
-        ).execute()
+        results = (
+            self.drive_service.files()
+            .list(
+                q=query,
+                pageSize=10,  # Assuming there are not too many folders with the same name
+                fields="files(id, name)",
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+            )
+            .execute()
+        )
 
-        items = results.get('files', [])
+        items = results.get("files", [])
         if items and len(items) > 1:
-            raise RuntimeError(f"Multiple folders found with the name '{folder_name}' in parent folder '{parent_folder_id}'.")
-        return items[0]['id']
+            raise RuntimeError(
+                f"Multiple folders found with the name '{folder_name}' in parent folder '{parent_folder_id}'."
+            )
+        return items[0]["id"]
 
     def list_folders(self, parent_folder_id):
         query = f"'{parent_folder_id}' in parents and mimeType='application/vnd.google-apps.folder'"
-        results = self.drive_service.files().list(
+        results = (
+            self.drive_service.files()
+            .list(
                 q=query,
                 pageSize=1000,
                 fields="files(id, name)",
                 includeItemsFromAllDrives=True,
                 supportsAllDrives=True,
-            ).execute()
-        return results['files']
+            )
+            .execute()
+        )
+        return results["files"]

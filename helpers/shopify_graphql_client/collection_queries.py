@@ -1,8 +1,12 @@
 import logging
+
+logger = logging.getLogger(__name__)
+
+
 class CollectionQueries:
-    logger = logging.getLogger(f"{__module__}.{__qualname__}")
+
     def products_by_collection_id(self, collection_id):
-        query = '''
+        query = """
         query ProductsByCollection ($id: ID!) {
             collection(id: $id) {
                 handle
@@ -15,15 +19,14 @@ class CollectionQueries:
                 }
             }
         }
-        '''
-        variables = {
-            'id': collection_id
-        }
+        """
+        variables = {"id": collection_id}
         res = self.run_query(query, variables)
-        return res['collection']['products']['nodes']
+        return res["collection"]["products"]["nodes"]
 
     def collection_by_title(self, title):
-        query = '''
+        query = (
+            """
         query collections {
             collections(first: 50, query: "title:'%s'") {
                 nodes {
@@ -40,18 +43,22 @@ class CollectionQueries:
                     }
                 }
             }
-        }''' % title
+        }"""
+            % title
+        )
         res = self.run_query(query)
-        if len(res['collections']['nodes']) != 1:
-            raise RuntimeError(f"{'Multiple' if res['nodes'] else 'No'} collections found for {title}: {res['nodes']}")
-        return res['collections']['nodes'][0]
+        if len(res["collections"]["nodes"]) != 1:
+            raise RuntimeError(
+                f"{'Multiple' if res['nodes'] else 'No'} collections found for {title}: {res['nodes']}"
+            )
+        return res["collections"]["nodes"][0]
 
     def collection_id_by_title(self, title):
         collection = self.collection_by_title(title)
-        return collection['id']
+        return collection["id"]
 
     def collection_create(self, collection_title, product_ids):
-        query = '''
+        query = """
         mutation createCollection($input: CollectionInput!) {
             collectionCreate(input: $input) {
                 collection {
@@ -69,20 +76,22 @@ class CollectionQueries:
                 }
             }
         }
-        '''
+        """
         variables = {
             "input": {
                 "title": collection_title,
-                "products": [self.sanitize_id(product_id) for product_id in product_ids]
+                "products": [
+                    self.sanitize_id(product_id) for product_id in product_ids
+                ],
             }
         }
         res = self.run_query(query, variables)
-        if errors := res['collectionCreate']['userErrors']:
+        if errors := res["collectionCreate"]["userErrors"]:
             raise RuntimeError(f"Collection creation failed: {errors}")
         return res
 
     def collection_add_products(self, collection_id, product_ids):
-        query = '''
+        query = """
         mutation collectionAddProducts($id: ID!, $productIds: [ID!]!) {
             collectionAddProducts(id: $id, productIds: $productIds) {
                 collection {
@@ -101,12 +110,12 @@ class CollectionQueries:
                 }
             }
         }
-        '''
+        """
         variables = {
             "id": collection_id,
-            "productIds": [self.sanitize_id(product_id) for product_id in product_ids]
+            "productIds": [self.sanitize_id(product_id) for product_id in product_ids],
         }
         res = self.run_query(query, variables)
-        if errors := res['collectionAddProducts']['userErrors']:
+        if errors := res["collectionAddProducts"]["userErrors"]:
             raise RuntimeError(f"Failed to add products to the collection: {errors}")
         return res

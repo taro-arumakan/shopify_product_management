@@ -1,13 +1,27 @@
 import logging
 import re
 
+logger = logging.getLogger(__name__)
+
+
 class ProductCreate:
     """
     A class to handle GraphQL queries related to products creation in Shopify, inherited by the ShopifyGraphqlClient class.
     """
-    logger = logging.getLogger(f"{__module__}.{__qualname__}")
 
-    def product_create_default_variant(self, title, description_html, vendor, tags, price, sku, handle=None, status='DRAFT', template_suffix=None, metafields=None):
+    def product_create_default_variant(
+        self,
+        title,
+        description_html,
+        vendor,
+        tags,
+        price,
+        sku,
+        handle=None,
+        status="DRAFT",
+        template_suffix=None,
+        metafields=None,
+    ):
         query = """
         mutation productSet($input: ProductSetInput!) {
             productSet(synchronous: true, input: $input) {
@@ -34,22 +48,20 @@ class ProductCreate:
                 "vendor": vendor,
                 "tags": tags,
                 "status": status,
-                "productOptions": [{
-                    'name': 'Title',
-                    'values': [{'name': "Default Title"}]
-                }],
-                "variants": [{
-                    'price': price,
-                    'sku': sku,
-                    'taxable': True,
-                    'position': 1,
-                    "optionValues": [
-                        {
-                            "optionName": "Title",
-                            "name": "Default Title"
-                        }
-                    ]
-                }]
+                "productOptions": [
+                    {"name": "Title", "values": [{"name": "Default Title"}]}
+                ],
+                "variants": [
+                    {
+                        "price": price,
+                        "sku": sku,
+                        "taxable": True,
+                        "position": 1,
+                        "optionValues": [
+                            {"optionName": "Title", "name": "Default Title"}
+                        ],
+                    }
+                ],
             }
         }
         if handle:
@@ -60,11 +72,22 @@ class ProductCreate:
             variables["input"]["metafields"] = metafields
 
         res = self.run_query(query, variables)
-        if errors := res['productSet']['userErrors']:
+        if errors := res["productSet"]["userErrors"]:
             raise RuntimeError(f"Product creation failed: {errors}")
-        return res['productSet']['product']
+        return res["productSet"]["product"]
 
-    def product_create(self, title, description_html, vendor, tags, handle=None, status='DRAFT', template_suffix=None, metafields=None, option_lists=None):
+    def product_create(
+        self,
+        title,
+        description_html,
+        vendor,
+        tags,
+        handle=None,
+        status="DRAFT",
+        template_suffix=None,
+        metafields=None,
+        option_lists=None,
+    ):
         query = """
         mutation productSet($input: ProductSetInput!) {
             productSet(synchronous: true, input: $input) {
@@ -100,13 +123,15 @@ class ProductCreate:
         if metafields:
             variables["input"]["metafields"] = metafields
         if option_lists:
-            variables["input"]["productOptions"] = self.populate_product_options(option_lists)
+            variables["input"]["productOptions"] = self.populate_product_options(
+                option_lists
+            )
             variables["input"]["variants"] = self.populate_variant_inputs(option_lists)
 
         res = self.run_query(query, variables)
-        if errors := res['productSet']['userErrors']:
+        if errors := res["productSet"]["userErrors"]:
             raise RuntimeError(f"Product creation failed: {errors}")
-        return res['productSet']['product']
+        return res["productSet"]["product"]
 
     def populate_product_options(self, option_lists):
         product_options = {}
@@ -114,10 +139,10 @@ class ProductCreate:
             for k, v in option_dict.items():
                 if v not in product_options.get(k, []):
                     product_options.setdefault(k, []).append(v)
-        return [{'name': k,
-                 'position': i+1,
-                 'values': [{'name': vv} for vv in v]
-                } for i, (k, v) in enumerate(product_options.items())]
+        return [
+            {"name": k, "position": i + 1, "values": [{"name": vv} for vv in v]}
+            for i, (k, v) in enumerate(product_options.items())
+        ]
 
     def populate_variant_inputs(self, option_lists):
         """
@@ -130,25 +155,28 @@ class ProductCreate:
         [[{'カラー': 'Black'}, 23100, 'OVBAX25107BLK'],
          [{'カラー': 'Beige'}, 23100, 'OVBAX25107BEE']]
         """
-        return [{'price': price,
-                 'sku': sku,
-                 'taxable': True,
-                 'position': i+1,
-                 'optionValues': [
-                     {'optionName': option_name,
-                      'name': option_value}
-                     for option_name, option_value in options_dict.items()
-                 ]}
-                for i, (options_dict, price, sku) in enumerate(option_lists)]
+        return [
+            {
+                "price": price,
+                "sku": sku,
+                "taxable": True,
+                "position": i + 1,
+                "optionValues": [
+                    {"optionName": option_name, "name": option_value}
+                    for option_name, option_value in options_dict.items()
+                ],
+            }
+            for i, (options_dict, price, sku) in enumerate(option_lists)
+        ]
 
     def escape_html(self, text):
         replace_map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;',
-            '\n': '<br>',
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+            "\n": "<br>",
         }
         for k, v in replace_map.items():
             text = text.replace(k, v)
@@ -156,43 +184,65 @@ class ProductCreate:
 
     @staticmethod
     def get_size_table_html(size_text):
-        kv_pairs = list(map(str.strip, re.split('[\n/]', size_text)))
-        headers, values = zip(*[kv_pair.split(' ') for kv_pair in kv_pairs])
+        kv_pairs = list(map(str.strip, re.split("[\n/]", size_text)))
+        headers, values = zip(*[kv_pair.split(" ") for kv_pair in kv_pairs])
         return ProductCreate.generate_table_html(headers, values)
 
     @staticmethod
     def generate_table_html(headers, rows):
-        spaces = '            '
+        spaces = "            "
         html = """
             <table border="1" style="border-collapse: collapse; text-align: left;">
               <thead>
-                <tr>""".replace(spaces, '')
+                <tr>""".replace(
+            spaces, ""
+        )
 
         for header in headers:
             html += f"""
-                  <th>{header}</th>""".replace(spaces, '')
+                  <th>{header}</th>""".replace(
+                spaces, ""
+            )
 
         html += """
                 </tr>
               </thead>
-              <tbody>""".replace(spaces, '')
+              <tbody>""".replace(
+            spaces, ""
+        )
 
         for row in rows:
             html += """
-                <tr>""".replace(spaces, '')
+                <tr>""".replace(
+                spaces, ""
+            )
             for v in row:
                 html += f"""
-                  <td>{v}</td>""".replace(spaces, '')
+                  <td>{v}</td>""".replace(
+                    spaces, ""
+                )
             html += """
-                </tr>""".replace(spaces, '')
+                </tr>""".replace(
+                spaces, ""
+            )
 
         html += """
               </tbody>
-            </table>""".replace(spaces, '')
+            </table>""".replace(
+            spaces, ""
+        )
 
         return html
 
-    def get_description_html(self, description, product_care, material, size_text, made_in, get_size_table_html_func=None):
+    def get_description_html(
+        self,
+        description,
+        product_care,
+        material,
+        size_text,
+        made_in,
+        get_size_table_html_func=None,
+    ):
         description = self.escape_html(description)
         product_care = self.escape_html(product_care)
         material = self.escape_html(material)
@@ -200,11 +250,11 @@ class ProductCreate:
         size_table = (get_size_table_html_func or self.get_size_table_html)(size_text)
 
         description_html = product_description_template()
-        description_html = description_html.replace('${DESCRIPTION}', description)
-        description_html = description_html.replace('${PRODUCTCARE}', product_care)
-        description_html = description_html.replace('${SIZE_TABLE}', size_table)
-        description_html = description_html.replace('${MATERIAL}', material)
-        description_html = description_html.replace('${MADEIN}', made_in)
+        description_html = description_html.replace("${DESCRIPTION}", description)
+        description_html = description_html.replace("${PRODUCTCARE}", product_care)
+        description_html = description_html.replace("${SIZE_TABLE}", size_table)
+        description_html = description_html.replace("${MATERIAL}", material)
+        description_html = description_html.replace("${MADEIN}", made_in)
 
         return description_html
 
@@ -227,14 +277,11 @@ class ProductCreate:
             }
         }
         """
-        variables = {
-            "productId": product_id,
-            "variants": variants
-        }
+        variables = {"productId": product_id, "variants": variants}
         res = self.run_query(query, variables)
-        if errors := res['productVariantsBulkCreate']['userErrors']:
+        if errors := res["productVariantsBulkCreate"]["userErrors"]:
             raise RuntimeError(f"Product variants creation failed: {errors}")
-        return res['productVariantsBulkCreate']['productVariants']
+        return res["productVariantsBulkCreate"]["productVariants"]
 
 
 def product_description_template():
