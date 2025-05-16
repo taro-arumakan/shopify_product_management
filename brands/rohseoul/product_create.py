@@ -1,5 +1,4 @@
 import logging
-import re
 import string
 import utils
 
@@ -35,8 +34,6 @@ def product_info_lists_from_sheet(
         column_product_attrs,
         column_variant_attrs,
         handle_suffix=handle_suffix,
-        row_filter_func=lambda row: row[column_product_attrs["status"]].strip()
-        == "NEW",
     )
 
 
@@ -72,43 +69,10 @@ def get_description_html(sgc: utils.Client, description, material, size_text, ma
     )
 
 
-def populate_option(product_info, option1_key):
-    return [
-        [{option1_key: option1[option1_key]}, option1["price"], option1["sku"]]
-        for option1 in product_info["options"]
-    ]
-
-
-def create_a_product(sgc: utils.Client, product_info, vendor, description_html_map):
-    logging.info(f'creating {product_info["title"]}')
-    description_html = description_html_map[product_info["title"]]
-    tags = ",".join(
-        [
-            product_info["release_date"],
-            product_info["collection"],
-            product_info["category"],
-        ]
-    )
-    options = populate_option(product_info, "カラー")
-    res = sgc.product_create(
-        title=product_info["title"],
-        handle=product_info["handle"],
-        description_html=description_html,
-        vendor=vendor,
-        tags=tags,
-        option_lists=options,
-    )
-    res2 = [
-        sgc.enable_and_activate_inventory(variant_info["sku"], [])
-        for variant_info in product_info["options"]
-    ]
-    return (res, res2)
-
-
-def create_products(sgc: utils.Client, product_info_list, vendor):
+def create_products(client: utils.Client, product_info_list, vendor):
     description_html_map = {
         product_info["title"]: get_description_html(
-            sgc,
+            client,
             product_info["description"],
             product_info["material"],
             product_info["size_text"],
@@ -121,7 +85,24 @@ def create_products(sgc: utils.Client, product_info_list, vendor):
     }
     ress = []
     for product_info in product_info_list:
-        ress.append(create_a_product(sgc, product_info, vendor, description_html_map))
+        description_html = description_html_map[product_info["title"]]
+        tags = ",".join(
+            [
+                product_info["release_date"],
+                product_info["collection"],
+                product_info["category"],
+                "New Arrival",
+            ]
+        )
+        ress.append(
+            client.create_a_product(
+                product_info,
+                vendor,
+                description_html=description_html,
+                tags=tags,
+                location_names=["Shop location"],
+            )
+        )
     return ress
 
 
@@ -129,10 +110,9 @@ def update_stocks(sgc: utils.Client, product_info_list):
     logging.info("updating inventory")
     location_id = sgc.location_id_by_name("Shop location")
     sku_stock_map = {
-        sku: stock
+        variant_info["sku"]: variant_info["stock"]
         for product_info in product_info_list
         for variant_info in product_info["options"]
-        for sku, stock in zip(variant_info["sku"], variant_info["stock"])
     }
     return [
         sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
@@ -140,72 +120,28 @@ def update_stocks(sgc: utils.Client, product_info_list):
     ]
 
 
-def sort_key_func(k):
-    def convert(text):
-        return int(text) if text.isdigit() else text.lower()
-
-    return (
-        ["0"]
-        if k.split(".")[0] == "b1"
-        else [convert(c) for c in re.split("([0-9]+)", k)]
-    )
-
-
-def process_product_images(client: utils.Client, product_info, handle_suffix):
-    # TODO move to client.process_product_images
-    product_id = client.product_id_by_handle(
-        "-".join(product_info["title"].lower().split(" ") + [handle_suffix])
-    )
-    local_paths = []
-    image_position = 0
-    for variant in product_info["options"]:
-        assert variant[
-            "drive_link"
-        ], f"no drive link for {product_info['title'], {variant}}"
-        drive_id = client.drive_link_to_id(variant["drive_link"])
-        skus = [variant["sku"]]
-
-        image_position += len(local_paths)
-        local_paths += client.drive_images_to_local(
-            drive_id,
-            "/Users/taro/Downloads/rohseoul20250417_test/",
-            f"upload_20250411_{skus[0]}",
-            sort_key_func=sort_key_func,
-        )
-        ress = []
-        ress.append(client.upload_and_assign_images_to_product(product_id, local_paths))
-        ress.append(
-            client.assign_image_to_skus_by_position(product_id, image_position, skus)
-        )
-        return ress
-
-
 def main():
-    handle_suffix = "dummy-test"
+    handle_suffix = "25ss-3rd"
     import pprint
 
     client = utils.client("rohseoul")
     product_info_list = product_info_lists_from_sheet(
-        client, client.google_sheet_id, "25SS 2차오픈(4월)(Summer 25)", handle_suffix
+        client, client.sheet_id, "25SS 2차오픈(5월)(Summer 25) ", handle_suffix
     )
-    len_list = len(product_info_list)
-    product_info_list = [
-        product_info
-        for product_info in product_info_list
-        if product_info["status"] == "NEW"
-    ]
-    assert len_list == len(product_info_list)
     ress = create_products(client, product_info_list, client.shop_name)
     pprint.pprint(ress)
-    # ress = update_stocks(sgc, product_info_list)
-    # pprint.pprint(ress)
+    ress = update_stocks(client, product_info_list)
+    pprint.pprint(ress)
     ress = []
-    reprocess_from_title = "Medium Mug shoulder bag Nylon"
-    for index, product_info in enumerate(product_info_list):
-        if product_info["title"] == reprocess_from_title:
-            break
-    for product_info in product_info_list[index:]:
-        ress.append(process_product_images(client, product_info, handle_suffix))
+    for product_info in product_info_list:
+        ress.append(
+            client.process_product_images(
+                product_info,
+                "/Users/taro/Downloads/rohseoul20250516/",
+                "upload_20250516_",
+                handle_suffix,
+            )
+        )
     pprint.pprint(ress)
 
 
