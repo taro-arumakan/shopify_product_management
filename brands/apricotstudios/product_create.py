@@ -89,7 +89,13 @@ def text_to_html_tables_and_paragraphs(size_text):
 def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=None):
     logging.info(f'creating {product_info["title"]}')
     tags = ",".join(
-        [product_info["category"], product_info["release_date"]] + additional_tags or []
+        [
+            product_info["collection"],
+            product_info["category"],
+            product_info["release_date"],
+        ]
+        + additional_tags
+        or []
     )
     ress = []
     ress.append(
