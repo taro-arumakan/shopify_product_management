@@ -102,7 +102,6 @@ class GoogleSheetsApiInterface:
 
     def get_richtext_link(self, spreadsheet_id, sheet_title, row, column):
         # Use the Google Sheets API directly for rich text data
-        from googleapiclient.discovery import build
         import string
 
         range_notation = f"{sheet_title}!{string.ascii_uppercase[column]}{row}"
