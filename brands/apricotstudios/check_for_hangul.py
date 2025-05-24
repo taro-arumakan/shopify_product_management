@@ -13,7 +13,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-LOCAL_ROOT = "/Users/taro/Downloads/20250509_apricotstudios"
+LOCAL_ROOT = "/Users/taro/Downloads/apricotstudios_20250524"
 
 korean_pattern = re.compile(r"[\uac00-\ud7a3]")
 
@@ -111,10 +111,18 @@ def check_all_both(paths):
 
 
 def check_images():
-    image_dirs = [
-        f"{LOCAL_ROOT}/{p}" for p in sorted(os.listdir(LOCAL_ROOT)) if p != ".DS_Store"
-    ]
-    image_paths = [f"{d}/{p}" for d in image_dirs for p in sorted(os.listdir(d))]
+    image_paths = sum(
+        [
+            [
+                os.path.join(dirpath, fn)
+                for fn in filenames
+                if fn.endswith((".jpg", ".jpeg", ".png"))
+            ]
+            for dirpath, _, filenames in os.walk(LOCAL_ROOT)
+            if dirpath.endswith("product_detail_images")
+        ],
+        [],
+    )
     check_all_both(image_paths)
 
 
