@@ -71,7 +71,7 @@ class GoogleDriveApiInterface:
             logger.debug(f"Download {int(status.progress() * 100)}%.")
 
     @staticmethod
-    def resize_image_to_limit(image_path, output_path, max_megapixels=20):
+    def resize_image_to_limit(image_path, output_path, max_megapixels=15):
         with Image.open(image_path) as img:
             current_megapixels = (img.width * img.height) / 1_000_000
             if current_megapixels > max_megapixels:
@@ -81,11 +81,12 @@ class GoogleDriveApiInterface:
 
                 resized_img = img.resize((new_width, new_height), Image.LANCZOS)
                 if resized_img.mode == "RGBA":
-                    kwargs = dict(format="PNG")
+                    resized_img = resized_img.convert("P", palette=Image.ADAPTIVE)
+                    kwargs = dict(format="PNG", optimize=True)
                 else:
-                    kwargs = dict(format="JPEG", quarity=85)
+                    kwargs = dict(format="JPEG", quality=85)
                 resized_img.save(output_path, **kwargs)
-                GoogleDriveApiInterface.logger.info(
+                logger.info(
                     f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}"
                 )
 
