@@ -1,7 +1,7 @@
 import logging
 import string
 import utils
-from alvana.update_descriptions import get_description
+from brands.alvana.update_descriptions import get_description
 
 logging.basicConfig(level=logging.INFO)
 
@@ -111,8 +111,8 @@ def process_product_images(client: utils.Client, product_info):
         skuss.append([v2["sku"] for v2 in variant["options"]])
         local_paths += client.drive_images_to_local(
             drive_id,
-            "/Users/taro/Downloads/alvana20250418/",
-            f"upload_202504187_{variant['options'][0]['sku']}",
+            "/Users/taro/Downloads/alvana20250519/",
+            f"upload_20250519_{variant['options'][0]['sku']}",
         )
     ress = []
     ress.append(client.upload_and_assign_images_to_product(product_id, local_paths))
@@ -130,15 +130,16 @@ def main():
     c = client("alvanas")
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "Product Master")
     for index, product_info in enumerate(product_info_list):
-        if product_info["title"] == "FADE CENTER SEAM S/S TEE SHIRTS":
+        if product_info["title"] == "WASHI CARDIGAN KNIT":
+            print(f'processing {product_info["title"]}')
+            res = process_product_images(c, product_info)
             break
+    pprint.pprint(res)
     # ress = create_products(c, product_info_list[index:], vendor='alvana')
     # pprint.pprint(ress)
-    ress = []
-    for product_info in product_info_list[index:]:
-        print(f'processing {product_info["title"]}')
-        ress.append(process_product_images(c, product_info))
-    pprint.pprint(ress)
+    # ress = []
+    # for product_info in product_info_list[index:]:
+    # pprint.pprint(ress)
 
 
 if __name__ == "__main__":
