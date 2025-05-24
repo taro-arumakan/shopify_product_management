@@ -14,8 +14,8 @@ import re
 
 logging.basicConfig(level=logging.INFO)
 
-IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250304/"
-DUMMY_PRODUCT = "gid://shopify/Product/9081967476992"
+IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250524/"
+DUMMY_PRODUCT = "gid://shopify/Product/9098700587264"
 
 
 def product_info_list_from_sheet_color_and_size(
@@ -52,33 +52,64 @@ def product_info_list_from_sheet_color_and_size(
         option1_attrs,
         option2_attrs,
         row_filter_func=lambda row: row[string.ascii_lowercase.index("b")]
-        == "5/16(1ST)",
+        == "5/30(2ND)",
     )
 
 
-def parse_a_size_line(size_line):
-    pattern = re.compile(r"(\S+?)：([\d.]+(?: cm)?)")
-    if not (size := pattern.findall(size_line)):
-        return ("サイズ", size_line.replace("サイズ ", "").strip())
-    return size[0]
+# def parse_a_size_line(size_line):
+#     pattern = re.compile(r"(\S+?)：([\d.]+(?: cm)?)")
+#     if not (size := pattern.findall(size_line)):
+#         return ("サイズ", size_line.replace("サイズ ", "").strip())
+#     return size[0]
+
+
+# def parse_table_text_to_html(table_text):
+#     table_text_all_sizes = filter(None, table_text.split("\n\n"))
+#     header_value_pairs = []
+#     for tt in table_text_all_sizes:
+#         header_value_pairs.append([parse_a_size_line(line) for line in tt.split("\n")])
+#     headers = [""] + [p[0] for p in header_value_pairs[0][1:]]
+#     values = [[p[1] for p in pairs] for pairs in header_value_pairs]
+#     return utils.Client.generate_table_html(headers, values)
+
+
+def is_header(parts):
+    try:
+        float(parts[0])
+        return False
+    except ValueError:
+        return True
 
 
 def parse_table_text_to_html(table_text):
-    table_text_all_sizes = filter(None, table_text.split("\n\n"))
-    header_value_pairs = []
-    for tt in table_text_all_sizes:
-        header_value_pairs.append([parse_a_size_line(line) for line in tt.split("\n")])
-    headers = [""] + [p[0] for p in header_value_pairs[0][1:]]
-    values = [[p[1] for p in pairs] for pairs in header_value_pairs]
-    return utils.Client.generate_table_html(headers, values)
+    lines = filter(None, table_text.split("\n"))
+    tables = []
+    headers = []
+    rowss = []
+    for line in lines:
+        parts = re.split(r"\s+", line)
+        if is_header(parts):
+            headers.append(parts)
+            rowss.append([])
+        else:
+            rowss[-1].append(parts)
+    for header, rows in zip(headers, rowss):
+        tables.append(utils.Client.generate_table_html(headers, rows))
+    return tables
 
 
 def text_to_html_tables_and_paragraphs(size_text):
-    table_text, notes_text = size_text.split("注意事項", 1)
-    size_table_html = parse_table_text_to_html(table_text)
-    paragraphs = [p.strip() for p in notes_text.split("\n") if p.strip()]
+    if "注意事項" in size_text:
+        table_text, notes_text = size_text.split("注意事項", 1)
+    else:
+        table_text = size_text
+        notes_text = ""
+    size_table_htmls = parse_table_text_to_html(table_text)
+    paragraphs = (
+        [p.strip() for p in notes_text.split("\n") if p.strip()] if notes_text else []
+    )
 
-    html_output = f"{size_table_html}\n"
+    html_output = "<br><br>".join(size_table_htmls)
     for paragraph in paragraphs:
         paragraph = paragraph.split()
         if paragraph:
@@ -107,6 +138,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
             location_names=["Apricot Studios Warehouse"],
         )
     )
+    logging.info(f'processing images for {product_info["title"]}')
     ress.append(process_images(sgc, product_info))
     ress.append(
         update_product_description_metafield(
@@ -114,15 +146,22 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
             product_info["title"],
             product_info["description"],
             product_info["material"],
-            product_info["made_in"],
+            product_info.get("made_in", "???"),
         )
     )
-    size_text = product_info["size_text"]
-    size_table_html = text_to_html_tables_and_paragraphs(size_text)
-    ress.append(
-        update_size_table_html_metafield(sgc, product_info["title"], size_table_html)
-    )
-    ress.append(update_description_include_metafield_value(sgc, product_info["title"]))
+    size_text = product_info.get("size_text")
+    if size_text:
+        size_table_html = text_to_html_tables_and_paragraphs(size_text)
+        ress.append(
+            update_size_table_html_metafield(
+                sgc, product_info["title"], size_table_html
+            )
+        )
+        ress.append(
+            update_description_include_metafield_value(sgc, product_info["title"])
+        )
+    else:
+        logging.warning(f"No size information found for {product_info['title']}")
 
 
 def create_products(sgc: utils.Client, product_info_list, vendor, additional_tags=None):
@@ -131,6 +170,7 @@ def create_products(sgc: utils.Client, product_info_list, vendor, additional_tag
         ress.append(
             create_a_product(sgc, product_info, vendor, additional_tags=additional_tags)
         )
+    return ress
     ress2 = update_stocks(sgc, product_info_list, ["Apricot Studios Warehouse"])
     return ress, ress2
 
@@ -141,22 +181,46 @@ def image_prefix(title):
     )
 
 
+def download_images(dirpath, images_link, prefix, tempdir):
+    if os.path.exists(dirpath):
+        return [
+            os.path.join(dirpath, p)
+            for p in sorted(os.listdir(dirpath))
+            if p.endswith((".jpg", ".jpeg", ".png"))
+        ]
+
+    return download_and_rename_images_from_dropbox(
+        dirpath,
+        images_link,
+        prefix=prefix,
+        tempdir=tempdir,
+    )
+
+
 def process_images(sgc: utils.Client, product_info):
+    logging.info("downloading product main images")
     image_pathss = [
-        download_and_rename_images_from_dropbox(
-            os.path.join(IMAGES_LOCAL_DIR, product_info["title"]),
+        download_images(
+            os.path.join(
+                IMAGES_LOCAL_DIR, product_info["title"], "product_main_images"
+            ),
             product_info["product_main_images_link"],
             prefix=f"{image_prefix(product_info['title'])}_product_main",
+            tempdir=os.path.join(IMAGES_LOCAL_DIR, "temp"),
         )
     ]
     skuss = []
     for variant in product_info["options"]:
         skus = [o2["sku"] for o2 in variant["options"]]
+        logging.info(f"downloading product variant images for skus {skus}")
         image_pathss += [
-            download_and_rename_images_from_dropbox(
-                os.path.join(IMAGES_LOCAL_DIR, product_info["title"]),
+            download_images(
+                os.path.join(
+                    IMAGES_LOCAL_DIR, product_info["title"], "variant_images", skus[0]
+                ),
                 variant["variant_images_link"],
                 skus[0],
+                tempdir=os.path.join(IMAGES_LOCAL_DIR, "temp"),
             )
         ]
         skuss.append(skus)
@@ -171,10 +235,13 @@ def process_images(sgc: utils.Client, product_info):
         print(f"assing variant image at position {image_position} to {skus}")
         sgc.assign_image_to_skus_by_position(product_id, image_position, skus)
         image_position += len(variant_image_paths)
-    detail_image_paths = download_and_rename_images_from_dropbox(
-        product_info["title"],
+
+    logging.info(f"downloading product detail images")
+    detail_image_paths = download_images(
+        os.path.join(IMAGES_LOCAL_DIR, product_info["title"], "product_detail_images"),
         product_info["product_detail_images_link"],
         prefix=f"{image_prefix(product_info['title'])}_product_detail",
+        tempdir=os.path.join(IMAGES_LOCAL_DIR, "temp"),
     )
     sgc.upload_and_assign_description_images_to_shopify(
         product_id,
@@ -206,6 +273,10 @@ def main():
     product_info_list = product_info_list_from_sheet_color_and_size(
         client, client.sheet_id, "Products Master"
     )
+    # for index, product_info in enumerate(product_info_list):
+    #     if product_info['title'] == 'SUMMER EVERYDAY T-SHIRT':
+    #         break
+    # product_info_list = product_info_list[index:index+1]
     ress = create_products(
         client, product_info_list, vendor, additional_tags=["New Arrival", "25 Summer"]
     )
