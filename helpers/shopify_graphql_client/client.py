@@ -12,6 +12,7 @@ from helpers.shopify_graphql_client.product_queries import ProductQueries
 from helpers.shopify_graphql_client.product_variants_to_products import (
     ProductVariantsToProducts,
 )
+from helpers.shopify_graphql_client.variants_management import VariantsManagement
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class ShopifyGraphqlClient(
     ProductQueries,
     ProductVariantsToProducts,
     MetafieldsManagement,
+    VariantsManagement,
 ):
     def __init__(self, shop_name, access_token):
         self.shop_name = shop_name
