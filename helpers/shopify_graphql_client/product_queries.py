@@ -41,6 +41,10 @@ class ProductQueries:
                                 name
                                 value
                             }
+                            image {
+                                id
+                                url
+                            }
                         }
                     }
                     media (first:100) {
