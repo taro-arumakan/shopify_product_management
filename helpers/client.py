@@ -65,6 +65,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 price=product_info["price"],
                 sku=product_info["sku"],
             )
+        logger.info(f"activating inventory")
         res2 = self._enable_and_activate_inventory(
             product_info, location_names, options
         )
