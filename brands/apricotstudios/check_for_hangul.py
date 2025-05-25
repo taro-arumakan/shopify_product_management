@@ -86,42 +86,44 @@ def check_eo(paths):
 
 
 def check_all_both(paths):
-    # result_pytesseract = check_pytesseract(paths)
-    # print("!!! pytesseract !!!")
-    # print("model_info")
-    # for path in result_pytesseract["model_info"]:
-    #     print(path)
-
-    # print()
-    # print("possible hangul")
-    # for path in result_pytesseract[True]:
-    #     print(path)
-
-    # print()
-    # print()
-    result_eo = check_eo(paths)
-    print("!!! EasyOCR !!!")
+    result_pytesseract = check_pytesseract(paths)
+    print("!!! pytesseract !!!")
     print("model_info")
-    for path in result_eo["model_info"]:
+    for path in result_pytesseract["model_info"]:
         print(path)
+
     print()
     print("possible hangul")
-    for path in result_eo[True]:
+    for path in result_pytesseract[True]:
         print(path)
+
+    # print()
+    # print()
+    # result_eo = check_eo(paths)
+    # print("!!! EasyOCR !!!")
+    # print("model_info")
+    # for path in result_eo["model_info"]:
+    #     print(path)
+    # print()
+    # print("possible hangul")
+    # for path in result_eo[True]:
+    #     print(path)
 
 
 def check_images():
-    image_paths = sum(
-        [
+    image_paths = sorted(
+        sum(
             [
-                os.path.join(dirpath, fn)
-                for fn in filenames
-                if fn.endswith((".jpg", ".jpeg", ".png"))
-            ]
-            for dirpath, _, filenames in os.walk(LOCAL_ROOT)
-            if dirpath.endswith("product_detail_images")
-        ],
-        [],
+                [
+                    os.path.join(dirpath, fn)
+                    for fn in filenames
+                    if fn.endswith((".jpg", ".jpeg", ".png"))
+                ]
+                for dirpath, _, filenames in os.walk(LOCAL_ROOT)
+                if dirpath.endswith("product_detail_images")
+            ],
+            [],
+        )
     )
     check_all_both(image_paths)
 
