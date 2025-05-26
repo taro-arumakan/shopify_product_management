@@ -115,9 +115,7 @@ def create_products(
         )
 
     logging.info("updating inventory")
-    ress2 = update_stocks(
-        sgc, product_info_list, ["KUME Warehouse", "Envycube Warehouse"]
-    )
+    ress2 = update_stocks(sgc, product_info_list, "KUME Warehouse")
 
     ress3 = []
     logging.info("processing product images")
