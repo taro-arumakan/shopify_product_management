@@ -65,8 +65,7 @@ def create_a_product(
             product_info["category2"],
             product_info["release_date"],
         ]
-        + additional_tags
-        or []
+        + (additional_tags or [])
     )
     return sgc.create_a_product(
         product_info=product_info,

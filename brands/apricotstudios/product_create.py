@@ -125,8 +125,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
             product_info["category"],
             product_info["release_date"],
         ]
-        + additional_tags
-        or []
+        + (additional_tags or [])
     )
     ress = []
     ress.append(
