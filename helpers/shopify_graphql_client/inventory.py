@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class InventoryManagement:
+class Inventory:
     """
     This class provides methods to manage inventory in a Shopify store. Inherited by the ShopifyGraphqlClient class.
     """

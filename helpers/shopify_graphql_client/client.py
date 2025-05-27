@@ -1,32 +1,34 @@
 import logging
 import requests
 from helpers.shopify_graphql_client.collection_queries import CollectionQueries
-from helpers.shopify_graphql_client.inventory_management import InventoryManagement
-from helpers.shopify_graphql_client.media_management import MediaManagement
-from helpers.shopify_graphql_client.metafields_management import MetafieldsManagement
-from helpers.shopify_graphql_client.product_attributes_management import (
-    ProductAttributesManagement,
+from helpers.shopify_graphql_client.inventory import Inventory
+from helpers.shopify_graphql_client.medias import Medias
+from helpers.shopify_graphql_client.metafields import Metafields
+from helpers.shopify_graphql_client.product_attributes import (
+    ProductAttributes,
 )
 from helpers.shopify_graphql_client.product_create import ProductCreate
 from helpers.shopify_graphql_client.product_queries import ProductQueries
 from helpers.shopify_graphql_client.product_variants_to_products import (
     ProductVariantsToProducts,
 )
-from helpers.shopify_graphql_client.variants_management import VariantsManagement
+from helpers.shopify_graphql_client.publications import Publications
+from helpers.shopify_graphql_client.variants import Variants
 
 logger = logging.getLogger(__name__)
 
 
 class ShopifyGraphqlClient(
     CollectionQueries,
-    InventoryManagement,
-    MediaManagement,
-    ProductAttributesManagement,
+    Inventory,
+    Medias,
+    ProductAttributes,
     ProductCreate,
     ProductQueries,
     ProductVariantsToProducts,
-    MetafieldsManagement,
-    VariantsManagement,
+    Metafields,
+    Publications,
+    Variants,
 ):
     def __init__(self, shop_name, access_token):
         self.shop_name = shop_name

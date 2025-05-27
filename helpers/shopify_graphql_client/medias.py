@@ -14,7 +14,7 @@ def is_evenly_spaced_stddev(lst, max_stddev=6.0):
     return statistics.stdev(diffs) <= max_stddev
 
 
-class MediaManagement:
+class Medias:
 
     def medias_by_product_id(self, product_id):
         query = """
