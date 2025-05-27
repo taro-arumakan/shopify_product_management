@@ -52,8 +52,10 @@ def main():
                 product_id, get_description(product_description, material, made_in)
             )
             print(res)
-        # res = client.update_product_care_metafield(product_id, get_product_care(row[string.ascii_uppercase.index('F')].strip()))
-        # print(res)
+        res = client.update_product_care_metafield(
+            product_id, get_product_care(row[string.ascii_uppercase.index("F")].strip())
+        )
+        print(res)
     print("done updating")
 
 
