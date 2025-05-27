@@ -25,8 +25,12 @@ class ProductAttributes:
         return res["product"]["descriptionHtml"]
 
     def update_product_attribute(self, product_id, attribute_name, attribute_value):
-        query = (
-            """
+        return self.update_product_attributes(
+            product_id, [attribute_name], [attribute_value]
+        )
+
+    def update_product_attributes(self, product_id, attribute_names, attribute_values):
+        query = """
         mutation productUpdate($input: ProductInput!) {
             productUpdate(input: $input) {
                 product {
@@ -39,15 +43,22 @@ class ProductAttributes:
                 }
             }
         }
-        """
-            % attribute_name
+        """ % "\n".join(
+            attribute_names
         )
         variables = {
             "input": {
                 "id": self.sanitize_id(product_id),
-                attribute_name: attribute_value,
             }
         }
+        variables.update(
+            {
+                attribute_name: attribute_value
+                for attribute_name, attribute_value in zip(
+                    attribute_names, attribute_values
+                )
+            }
+        )
         res = self.run_query(query, variables)
         if res["productUpdate"]["userErrors"]:
             raise RuntimeError(
