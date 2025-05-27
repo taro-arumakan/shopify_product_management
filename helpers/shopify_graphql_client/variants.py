@@ -5,6 +5,45 @@ logger = logging.getLogger(__name__)
 
 
 class Variants:
+    def update_a_variant_attributes(
+        self, product_id, variant_id, attribute_names, attribute_values
+    ):
+        query = """
+        mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+            productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                product {
+                    id
+                }
+                productVariants {
+                    id
+                    %s
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """ % "\n".join(
+            attribute_names
+        )
+        variables = {
+            "productId": self.sanitize_id(product_id),
+            "variants": [
+                {
+                    "id": self.sanitize_id(variant_id, "ProductVariant"),
+                    **{
+                        attribute_name: attribute_value
+                        for attribute_name, attribute_value in zip(
+                            attribute_names, attribute_values
+                        )
+                    },
+                }
+            ],
+        }
+        res = self.run_query(query, variables)
+        return res["productVariantsBulkUpdate"]
+
     def variants_add(
         self,
         product_id,
