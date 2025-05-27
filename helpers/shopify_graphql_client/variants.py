@@ -4,7 +4,7 @@ import re
 logger = logging.getLogger(__name__)
 
 
-class VariantsManagement:
+class Variants:
     def variants_add(
         self,
         product_id,

@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class MetafieldsManagement:
+class Metafields:
     """
     This class provides methods to manage metafields in Shopify using GraphQL. Inherited by the ShopifyGraphqlClient class.
     """
