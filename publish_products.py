@@ -1,4 +1,3 @@
-import copy
 import datetime
 import logging
 import pytz
@@ -11,10 +10,12 @@ def main():
     scheduled_time = pytz.timezone("Asia/Tokyo").localize(
         datetime.datetime(2025, 5, 30, 7, 0, 0)
     )
-    client = utils.client("apricot-studios")
-    products = client.products_by_tag("5/30(2ND)", additional_fields=["status"])
-    # for product in products:
-    #     assert product['status'] == 'DRAFT', f"Product {product['id']} is not in DRAFT status"
+    client = utils.client("kumej")
+    products = client.products_by_tag("5/30 (HOT SUMMER)", additional_fields=["status"])
+    for product in products:
+        assert (
+            product["status"] == "DRAFT"
+        ), f"Product {product['id']} is not in DRAFT status"
 
     publications = client.publications()
     for product in products:
