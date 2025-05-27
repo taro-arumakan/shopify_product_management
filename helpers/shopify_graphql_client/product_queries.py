@@ -37,6 +37,7 @@ class ProductQueries:
                             title
                             sku
                             price
+                            compareAtPrice
                             selectedOptions {
                                 name
                                 value
