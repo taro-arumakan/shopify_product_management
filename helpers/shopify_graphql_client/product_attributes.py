@@ -51,7 +51,7 @@ class ProductAttributes:
                 "id": self.sanitize_id(product_id),
             }
         }
-        variables.update(
+        variables["input"].update(
             {
                 attribute_name: attribute_value
                 for attribute_name, attribute_value in zip(
@@ -62,7 +62,7 @@ class ProductAttributes:
         res = self.run_query(query, variables)
         if res["productUpdate"]["userErrors"]:
             raise RuntimeError(
-                f"Failed to update {attribute_name}: {res['productUpdate']['userErrors']}"
+                f"Failed to update {attribute_names}: {res['productUpdate']['userErrors']}"
             )
         return res
 
