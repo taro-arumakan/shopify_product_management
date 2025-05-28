@@ -187,3 +187,27 @@ class ProductQueries:
     def product_id_by_sku(self, sku):
         variant_id = self.variant_id_by_sku(sku)
         return self.product_id_by_variant_id(variant_id)
+
+    def products_by_collection_handle(self, collection_handle):
+        query = """
+            query getCollectionByHandle($collection_handle: String!) {
+                collectionByHandle(handle: $collection_handle) {
+                    id
+                    title
+                    products(first: 100) {
+                        nodes {
+                            id
+                            title
+                            tags
+                        }
+                    }
+                }
+            }
+        """
+        variables = {"collection_handle": collection_handle}
+        res = self.run_query(query, variables)
+        res = res["collectionByHandle"]["products"]["nodes"]
+        assert (
+            len(res) < 100
+        ), f"Too many products found for {collection_handle}: {len(res)}"
+        return res
