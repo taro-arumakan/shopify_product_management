@@ -76,6 +76,11 @@ class Metafields:
             product_id, "custom", "size_table_html", html_text
         )
 
+    def update_badges_metafield(self, product_id, badges: list[str]):
+        return self.update_product_metafield(
+            product_id, "custom", "badges", json.dumps(badges)
+        )
+
     def metafield_id_by_namespace_and_key(self, namespace, key, owner_type="PRODUCT"):
         query = """
         query {
