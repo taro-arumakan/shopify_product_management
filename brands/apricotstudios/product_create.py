@@ -170,8 +170,6 @@ def create_products(sgc: utils.Client, product_info_list, vendor, additional_tag
             create_a_product(sgc, product_info, vendor, additional_tags=additional_tags)
         )
     return ress
-    ress2 = update_stocks(sgc, product_info_list, ["Apricot Studios Warehouse"])
-    return ress, ress2
 
 
 def image_prefix(title):
@@ -276,10 +274,12 @@ def main():
     #     if product_info['title'] == 'SUMMER EVERYDAY T-SHIRT':
     #         break
     # product_info_list = product_info_list[index:index+1]
-    ress = create_products(
-        client, product_info_list, vendor, additional_tags=["New Arrival", "25 Summer"]
-    )
-    pprint.pprint(ress)
+    # ress = create_products(
+    #     client, product_info_list, vendor, additional_tags=["New Arrival", "25 Summer"]
+    # )
+    ress2 = update_stocks(client, product_info_list, ["Apricot Studios Warehouse"])
+
+    pprint.pprint(ress2)
 
 
 if __name__ == "__main__":
