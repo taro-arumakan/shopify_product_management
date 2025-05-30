@@ -1,5 +1,8 @@
+import logging
 import string
 import utils
+
+logging.basicConfig(level=logging.INFO)
 
 
 def product_info_lists_from_sheet(gai: utils.Client, sheet_id, sheet_title):
@@ -14,11 +17,12 @@ def product_info_lists_from_sheet(gai: utils.Client, sheet_id, sheet_title):
         material=string.ascii_lowercase.index("u"),
         made_in=string.ascii_lowercase.index("v"),
     )
-    column_variant_attrs = dict(
+    column_variant_attrs = {"カラー": string.ascii_lowercase.index("i")}
+    column_variant_attrs.update(
         sku=string.ascii_lowercase.index("e"),
-        color=string.ascii_lowercase.index("i"),
         price=string.ascii_lowercase.index("l"),
         drive_link=string.ascii_lowercase.index("o"),
+        stock=string.ascii_lowercase.index("m"),
     )
     return gai.to_products_list(
         sheet_id, sheet_title, start_row, column_product_attrs, column_variant_attrs
@@ -42,12 +46,6 @@ def create_a_product(sgc, product_info, vendor):
         product_info["size_text"],
         product_info["made_in"],
     )
-    options = [
-        [{"カラー": color}, price, sku]
-        for color, price, sku in zip(
-            product_info["color"], product_info["price"], product_info["sku"]
-        )
-    ]
     tags = ",".join(
         [
             product_info["release_date"],
@@ -55,19 +53,33 @@ def create_a_product(sgc, product_info, vendor):
             product_info["category"],
         ]
     )
-    return sgc.product_create(
-        title=product_info["title"],
+    sgc.create_a_product(
+        product_info,
+        vendor,
         description_html=description_html,
-        vendor=vendor,
         tags=tags,
-        option_lists=options,
+        location_names=["Archivépke Warehouse", "Envycube Warehouse"],
     )
+
+
+def update_stocks(sgc: utils.Client, product_info_list):
+    logging.info("updating inventory")
+    location_id = sgc.location_id_by_name("Archivépke Warehouse")
+    sku_stock_map = {
+        variant_info["sku"]: variant_info["stock"]
+        for product_info in product_info_list
+        for variant_info in product_info["options"]
+    }
+    return [
+        sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
+        for sku, stock in sku_stock_map.items()
+    ]
 
 
 def main():
     client = utils.client("archive-epke")
     product_info_list = product_info_lists_from_sheet(
-        client, client.google_sheet_id, "2025.4/10 Release"
+        client, client.sheet_id, "2025.6.3 Release"
     )
     import pprint
 
@@ -76,6 +88,20 @@ def main():
         pprint.pprint(product_info)
         res = create_a_product(client, product_info, "archive-epke")
         ress.append(res)
+    pprint.pprint(ress)
+
+    res = update_stocks(client, product_info_list)
+    pprint.pprint(res)
+
+    ress = []
+    for product_info in product_info_list:
+        ress.append(
+            client.process_product_images(
+                product_info,
+                "/Users/taro/Downloads/archivépke20250530/",
+                "upload_20250530_",
+            )
+        )
     pprint.pprint(ress)
 
 
