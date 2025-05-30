@@ -186,7 +186,9 @@ class GoogleSheetsApiInterface:
                         option1_key: option1[option1_key],
                         option2_key: option2[option2_key],
                     },
-                    option2.get("price", option1.get("price", product_info["price"])),
+                    option2.get("price")
+                    or option1.get("price")
+                    or product_info["price"],
                     option2["sku"],
                 ]
                 for option1 in product_info["options"]
@@ -196,7 +198,7 @@ class GoogleSheetsApiInterface:
             return [
                 [
                     {option1_key: option1[option1_key]},
-                    option1.get("price", product_info["price"]),
+                    option1.get("price") or product_info["price"],
                     option1["sku"],
                 ]
                 for option1 in product_info["options"]
