@@ -1,6 +1,9 @@
+import logging
 import string
 import utils
 import re
+
+logging.basicConfig(level=logging.INFO)
 
 IMAGES_LOCAL_DIR = "/Users/taro/Downloads/rawrowr20250418/"
 DUMMY_PRODUCT = "gid://shopify/Product/8773753700593"
@@ -31,7 +34,7 @@ def main():
     for f in folders:
         dir_id = f["id"]
         name = get_product_name(f["name"])
-        if name != "R TRUNK FRAME ep.3 84L / 20’’" and " COVER " not in name:
+        if name.startswith("R TRUNK LITE ep.3 72L"):
             prefix = name.translate(punctuation_translator)
             print("processing", name)
             product = client.product_by_query(
