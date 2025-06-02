@@ -18,15 +18,23 @@ def main():
         client, client.sheet_id, "Products Master"
     )
     for product_info in product_info_list:
-        size_text = product_info.get("size_text")
-        if size_text:
-            size_table_html = text_to_html_tables_and_paragraphs(size_text)
-            update_size_table_html_metafield(
-                client, product_info["title"], size_table_html
-            )
-            update_description_include_metafield_value(client, product_info["title"])
-        else:
-            logging.warning(f"No size information found for {product_info['title']}")
+        if product_info["title"] in [
+            "DAUGHTER MAY SOCKS 3pcs",
+            "SUMMER MARIN EYELET SOCKS 2pcs",
+        ]:
+            size_text = product_info.get("size_text")
+            if size_text:
+                size_table_html = text_to_html_tables_and_paragraphs(size_text)
+                update_size_table_html_metafield(
+                    client, product_info["title"], size_table_html
+                )
+                update_description_include_metafield_value(
+                    client, product_info["title"]
+                )
+            else:
+                logging.warning(
+                    f"No size information found for {product_info['title']}"
+                )
 
 
 if __name__ == "__main__":

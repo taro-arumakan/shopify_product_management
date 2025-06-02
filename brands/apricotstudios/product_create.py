@@ -74,6 +74,8 @@ def product_info_list_from_sheet_color_and_size(
 
 
 def is_header(parts):
+    if parts[0] in ["XS", "S", "M", "L", "XL", "XXL"]:
+        return False
     try:
         float(parts[0])
         return False
@@ -84,16 +86,16 @@ def is_header(parts):
 def parse_table_text_to_html(table_text):
     lines = filter(None, table_text.split("\n"))
     tables = []
-    headers = []
+    headers = None
     rowss = []
     for line in lines:
         parts = re.split(r"\s+", line)
-        if is_header(parts):
-            headers.append(parts)
+        if not headers and is_header(parts):
+            headers = parts
             rowss.append([])
         else:
             rowss[-1].append(parts)
-    for header, rows in zip(headers, rowss):
+    for rows in rowss:
         tables.append(utils.Client.generate_table_html(headers, rows))
     return tables
 
