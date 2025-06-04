@@ -76,6 +76,16 @@ class Metafields:
             product_id, "custom", "size_table_html", html_text
         )
 
+    def update_size_table_html_ja_metafield(self, product_id, html_text):
+        return self.update_product_metafield(
+            product_id, "custom", "size_table_html_ja", html_text
+        )
+
+    def update_size_table_html_en_metafield(self, product_id, html_text):
+        return self.update_product_metafield(
+            product_id, "custom", "size_table_html_en", html_text
+        )
+
     def update_badges_metafield(self, product_id, badges: list[str]):
         return self.update_product_metafield(
             product_id, "custom", "badges", json.dumps(badges)
