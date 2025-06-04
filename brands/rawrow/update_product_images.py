@@ -39,12 +39,12 @@ def main():
     )
     ress = []
     for product_info in product_info_list:
-        if product_info["title"] == 'R TRUNK LITE ep.3 37L / 20"':
+        if product_info["title"] == 'R TRUNK LITE ep.3 72L / 27"':
             ress.append(
                 client.process_product_images(
                     product_info,
-                    "/Users/taro/Downloads/rawrow20250428/",
-                    "upload_20250428_",
+                    "/Users/taro/Downloads/rawrow20250530/",
+                    "upload_20250530_",
                 )
             )
     pprint.pprint(ress)
