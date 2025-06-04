@@ -19,8 +19,7 @@ def main():
     )
     for product_info in product_info_list:
         if product_info["title"] in [
-            "DAUGHTER MAY SOCKS 3pcs",
-            "SUMMER MARIN EYELET SOCKS 2pcs",
+            "SUMMER MOTIVE SOCKS 3pcs",
         ]:
             size_text = product_info.get("size_text")
             if size_text:
