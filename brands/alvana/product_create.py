@@ -80,14 +80,13 @@ def create_products(sgc: utils.Client, product_info_list, vendor):
 
 def update_stocks(sgc: utils.Client, product_info_list):
     logging.info("updating inventory")
-    location_id = sgc.location_id_by_name("Shop location")
+    location_id = sgc.location_id_by_name("Jingumae")
     sku_stock_map = {
-        sku: stock
+        option2["sku"]: option2["stock"]
         for product_info in product_info_list
         for option1 in product_info["options"]
         for option2 in option1["options"]
-        for sku, stock in zip(option2["sku"], option2["stock"])
-        if option2["stock"]
+        if option2.get("stock")
     }
     return [
         sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
@@ -111,8 +110,8 @@ def process_product_images(client: utils.Client, product_info):
         skuss.append([v2["sku"] for v2 in variant["options"]])
         local_paths += client.drive_images_to_local(
             drive_id,
-            "/Users/taro/Downloads/alvana20250519/",
-            f"upload_20250519_{variant['options'][0]['sku']}",
+            "/Users/taro/Downloads/alvana20250604/",
+            f"upload_20250604_{variant['options'][0]['sku']}",
         )
     ress = []
     ress.append(client.upload_and_assign_images_to_product(product_id, local_paths))
@@ -130,16 +129,15 @@ def main():
     c = client("alvanas")
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "Product Master")
     for index, product_info in enumerate(product_info_list):
-        if product_info["title"] == "WASHI CARDIGAN KNIT":
-            print(f'processing {product_info["title"]}')
-            res = process_product_images(c, product_info)
+        if product_info["title"] == "HANDSPUN HEMP OPEN COLLAR SHIRTS":
             break
-    pprint.pprint(res)
-    # ress = create_products(c, product_info_list[index:], vendor='alvana')
-    # pprint.pprint(ress)
-    # ress = []
-    # for product_info in product_info_list[index:]:
-    # pprint.pprint(ress)
+    product_info_list = product_info_list[index:]
+    ress = create_products(c, product_info_list, vendor="alvana")
+    for product_info in product_info_list:
+        pprint.pprint(ress)
+        res = process_product_images(c, product_info)
+        pprint.pprint(res)
+    update_stocks(c, product_info_list)
 
 
 if __name__ == "__main__":
