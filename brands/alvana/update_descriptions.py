@@ -42,6 +42,12 @@ def main():
         size_text = row[string.ascii_uppercase.index("H")].strip()
         if size_text:
             size_table_html = size_text_to_html_table(size_text)
+            if title.startswith("NATURAL TWILL") or title in [
+                "FADE CENTER SEAM S/S TEE SHIRTS",
+                "BHARAT DENIM JACKET",
+            ]:
+                size_table_html += "<br>"
+                size_table_html += "<p>注: 製造後に洗い加工を施しているため、記載されているサイズに若干の誤差が生じる場合がございます。</p>"
             res = client.update_size_table_html_metafield(product_id, size_table_html)
             print(res)
         product_description = row[string.ascii_uppercase.index("E")].strip()
