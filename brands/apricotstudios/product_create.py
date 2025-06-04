@@ -86,17 +86,17 @@ def is_header(parts):
 def parse_table_text_to_html(table_text):
     lines = filter(None, table_text.split("\n"))
     tables = []
-    headers = None
+    headers = []
     rowss = []
     for line in lines:
         parts = re.split(r"\s+", line)
-        if not headers and is_header(parts):
-            headers = parts
+        if is_header(parts):
+            headers.append(parts)
             rowss.append([])
         else:
             rowss[-1].append(parts)
-    for rows in rowss:
-        tables.append(utils.Client.generate_table_html(headers, rows))
+    for header, rows in zip(headers, rowss):
+        tables.append(utils.Client.generate_table_html(header, rows))
     return tables
 
 
