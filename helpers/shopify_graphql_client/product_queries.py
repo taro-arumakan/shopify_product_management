@@ -152,7 +152,7 @@ class ProductQueries:
         res = res["productVariants"]["nodes"]
         if filter_archived:
             # Shopify API ignores product_status filter on productVariants query
-            logger.info("Filtering ARCHIVED products' variants")
+            logger.debug("Filtering ARCHIVED products' variants")
             res = [r for r in res if r["product"]["status"] != "ARCHIVED"]
         return res
 
@@ -172,11 +172,15 @@ class ProductQueries:
             )
         return res[0]
 
-    def variant_by_sku(self, sku):
+    def variant_by_sku(self, sku, active_only=True):
         if len(res := self.product_variants_by_query(f"sku:{sku}")) != 1:
-            raise (MultipleVariantsFoundException if res else NoVariantsFoundException)(
-                f"{'Multiple' if res else 'No'} variants found for {sku}: {res}"
-            )
+            if res and active_only:
+                logger.info("Filtering non-active products' variants")
+                res = [r for r in res if r["product"]["status"] == "ACTIVE"]
+            if len(res) != 1:
+                raise (
+                    MultipleVariantsFoundException if res else NoVariantsFoundException
+                )(f"{'Multiple' if res else 'No'} variants found for {sku}: {res}")
         return res[0]
 
     def variant_id_by_sku(self, sku):
@@ -187,8 +191,8 @@ class ProductQueries:
         return variant["product"]["id"]
 
     def product_id_by_sku(self, sku):
-        variant_id = self.variant_id_by_sku(sku)
-        return self.product_id_by_variant_id(variant_id)
+        variant = self.variant_by_sku(sku)
+        return variant["product"]["id"]
 
     def products_by_collection_handle(self, collection_handle):
         query = """
