@@ -68,8 +68,8 @@ class GoogleSheetsApiInterface:
                 ), f"expected int for {column_name}, got {type(v)}: {v}"
                 v = str(datetime.date(1899, 12, 30) + datetime.timedelta(days=v))
             elif column_name in ["price", "stock"]:
-                assert isinstance(
-                    v, (int, float)
+                assert (
+                    isinstance(v, (int, float)) or v.isnumeric()
                 ), f"expected int for {column_name}, got {type(v)}: {v}"
                 v = int(v)
             elif column_name in ["サイズ", "sku"]:
