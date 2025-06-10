@@ -2,7 +2,10 @@ import datetime
 import logging
 import string
 import utils
-from gbh.get_size_table_html import size_table_html_from_size_dict, size_table_html
+from brands.gbh.get_size_table_html import (
+    size_table_html_from_size_dict,
+    size_table_html,
+)
 
 logging.basicConfig(level=logging.INFO)
 column_indices = dict(
@@ -14,11 +17,11 @@ column_indices = dict(
     price=string.ascii_lowercase.index("l"),
     stock=string.ascii_lowercase.index("m"),
     drive_link=string.ascii_lowercase.index("o"),
-    description=string.ascii_lowercase.index("r"),
-    product_care=string.ascii_lowercase.index("t"),
-    size_text=string.ascii_lowercase.index("v"),
-    material=string.ascii_lowercase.index("w"),
-    made_in=string.ascii_lowercase.index("x"),
+    description=string.ascii_lowercase.index("q"),
+    product_care=string.ascii_lowercase.index("s"),
+    size_text=string.ascii_lowercase.index("t"),
+    material=string.ascii_lowercase.index("u"),
+    made_in=string.ascii_lowercase.index("v"),
 )
 column_indices["カラー"] = string.ascii_lowercase.index("g")
 column_indices["Scent"] = string.ascii_lowercase.index("g")
@@ -111,7 +114,7 @@ def product_info_list_from_sheet_size_options(
 def product_info_list_from_sheet_color_options(
     gai: utils.Client, sheet_id, sheet_name, titles
 ):
-    start_row = 2
+    start_row = 1
     column_product_attrs = [
         "title",
         "category",
@@ -209,9 +212,9 @@ def main():
     # for res in ress:
     #     logging.info(res)
 
-    titles_with_color_options = ["WOOD PLATE"]
+    titles_with_color_options = ["3-FOLDING LIGHT UMBRELLA"]
     product_info_list = product_info_list_from_sheet_color_options(
-        client, client.sheet_id, "HOME&COSME_25.05.09", titles_with_color_options
+        client, client.sheet_id, "HOME 25.06.16_傘", titles_with_color_options
     )
     ress = create_products(
         client, product_info_list, vendor, get_size_table_html_func=lambda x: x
@@ -221,7 +224,7 @@ def main():
     for product_info in product_info_list:
         ress.append(
             client.process_product_images(
-                product_info, "/Users/taro/Downloads/gbh20250506/", "upload_20250506_"
+                product_info, "/Users/taro/Downloads/gbh20250610/", "upload_20250610_"
             )
         )
     pprint.pprint(ress)

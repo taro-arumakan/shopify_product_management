@@ -14,8 +14,9 @@ import re
 
 logging.basicConfig(level=logging.INFO)
 
-IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250524/"
-DUMMY_PRODUCT = "gid://shopify/Product/9098700587264"
+IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250610/"
+DUMMY_PRODUCT = "gid://shopify/Product/9106852086016"
+UPDATED_IMAGES_LOCAL_DIR = "/Users/taro/Downloads/2025.6.11分 画像翻訳修正+"
 
 
 def product_info_list_from_sheet_color_and_size(
@@ -51,8 +52,6 @@ def product_info_list_from_sheet_color_and_size(
         column_product_attrs,
         option1_attrs,
         option2_attrs,
-        row_filter_func=lambda row: row[string.ascii_lowercase.index("b")]
-        == "5/30(2ND)",
     )
 
 
@@ -84,7 +83,7 @@ def is_header(parts):
 
 
 def parse_table_text_to_html(table_text):
-    lines = filter(None, table_text.split("\n"))
+    lines = map(str.strip, filter(None, table_text.split("\n")))
     tables = []
     headers = []
     rowss = []
@@ -103,6 +102,8 @@ def parse_table_text_to_html(table_text):
 def text_to_html_tables_and_paragraphs(size_text):
     if "注意事項" in size_text:
         table_text, notes_text = size_text.split("注意事項", 1)
+    elif "ウォーターバッグ" in size_text:
+        return f"<p>{size_text}</p>"
     else:
         table_text = size_text
         notes_text = ""
@@ -196,6 +197,23 @@ def download_images(dirpath, images_link, prefix, tempdir):
     )
 
 
+def replace_updated_images_paths(product_info, image_paths):
+    other_dir = [
+        d
+        for d in os.listdir(UPDATED_IMAGES_LOCAL_DIR)
+        if d.endswith(product_info["title"])
+    ][0]
+    other_paths = os.listdir(os.path.join(UPDATED_IMAGES_LOCAL_DIR, other_dir))
+    res = []
+    for path in image_paths:
+        other = [p for p in other_paths if path.endswith(p)]
+        if other:
+            res.append(os.path.join(UPDATED_IMAGES_LOCAL_DIR, other_dir, other[0]))
+        else:
+            res.append(path)
+    return res
+
+
 def process_images(sgc: utils.Client, product_info):
     logging.info("downloading product main images")
     image_pathss = [
@@ -242,6 +260,7 @@ def process_images(sgc: utils.Client, product_info):
         prefix=f"{image_prefix(product_info['title'])}_product_detail",
         tempdir=os.path.join(IMAGES_LOCAL_DIR, "temp"),
     )
+    detail_image_paths = replace_updated_images_paths(product_info, detail_image_paths)
     sgc.upload_and_assign_description_images_to_shopify(
         product_id,
         detail_image_paths,
@@ -270,15 +289,16 @@ def main():
     client = utils.client("apricot-studios")
     vendor = "Apricot Studios"
     product_info_list = product_info_list_from_sheet_color_and_size(
-        client, client.sheet_id, "Products Master"
+        client, client.sheet_id, "6.11 SW & RA"
     )
     # for index, product_info in enumerate(product_info_list):
     #     if product_info['title'] == 'SUMMER EVERYDAY T-SHIRT':
     #         break
     # product_info_list = product_info_list[index:index+1]
-    # ress = create_products(
-    #     client, product_info_list, vendor, additional_tags=["New Arrival", "25 Summer"]
-    # )
+    ress = create_products(
+        client, product_info_list, vendor, additional_tags=["New Arrival", "25 Summer"]
+    )
+    pprint.pprint(ress)
     ress2 = update_stocks(client, product_info_list, ["Apricot Studios Warehouse"])
 
     pprint.pprint(ress2)
