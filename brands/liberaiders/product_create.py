@@ -12,21 +12,23 @@ def product_info_list_from_sheet(gai: utils.Client, sheet_id, sheet_name):
     start_row = 1
     column_product_attrs = dict(
         title=string.ascii_lowercase.index("b"),
-        tags=string.ascii_lowercase.index("c"),
-        price=string.ascii_lowercase.index("d"),
-        description=string.ascii_lowercase.index("e"),
-        product_care=string.ascii_lowercase.index("f"),
-        material=string.ascii_lowercase.index("g"),
-        size_text_ja=string.ascii_lowercase.index("i"),
-        size_text_en=string.ascii_lowercase.index("j"),
-        made_in=string.ascii_lowercase.index("k"),
-        drive_link=string.ascii_lowercase.index("l"),
+        product_number=string.ascii_lowercase.index("c"),
+        tags=string.ascii_lowercase.index("d"),
+        price=string.ascii_lowercase.index("e"),
+        description=string.ascii_lowercase.index("f"),
+        product_care=string.ascii_lowercase.index("g"),
+        material=string.ascii_lowercase.index("h"),
+        weight=string.ascii_lowercase.index("i"),
+        size_text_ja=string.ascii_lowercase.index("j"),
+        size_text_en=string.ascii_lowercase.index("k"),
+        made_in=string.ascii_lowercase.index("l"),
+        drive_link=string.ascii_lowercase.index("m"),
     )
-    option1_attrs = {"カラー": string.ascii_lowercase.index("m")}
-    option2_attrs = {"サイズ": string.ascii_lowercase.index("n")}
+    option1_attrs = {"カラー": string.ascii_lowercase.index("n")}
+    option2_attrs = {"サイズ": string.ascii_lowercase.index("o")}
     option2_attrs.update(
-        sku=string.ascii_lowercase.index("o"),
-        stock=string.ascii_lowercase.index("p"),
+        sku=string.ascii_lowercase.index("p"),
+        stock=string.ascii_lowercase.index("q"),
     )
     return gai.to_products_list(
         sheet_id,
@@ -93,7 +95,7 @@ def create_products(sgc: utils.Client, product_info_list, vendor):
 
 def update_stocks(sgc: utils.Client, product_info_list):
     logging.info("updating inventory")
-    location_id = sgc.location_id_by_name("Jingumae")
+    location_id = sgc.location_id_by_name("Shop location")
     sku_stock_map = {
         option2["sku"]: option2["stock"]
         for product_info in product_info_list
@@ -115,8 +117,8 @@ def process_product_images(client: utils.Client, product_info):
     image_positions.append(len(local_paths))
     local_paths += client.drive_images_to_local(
         drive_id,
-        "/Users/taro/Downloads/liberaiders20250604/",
-        f"upload_20250604_{product_info['title']}",
+        "/Users/taro/Downloads/liberaiders20250605/",
+        f"upload_20250605_{product_info['title']}",
     )
     return client.upload_and_assign_images_to_product(product_id, local_paths)
 
@@ -127,9 +129,8 @@ def main():
 
     c = client("liberaiders")
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "Product Master")
-    ress = create_products(c, product_info_list, vendor="liberaiders")
+    # ress = create_products(c, product_info_list, vendor="liberaiders")
     for product_info in product_info_list:
-        pprint.pprint(ress)
         res = process_product_images(c, product_info)
         pprint.pprint(res)
     update_stocks(c, product_info_list)
