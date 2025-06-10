@@ -63,22 +63,23 @@ class GoogleSheetsApiInterface:
         v = row[column_index]
         if v or v == 0:
             if column_name in ["release_date"] and isinstance(v, int):
-                assert isinstance(
-                    v, int
-                ), f"expected int for {column_name}, got {type(v)}: {v}"
                 v = str(datetime.date(1899, 12, 30) + datetime.timedelta(days=v))
             elif column_name in ["price", "stock"]:
                 assert (
                     isinstance(v, (int, float)) or v.isnumeric()
                 ), f"expected int for {column_name}, got {type(v)}: {v}"
                 v = int(v)
-            elif column_name in ["サイズ", "sku"]:
+            elif column_name in ["サイズ", "sku", "product_number"]:
                 v = str(v).strip()
             elif column_name == "drive_link":
                 if all([v, v != "no image", not v.startswith("http")]):
                     v = self.get_richtext_link(
                         sheet_id, sheet_title, row_num, column_index
                     )
+            elif column_name in ["weight"]:
+                assert isinstance(
+                    v, (int, float)
+                ), f"expected int or float for {column_name}, got {type(v)}: {v}"
             else:
                 assert isinstance(
                     v, str
