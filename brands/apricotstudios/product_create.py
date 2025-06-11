@@ -300,9 +300,9 @@ def main():
         client, client.sheet_id, "6.11 SW & RA"
     )
     for index, product_info in enumerate(product_info_list):
-        if product_info["title"] == "Togom Watergun":
+        if product_info["title"] == "Sand Raincoat":
             break
-    product_info_list = product_info_list[index : index + 1]
+    product_info_list = product_info_list[index:]
     ress = create_products(
         client, product_info_list, vendor, additional_tags=["New Arrival", "25 Summer"]
     )
