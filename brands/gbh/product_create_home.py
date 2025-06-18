@@ -19,9 +19,9 @@ column_indices = dict(
     drive_link=string.ascii_lowercase.index("o"),
     description=string.ascii_lowercase.index("q"),
     product_care=string.ascii_lowercase.index("s"),
-    size_text=string.ascii_lowercase.index("t"),
-    material=string.ascii_lowercase.index("u"),
-    made_in=string.ascii_lowercase.index("v"),
+    size_text=string.ascii_lowercase.index("u"),
+    material=string.ascii_lowercase.index("v"),
+    made_in=string.ascii_lowercase.index("w"),
 )
 column_indices["カラー"] = string.ascii_lowercase.index("g")
 column_indices["Scent"] = string.ascii_lowercase.index("g")
@@ -29,7 +29,7 @@ column_indices["サイズ"] = string.ascii_lowercase.index("h")
 
 
 def product_info_list_from_sheet_no_options(
-    gai: utils.Client, sheet_id, sheet_name, raw_filter_func
+    gai: utils.Client, sheet_id, sheet_name, row_filter_func=None
 ):
     start_row = 2
     column_product_attrs = [
@@ -53,7 +53,7 @@ def product_info_list_from_sheet_no_options(
         sheet_name,
         start_row,
         column_product_attrs,
-        row_filter_func=raw_filter_func,
+        row_filter_func=row_filter_func,
     )
 
 
@@ -212,43 +212,31 @@ def main():
     # for res in ress:
     #     logging.info(res)
 
-    titles_with_color_options = ["3-FOLDING LIGHT UMBRELLA"]
-    product_info_list = product_info_list_from_sheet_color_options(
-        client, client.sheet_id, "HOME 25.06.16_傘", titles_with_color_options
+    product_info_list = product_info_list_from_sheet_no_options(
+        client,
+        client.sheet_id,
+        "GIFT SET 25.06.18 SET",
+        row_filter_func=lambda row: row[column_indices["title"]]
+        in [
+            "DAILY HAIR CARE GIFT SET",
+            "DAILY FRAGRANCE GIFT SET",
+            "DAILY FRAGRANCE PREMIUM GIFT SET",
+        ],
     )
-    ress = create_products(
-        client, product_info_list, vendor, get_size_table_html_func=lambda x: x
-    )
-    pprint.pprint(ress)
-    ress = []
-    for product_info in product_info_list:
-        ress.append(
-            client.process_product_images(
-                product_info, "/Users/taro/Downloads/gbh20250610/", "upload_20250610_"
-            )
-        )
-    pprint.pprint(ress)
-
-    # titles_with_scent_and_size_options = ['HAND BALM']
-    # product_info_list = product_info_list_from_sheet_scent_and_size_options(client, client.sheet_id, 'HOME&COSME_25.05.09', titles_with_scent_and_size_options)
-    # ress = create_products(client, product_info_list, vendor, get_size_table_html_func=lambda x: x)
+    # ress = create_products(
+    #     client, product_info_list, vendor, get_size_table_html_func=lambda x: x
+    # )
     # pprint.pprint(ress)
     # ress = []
     # for product_info in product_info_list:
-    #     ress.append(client.process_product_images(product_info, '/Users/taro/Downloads/gbh20250506/', 'upload_20250506_'))
+    #     ress.append(
+    #         client.process_product_images(
+    #             product_info, "/Users/taro/Downloads/gbh20250615/", "upload_20250615_"
+    #         )
+    #     )
     # pprint.pprint(ress)
-
-    # def filter_func(row):
-    #     return (isinstance(row[string.ascii_lowercase.index('b')], int) and
-    #             datetime.date(1899, 12, 30) + datetime.timedelta(days=row[string.ascii_lowercase.index('b')]) == datetime.date(2025, 4, 24) and
-    #             row[string.ascii_lowercase.index('f')] not in titles_with_size_options + titles_with_scent_and_size_options)
-    # product_info_list = product_info_list_from_sheet_no_options(client, client.sheet_id, 'HOME&COSMETIC_25.04.24', raw_filter_func=filter_func)
-    # ress = create_products(client, product_info_list, vendor, get_size_table_html_func=size_table_html)
-    # pprint.pprint(ress)
-    # ress = []
-    # for product_info in product_info_list:
-    #     ress.append(client.process_product_images(product_info, '/Users/taro/Downloads/gbh20250421/', 'upload_20250421_'))
-    # pprint.pprint(ress)
+    res = update_stocks(client, product_info_list, "Shop location")
+    pprint.pprint(res)
 
 
 if __name__ == "__main__":
