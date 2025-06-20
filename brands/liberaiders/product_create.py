@@ -67,6 +67,21 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
         option_lists=options,
     )
     product_id = res["id"]
+    update_metafields(sgc, product_id, product_info)
+
+    res = [
+        sgc.enable_and_activate_inventory(option2["sku"], [])
+        for option1 in product_info["options"]
+        for option2 in option1["options"]
+    ]
+    print(res)
+
+
+def update_metafields(sgc: utils.Client, product_id, product_info):
+    product_number = product_info["product_number"].strip()
+    if product_number:
+        res = sgc.update_product_number_metafield(product_id, product_number)
+        print(res)
     size_text_ja = product_info["size_text_ja"].strip()
     if size_text_ja:
         size_table_html_ja = size_text_to_html_table(size_text_ja)
@@ -77,13 +92,6 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
         size_table_html_en = size_text_to_html_table(size_text_en)
         res = sgc.update_size_table_html_en_metafield(product_id, size_table_html_en)
         print(res)
-
-    # res2 = [
-    #     sgc.enable_and_activate_inventory(option2["sku"], [])
-    #     for option1 in product_info["options"]
-    #     for option2 in option1["options"]
-    # ]
-    # return (res, res2)
 
 
 def create_products(sgc: utils.Client, product_info_list, vendor):
@@ -129,11 +137,14 @@ def main():
 
     c = client("liberaiders")
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "Product Master")
-    # ress = create_products(c, product_info_list, vendor="liberaiders")
     for product_info in product_info_list:
-        res = process_product_images(c, product_info)
-        pprint.pprint(res)
-    update_stocks(c, product_info_list)
+        product_id = c.product_id_by_title(product_info["title"])
+        update_metafields(c, product_id, product_info)
+    # ress = create_products(c, product_info_list, vendor="liberaiders")
+    # for product_info in product_info_list:
+    #     res = process_product_images(c, product_info)
+    #     pprint.pprint(res)
+    # update_stocks(c, product_info_list)
 
 
 if __name__ == "__main__":
