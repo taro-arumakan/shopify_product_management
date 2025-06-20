@@ -76,6 +76,11 @@ class Metafields:
             product_id, "custom", "size_table_html", html_text
         )
 
+    def update_product_number_metafield(self, product_id, product_number):
+        return self.update_product_metafield(
+            product_id, "custom", "product_number", product_number
+        )
+
     def update_size_table_html_ja_metafield(self, product_id, html_text):
         return self.update_product_metafield(
             product_id, "custom", "size_table_html_ja", html_text
