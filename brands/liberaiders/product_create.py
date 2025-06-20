@@ -24,8 +24,8 @@ def product_info_list_from_sheet(gai: utils.Client, sheet_id, sheet_name):
         made_in=string.ascii_lowercase.index("l"),
         drive_link=string.ascii_lowercase.index("m"),
     )
-    option1_attrs = {"カラー": string.ascii_lowercase.index("n")}
-    option2_attrs = {"サイズ": string.ascii_lowercase.index("o")}
+    option1_attrs = {"Color": string.ascii_lowercase.index("n")}
+    option2_attrs = {"Size": string.ascii_lowercase.index("o")}
     option2_attrs.update(
         sku=string.ascii_lowercase.index("p"),
         stock=string.ascii_lowercase.index("q"),

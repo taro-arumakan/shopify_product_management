@@ -41,15 +41,16 @@ class Inventory:
             )
         return ress
 
-    def enable_inventory_tracking(self, inventory_item_id):
+    def update_inventory_item(self, inventory_item_id, input_data: dict):
         query = """
-        mutation inventoryItemUpdate($id: ID!) {
-            inventoryItemUpdate(id: $id, input: {
-                                                   tracked: true
-                                                }) {
+        mutation inventoryItemUpdate($id: ID!, $input: InventoryItemInput!) {
+            inventoryItemUpdate(id: $id, input: $input) {
                 inventoryItem {
                     id
                     tracked
+                    measurement {
+                      id
+                    }
                 }
                 userErrors {
                     message
@@ -57,13 +58,29 @@ class Inventory:
             }
         }
         """
-        variables = {"id": inventory_item_id, "input": {"tracked": "true"}}
+        variables = {"id": inventory_item_id, "input": input_data}
         res = self.run_query(query, variables)
         if res["inventoryItemUpdate"]["userErrors"]:
             raise Exception(
                 f"Error updating inventory quantity: {res['inventoryItemUpdate']['userErrors']}"
             )
         return res["inventoryItemUpdate"]["inventoryItem"]
+
+    def enable_inventory_tracking(self, inventory_item_id):
+        input_data = {"tracked": True}
+        return self.update_inventory_item(inventory_item_id, input_data)
+
+    def update_inventory_item_weight(
+        self, inventory_item_id, weight: float, unit: str = "KILOGRAMS"
+    ):
+        input_data = {"measurement": {"weight": {"value": weight, "unit": unit}}}
+        return self.update_inventory_item(inventory_item_id, input_data)
+
+    def update_inventory_item_weight_by_sku(
+        self, sku, weight: float, unit: str = "KILOGRAMS"
+    ):
+        inventory_item_id = self.inventory_item_id_by_sku(sku)
+        return self.update_inventory_item_weight(inventory_item_id, weight, unit)
 
     def activate_inventory_item(self, inventory_item_id, location_id, available=0):
         query = """

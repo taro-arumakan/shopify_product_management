@@ -208,7 +208,13 @@ def replace_updated_images_paths(product_info, image_paths):
     for path in image_paths:
         other = [p for p in other_paths if path.endswith(p)]
         if other:
-            res.append(os.path.join(UPDATED_IMAGES_LOCAL_DIR, other_dir, other[0]))
+            new_path = os.path.join(
+                UPDATED_IMAGES_LOCAL_DIR, other_dir, path.rsplit("/", 1)[-1]
+            )
+            os.rename(
+                os.path.join(UPDATED_IMAGES_LOCAL_DIR, other_dir, other[0]), new_path
+            )
+            res.append(new_path)
         else:
             res.append(path)
     return res
@@ -242,15 +248,17 @@ def process_images(sgc: utils.Client, product_info):
         ]
         skuss.append(skus)
 
-    import pprint
-
-    pprint.pprint(image_pathss)
     product_id = sgc.product_id_by_title(product_info["title"])
     image_position = len(image_pathss[0])
     sgc.upload_and_assign_images_to_product(product_id, sum(image_pathss, []))
     for variant_image_paths, skus in zip(image_pathss[1:], skuss):
-        print(f"assing variant image at position {image_position} to {skus}")
-        sgc.assign_image_to_skus_by_position(product_id, image_position, skus)
+        if image_position < len(sum(image_pathss, [])):
+            print(f"assigning variant image at position {image_position} to {skus}")
+            sgc.assign_image_to_skus_by_position(product_id, image_position, skus)
+        else:
+            print(
+                f"!!! {product_info['title']} - {skus} no image position to assign, skipping"
+            )
         image_position += len(variant_image_paths)
 
     logging.info(f"downloading product detail images")
@@ -291,10 +299,10 @@ def main():
     product_info_list = product_info_list_from_sheet_color_and_size(
         client, client.sheet_id, "6.11 SW & RA"
     )
-    # for index, product_info in enumerate(product_info_list):
-    #     if product_info['title'] == 'SUMMER EVERYDAY T-SHIRT':
-    #         break
-    # product_info_list = product_info_list[index:index+1]
+    for index, product_info in enumerate(product_info_list):
+        if product_info["title"] == "Sand Raincoat":
+            break
+    product_info_list = product_info_list[index:]
     ress = create_products(
         client, product_info_list, vendor, additional_tags=["New Arrival", "25 Summer"]
     )
