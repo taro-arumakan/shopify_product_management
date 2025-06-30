@@ -55,7 +55,7 @@ def create_a_product(
     sgc: utils.Client,
     product_info,
     vendor,
-    additional_tags=None,
+    additional_tags=["New Arrival"],
 ):
     logging.info(f'creating {product_info["title"]}')
     description_html = sgc.get_description_html(
@@ -67,12 +67,7 @@ def create_a_product(
         get_size_table_html_func=parse_table_text_to_html,
     )
     tags = ",".join(
-        [
-            product_info["category"],
-            product_info["collection"],
-            product_info["release_date"],
-        ]
-        + (additional_tags or [])
+        [product_info["category"], product_info["collection"]] + (additional_tags or [])
     )
     return sgc.create_a_product(
         product_info=product_info,
@@ -122,7 +117,7 @@ def create_products(
     for product_info in product_info_list:
         ress3.append(
             sgc.process_product_images(
-                product_info, "/Users/taro/Downloads/kume20250526/", "upload_20250526_"
+                product_info, "/Users/taro/Downloads/kume20250624/", "upload_20250624_"
             )
         )
     return ress, ress2, ress3
@@ -137,7 +132,7 @@ def main():
     product_info_list = [
         product_info
         for product_info in product_info_list
-        if product_info["release_date"].startswith("5/30")
+        if product_info["title"] == "Knotted Handle Leather Bag"
     ]
     ress = create_products(
         client,
