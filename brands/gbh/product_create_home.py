@@ -7,6 +7,8 @@ from brands.gbh.get_size_table_html import (
     size_table_html,
 )
 
+tags_map = {"COSME": "COSMETIC"}
+
 logging.basicConfig(level=logging.INFO)
 column_indices = dict(
     release_date=string.ascii_lowercase.index("b"),
@@ -155,9 +157,10 @@ def create_a_product(
     )
     tags = ",".join(
         [
-            product_info["category"],
-            product_info["category2"],
+            tags_map.get(product_info["category"], product_info["category"]),
+            tags_map.get(product_info["category2"], product_info["category2"]),
             product_info["release_date"],
+            "New Arrival",
         ]
     )
     return sgc.create_a_product(
