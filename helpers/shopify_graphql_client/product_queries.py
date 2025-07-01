@@ -62,9 +62,7 @@ class ProductQueries:
         variables = {"query_string": query_string}
         res = self.run_query(query, variables)
         res = res["products"]["nodes"]
-        assert (
-            len(res) <= 100
-        ), f"Too many products found for {query_string}: {len(res)}"
+        assert len(res) < 100, f"Too many products found for {query_string}: {len(res)}"
         return res
 
     def product_by_query(self, query_string, additional_fields=None):
