@@ -121,12 +121,12 @@ def update_stocks(sgc: utils.Client, product_info_list):
 
 
 def main():
-    handle_suffix = "25ss-3rd"
+    handle_suffix = None
     import pprint
 
     client = utils.client("rohseoul")
     product_info_list = product_info_lists_from_sheet(
-        client, client.sheet_id, "25SS 2차오픈(5월)(Summer 25) ", handle_suffix
+        client, client.sheet_id, "25SS 4차 1ST", handle_suffix
     )
     ress = create_products(client, product_info_list, client.shop_name)
     pprint.pprint(ress)
@@ -137,8 +137,8 @@ def main():
         ress.append(
             client.process_product_images(
                 product_info,
-                "/Users/taro/Downloads/rohseoul20250516/",
-                "upload_20250516_",
+                "/Users/taro/Downloads/rohseoul20250701/",
+                "upload_20250701_",
                 handle_suffix,
             )
         )
