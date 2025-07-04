@@ -14,9 +14,8 @@ import re
 
 logging.basicConfig(level=logging.INFO)
 
-IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250610/"
+IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250704/"
 DUMMY_PRODUCT = "gid://shopify/Product/9106852086016"
-UPDATED_IMAGES_LOCAL_DIR = "/Users/taro/Downloads/2025.6.11分 画像翻訳修正+"
 
 
 def product_info_list_from_sheet_color_and_size(
@@ -24,26 +23,27 @@ def product_info_list_from_sheet_color_and_size(
 ):
     start_row = 1
     column_product_attrs = dict(
+        product_number=string.ascii_lowercase.index("a"),
         title=string.ascii_lowercase.index("f"),
         collection=string.ascii_lowercase.index("c"),
         category=string.ascii_lowercase.index("d"),
-        release_date=string.ascii_lowercase.index("b"),
-        description=string.ascii_lowercase.index("j"),
-        material=string.ascii_lowercase.index("n"),
-        size_text=string.ascii_lowercase.index("p"),
-        made_in=string.ascii_lowercase.index("q"),
-        product_main_images_link=string.ascii_lowercase.index("r"),
-        product_detail_images_link=string.ascii_lowercase.index("s"),
+        # release_date=string.ascii_lowercase.index("b"),
+        description=string.ascii_lowercase.index("l"),
+        material=string.ascii_lowercase.index("p"),
+        size_text=string.ascii_lowercase.index("r"),
+        made_in=string.ascii_lowercase.index("s"),
+        product_main_images_link=string.ascii_lowercase.index("t"),
     )
-    option1_attrs = {"カラー": string.ascii_lowercase.index("u")}
+    option1_attrs = {"カラー": string.ascii_lowercase.index("w")}
     option1_attrs.update(
-        variant_images_link=string.ascii_lowercase.index("t"),
+        variant_images_link=string.ascii_lowercase.index("v"),
     )
-    option2_attrs = {"サイズ": string.ascii_lowercase.index("v")}
+    option2_attrs = {"サイズ": string.ascii_lowercase.index("x")}
     option2_attrs.update(
-        price=string.ascii_lowercase.index("h"),
-        sku=string.ascii_lowercase.index("w"),
-        stock=string.ascii_lowercase.index("y"),
+        price=string.ascii_lowercase.index("i"),
+        compare_at_price=string.ascii_lowercase.index("h"),
+        sku=string.ascii_lowercase.index("y"),
+        stock=string.ascii_lowercase.index("z"),
     )
     return gai.to_products_list(
         sheet_id,
@@ -72,6 +72,11 @@ def product_info_list_from_sheet_color_and_size(
 #     return utils.Client.generate_table_html(headers, values)
 
 
+def is_title(line):
+    if len(line.split("/")) < 2:
+        return True
+
+
 def is_header(parts):
     if parts[0] in ["XS", "S", "M", "L", "XL", "XXL"]:
         return False
@@ -84,18 +89,24 @@ def is_header(parts):
 
 def parse_table_text_to_html(table_text):
     lines = map(str.strip, filter(None, table_text.split("\n")))
+    titles = []
     tables = []
     headers = []
     rowss = []
     for line in lines:
-        parts = re.split(r"\s+", line)
-        if is_header(parts):
-            headers.append(parts)
-            rowss.append([])
+        if is_title(line):
+            titles.append(line)
         else:
-            rowss[-1].append(parts)
+            parts = re.split(r"[/\:]", line)
+            if is_header(parts):
+                headers.append(map(str.strip, parts))
+                rowss.append([])
+            else:
+                rowss[-1].append(map(str.strip, parts))
     for header, rows in zip(headers, rowss):
         tables.append(utils.Client.generate_table_html(header, rows))
+    if len(titles) == len(tables):
+        tables = [f"<h3>{title}</h3>{table}" for title, table in zip(titles, tables)]
     return tables
 
 
@@ -126,7 +137,6 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
         [
             product_info["collection"],
             product_info["category"],
-            product_info["release_date"],
         ]
         + (additional_tags or [])
     )
@@ -164,6 +174,17 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
         )
     else:
         logging.warning(f"No size information found for {product_info['title']}")
+    skus = [o2["sku"] for o1 in product_info["options"] for o2 in o1["options"]]
+    prices = [o2["price"] for o1 in product_info["options"] for o2 in o1["options"]]
+    compare_at_prices = [
+        o2["compare_at_price"] for o1 in product_info["options"] for o2 in o1["options"]
+    ]
+    ress.append(
+        sgc.update_variant_price_by_skus(
+            ress[0][0]["id"], skus, prices, compare_at_prices
+        )
+    )
+    return ress
 
 
 def create_products(sgc: utils.Client, product_info_list, vendor, additional_tags=None):
@@ -195,29 +216,6 @@ def download_images(dirpath, images_link, prefix, tempdir):
         prefix=prefix,
         tempdir=tempdir,
     )
-
-
-def replace_updated_images_paths(product_info, image_paths):
-    other_dir = [
-        d
-        for d in os.listdir(UPDATED_IMAGES_LOCAL_DIR)
-        if d.endswith(product_info["title"])
-    ][0]
-    other_paths = os.listdir(os.path.join(UPDATED_IMAGES_LOCAL_DIR, other_dir))
-    res = []
-    for path in image_paths:
-        other = [p for p in other_paths if path.endswith(p)]
-        if other:
-            new_path = os.path.join(
-                UPDATED_IMAGES_LOCAL_DIR, other_dir, path.rsplit("/", 1)[-1]
-            )
-            os.rename(
-                os.path.join(UPDATED_IMAGES_LOCAL_DIR, other_dir, other[0]), new_path
-            )
-            res.append(new_path)
-        else:
-            res.append(path)
-    return res
 
 
 def process_images(sgc: utils.Client, product_info):
@@ -262,13 +260,17 @@ def process_images(sgc: utils.Client, product_info):
         image_position += len(variant_image_paths)
 
     logging.info(f"downloading product detail images")
-    detail_image_paths = download_images(
-        os.path.join(IMAGES_LOCAL_DIR, product_info["title"], "product_detail_images"),
-        product_info["product_detail_images_link"],
-        prefix=f"{image_prefix(product_info['title'])}_product_detail",
-        tempdir=os.path.join(IMAGES_LOCAL_DIR, "temp"),
+    folder_name = (
+        f"{str(product_info['product_number']).zfill(2)}{product_info['title']}"
     )
-    detail_image_paths = replace_updated_images_paths(product_info, detail_image_paths)
+    folder_id = sgc.find_folder_id_by_name(
+        "1FNna4lImNPfsRYKQFmR5rKh9P1TiFHAf", folder_name
+    )
+    detail_image_paths = sgc.drive_images_to_local(
+        folder_id,
+        os.path.join(IMAGES_LOCAL_DIR, product_info["title"], "product_detail_images"),
+        filename_prefix=f"{image_prefix(product_info['title'])}_product_detail",
+    )
     sgc.upload_and_assign_description_images_to_shopify(
         product_id,
         detail_image_paths,
@@ -297,14 +299,17 @@ def main():
     client = utils.client("apricot-studios")
     vendor = "Apricot Studios"
     product_info_list = product_info_list_from_sheet_color_and_size(
-        client, client.sheet_id, "6.11 SW & RA"
+        client, client.sheet_id, "7.8-11 Sale Event"
     )
-    for index, product_info in enumerate(product_info_list):
-        if product_info["title"] == "Sand Raincoat":
-            break
-    product_info_list = product_info_list[index:]
+    # for index, product_info in enumerate(product_info_list):
+    #     if product_info["title"] == "Babycot Ticket Bodysuit":
+    #         break
+    # product_info_list = product_info_list[index:]
     ress = create_products(
-        client, product_info_list, vendor, additional_tags=["New Arrival", "25 Summer"]
+        client,
+        product_info_list,
+        vendor,
+        additional_tags=["New Arrival", "2025_sale_event"],
     )
     pprint.pprint(ress)
     ress2 = update_stocks(client, product_info_list, ["Apricot Studios Warehouse"])
