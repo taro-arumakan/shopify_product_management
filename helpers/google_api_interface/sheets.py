@@ -64,7 +64,14 @@ class GoogleSheetsApiInterface:
         if v or v == 0:
             if column_name in ["release_date"] and isinstance(v, int):
                 v = str(datetime.date(1899, 12, 30) + datetime.timedelta(days=v))
-            elif column_name in ["price", "stock"]:
+            elif column_name in ["price", "stock", "compare_at_price"]:
+                if isinstance(v, str):
+                    v = (
+                        v.replace("¥", "")
+                        .replace(",", "")
+                        .replace(" ", "")
+                        .replace("￥", "")
+                    )
                 assert (
                     isinstance(v, (int, float)) or v.isnumeric()
                 ), f"expected int for {column_name}, got {type(v)}: {v}"
