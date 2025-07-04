@@ -167,7 +167,7 @@ class GoogleSheetsApiInterface:
 
     def get_sku_stocks_map(self, product_info):
         variants_info = self.get_variants_level_info(product_info)
-        return {variant["sku"]: variant["stock"] for variant in variants_info}
+        return {variant["sku"]: variant.get("stock", 0) for variant in variants_info}
 
     def update_stocks(self, product_info_list, location_name):
         logger.info("updating inventory")
