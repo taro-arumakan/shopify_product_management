@@ -176,6 +176,19 @@ class ProductAttributes:
         }
         return self.variants_bulk_update(variables)
 
+    def update_variant_price_by_skus(self, product_id, skus, prices, compare_at_prices):
+        variant_ids = [self.variant_id_by_sku(sku) for sku in skus]
+        variables = {
+            "productId": product_id,
+            "variants": [
+                {"id": variant_id, "price": price, "compareAtPrice": compare_at_price}
+                for variant_id, price, compare_at_price in zip(
+                    variant_ids, prices, compare_at_prices
+                )
+            ],
+        }
+        return self.variants_bulk_update(variables)
+
     def update_variant_sku_by_variant_id(self, product_id, variant_ids, skus):
         variables = {
             "productId": product_id,
