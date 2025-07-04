@@ -301,10 +301,10 @@ def main():
     product_info_list = product_info_list_from_sheet_color_and_size(
         client, client.sheet_id, "7.8-11 Sale Event"
     )
-    for index, product_info in enumerate(product_info_list):
-        if product_info["title"] == "Summer Square Knit Vest":
-            break
-    product_info_list = product_info_list[index:]
+    # for index, product_info in enumerate(product_info_list):
+    #     if product_info["title"] == "Cable Vest":
+    #         break
+    # product_info_list = product_info_list[index:]
     ress = create_products(
         client,
         product_info_list,
