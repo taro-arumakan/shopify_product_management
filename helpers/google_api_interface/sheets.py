@@ -87,6 +87,11 @@ class GoogleSheetsApiInterface:
                 assert isinstance(
                     v, (int, float)
                 ), f"expected int or float for {column_name}, got {type(v)}: {v}"
+            elif column_name in ["Size", "size"]:
+                assert isinstance(
+                    v, (str, int)
+                ), f"expected str or int for {column_name}, got {type(v)}: {v}"
+                v = str(v).strip()
             else:
                 assert isinstance(
                     v, str
