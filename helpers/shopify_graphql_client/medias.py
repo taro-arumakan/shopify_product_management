@@ -206,7 +206,11 @@ class Medias:
         media_id = media_nodes[image_position]["id"]
         return self.assign_image_to_skus(product_id, media_id, variant_ids)
 
-    def assign_image_to_skus(self, product_id, media_id, variant_ids):
+    def assign_image_to_skus(self, product_id, media_id, skus):
+        variant_ids = [self.variant_id_by_sku(sku) for sku in skus]
+        return self.assign_image_to_variant_ids(product_id, media_id, variant_ids)
+
+    def assign_image_to_variant_ids(self, product_id, media_id, variant_ids):
         variants = [
             self.variant_by_variant_id(variant_id) for variant_id in variant_ids
         ]
