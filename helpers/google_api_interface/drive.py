@@ -52,7 +52,12 @@ class GoogleDriveApiInterface:
             .execute()
         )
         items = results.get("files", [])
-        return [item for item in items if item["mimeType"].startswith("image/")]
+        return [
+            item
+            for item in items
+            if item["mimeType"].startswith("image/")
+            and not item["name"].startswith(".")
+        ]
 
     def download_and_process_image(self, file_id, local_path):
         if not os.path.exists(local_path):
