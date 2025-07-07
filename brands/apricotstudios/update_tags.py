@@ -1,12 +1,15 @@
+import logging
 import pprint
 import utils
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main():
     client = utils.client("apricot-studios")
-    products = client.products_by_tag("2025-06-11")
+    products = client.products_by_tag("2025_sale_event")
     for p in products:
-        new_tags = p["tags"] + ["25 Summer Swim & Rain"]
+        new_tags = p["tags"] + ["Special Summer Sale"]
         print(["title"], new_tags)
         pprint.pprint(client.update_product_tags(p["id"], ",".join(new_tags)))
 
