@@ -1,4 +1,5 @@
 import logging
+import string
 from helpers.exceptions import (
     MultipleProductsFoundException,
     NoProductsFoundException,
@@ -7,6 +8,13 @@ from helpers.exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+additional_punctuation_chars = "‘’“” "
+punctuation_chrs = (
+    "".join([s for s in string.punctuation if s not in ["-"]])
+    + additional_punctuation_chars
+)
+punctuation_translator = str.maketrans("", "", punctuation_chrs)
 
 
 class ProductQueries:
@@ -17,7 +25,7 @@ class ProductQueries:
     @staticmethod
     def product_title_to_handle(title, handle_suffix=None):
         parts = title.lower().split(" ") + ([handle_suffix] if handle_suffix else [])
-        parts = [part.replace("(", "").replace(")", "") for part in parts]
+        parts = [part.translate(punctuation_translator) for part in parts]
         return "-".join(parts)
 
     def products_by_query(self, query_string, additional_fields=None):
