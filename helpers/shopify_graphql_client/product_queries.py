@@ -14,6 +14,12 @@ class ProductQueries:
     A class to handle GraphQL queries related to products in Shopify, inherited by the ShopifyGraphqlClient class.
     """
 
+    @staticmethod
+    def product_title_to_handle(title, handle_suffix=None):
+        parts = title.lower().split(" ") + ([handle_suffix] if handle_suffix else [])
+        parts = [part.replace("(", "").replace(")", "") for part in parts]
+        return "-".join(parts)
+
     def products_by_query(self, query_string, additional_fields=None):
         query = """
         query productsByQuery($query_string: String!) {
