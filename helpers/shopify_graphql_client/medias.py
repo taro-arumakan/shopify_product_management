@@ -201,10 +201,9 @@ class Medias:
 
     def assign_image_to_skus_by_position(self, product_id, image_position, skus):
         logger.info(f"assigning a variant image to {skus}")
-        variant_ids = [self.variant_id_by_sku(sku) for sku in skus]
         media_nodes = self.medias_by_product_id(product_id)
         media_id = media_nodes[image_position]["id"]
-        return self.assign_image_to_skus(product_id, media_id, variant_ids)
+        return self.assign_image_to_skus(product_id, media_id, skus)
 
     def assign_image_to_skus(self, product_id, media_id, skus):
         variant_ids = [self.variant_id_by_sku(sku) for sku in skus]
