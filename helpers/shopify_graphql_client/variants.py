@@ -82,12 +82,10 @@ class Variants:
             "variants": [
                 {
                     "optionValues": [
-                        {
-                            option_name: option_value
-                            for option_name, option_value in zip(
-                                option_names, variant_option_values
-                            )
-                        }
+                        {"name": option_value, "optionName": option_name}
+                        for option_name, option_value in zip(
+                            option_names, variant_option_values
+                        )
                     ],
                     "inventoryItem": {
                         "sku": sku,
