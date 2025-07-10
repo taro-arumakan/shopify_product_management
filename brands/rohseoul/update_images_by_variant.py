@@ -2,10 +2,7 @@ import logging
 import pprint
 import utils
 
-logger = logging.getLogger(__name__)
-stream_handler = logging.StreamHandler()
-logger.addHandler(stream_handler)
-logger.setLevel(logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 UPLOAD_IMAGE_PREFIX = "uplaod20250226_rohseoul_"
 IMAGES_LOCAL_DIR = "/Users/taro/Downloads/rohseoul20250226/"
