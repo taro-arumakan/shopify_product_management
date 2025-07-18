@@ -5,11 +5,15 @@ import utils
 
 logging.basicConfig(level=logging.INFO)
 
+tag_mapping = {
+    "Standard": "Standard Line",
+}
+
 
 def product_info_lists_from_sheet(
     gai: utils.Client, sheet_id, sheet_title, handle_suffix=None
 ):
-    start_row = 2  # 0 base
+    start_row = 3  # 0 base
     column_product_attrs = dict(
         title=string.ascii_lowercase.index("d"),
         release_date=string.ascii_lowercase.index("c"),
@@ -97,8 +101,8 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
     tags = ",".join(
         [
             product_info["release_date"],
-            product_info["collection"],
-            product_info["category"],
+            tag_mapping.get(product_info["collection"], product_info["collection"]),
+            tag_mapping.get(product_info["category"], product_info["category"]),
             "New Arrival",
         ]
     )
@@ -127,12 +131,13 @@ def update_stocks(sgc: utils.Client, product_info_list):
 
 def main():
     client = utils.client("archive-epke")
+    handle_suffix = "2025ss"
     product_info_list = product_info_lists_from_sheet(
-        client, client.sheet_id, "2025.7 SPOT Release"
+        client,
+        client.sheet_id,
+        "2025.07.24 (Standard New) ",
+        handle_suffix=handle_suffix,
     )
-    product_info_list = [
-        pr for pr in product_info_list if pr["title"] != "Knotted layer bag"
-    ]
     import pprint
 
     ress = []
@@ -150,8 +155,9 @@ def main():
         ress.append(
             client.process_product_images(
                 product_info,
-                "/Users/taro/Downloads/archivépke20250710/",
-                "upload_20250710_",
+                "/Users/taro/Downloads/archivépke20250718/",
+                "upload_20250718_",
+                handle_suffix=handle_suffix,
             )
         )
     pprint.pprint(ress)
