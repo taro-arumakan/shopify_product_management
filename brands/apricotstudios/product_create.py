@@ -14,7 +14,7 @@ import re
 
 logging.basicConfig(level=logging.INFO)
 
-IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250704/"
+IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250720/"
 DUMMY_PRODUCT = "gid://shopify/Product/9119951454464"
 
 
@@ -27,23 +27,22 @@ def product_info_list_from_sheet_color_and_size(
         title=string.ascii_lowercase.index("f"),
         collection=string.ascii_lowercase.index("c"),
         category=string.ascii_lowercase.index("d"),
-        # release_date=string.ascii_lowercase.index("b"),
-        description=string.ascii_lowercase.index("l"),
-        material=string.ascii_lowercase.index("p"),
-        size_text=string.ascii_lowercase.index("r"),
-        made_in=string.ascii_lowercase.index("s"),
-        product_main_images_link=string.ascii_lowercase.index("t"),
+        release_date=string.ascii_lowercase.index("b"),
+        description=string.ascii_lowercase.index("j"),
+        material=string.ascii_lowercase.index("n"),
+        size_text=string.ascii_lowercase.index("p"),
+        made_in=string.ascii_lowercase.index("q"),
+        product_main_images_link=string.ascii_lowercase.index("r"),
     )
-    option1_attrs = {"カラー": string.ascii_lowercase.index("w")}
+    option1_attrs = {"カラー": string.ascii_lowercase.index("u")}
     option1_attrs.update(
-        variant_images_link=string.ascii_lowercase.index("v"),
+        variant_images_link=string.ascii_lowercase.index("t"),
     )
-    option2_attrs = {"サイズ": string.ascii_lowercase.index("x")}
+    option2_attrs = {"サイズ": string.ascii_lowercase.index("v")}
     option2_attrs.update(
-        price=string.ascii_lowercase.index("i"),
-        compare_at_price=string.ascii_lowercase.index("h"),
-        sku=string.ascii_lowercase.index("y"),
-        stock=string.ascii_lowercase.index("z"),
+        price=string.ascii_lowercase.index("h"),
+        sku=string.ascii_lowercase.index("w"),
+        stock=string.ascii_lowercase.index("y"),
     )
     return gai.to_products_list(
         sheet_id,
@@ -123,7 +122,7 @@ def text_to_html_tables_and_paragraphs(size_text):
         [p.strip() for p in notes_text.split("\n") if p.strip()] if notes_text else []
     )
 
-    html_output = "<br><br>".join(size_table_htmls)
+    html_output = "<br>\n<br>\n".join(size_table_htmls)
     for paragraph in paragraphs:
         paragraph = paragraph.split()
         if paragraph:
@@ -158,7 +157,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
             product_info["title"],
             product_info["description"],
             product_info["material"],
-            product_info.get("made_in", "???"),
+            product_info["made_in"],
         )
     )
     size_text = product_info.get("size_text")
@@ -174,16 +173,16 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
         )
     else:
         logging.warning(f"No size information found for {product_info['title']}")
-    skus = [o2["sku"] for o1 in product_info["options"] for o2 in o1["options"]]
-    prices = [o2["price"] for o1 in product_info["options"] for o2 in o1["options"]]
-    compare_at_prices = [
-        o2["compare_at_price"] for o1 in product_info["options"] for o2 in o1["options"]
-    ]
-    ress.append(
-        sgc.update_variant_price_by_skus(
-            ress[0][0]["id"], skus, prices, compare_at_prices
-        )
-    )
+    # skus = [o2["sku"] for o1 in product_info["options"] for o2 in o1["options"]]
+    # prices = [o2["price"] for o1 in product_info["options"] for o2 in o1["options"]]
+    # compare_at_prices = [
+    #     o2["compare_at_price"] for o1 in product_info["options"] for o2 in o1["options"]
+    # ]
+    # ress.append(
+    #     sgc.update_variant_price_by_skus(
+    #         ress[0][0]["id"], skus, prices, compare_at_prices
+    #     )
+    # )
     return ress
 
 
@@ -260,11 +259,9 @@ def process_images(sgc: utils.Client, product_info):
         image_position += len(variant_image_paths)
 
     logging.info(f"downloading product detail images")
-    folder_name = (
-        f"{str(product_info['product_number']).zfill(2)}{product_info['title']}"
-    )
+    folder_name = product_info["title"]
     folder_id = sgc.find_folder_id_by_name(
-        "1FNna4lImNPfsRYKQFmR5rKh9P1TiFHAf", folder_name
+        "1sCHPHL0NzbQpyssHslZLK911ISaVq-xo", folder_name
     )
     detail_image_paths = sgc.drive_images_to_local(
         folder_id,
@@ -299,7 +296,7 @@ def main():
     client = utils.client("apricot-studios")
     vendor = "Apricot Studios"
     product_info_list = product_info_list_from_sheet_color_and_size(
-        client, client.sheet_id, "7.8-11 Sale Event"
+        client, client.sheet_id, "7.25 Summer 3rd"
     )
     # for index, product_info in enumerate(product_info_list):
     #     if product_info["title"] == "Cable Vest":
@@ -309,7 +306,7 @@ def main():
         client,
         product_info_list,
         vendor,
-        additional_tags=["New Arrival", "2025_sale_event"],
+        additional_tags=["New Arrival", "2025_summer_3rd"],
     )
     pprint.pprint(ress)
     ress2 = update_stocks(client, product_info_list, ["Apricot Studios Warehouse"])
