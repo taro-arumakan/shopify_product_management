@@ -185,7 +185,14 @@ class ProductQueries:
         return res[0]
 
     def variant_by_sku(self, sku, active_only=True):
-        if len(res := self.product_variants_by_query(f"sku:{sku}")) != 1:
+        if (
+            len(
+                res := self.product_variants_by_query(
+                    f"sku:{sku}", filter_archived=active_only
+                )
+            )
+            != 1
+        ):
             if res and active_only:
                 logger.info("Filtering non-active products' variants")
                 res = [r for r in res if r["product"]["status"] == "ACTIVE"]
@@ -195,15 +202,15 @@ class ProductQueries:
                 )(f"{'Multiple' if res else 'No'} variants found for {sku}: {res}")
         return res[0]
 
-    def variant_id_by_sku(self, sku):
-        return self.variant_by_sku(sku)["id"]
+    def variant_id_by_sku(self, sku, active_only=True):
+        return self.variant_by_sku(sku, active_only=active_only)["id"]
 
     def product_id_by_variant_id(self, variant_id):
         variant = self.variant_by_variant_id(variant_id)
         return variant["product"]["id"]
 
-    def product_id_by_sku(self, sku):
-        variant = self.variant_by_sku(sku)
+    def product_id_by_sku(self, sku, active_only=True):
+        variant = self.variant_by_sku(sku, active_only=active_only)
         return variant["product"]["id"]
 
     def products_by_collection_handle(self, collection_handle):
