@@ -47,7 +47,7 @@ def parse_table_text_to_html(table_text):
         kv_pairs = rest.strip().split(" / ")
         if not headers:
             headers = [""] + [pair.split(" ")[0] for pair in kv_pairs]
-        valuess.append([size] + [pair.split(" ")[1] for pair in kv_pairs])
+        valuess.append([size] + [pair.split(" ", 1)[1].strip() for pair in kv_pairs])
     return utils.Client.generate_table_html(headers, valuess)
 
 
@@ -67,7 +67,9 @@ def create_a_product(
         get_size_table_html_func=parse_table_text_to_html,
     )
     tags = ",".join(
-        [product_info["category"], product_info["collection"]] + (additional_tags or [])
+        list(map(str.strip, product_info["category"].split(" AND ")))
+        + [product_info["collection"]]
+        + (additional_tags or [])
     )
     return sgc.create_a_product(
         product_info=product_info,
@@ -98,29 +100,32 @@ def create_products(
     vendor,
     additional_tags=None,
 ):
-    ress = []
-    for product_info in product_info_list:
-        ress.append(
-            create_a_product(
-                sgc,
-                product_info,
-                vendor,
-                additional_tags=additional_tags,
-            )
-        )
+    # ress = []
+    # for product_info in product_info_list:
+    #     ress.append(
+    #         create_a_product(
+    #             sgc,
+    #             product_info,
+    #             vendor,
+    #             additional_tags=additional_tags,
+    #         )
+    #     )
 
-    logging.info("updating inventory")
-    ress2 = update_stocks(sgc, product_info_list, "KUME Warehouse")
+    # logging.info("updating inventory")
+    # ress2 = update_stocks(sgc, product_info_list, "KUME Warehouse")
 
     ress3 = []
     logging.info("processing product images")
     for product_info in product_info_list:
         ress3.append(
             sgc.process_product_images(
-                product_info, "/Users/taro/Downloads/kume20250624/", "upload_20250624_"
+                product_info,
+                "/Users/taro/Downloads/kume20250729/",
+                "upload_20250729_",
+                local_prefix=product_info["title"],
             )
         )
-    return ress, ress2, ress3
+    # return ress, ress2, ress3
 
 
 def main():
@@ -128,12 +133,14 @@ def main():
 
     client = utils.client("kumej")
     vendor = "KUME"
-    product_info_list = product_info_list_from_sheet(client, client.sheet_id, "25ss")
-    product_info_list = [
-        product_info
-        for product_info in product_info_list
-        if product_info["title"] == "Knotted Handle Leather Bag"
-    ]
+    product_info_list = product_info_list_from_sheet(
+        client, client.sheet_id, "SS/seasonOff"
+    )
+    # product_info_list = [
+    #     product_info
+    #     for product_info in product_info_list
+    #     if product_info["title"] == "Knotted Handle Leather Bag"
+    # ]
     ress = create_products(
         client,
         product_info_list,
