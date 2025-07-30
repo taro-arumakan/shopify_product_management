@@ -53,7 +53,7 @@ def filter_tags(tags):
     tags = [
         tag
         for tag in tags
-        if tag not in ["summer_sale_10%_off"]
+        if tag not in ["summer_sale_10%_off", "40%", "20%", "15%", "5%"]
         and not tag.startswith("2024 BF ")
         and not tag.startswith("2025 Holiday Season ")
     ]
@@ -72,19 +72,20 @@ df = pd.read_excel(
 i = 0
 for sku, percentage in df[["Product Code", "Final\nDiscount Rate"]].values[i:]:
     print(f"{sku} {percentage:.0%}")
-    if sku in to_be_added_skus:
-        continue
+    # if sku in to_be_added_skus:
+    #     continue
     sku = sku_map.get(sku, sku)
     product_id = client.product_id_by_sku(sku)
     product = client.product_by_id(product_id)
-    tags = filter_tags(product["tags"]) + [f"{percentage:.0%}"]
-    if product_id in processed_products:
-        try:
-            assert set(tags) == set(
-                processed_products[product_id]
-            ), f'tags are different amongst a product: {product_id}, {product["title"]}, {processed_products[product_id]} - {tags}'
-        except AssertionError as e:
-            print(e)
-    else:
-        processed_products[product_id] = tags
+    tags = filter_tags(product["tags"]) + ["2025_summer_outlet"]
+    # if product_id in processed_products:
+    #     try:
+    #         assert set(tags) == set(
+    #             processed_products[product_id]
+    #         ), f'tags are different amongst a product: {product_id}, {product["title"]}, {processed_products[product_id]} - {tags}'
+    #     except AssertionError as e:
+    #         print(e)
+    # else:
+    #     processed_products[product_id] = tags
     client.update_product_tags(product_id, ",".join(tags))
+    client.update_discount_rate_metafield(product_id, f"{percentage:.0%}")

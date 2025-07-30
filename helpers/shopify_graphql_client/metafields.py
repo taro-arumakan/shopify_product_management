@@ -96,6 +96,11 @@ class Metafields:
             product_id, "custom", "badges", json.dumps(badges)
         )
 
+    def update_discount_rate_metafield(self, product_id, discount_rate):
+        return self.update_product_metafield(
+            product_id, "custom", "discount_rate", discount_rate
+        )
+
     def metafield_id_by_namespace_and_key(self, namespace, key, owner_type="PRODUCT"):
         query = """
         query {
