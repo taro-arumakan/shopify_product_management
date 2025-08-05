@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 class Variants:
-    def update_a_variant_attributes(
+    def update_variant_attributes(
         self, product_id, variant_id, attribute_names, attribute_values, sku=None
     ):
         query = """
@@ -45,6 +45,12 @@ class Variants:
             variables["variants"][0].setdefault("inventoryItem", {})["sku"] = sku
         res = self.run_query(query, variables)
         return res["productVariantsBulkUpdate"]
+
+    def update_variant_barcode_by_sku(self, sku, barcode):
+        variant = self.variant_by_sku(sku)
+        return self.update_variant_attributes(
+            variant["product"]["id"], variant["id"], ["barcode"], [barcode]
+        )
 
     def variants_add(
         self,

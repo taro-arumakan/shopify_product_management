@@ -26,7 +26,7 @@ def main():
                 barcode = size_option["barcode"]
                 variant = get_variant(c, barcode, sku)
                 product_id = variant["product"]["id"]
-                c.update_a_variant_attributes(
+                c.update_variant_attributes(
                     product_id, variant["id"], ["barcode"], [barcode], sku=sku
                 )
 

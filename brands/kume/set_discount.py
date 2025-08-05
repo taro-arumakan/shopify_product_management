@@ -11,7 +11,7 @@ def main():
             print(
                 f"Updating price of {variant['id']} from {compare_at_price} to {price}"
             )
-            client.update_a_variant_attributes(
+            client.update_variant_attributes(
                 product_id=p["id"],
                 variant_id=variant["id"],
                 attribute_names=["price", "compareAtPrice"],
