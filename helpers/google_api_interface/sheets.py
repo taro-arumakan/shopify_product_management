@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 import gspread
 
 logger = logging.getLogger(__name__)
@@ -139,7 +140,7 @@ class GoogleSheetsApiInterface:
         return hyperlink
 
     def drive_link_to_id(self, link):
-        return (
+        res = (
             link.rsplit("/", 1)[-1]
             .replace("open?id=", "")
             .replace("?usp=drive_link", "")
@@ -147,6 +148,7 @@ class GoogleSheetsApiInterface:
             .replace("&usp=drive_fs", "")
             .replace("?dmr=1&ec=wgc-drive-globalnav-goto", "")
         )
+        return re.sub(r"\?role=.*$", "", res)
 
     def worksheet_rows(self, sheet_id, sheet_title):
         sheet_index = self.get_sheet_index_by_title(sheet_id, sheet_title)
