@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 class Variants:
     def update_a_variant_attributes(
-        self, product_id, variant_id, attribute_names, attribute_values
+        self, product_id, variant_id, attribute_names, attribute_values, sku=None
     ):
         query = """
         mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
@@ -41,6 +41,8 @@ class Variants:
                 }
             ],
         }
+        if sku:
+            variables["variants"][0].setdefault("inventoryItem", {})["sku"] = sku
         res = self.run_query(query, variables)
         return res["productVariantsBulkUpdate"]
 
