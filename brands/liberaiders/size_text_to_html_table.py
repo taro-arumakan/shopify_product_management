@@ -10,7 +10,7 @@ def size_text_to_html_table(size_text):
     [4] 着丈 90 / 肩幅 xxx / 袖丈 yyy
     """
     size_expression = re.compile(r"\[(\w+)\]\s*(.*)")
-    header_value_expression = re.compile(r"([^\d]+)\s*([\d\.]+)")
+    header_value_expression = re.compile(r"([^\d]+)\s*([×\d\.]+)")
 
     rows = []
     headers = ["Size"]

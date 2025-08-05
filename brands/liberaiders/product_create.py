@@ -1,3 +1,4 @@
+import datetime
 import logging
 import string
 import utils
@@ -8,7 +9,9 @@ from brands.liberaiders.size_text_to_html_table import size_text_to_html_table
 logging.basicConfig(level=logging.INFO)
 
 
-def product_info_list_from_sheet(gai: utils.Client, sheet_id, sheet_name):
+def product_info_list_from_sheet(
+    gai: utils.Client, sheet_id, sheet_name, row_filter_func=None
+):
     start_row = 1
     column_product_attrs = dict(
         title=string.ascii_lowercase.index("b"),
@@ -39,6 +42,7 @@ def product_info_list_from_sheet(gai: utils.Client, sheet_id, sheet_name):
         column_product_attrs,
         option1_attrs,
         option2_attrs,
+        row_filter_func=row_filter_func,
     )
 
 
@@ -148,8 +152,8 @@ def process_product_images(client: utils.Client, product_info):
     image_positions.append(len(local_paths))
     local_paths += client.drive_images_to_local(
         drive_id,
-        "/Users/taro/Downloads/liberaiders20250605/",
-        f"upload_20250605_{product_info['title'].replace('/', '_')}",
+        f"/Users/taro/Downloads/liberaiders{datetime.date.today():%Y%m%d}/",
+        f"upload_{datetime.date.today():%Y%m%d}_{product_info['title'].replace('/', '_')}",
     )
     return client.upload_and_assign_images_to_product(product_id, local_paths)
 
@@ -171,7 +175,7 @@ def assign_variant_images(client: utils.Client, product_info_list):
             media = [m for m in medias if m["alt"].endswith(file_name)]
             if len(media) != 1:
                 logging.warning(
-                    f"check images of f{product_info['title']} - f{color_option['Color']}"
+                    f"check images of {product_info['title']} - {color_option['Color']}"
                 )
                 continue
             media = media[0]
@@ -181,18 +185,16 @@ def assign_variant_images(client: utils.Client, product_info_list):
 
 def main():
     c = utils.client("liberaiders")
-    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "Product Master")
-    product_info_list = product_info_list[2:]
+    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "PX2025")
+    # product_info_list = product_info_list[2:]
 
     # for index, product_info in enumerate(product_info_list):
-    #     if product_info["title"] == "TIFINAGH EMBROIDERY FLANNEL SHIRT":
+    #     if product_info["title"] == "Liberaiders PX LOGO TEE":
     #         break
     # product_info_list = product_info_list[index:]
 
-    assign_variant_images(c, product_info_list)
-
     # create_products(c, product_info_list, vendor="liberaiders")
-
+    assign_variant_images(c, product_info_list)
     # update_stocks(c, product_info_list)
 
 
