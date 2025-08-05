@@ -5,7 +5,9 @@ from brands.alvana.size_text_to_html_table import size_text_to_html_table
 
 def get_description(product_description, material, made_in):
     description_html = product_description_template()
-    description_html = description_html.replace("${DESCRIPTION}", product_description)
+    description_html = description_html.replace(
+        "${DESCRIPTION}", product_description.replace("\n", "<br>")
+    )
     description_html = description_html.replace("${MATERIAL}", material)
     description_html = description_html.replace("${MADEIN}", made_in)
     return description_html
