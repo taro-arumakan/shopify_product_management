@@ -29,7 +29,8 @@ def product_info_list_from_sheet(gai: utils.Client, sheet_id, sheet_name):
     option2_attrs = {"Size": string.ascii_lowercase.index("p")}
     option2_attrs.update(
         sku=string.ascii_lowercase.index("q"),
-        stock=string.ascii_lowercase.index("r"),
+        barcode=string.ascii_lowercase.index("r"),
+        stock=string.ascii_lowercase.index("s"),
     )
     return gai.to_products_list(
         sheet_id,
