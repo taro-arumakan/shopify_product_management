@@ -89,6 +89,11 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
         for option1 in product_info["options"]
         for option2 in option1["options"]
     ]
+    res += [
+        sgc.update_variant_barcode_by_sku(option2["sku"], option2["barcode"])
+        for option1 in product_info["options"]
+        for option2 in option1["options"]
+    ]
 
     print(res)
 
