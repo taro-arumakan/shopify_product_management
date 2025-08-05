@@ -76,7 +76,7 @@ class GoogleSheetsApiInterface:
                     isinstance(v, (int, float)) or v.isnumeric()
                 ), f"expected int for {column_name}, got {type(v)}: {v}"
                 v = int(v)
-            elif column_name in ["サイズ", "sku", "product_number"]:
+            elif column_name in ["サイズ", "sku", "product_number", "barcode"]:
                 v = str(v).strip()
             elif column_name == "drive_link":
                 if all([v, v != "no image", not v.startswith("http")]):
