@@ -185,7 +185,12 @@ def assign_variant_images(client: utils.Client, product_info_list):
 
 def main():
     c = utils.client("liberaiders")
-    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "PX2025")
+    product_info_list = product_info_list_from_sheet(
+        c,
+        c.sheet_id,
+        "Product Master",
+        row_filter_func=lambda x: x[string.ascii_lowercase.index("u")] == "image",
+    )
     # product_info_list = product_info_list[2:]
 
     # for index, product_info in enumerate(product_info_list):
@@ -194,8 +199,20 @@ def main():
     # product_info_list = product_info_list[index:]
 
     # create_products(c, product_info_list, vendor="liberaiders")
+    for product_info in product_info_list:
+        process_product_images(c, product_info)
     assign_variant_images(c, product_info_list)
     # update_stocks(c, product_info_list)
+
+    product_info_list = product_info_list_from_sheet(
+        c,
+        c.sheet_id,
+        "Product Master",
+        row_filter_func=lambda x: x[string.ascii_lowercase.index("u")] == "size",
+    )
+    for product_info in product_info_list:
+        product_id = c.product_id_by_title(product_info["title"])
+        update_metafields(c, product_id, product_info)
 
 
 if __name__ == "__main__":

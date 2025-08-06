@@ -20,7 +20,9 @@ def size_text_to_html_table(size_text):
         if not match:
             raise RuntimeError(f"Invalid size text format: {line}")
         row_values = [match.group(1)]
-        header_value_pairs = [p.strip() for p in match.group(2).split("/")]
+        header_value_pairs = filter(
+            None, [p.strip() for p in match.group(2).split("/")]
+        )
 
         for header_value_pair in header_value_pairs:
             header, value = header_value_expression.match(
