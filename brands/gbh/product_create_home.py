@@ -21,9 +21,9 @@ column_indices = dict(
     drive_link=string.ascii_lowercase.index("o"),
     description=string.ascii_lowercase.index("q"),
     product_care=string.ascii_lowercase.index("s"),
-    size_text=string.ascii_lowercase.index("u"),
-    material=string.ascii_lowercase.index("v"),
-    made_in=string.ascii_lowercase.index("w"),
+    size_text=string.ascii_lowercase.index("t"),
+    material=string.ascii_lowercase.index("u"),
+    made_in=string.ascii_lowercase.index("v"),
 )
 column_indices["カラー"] = string.ascii_lowercase.index("g")
 column_indices["Scent"] = string.ascii_lowercase.index("g")
@@ -33,7 +33,7 @@ column_indices["サイズ"] = string.ascii_lowercase.index("h")
 def product_info_list_from_sheet_no_options(
     gai: utils.Client, sheet_id, sheet_name, row_filter_func=None
 ):
-    start_row = 2
+    start_row = 1
     column_product_attrs = [
         "title",
         "category",
@@ -185,8 +185,7 @@ def create_products(
                 get_size_table_html_func=get_size_table_html_func,
             )
         )
-    ress2 = update_stocks(sgc, product_info_list, ["Shop location"])
-    return ress, ress2
+    return ress
 
 
 def update_stocks(sgc: utils.Client, product_info_list, location_name):
@@ -218,26 +217,31 @@ def main():
     product_info_list = product_info_list_from_sheet_no_options(
         client,
         client.sheet_id,
-        "GIFT SET 25.06.18 SET",
-        row_filter_func=lambda row: row[column_indices["title"]]
-        in [
-            "DAILY HAIR CARE GIFT SET",
-            "DAILY FRAGRANCE GIFT SET",
-            "DAILY FRAGRANCE PREMIUM GIFT SET",
-        ],
+        "HOME 25.08.27",
+        # row_filter_func=lambda row: row[column_indices["title"]]
+        # in [
+        #     "DAILY HAIR CARE GIFT SET",
+        #     "DAILY FRAGRANCE GIFT SET",
+        #     "DAILY FRAGRANCE PREMIUM GIFT SET",
+        # ],
     )
-    # ress = create_products(
-    #     client, product_info_list, vendor, get_size_table_html_func=lambda x: x
-    # )
-    # pprint.pprint(ress)
-    # ress = []
-    # for product_info in product_info_list:
-    #     ress.append(
-    #         client.process_product_images(
-    #             product_info, "/Users/taro/Downloads/gbh20250615/", "upload_20250615_"
-    #         )
-    #     )
-    # pprint.pprint(ress)
+    ress = create_products(
+        client,
+        product_info_list,
+        vendor,
+        get_size_table_html_func=lambda x: x.replace("\n", "<br>"),
+    )
+    pprint.pprint(ress)
+    ress = []
+    for product_info in product_info_list:
+        ress.append(
+            client.process_product_images(
+                product_info,
+                f"/Users/taro/Downloads/gbh{datetime.date.today():%Y%m%d}/",
+                f"upload_{datetime.date.today():%Y%m%d}_",
+            )
+        )
+    pprint.pprint(ress)
     res = update_stocks(client, product_info_list, "Shop location")
     pprint.pprint(res)
 
