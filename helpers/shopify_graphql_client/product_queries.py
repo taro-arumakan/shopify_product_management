@@ -52,6 +52,7 @@ class ProductQueries:
                             sku
                             price
                             compareAtPrice
+                            inventoryQuantity
                             selectedOptions {
                                 name
                                 value
