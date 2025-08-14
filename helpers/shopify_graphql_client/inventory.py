@@ -120,12 +120,25 @@ class Inventory:
         return res["inventoryActivate"]["inventoryLevel"]
 
     def inventory_item_id_by_sku(self, sku):
+        res = self.inventory_item_by_sku(sku)
+        return res["id"]
+
+    def inventory_item_by_sku(self, sku):
         query = (
             """
         {
             inventoryItems(query:"sku:%s", first:5) {
                 nodes{
                     id
+                    inventoryLevels(first:5) {
+                        nodes {
+                            id
+                            quantities(names: ["available"]) {
+                                name
+                                quantity
+                            }
+                        }
+                    }
                 }
             }
         }"""
@@ -136,7 +149,7 @@ class Inventory:
         assert (
             len(res) == 1
         ), f'{"Multiple" if res else "No"} inventoryItems found for {sku}: {res}'
-        return res[0]["id"]
+        return res[0]
 
     def set_inventory_quantity_by_sku_and_location_id(self, sku, location_id, quantity):
         inventory_item_id = self.inventory_item_id_by_sku(sku)
