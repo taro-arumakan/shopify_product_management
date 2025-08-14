@@ -5,22 +5,58 @@ import utils
 
 logging.basicConfig(level=logging.INFO)
 
+handles = [
+    "mare-cardigan",
+    "varsity-setup",
+    "if-knit-top",
+    "pigment-wave-setup",
+    "mar-t-shirt",
+    "grace-setup",
+    "leats-setup",
+    "leats-setup",
+    "pigment-wave-setup",
+    "easy-pants",
+    "easy-pants",
+    "25-summer-sandy-suit",
+    "25-jelly-stripe-indoorwear",
+    "color-denim-pants",
+    "fave-pants",
+    "fave-pants",
+    "fave-pants",
+    "fave-pants",
+    "fave-pants",
+    "summer-marin-eyelet-socks-2pcs",
+    "summer-marin-eyelet-socks-2pcs",
+    "summer-motive-socks-3pcs",
+    "bejou-leggings",
+    "bejou-leggings",
+    "bejou-leggings",
+    "bejou-leggings",
+    "babycot-bubble-bodysuit",
+    "babycot-bubble-bodysuit",
+    "babycot-breeze-romper",
+    "babycot-breeze-romper",
+    "babycot-blooming-romper",
+    "babycot-blooming-romper",
+    "babycot-ivy-collar-suit",
+    "babycot-peony-ruffle-setup",
+    "babycot-sunnypop-bloomer",
+    "babycot-sunnypop-bloomer",
+    "babycot-lemon-seersucker-setup",
+    "babycot-lemon-seersucker-setup",
+    "babycot-rabbit-dot-bonnet",
+    "babycot-ivy-frill-bonnet",
+]
+
 
 def main():
-    products_tag = "2025_summer_3rd"
     scheduled_time = pytz.timezone("Asia/Tokyo").localize(
-        datetime.datetime(2025, 7, 25, 0, 0, 0)
+        datetime.datetime(2025, 8, 18, 10, 0, 0)
     )
     client = utils.client("apricot-studios")
-    logging.info(f"Retrieving products tagged with {products_tag} for publication")
-    products = client.products_by_tag(products_tag, additional_fields=["status"])
-    for product in products:
-        assert (
-            product["status"] == "DRAFT"
-        ), f"Product {product['id']} is not in DRAFT status"
-
     publications = client.publications()
-    for product in products:
+    for handle in set(handles):
+        product = client.product_by_handle(handle)
         logging.info(
             f"Publishing product {product['id']} - {product['title']} at {scheduled_time}"
         )
@@ -32,8 +68,6 @@ def main():
                     scheduled_time=scheduled_time, **params
                 )
                 client.update_product_status(product["id"], "ACTIVE")
-            else:
-                client.publish_by_product_id_and_publication_id(**params)
 
 
 if __name__ == "__main__":
