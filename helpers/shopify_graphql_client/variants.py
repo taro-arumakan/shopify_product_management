@@ -68,7 +68,7 @@ class Variants:
             logger.info(f"Assigning media ID {media_id} to product ID {product_id}")
             self.assign_existing_image_to_products_by_id(media_id, [product_id])
         query = """
-            mutation ProductVariantsCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+        mutation ProductVariantsCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
             productVariantsBulkCreate(productId: $productId, variants: $variants) {
                 productVariants {
                     id
