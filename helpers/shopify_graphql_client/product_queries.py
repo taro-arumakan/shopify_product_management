@@ -36,6 +36,7 @@ class ProductQueries:
                     id
                     title
                     handle
+                    status
                     tags%s
                     metafields (first:10) {
                         nodes {
