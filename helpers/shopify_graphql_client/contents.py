@@ -28,7 +28,7 @@ class Contents:
             ), "from and to paths starting with a leading slash relative to the top domain are expected"
         query = """
         mutation urlRedirectCreate($input: UrlRedirectInput!) {
-            urlRedirectCreate(input: $input) {
+            urlRedirectCreate(urlRedirect: $input) {
                 urlRedirect {
                     id
                     path
