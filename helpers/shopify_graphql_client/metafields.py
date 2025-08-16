@@ -105,22 +105,6 @@ class Metafields:
             product_id, "custom", "discount_rate", discount_rate
         )
 
-    def page_id_by_title(self, page_title):
-        query = """
-        query pageList($query_string: String!) {
-            pages(first: 10, query: $query_string) {
-                nodes {
-                    id
-                }
-            }
-        }
-        """
-        variables = {"query_string": f"title:{page_title}"}
-        res = self.run_query(query, variables)
-        if len(res["pages"]["nodes"]) != 1:
-            raise RuntimeError(f"Error getting page id for {page_title}: {res}")
-        return res["pages"]["nodes"][0]["id"]
-
     def update_product_care_page_metafield(self, product_id, product_care_page_title):
         page_id = self.page_id_by_title(product_care_page_title)
         return self.update_product_metafield(

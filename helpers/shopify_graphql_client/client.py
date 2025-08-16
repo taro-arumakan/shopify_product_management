@@ -1,5 +1,6 @@
 import logging
 import requests
+from helpers.shopify_graphql_client.contents import Contents
 from helpers.shopify_graphql_client.collection_queries import CollectionQueries
 from helpers.shopify_graphql_client.inventory import Inventory
 from helpers.shopify_graphql_client.medias import Medias
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class ShopifyGraphqlClient(
+    Contents,
     CollectionQueries,
     Inventory,
     Medias,
