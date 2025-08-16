@@ -4,6 +4,9 @@ from helpers.shopify_graphql_client.contents import Contents
 from helpers.shopify_graphql_client.collection_queries import CollectionQueries
 from helpers.shopify_graphql_client.inventory import Inventory
 from helpers.shopify_graphql_client.medias import Medias
+from helpers.shopify_graphql_client.merge_products_as_variants import (
+    MergeProductsAsVariants,
+)
 from helpers.shopify_graphql_client.metafields import Metafields
 from helpers.shopify_graphql_client.product_attributes import (
     ProductAttributes,
@@ -29,6 +32,7 @@ class ShopifyGraphqlClient(
     ProductQueries,
     ProductVariantsToProducts,
     Metafields,
+    MergeProductsAsVariants,
     Publications,
     Variants,
 ):
