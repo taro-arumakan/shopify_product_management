@@ -65,7 +65,13 @@ class ProductQueries:
                     }
                     media (first:100) {
                         nodes {
-                            id
+                            ... on MediaImage {
+                                id
+                                image {
+                                    id
+                                    url
+                                }
+                            }
                         }
                     }
                 }
