@@ -28,10 +28,10 @@ class ProductQueries:
         parts = [part.translate(punctuation_translator) for part in parts]
         return "-".join(parts)
 
-    def products_by_query(self, query_string, additional_fields=None):
+    def products_by_query(self, query_string, additional_fields=None, sort_key="TITLE"):
         query = """
         query productsByQuery($query_string: String!) {
-            products(first: 100, query: $query_string, sortKey: TITLE) {
+            products(first: 100, query: $query_string, sortKey: %s) {
                 nodes {
                     id
                     title
@@ -79,7 +79,8 @@ class ProductQueries:
             }
         }
         """ % (
-            f"\n{'\n'.join(additional_fields)}" if additional_fields else ""
+            sort_key,
+            f"\n{'\n'.join(additional_fields)}" if additional_fields else "",
         )
         variables = {"query_string": query_string}
         res = self.run_query(query, variables)
@@ -87,24 +88,9 @@ class ProductQueries:
         assert len(res) < 100, f"Too many products found for {query_string}: {len(res)}"
         return res
 
-    def product_by_query(self, query_string, additional_fields=None):
-        products = self.products_by_query(query_string, additional_fields)
-        if len(products) != 1:
-            raise (
-                MultipleProductsFoundException if products else NoProductsFoundException
-            )(
-                f"{'Multiple' if products else 'No'} products found for {query_string}: {products}"
-            )
-        return products[0]
-
-    def product_by_id(self, identifier, additional_fields=None):
-        return self.products_by_query(
-            f"id:'{identifier.rsplit('/', 1)[-1]}'", additional_fields
-        )[0]
-
-    def products_by_title(self, title, additional_fields=None):
+    def products_by_title(self, title, *args, **kwargs):
         products = self.products_by_query(
-            f"title:'{title.replace("'", "\\'")}'", additional_fields
+            f"title:'{title.replace("'", "\\'")}'", *args, **kwargs
         )
         if len(products) == 0:
             raise NoProductsFoundException(f"No products found for {title}")
@@ -114,22 +100,37 @@ class ProductQueries:
         res = self.products_by_title(title)
         return [r["id"] for r in res]
 
-    def product_by_title(self, title, additional_fields=None):
+    def products_by_tag(self, tag, *args, **kwargs):
+        return self.products_by_query(f"tag:'{tag}'", *args, **kwargs)
+
+    def product_by_query(self, query_string, *args, **kwargs):
+        products = self.products_by_query(query_string, *args, **kwargs)
+        if len(products) != 1:
+            raise (
+                MultipleProductsFoundException if products else NoProductsFoundException
+            )(
+                f"{'Multiple' if products else 'No'} products found for {query_string}: {products}"
+            )
+        return products[0]
+
+    def product_by_id(self, identifier, *args, **kwargs):
+        return self.products_by_query(
+            f"id:'{identifier.rsplit('/', 1)[-1]}'", *args, **kwargs
+        )[0]
+
+    def product_by_title(self, title, *args, **kwargs):
         return self.product_by_query(
-            f"title:'{title.replace("'", "\\'")}'", additional_fields
+            f"title:'{title.replace("'", "\\'")}'", *args, **kwargs
         )
 
     def product_id_by_title(self, title):
         return self.product_by_title(title)["id"]
 
-    def product_by_handle(self, handle, additional_fields=None):
-        return self.product_by_query(f"handle:'{handle}'", additional_fields)
+    def product_by_handle(self, handle, *args, **kwargs):
+        return self.product_by_query(f"handle:'{handle}'", *args, **kwargs)
 
     def product_id_by_handle(self, handle):
         return self.product_by_handle(handle)["id"]
-
-    def products_by_tag(self, tag, additional_fields=None):
-        return self.products_by_query(f"tag:'{tag}'", additional_fields)
 
     def product_variants_by_query(self, query, filter_archived=True):
         query = (
