@@ -13,7 +13,11 @@ class MergeProductsAsVariants:
                 return media["id"]
 
     def add_product_to_product_as_variants(
-        self, target_product_id, product_id_to_add, location_name
+        self,
+        target_product_id,
+        product_id_to_add,
+        location_name,
+        variant_option_names=None,
     ):
         right = self.product_by_id(product_id_to_add)
 
@@ -24,7 +28,7 @@ class MergeProductsAsVariants:
             for v in right["variants"]["nodes"]
         ]
         prices = [v["price"] for v in right["variants"]["nodes"]]
-        option_names = [
+        option_names = variant_option_names or [
             o["name"] for o in right["variants"]["nodes"][0]["selectedOptions"]
         ]
         location_id = self.location_id_by_name(location_name)
@@ -32,7 +36,18 @@ class MergeProductsAsVariants:
         option_valuess = []
         stocks = []
         for variant in right["variants"]["nodes"]:
-            option_values = [o["value"] for o in variant["selectedOptions"]]
+            option_values = []
+            for n in option_names:
+                option_values.append(
+                    next(
+                        (
+                            o["value"]
+                            for o in variant["selectedOptions"]
+                            if o["name"] == n
+                        ),
+                        None,
+                    )
+                )
             option_valuess.append(option_values)
             stocks.append(variant["inventoryQuantity"])
 
@@ -66,8 +81,8 @@ class MergeProductsAsVariants:
             )
 
     def merge_products_as_variants(self, product_title, location_name):
-        products = self.products_by_title(product_title)
-        products = [p for p in products if p["status"] == "ACTIVE"]
+        products = self.products_by_title(product_title, sort_key="CREATED_AT")
+        products = [p for p in reversed(products) if p["status"] == "ACTIVE"]
         logger.info(f"Merging {len(products)} products")
         merged = self.duplicate_product(
             products[0]["id"],
@@ -75,15 +90,19 @@ class MergeProductsAsVariants:
             include_images=True,
             new_status="DRAFT",
         )
-        new_product_id = merged["productDuplicate"]["newProduct"]["id"]
-        new_product_handle = merged["productDuplicate"]["newProduct"]["handle"]
+        merged = ["productDuplicate"]["newProduct"]
+        new_product_id = merged["id"]
+        new_product_handle = merged["handle"]
+        variant_option_names = [
+            o["name"] for o in merged["variants"]["nodes"][0]["selectedOptions"]
+        ]
         logger.info(
             f"Merging into a new product {new_product_id}: {new_product_handle}"
         )
         rights = products[1:]
         for right in rights:
             self.add_product_to_product_as_variants(
-                new_product_id, right["id"], location_name
+                new_product_id, right["id"], location_name, variant_option_names
             )
 
         logger.info(f"Activating the new product")
@@ -99,7 +118,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
     client = utils.client("rohseoul")
-    client.merge_products_as_variants("Classic tomboy shirt", "Shop location")
+    client.merge_products_as_variants("Tin square shoulder bag", "Shop location")
 
 
 if __name__ == "__main__":
