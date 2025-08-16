@@ -41,7 +41,7 @@ class Inventory:
             )
         return ress
 
-    def disable_invetory_tracking_by_sku(self, sku):
+    def disable_inventory_tracking_by_sku(self, sku):
         inventory_item_id = self.inventory_item_id_by_sku(sku)
         return self.update_inventory_tracking(inventory_item_id, False)
 
