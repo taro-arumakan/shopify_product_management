@@ -32,7 +32,7 @@ class Inventory:
 
     def enable_and_activate_inventory(self, sku, location_names):
         inventory_item_id = self.inventory_item_id_by_sku(sku)
-        ress = [self.enable_inventory_tracking(inventory_item_id)]
+        ress = [self.update_inventory_tracking(inventory_item_id, True)]
         for location_name in location_names:
             ress.append(
                 self.activate_inventory_item(
@@ -40,6 +40,10 @@ class Inventory:
                 )
             )
         return ress
+
+    def disable_invetory_tracking_by_sku(self, sku):
+        inventory_item_id = self.inventory_item_id_by_sku(sku)
+        return self.update_inventory_tracking(inventory_item_id, False)
 
     def update_inventory_item(self, inventory_item_id, input_data: dict):
         query = """
@@ -66,8 +70,8 @@ class Inventory:
             )
         return res["inventoryItemUpdate"]["inventoryItem"]
 
-    def enable_inventory_tracking(self, inventory_item_id):
-        input_data = {"tracked": True}
+    def update_inventory_tracking(self, inventory_item_id, tracked=True):
+        input_data = {"tracked": tracked}
         return self.update_inventory_item(inventory_item_id, input_data)
 
     def update_inventory_item_weight(
