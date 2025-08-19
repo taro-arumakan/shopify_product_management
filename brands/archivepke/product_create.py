@@ -1,3 +1,4 @@
+import datetime
 import logging
 import re
 import string
@@ -131,11 +132,11 @@ def update_stocks(sgc: utils.Client, product_info_list):
 
 def main():
     client = utils.client("archive-epke")
-    handle_suffix = "2025ss"
+    handle_suffix = None
     product_info_list = product_info_lists_from_sheet(
         client,
         client.sheet_id,
-        "2025.07.24 (Standard New) ",
+        "2025.08.21 (25FW Collection 1st)",
         handle_suffix=handle_suffix,
     )
     import pprint
@@ -155,8 +156,8 @@ def main():
         ress.append(
             client.process_product_images(
                 product_info,
-                "/Users/taro/Downloads/archivépke20250718/",
-                "upload_20250718_",
+                f"/Users/taro/Downloads/archivépke{datetime.date.today():%Y%m%d}/",
+                f"upload_{datetime.date.today():%Y%m%d}_",
                 handle_suffix=handle_suffix,
             )
         )
