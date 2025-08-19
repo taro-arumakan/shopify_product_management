@@ -13,23 +13,23 @@ def product_info_list_from_sheet(
 ):
     start_row = 946
     column_product_attrs = dict(
-        title=string.ascii_lowercase.index("b"),
-        tags=string.ascii_lowercase.index("c"),
-        price=string.ascii_lowercase.index("e"),
-        description=string.ascii_lowercase.index("g"),
-        product_care=string.ascii_lowercase.index("i"),
-        material=string.ascii_lowercase.index("j"),
-        size_text=string.ascii_lowercase.index("k"),
-        made_in=string.ascii_lowercase.index("l"),
+        title=string.ascii_lowercase.index("a"),
+        tags=string.ascii_lowercase.index("b"),
+        price=string.ascii_lowercase.index("d"),
+        description=string.ascii_lowercase.index("f"),
+        product_care=string.ascii_lowercase.index("h"),
+        material=string.ascii_lowercase.index("i"),
+        size_text=string.ascii_lowercase.index("j"),
+        made_in=string.ascii_lowercase.index("k"),
     )
-    option1_attrs = {"Color": string.ascii_lowercase.index("m")}
+    option1_attrs = {"Color": string.ascii_lowercase.index("l")}
     option1_attrs.update(
-        drive_link=string.ascii_lowercase.index("n"),
+        drive_link=string.ascii_lowercase.index("m"),
     )
-    option2_attrs = {"Size": string.ascii_lowercase.index("o")}
+    option2_attrs = {"Size": string.ascii_lowercase.index("no")}
     option2_attrs.update(
-        sku=string.ascii_lowercase.index("p"),
-        stock=string.ascii_lowercase.index("q"),
+        sku=string.ascii_lowercase.index("o"),
+        stock=string.ascii_lowercase.index("p"),
     )
     return gai.to_products_list(
         sheet_id,
