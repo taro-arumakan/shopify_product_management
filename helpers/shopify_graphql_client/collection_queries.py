@@ -11,16 +11,33 @@ class CollectionQueries:
             collection(id: $id) {
                 handle
                 products(first: 50) {
-                nodes {
-                    title,
-                    id,
-                    status
-                }
+                    nodes {
+                        title,
+                        id,
+                        status
+                        variants (first:10) {
+                            nodes {
+                                id
+                                title
+                                sku
+                                price
+                                compareAtPrice
+                                inventoryQuantity
+                                selectedOptions {
+                                    name
+                                    value
+                                }
+                                image {
+                                    id
+                                    url
+                                }
+                            }
+                        }                    }
                 }
             }
         }
         """
-        variables = {"id": collection_id}
+        variables = {"id": self.sanitize_id(collection_id, "Collection")}
         res = self.run_query(query, variables)
         return res["collection"]["products"]["nodes"]
 
