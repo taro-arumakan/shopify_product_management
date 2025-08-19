@@ -90,7 +90,7 @@ class MergeProductsAsVariants:
             include_images=True,
             new_status="DRAFT",
         )
-        merged = ["productDuplicate"]["newProduct"]
+        merged = merged["productDuplicate"]["newProduct"]
         new_product_id = merged["id"]
         new_product_handle = merged["handle"]
         variant_option_names = [
