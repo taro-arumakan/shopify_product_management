@@ -8,10 +8,10 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     scheduled_time = pytz.timezone("Asia/Tokyo").localize(
-        datetime.datetime(2025, 7, 24, 0, 0, 0)
+        datetime.datetime(2025, 8, 21, 0, 0, 0)
     )
     client = utils.client("archive-epke")
-    products = client.products_by_tag("2025-07-24", additional_fields=["status"])
+    products = client.products_by_tag("2025-08-21", additional_fields=["status"])
     for product in products:
         assert (
             product["status"] == "DRAFT"
