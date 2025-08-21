@@ -20,6 +20,24 @@ class Publications:
         res = self.run_query(query)
         return res["publications"]["nodes"]
 
+    def activate_and_publish_by_product_id(
+        self, product_id, scheduled_time: datetime.datetime = None
+    ):
+        """
+        publish the product immediately or at a scheduled time, and activate it
+        """
+        publications = self.publications()
+        params = {"product_id": product_id}
+        for publication in publications:
+            params["publication_id"] = publication["id"]
+            if scheduled_time and publication["name"] == "Online Store":
+                self.publish_by_product_id_and_publication_id(
+                    scheduled_time=scheduled_time, **params
+                )
+            else:
+                self.publish_by_product_id_and_publication_id(**params)
+        self.update_product_status(product_id, "ACTIVE")
+
     def publish_by_product_id_and_publication_id(
         self, product_id, publication_id, scheduled_time: datetime.datetime = None
     ):
