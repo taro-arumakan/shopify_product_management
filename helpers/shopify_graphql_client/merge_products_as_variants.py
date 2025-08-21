@@ -106,7 +106,7 @@ class MergeProductsAsVariants:
             )
 
         logger.info(f"Activating the new product")
-        self.update_product_status(new_product_id, "ACTIVE")
+        self.activate_and_publish_by_product_id(new_product_id)
 
         logger.info(f"Archiving and untracking the old products. Adding redirects")
         for product in products:
