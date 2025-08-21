@@ -44,7 +44,7 @@ class ShopifyGraphqlClient(
         )
 
     def sanitize_id(self, identifier, prefix="Product"):
-        if identifier.isnumeric():
+        if isinstance(identifier, int) or identifier.isnumeric():
             return f"gid://shopify/{prefix}/{identifier}"
         elif identifier.startswith("gid://"):
             assert (
