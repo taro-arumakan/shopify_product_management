@@ -189,7 +189,8 @@ def main():
         c,
         c.sheet_id,
         "Product Master",
-        row_filter_func=lambda x: x[string.ascii_lowercase.index("u")] == "image",
+        row_filter_func=lambda x: x[string.ascii_lowercase.index("u")]
+        == "image_20250822_1",
     )
     # product_info_list = product_info_list[2:]
 
@@ -204,15 +205,15 @@ def main():
     assign_variant_images(c, product_info_list)
     # update_stocks(c, product_info_list)
 
-    product_info_list = product_info_list_from_sheet(
-        c,
-        c.sheet_id,
-        "Product Master",
-        row_filter_func=lambda x: x[string.ascii_lowercase.index("u")] == "size",
-    )
-    for product_info in product_info_list:
-        product_id = c.product_id_by_title(product_info["title"])
-        update_metafields(c, product_id, product_info)
+    # product_info_list = product_info_list_from_sheet(
+    #     c,
+    #     c.sheet_id,
+    #     "Product Master",
+    #     row_filter_func=lambda x: x[string.ascii_lowercase.index("u")] == "size",
+    # )
+    # for product_info in product_info_list:
+    #     product_id = c.product_id_by_title(product_info["title"])
+    #     update_metafields(c, product_id, product_info)
 
 
 if __name__ == "__main__":
