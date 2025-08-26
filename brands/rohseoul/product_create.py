@@ -1,3 +1,4 @@
+import datetime
 import logging
 import string
 import utils
@@ -5,29 +6,40 @@ import utils
 logging.basicConfig(level=logging.INFO)
 
 
+def filter_variants_by_status(product_info, status="NEW"):
+    options = []
+    for variant in product_info["options"]:
+        if variant["status"] == status:
+            options.append(variant)
+    if options:
+        product_info["options"] = options
+        return product_info
+
+
 def product_info_lists_from_sheet(
     gai: utils.Client, sheet_id, sheet_name, handle_suffix
 ):
     start_row = 2
     column_product_attrs = dict(
-        title=string.ascii_lowercase.index("e"),
-        status=string.ascii_lowercase.index("a"),
-        release_date=string.ascii_lowercase.index("c"),
-        collection=string.ascii_lowercase.index("g"),
-        category=string.ascii_lowercase.index("h"),
-        description=string.ascii_lowercase.index("r"),
-        size_text=string.ascii_lowercase.index("u"),
-        material=string.ascii_lowercase.index("v"),
-        made_in=string.ascii_lowercase.index("w"),
+        title=string.ascii_lowercase.index("f"),
+        release_date=string.ascii_lowercase.index("e"),
+        collection=string.ascii_lowercase.index("h"),
+        bag_category=string.ascii_lowercase.index("i"),
+        category=string.ascii_lowercase.index("j"),
+        description=string.ascii_lowercase.index("s"),
+        size_text=string.ascii_lowercase.index("v"),
+        material=string.ascii_lowercase.index("w"),
+        made_in=string.ascii_lowercase.index("x"),
     )
-    column_variant_attrs = {"カラー": string.ascii_lowercase.index("j")}
+    column_variant_attrs = {"カラー": string.ascii_lowercase.index("k")}
     column_variant_attrs.update(
-        sku=string.ascii_lowercase.index("f"),
-        price=string.ascii_lowercase.index("m"),
-        stock=string.ascii_lowercase.index("n"),
-        drive_link=string.ascii_lowercase.index("p"),
+        sku=string.ascii_lowercase.index("g"),
+        price=string.ascii_lowercase.index("n"),
+        stock=string.ascii_lowercase.index("o"),
+        drive_link=string.ascii_lowercase.index("q"),
+        status=string.ascii_lowercase.index("b"),
     )
-    return gai.to_products_list(
+    product_info_list = gai.to_products_list(
         sheet_id,
         sheet_name,
         start_row,
@@ -35,6 +47,10 @@ def product_info_lists_from_sheet(
         column_variant_attrs,
         handle_suffix=handle_suffix,
     )
+    product_info_list = list(
+        filter(None, (filter_variants_by_status(pi) for pi in product_info_list))
+    )
+    return product_info_list
 
 
 def get_size_table_html(size_text):
@@ -91,6 +107,7 @@ def create_products(client: utils.Client, product_info_list, vendor):
                 product_info["release_date"],
                 product_info["collection"],
                 product_info["category"],
+                product_info["bag_category"],
                 "New Arrival",
             ]
         )
@@ -121,12 +138,12 @@ def update_stocks(sgc: utils.Client, product_info_list):
 
 
 def main():
-    handle_suffix = None
+    handle_suffix = "25fw-1st"
     import pprint
 
     client = utils.client("rohseoul")
     product_info_list = product_info_lists_from_sheet(
-        client, client.sheet_id, "25SS 4차 1ST", handle_suffix
+        client, client.sheet_id, "25FW 1ST", handle_suffix
     )
     ress = create_products(client, product_info_list, client.shop_name)
     pprint.pprint(ress)
@@ -137,8 +154,8 @@ def main():
         ress.append(
             client.process_product_images(
                 product_info,
-                "/Users/taro/Downloads/rohseoul20250701/",
-                "upload_20250701_",
+                f"/Users/taro/Downloads/rohseoul{datetime.date.today():%Y%m%d}/",
+                f"upload_{datetime.date.today():%Y%m%d}_",
                 handle_suffix,
             )
         )
