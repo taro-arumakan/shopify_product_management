@@ -5,6 +5,8 @@ import utils
 
 logging.basicConfig(level=logging.INFO)
 
+# XXX move to client.activate_and_publish_by_product_id
+
 
 def main():
     scheduled_time = pytz.timezone("Asia/Tokyo").localize(
