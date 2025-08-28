@@ -456,6 +456,9 @@ class Medias:
         return False
 
     def replace_image_files(self, local_paths):
+        """
+        Replace media files. Local file names must match with the existing remote files.
+        """
         mime_types = [
             f"image/{local_path.rsplit('.', 1)[-1].lower()}"
             for local_path in local_paths
