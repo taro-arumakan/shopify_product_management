@@ -47,7 +47,7 @@ def parse_line_to_header_and_values(line: str):
     return headers, values
 
 
-def parse_table_text_to_html(table_text):
+def parse_table_text_to_html(table_text: str):
     lines = filter(None, table_text.split("\n"))
     valuess = []
     for line in lines:
@@ -62,14 +62,14 @@ def heading_headers_values_to_html(heading, headers, valuess):
     return res
 
 
-def parse_headings_and_table_text_to_html(size_text):
+def parse_headings_and_table_text_to_html(size_text: str):
     lines = filter(None, size_text.split("\n"))
     headings, headerss, valuesss = [], [], []
     for line in lines:
         size_or_heading, rest = line.split("]", 1)
         rest = rest.strip()
         if not rest:
-            headings.append(size_or_heading.replace("[", ""))
+            headings.append(size_or_heading.replace("[", "").strip())
         else:
             headers, values = parse_line_to_header_and_values(line)
             if len(headings) > len(headerss):
