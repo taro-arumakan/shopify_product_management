@@ -87,3 +87,39 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         skus = [option[2] for option in options] if options else [product_info["sku"]]
         res2 = [self.enable_and_activate_inventory(sku, location_names) for sku in skus]
         return res2
+
+    def replace_images_by_sku(
+        self, sku, folder_id, image_local_dir, download_filename_prefix
+    ):
+        medias = self.medias_by_sku(sku)
+        existing_ids = [m["id"] for m in medias]
+        logger.info(f"going to replace images of {sku} with {folder_id}")
+        local_paths = self.drive_images_to_local(
+            folder_id,
+            image_local_dir,
+            download_filename_prefix=download_filename_prefix,
+        )
+        file_names = [path.rsplit("/", 1)[-1] for path in local_paths]
+        mime_types = [f"image/{path.rsplit('.', 1)[-1]}" for path in local_paths]
+        staged_targets = self.generate_staged_upload_targets(file_names, mime_types)
+        logger.info(f"generated staged upload targets: {len(staged_targets)}")
+        self.upload_images_to_shopify(staged_targets, local_paths, mime_types)
+
+        product_id = self.product_id_by_sku(sku)
+        logger.info(
+            f"Images uploaded for {product_id}, going to remove existing and assign."
+        )
+        if medias:
+            logger.info(f"removing media ids: {existing_ids}")
+            self.remove_product_media_by_product_id(product_id, existing_ids)
+        logger.info(f"adding medias to {product_id}")
+        self.assign_images_to_product(
+            [target["resourceUrl"] for target in staged_targets],
+            alts=file_names,
+            product_id=product_id,
+        )
+        logger.info(f"adding a media to {sku}")
+        uploaded_variant_media = self.media_by_product_id_by_file_name(
+            product_id, file_names[0]
+        )
+        self.assign_image_to_skus(product_id, uploaded_variant_media["id"], [sku])
