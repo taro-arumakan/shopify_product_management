@@ -60,27 +60,21 @@ def populate_option(product_info, option1_key, option2_key):
 
 def create_a_product(sgc: utils.Client, product_info, vendor):
     logging.info(f'creating {product_info["title"]}')
-    try:
-        exists = sgc.product_by_title(product_info["title"])
-        logging.info(f'skipping creation of {product_info["title"]} - {exists["id"]}')
-        product_id = exists["id"]
-    except utils.NoProductsFoundException as ex:
-        logging.info(ex)
-        description_html = get_description(
-            product_info["description"],
-            product_info.get("material", ""),
-            product_info.get("made_in", ""),
-        )
-        tags = product_info["tags"]
-        options = populate_option(product_info, "Color", "Size")
-        res = sgc.product_create(
-            title=product_info["title"],
-            description_html=description_html,
-            vendor=vendor,
-            tags=tags,
-            option_lists=options,
-        )
-        product_id = res["id"]
+    description_html = get_description(
+        product_info["description"],
+        product_info.get("material", ""),
+        product_info.get("made_in", ""),
+    )
+    tags = product_info["tags"]
+    options = populate_option(product_info, "Color", "Size")
+    res = sgc.product_create(
+        title=product_info["title"],
+        description_html=description_html,
+        vendor=vendor,
+        tags=tags,
+        option_lists=options,
+    )
+    product_id = res["id"]
     update_metafields(sgc, product_id, product_info)
 
     res = [
