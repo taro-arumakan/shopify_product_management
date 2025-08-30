@@ -2,7 +2,7 @@ import datetime
 import logging
 import string
 import utils
-from brands.alvana.update_descriptions import get_description
+from brands.liberaiders.update_descriptions import get_description
 from brands.liberaiders.size_text_to_html_table import size_text_to_html_table
 
 
