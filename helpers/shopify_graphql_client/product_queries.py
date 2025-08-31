@@ -106,11 +106,15 @@ class ProductQueries:
     def product_by_query(self, query_string, *args, **kwargs):
         products = self.products_by_query(query_string, *args, **kwargs)
         if len(products) != 1:
-            raise (
-                MultipleProductsFoundException if products else NoProductsFoundException
-            )(
-                f"{'Multiple' if products else 'No'} products found for {query_string}: {products}"
-            )
+            products = [p for p in products if p["status"] != "ARCHIVED"]
+            if len(products) != 1:
+                raise (
+                    MultipleProductsFoundException
+                    if products
+                    else NoProductsFoundException
+                )(
+                    f"{'Multiple' if products else 'No'} products found for {query_string}: {products}"
+                )
         return products[0]
 
     def product_by_id(self, identifier, *args, **kwargs):
