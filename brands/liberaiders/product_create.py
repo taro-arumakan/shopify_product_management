@@ -63,7 +63,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
     description_html = get_description(
         product_info["description"],
         product_info.get("material", ""),
-        product_info.get("made_in", ""),
+        # product_info.get("made_in", ""),
     )
     tags = product_info["tags"]
     options = populate_option(product_info, "Color", "Size")
@@ -117,14 +117,12 @@ def create_products(sgc: utils.Client, product_info_list, vendor):
     ress = []
     for product_info in product_info_list:
         ress.append(create_a_product(sgc, product_info, vendor))
-        if product_info.get("drive_link"):
-            ress.append(process_product_images(sgc, product_info))
     return ress
 
 
 def update_stocks(sgc: utils.Client, product_info_list):
     logging.info("updating inventory")
-    location_id = sgc.location_id_by_name("Shop location")
+    location_id = sgc.location_id_by_name("Liberaiders オンライン")
     sku_stock_map = {
         option2["sku"]: option2["stock"]
         for product_info in product_info_list
@@ -141,15 +139,14 @@ def update_stocks(sgc: utils.Client, product_info_list):
 def process_product_images(client: utils.Client, product_info):
     product_id = client.product_id_by_title(product_info["title"])
     local_paths = []
-    image_positions = []
-    drive_id = client.drive_link_to_id(product_info["drive_link"])
-    image_positions.append(len(local_paths))
-    local_paths += client.drive_images_to_local(
-        drive_id,
-        f"/Users/taro/Downloads/liberaiders{datetime.date.today():%Y%m%d}/",
-        f"upload_{datetime.date.today():%Y%m%d}_{product_info['title'].replace('/', '_')}",
-    )
-    return client.upload_and_assign_images_to_product(product_id, local_paths)
+    if "drive_link" in product_info:
+        drive_id = client.drive_link_to_id(product_info["drive_link"])
+        local_paths += client.drive_images_to_local(
+            drive_id,
+            f"/Users/taro/Downloads/liberaiders{datetime.date.today():%Y%m%d}/",
+            f"upload_{datetime.date.today():%Y%m%d}_{product_info['title'].replace('/', '_')}",
+        )
+        return client.upload_and_assign_images_to_product(product_id, local_paths)
 
 
 def assign_variant_images(client: utils.Client, product_info_list):
@@ -182,32 +179,20 @@ def main():
     product_info_list = product_info_list_from_sheet(
         c,
         c.sheet_id,
-        "Product Master",
-        row_filter_func=lambda x: x[string.ascii_lowercase.index("u")]
-        == "image_20250822_1",
+        "キャリー在庫",
     )
-    # product_info_list = product_info_list[2:]
 
     # for index, product_info in enumerate(product_info_list):
-    #     if product_info["title"] == "Liberaiders PX LOGO TEE":
+    #     if product_info["title"] == "GARMENT DYED UTILITY PANTS":
     #         break
     # product_info_list = product_info_list[index:]
+    # product_info_list = [pi for pi in product_info_list if pi['title'] == 'DESTINATION UNKNOWN L/S TEE']
 
-    # create_products(c, product_info_list, vendor="liberaiders")
+    create_products(c, product_info_list, vendor="liberaiders")
     for product_info in product_info_list:
         process_product_images(c, product_info)
     assign_variant_images(c, product_info_list)
-    # update_stocks(c, product_info_list)
-
-    # product_info_list = product_info_list_from_sheet(
-    #     c,
-    #     c.sheet_id,
-    #     "Product Master",
-    #     row_filter_func=lambda x: x[string.ascii_lowercase.index("u")] == "size",
-    # )
-    # for product_info in product_info_list:
-    #     product_id = c.product_id_by_title(product_info["title"])
-    #     update_metafields(c, product_id, product_info)
+    update_stocks(c, product_info_list)
 
 
 if __name__ == "__main__":

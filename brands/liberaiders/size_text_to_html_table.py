@@ -18,7 +18,7 @@ def size_text_to_html_table(size_text):
     for line in filter(None, size_text.strip().split("\n")):
         match = size_expression.match(line.strip())
         if not match:
-            raise RuntimeError(f"Invalid size text format: {line}")
+            return size_text
         row_values = [match.group(1)]
         header_value_pairs = filter(
             None, [p.strip() for p in match.group(2).split("/")]
