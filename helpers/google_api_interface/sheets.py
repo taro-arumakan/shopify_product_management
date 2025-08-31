@@ -141,7 +141,8 @@ class GoogleSheetsApiInterface:
 
     def drive_link_to_id(self, link):
         res = (
-            link.rsplit("/", 1)[-1]
+            link.strip()
+            .rsplit("/", 1)[-1]
             .replace("open?id=", "")
             .replace("?usp=drive_link", "")
             .replace("?usp=sharing", "")
