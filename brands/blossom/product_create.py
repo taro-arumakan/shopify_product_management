@@ -3,7 +3,6 @@ import logging
 import string
 import utils
 from brands.blossom.update_descriptions import get_description
-from brands.liberaiders.size_text_to_html_table import size_text_to_html_table
 
 
 logging.basicConfig(level=logging.INFO)
@@ -83,7 +82,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
 
 def update_metafields(sgc: utils.Client, product_id, product_info):
     size_text = product_info.get("size_text", "").strip()
-    size_table_html = size_text_to_html_table(size_text)
+    size_table_html = sgc.formatted_size_text_to_html_table(size_text)
     res = sgc.update_size_table_html_metafield(product_id, size_table_html)
     print(res)
     if product_care := product_info.get("product_care", "").strip():

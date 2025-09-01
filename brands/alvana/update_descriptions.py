@@ -1,6 +1,5 @@
 import string
 import utils
-from brands.alvana.size_text_to_html_table import size_text_to_html_table
 
 
 def get_description(product_description, material, made_in):
@@ -43,7 +42,7 @@ def main():
         product_id = client.product_id_by_title(title)
         size_text = row[string.ascii_uppercase.index("H")].strip()
         if size_text:
-            size_table_html = size_text_to_html_table(size_text)
+            size_table_html = client.formatted_size_text_to_html_table(size_text)
             if title.startswith("NATURAL TWILL") or title in [
                 "FADE CENTER SEAM S/S TEE SHIRTS",
                 "BHARAT DENIM JACKET",

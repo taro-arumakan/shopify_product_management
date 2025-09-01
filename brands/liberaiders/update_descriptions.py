@@ -1,6 +1,5 @@
 import string
 import utils
-from brands.alvana.size_text_to_html_table import size_text_to_html_table
 
 
 def get_description(product_description, material):
@@ -42,20 +41,20 @@ def main():
             continue
         print(f"processing {title}")
         product_id = client.product_id_by_title(title)
-        # size_text_ja = row[string.ascii_uppercase.index("I")].strip()
-        # if size_text_ja:
-        #     size_table_html_ja = size_text_to_html_table(size_text_ja)
-        #     res = client.update_size_table_html_ja_metafield(
-        #         product_id, size_table_html_ja
-        #     )
-        #     print(res)
-        # size_text_en = row[string.ascii_uppercase.index("J")].strip()
-        # if size_text_en:
-        #     size_table_html_en = size_text_to_html_table(size_text_en)
-        #     res = client.update_size_table_html_en_metafield(
-        #         product_id, size_table_html_en
-        #     )
-        #     print(res)
+        size_text_ja = row[string.ascii_uppercase.index("I")].strip()
+        if size_text_ja:
+            size_table_html_ja = client.formatted_size_text_to_html_table(size_text_ja)
+            res = client.update_size_table_html_ja_metafield(
+                product_id, size_table_html_ja
+            )
+            print(res)
+        size_text_en = row[string.ascii_uppercase.index("J")].strip()
+        if size_text_en:
+            size_table_html_en = client.formatted_size_text_to_html_table(size_text_en)
+            res = client.update_size_table_html_en_metafield(
+                product_id, size_table_html_en
+            )
+            print(res)
 
         # made_in = row[string.ascii_uppercase.index("I")].strip()
         material = row[string.ascii_uppercase.index("H")].strip()

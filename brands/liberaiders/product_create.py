@@ -3,7 +3,6 @@ import logging
 import string
 import utils
 from brands.liberaiders.update_descriptions import get_description
-from brands.liberaiders.size_text_to_html_table import size_text_to_html_table
 
 
 logging.basicConfig(level=logging.INFO)
@@ -103,12 +102,12 @@ def update_metafields(sgc: utils.Client, product_id, product_info):
         print(res)
     size_text_ja = product_info.get("size_text_ja", "").strip()
     if size_text_ja:
-        size_table_html_ja = size_text_to_html_table(size_text_ja)
+        size_table_html_ja = sgc.formatted_size_text_to_html_table(size_text_ja)
         res = sgc.update_size_table_html_ja_metafield(product_id, size_table_html_ja)
         print(res)
     size_text_en = product_info.get("size_text_en", "").strip()
     if size_text_en:
-        size_table_html_en = size_text_to_html_table(size_text_en)
+        size_table_html_en = sgc.formatted_size_text_to_html_table(size_text_en)
         res = sgc.update_size_table_html_en_metafield(product_id, size_table_html_en)
         print(res)
 
