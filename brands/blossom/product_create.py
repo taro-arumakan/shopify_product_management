@@ -2,7 +2,7 @@ import datetime
 import logging
 import string
 import utils
-from brands.alvana.update_descriptions import get_description
+from brands.blossom.update_descriptions import get_description
 from brands.liberaiders.size_text_to_html_table import size_text_to_html_table
 
 
@@ -86,11 +86,11 @@ def update_metafields(sgc: utils.Client, product_id, product_info):
     size_table_html = size_text_to_html_table(size_text)
     res = sgc.update_size_table_html_metafield(product_id, size_table_html)
     print(res)
-    # product_care_page_title = (
-    #     "Product Care - " + product_info.get("product_care_option", "").strip()
-    # )
-    # res = sgc.update_product_care_page_metafield(product_id, product_care_page_title)
-    # print(res)
+    if product_care := product_info.get("product_care", "").strip():
+        res = sgc.update_product_care_metafield(
+            product_id, sgc.text_to_simple_richtext(product_care)
+        )
+        print(res)
 
 
 def create_products(sgc: utils.Client, product_info_list, vendor):
@@ -146,7 +146,7 @@ def process_product_images(client: utils.Client, product_info):
 def main():
     c = utils.client("blossomhcompany")
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes")
-    # product_info_list = product_info_list[:3]
+    product_info_list = product_info_list[-3:]
 
     # for index, product_info in enumerate(product_info_list):
     #     if product_info["title"] == "Liberaiders PX LOGO TEE":
