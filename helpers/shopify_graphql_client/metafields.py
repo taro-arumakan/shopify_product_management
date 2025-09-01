@@ -9,6 +9,24 @@ class Metafields:
     This class provides methods to manage metafields in Shopify using GraphQL. Inherited by the ShopifyGraphqlClient class.
     """
 
+    @staticmethod
+    def text_to_simple_richtext(text):
+        res = {
+            "type": "root",
+            "children": [
+                {
+                    "children": [
+                        {
+                            "type": "text",
+                            "value": text.strip('"').replace("●", "- "),
+                        }
+                    ],
+                    "type": "paragraph",
+                },
+            ],
+        }
+        return res
+
     def update_product_metafield(
         self, product_id, metafield_namespace, metafield_key, value
     ):
