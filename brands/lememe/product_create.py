@@ -51,27 +51,21 @@ def populate_option(product_info, option1_key):
 
 def create_a_product(sgc: utils.Client, product_info, vendor):
     logging.info(f'creating {product_info["title"]}')
-    try:
-        exists = sgc.product_by_title(product_info["title"])
-        logging.info(f'skipping creation of {product_info["title"]} - {exists["id"]}')
-        product_id = exists["id"]
-    except utils.NoProductsFoundException as ex:
-        logging.info(ex)
-        description_html = get_description(
-            product_info["description"],
-            product_info.get("material", ""),
-            product_info.get("made_in", ""),
-        )
-        tags = product_info["tags"]
-        options = populate_option(product_info, "Color")
-        res = sgc.product_create(
-            title=product_info["title"],
-            description_html=description_html,
-            vendor=vendor,
-            tags=tags,
-            option_lists=options,
-        )
-        product_id = res["id"]
+    description_html = get_description(
+        product_info["description"],
+        product_info.get("material", ""),
+        product_info.get("made_in", ""),
+    )
+    tags = product_info["tags"]
+    options = populate_option(product_info, "Color")
+    res = sgc.product_create(
+        title=product_info["title"],
+        description_html=description_html,
+        vendor=vendor,
+        tags=tags,
+        option_lists=options,
+    )
+    product_id = res["id"]
     update_metafields(sgc, product_id, product_info)
     res = [
         sgc.enable_and_activate_inventory(option1["sku"], [])
@@ -117,11 +111,9 @@ def update_stocks(sgc: utils.Client, product_info_list):
     logging.info("updating inventory")
     location_id = sgc.location_id_by_name("Shop location")
     sku_stock_map = {
-        option2["sku"]: option2["stock"]
+        option1["sku"]: option1.get("stock", 0)
         for product_info in product_info_list
         for option1 in product_info["options"]
-        for option2 in option1["options"]
-        if option2.get("stock")
     }
     return [
         sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
@@ -145,7 +137,7 @@ def process_product_images(client: utils.Client, product_info):
             local_paths += client.drive_images_to_local(
                 drive_id,
                 f"/Users/taro/Downloads/lememe{datetime.date.today():%Y%m%d}/",
-                f"upload_{datetime.date.today():%Y%m%d}_{product_info['title'].replace('/', '_')}",
+                f"upload_{datetime.date.today():%Y%m%d}_{product_info['title'].replace('/', '_')}_{variant['sku']}",
             )
     ress = []
     ress.append(client.upload_and_assign_images_to_product(product_id, local_paths))
@@ -154,6 +146,13 @@ def process_product_images(client: utils.Client, product_info):
             client.assign_image_to_skus_by_position(product_id, image_position, skus)
         )
     return ress
+
+
+def publish_products(client: utils.Client, product_info_list):
+    for pi in product_info_list:
+        logging.info(f"publishing product: {pi['title']}")
+        product_id = client.product_id_by_title(pi["title"])
+        client.activate_and_publish_by_product_id(product_id)
 
 
 def main():
@@ -168,12 +167,13 @@ def main():
 
     import pprint
 
-    # res = create_products(c, product_info_list, vendor="lememe")
-    # pprint.pprint(res)
-    # update_stocks(c, product_info_list)
+    res = create_products(c, product_info_list, vendor="lememe")
+    pprint.pprint(res)
     for product_info in product_info_list:
         res = process_product_images(c, product_info)
         pprint.pprint(res)
+    update_stocks(c, product_info_list)
+    publish_products(c, product_info_list)
 
 
 if __name__ == "__main__":
