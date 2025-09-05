@@ -1,4 +1,6 @@
+import datetime
 import logging
+import pytz
 import string
 import utils
 
@@ -6,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def product_info_list_from_sheet(gai: utils.Client, sheet_id, sheet_name):
-    start_row = 4
+    start_row = 2
     column_product_attrs = dict(
         title=string.ascii_lowercase.index("d"),
         release_date=string.ascii_lowercase.index("c"),
@@ -168,11 +170,11 @@ def create_products(
         ress3.append(
             sgc.process_product_images(
                 product_info,
-                "/Users/taro/Downloads/kume20250729/",
-                local_prefix="upload_20250729_",
+                f"/Users/taro/Downloads/{datetime.date.today():%Y%m%d}/",
+                local_prefix=f"upload_{datetime.date.today():%Y%m%d}_",
             )
         )
-    # return ress, ress2, ress3
+    return ress, ress2, ress3
 
 
 def main():
@@ -181,14 +183,15 @@ def main():
     client = utils.client("kumej")
     vendor = "KUME"
     product_info_list = product_info_list_from_sheet(
-        client, client.sheet_id, "25FW_9月1日"
+        client, client.sheet_id, "25FW_9月12日"
     )
 
     product_info_list = [
         product_info
         for product_info in product_info_list
-        if product_info["release_date"] == "2025-09-01"
+        if product_info["release_date"] == "2025-09-12"
     ]
+    product_info_list = product_info_list[:1]
     ress = create_products(
         client,
         product_info_list,
@@ -196,6 +199,15 @@ def main():
         additional_tags=["New Arrival"],
     )
     pprint.pprint(ress)
+
+    scheduled_time = pytz.timezone("Asia/Tokyo").localize(
+        datetime.datetime(2025, 9, 12, 0, 0, 0)
+    )
+    for pi in product_info_list:
+        product_id = client.product_id_by_title(pi["title"])
+        client.activate_and_publish_by_product_id(
+            product_id, scheduled_time=scheduled_time
+        )
 
 
 if __name__ == "__main__":
