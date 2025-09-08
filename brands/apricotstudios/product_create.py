@@ -199,13 +199,13 @@ def create_products(sgc: utils.Client, product_info_list, vendor, additional_tag
     return ress
 
 
-def image_prefix(title):
+def image_prefix(title: str):
     return title.translate(
         str.maketrans(string.punctuation, "_" * len(string.punctuation))
     )
 
 
-def download_images(dirpath, images_link, prefix, tempdir):
+def download_images(dirpath: str, images_link, prefix, tempdir):
     if os.path.exists(dirpath):
         return [
             os.path.join(dirpath, p)
