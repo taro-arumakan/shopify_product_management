@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import string
@@ -14,8 +15,11 @@ import re
 
 logging.basicConfig(level=logging.INFO)
 
-IMAGES_LOCAL_DIR = "/Users/taro/Downloads/apricotstudios_20250720/"
+IMAGES_LOCAL_DIR = (
+    f"/Users/taro/Downloads/apricotstudios_{datetime.date.today():%Y%m%d}/"
+)
 DUMMY_PRODUCT = "gid://shopify/Product/9119951454464"
+PRODUCT_DETAIL_IMAGES_FOLDER_ID = "1ZLeHMyXiRVbWBVAJR-RQeVhAlpkdkU5X"
 
 
 def product_info_list_from_sheet_color_and_size(
@@ -23,7 +27,6 @@ def product_info_list_from_sheet_color_and_size(
 ):
     start_row = 1
     column_product_attrs = dict(
-        product_number=string.ascii_lowercase.index("a"),
         title=string.ascii_lowercase.index("f"),
         collection=string.ascii_lowercase.index("c"),
         category=string.ascii_lowercase.index("d"),
@@ -136,6 +139,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
         [
             product_info["collection"],
             product_info["category"],
+            product_info["release_date"],
         ]
         + (additional_tags or [])
     )
@@ -260,9 +264,7 @@ def process_images(sgc: utils.Client, product_info):
 
     logging.info(f"downloading product detail images")
     folder_name = product_info["title"]
-    folder_id = sgc.find_folder_id_by_name(
-        "1sCHPHL0NzbQpyssHslZLK911ISaVq-xo", folder_name
-    )
+    folder_id = sgc.find_folder_id_by_name(PRODUCT_DETAIL_IMAGES_FOLDER_ID, folder_name)
     detail_image_paths = sgc.drive_images_to_local(
         folder_id,
         os.path.join(IMAGES_LOCAL_DIR, product_info["title"], "product_detail_images"),
@@ -296,7 +298,7 @@ def main():
     client = utils.client("apricot-studios")
     vendor = "Apricot Studios"
     product_info_list = product_info_list_from_sheet_color_and_size(
-        client, client.sheet_id, "7.25 Summer 3rd"
+        client, client.sheet_id, "9.11 25Autumn(1st)"
     )
     # for index, product_info in enumerate(product_info_list):
     #     if product_info["title"] == "Cable Vest":
@@ -306,7 +308,7 @@ def main():
         client,
         product_info_list,
         vendor,
-        additional_tags=["New Arrival", "2025_summer_3rd"],
+        additional_tags=["New Arrival", "25 Autumn"],
     )
     pprint.pprint(ress)
     ress2 = update_stocks(client, product_info_list, ["Apricot Studios Warehouse"])
