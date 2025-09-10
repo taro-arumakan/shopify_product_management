@@ -80,7 +80,7 @@ def is_title(line):
 
 
 def is_header(parts):
-    if parts[0] in ["XS", "S", "M", "L", "XL", "XXL"]:
+    if parts[0] in ["XS", "S", "M", "L", "XL", "XXL", "6M", "12M", "18M", "24M"]:
         return False
     try:
         float(parts[0])
@@ -99,7 +99,7 @@ def parse_table_text_to_html(table_text):
         if is_title(line):
             titles.append(line)
         else:
-            parts = re.split(r"[/\:]", line)
+            parts = re.split(r"[\s/:]+", line)
             if is_header(parts):
                 headers.append(map(str.strip, parts))
                 rowss.append([])
@@ -113,6 +113,9 @@ def parse_table_text_to_html(table_text):
 
 
 def text_to_html_tables_and_paragraphs(size_text):
+    size_text = (
+        size_text.replace("　", " ").replace("\u2003", " ").replace("\u3000", " ")
+    )
     if "注意事項" in size_text:
         table_text, notes_text = size_text.split("注意事項", 1)
     elif "ウォーターバッグ" in size_text:
