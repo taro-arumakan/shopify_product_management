@@ -11,10 +11,11 @@ def main():
     for p in products:
         logger.info(f"Processing product {p['id']} - {p['title']}")
         for variant in p["variants"]["nodes"]:
+            current_price = int(variant["price"])
             compare_at_price = variant["compareAtPrice"] or variant["price"]
-            price = int(int(compare_at_price) * 0.95)
+            price = int(compare_at_price)
             logger.info(
-                f"Updating price of {variant['id']} from {compare_at_price} to {price}"
+                f"Updating price of {variant['id']} from {current_price} to {price}"
             )
             client.update_variant_attributes(
                 product_id=p["id"],
