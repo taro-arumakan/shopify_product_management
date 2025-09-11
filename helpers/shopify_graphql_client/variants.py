@@ -8,6 +8,9 @@ class Variants:
     def update_variant_attributes(
         self, product_id, variant_id, attribute_names, attribute_values, sku=None
     ):
+        assert len(attribute_names) == len(
+            attribute_values
+        ), "attribute_names and attribute_values must have the same length"
         query = """
         mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
             productVariantsBulkUpdate(productId: $productId, variants: $variants) {
