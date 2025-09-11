@@ -103,7 +103,9 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
         [
             product_info["release_date"],
             tag_mapping.get(product_info["collection"], product_info["collection"]),
-            tag_mapping.get(product_info["category"], product_info["category"]),
+            tag_mapping.get(
+                product_info.get("category", ""), product_info.get("category", "")
+            ),
             "New Arrival",
         ]
     )
@@ -132,11 +134,11 @@ def update_stocks(sgc: utils.Client, product_info_list):
 
 def main():
     client = utils.client("archive-epke")
-    handle_suffix = None
+    handle_suffix = "25fw"
     product_info_list = product_info_lists_from_sheet(
         client,
         client.sheet_id,
-        "2025.08.21 (25FW Collection 1st)",
+        "2025.09.18(25FW Collection 2nd)",
         handle_suffix=handle_suffix,
     )
     import pprint
