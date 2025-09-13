@@ -1,6 +1,6 @@
 import datetime
 import logging
-import pprint
+import string
 import utils
 
 logging.basicConfig(level=logging.INFO)
@@ -13,10 +13,10 @@ IMAGES_LOCAL_DIR = f"/Users/taro/Downloads/{datetime.date.today():%Y%m%d}/"
 def main():
     client = utils.client("rohseoul")
     rows = client.worksheet_rows(client.sheet_id, "25FW 1ST")
-    sku_column_index = 6
-    state_column_index = 1
-    drive_link_column_index = 16
-    restart_from_sku = None  # "JLL00CC8SBK"
+    sku_column_index = string.ascii_lowercase.index("g")
+    state_column_index = string.ascii_lowercase.index("b")
+    drive_link_column_index = string.ascii_lowercase.index("q")
+    restart_from_sku = "JCL00C0BMMG"  # "JLL00CC8SBK"
     started = False
     for row in rows:
         sku = row[sku_column_index]
