@@ -97,13 +97,13 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         local_paths = self.drive_images_to_local(
             folder_id,
             image_local_dir,
-            download_filename_prefix=download_filename_prefix,
+            filename_prefix=download_filename_prefix,
         )
         file_names = [path.rsplit("/", 1)[-1] for path in local_paths]
         mime_types = [f"image/{path.rsplit('.', 1)[-1]}" for path in local_paths]
         staged_targets = self.generate_staged_upload_targets(file_names, mime_types)
         logger.info(f"generated staged upload targets: {len(staged_targets)}")
-        self.upload_images_to_shopify(staged_targets, local_paths, mime_types)
+        self.upload_images_to_shopify_parallel(staged_targets, local_paths, mime_types)
 
         product_id = self.product_id_by_sku(sku)
         logger.info(
