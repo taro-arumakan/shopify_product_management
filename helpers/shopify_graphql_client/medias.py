@@ -7,7 +7,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def is_evenly_spaced_stddev(lst, max_stddev=6.0):
+def is_evenly_spaced_stddev(lst, max_stddev=6.85):
     if len(lst) < 3:
         return True
     diffs = [b - a for a, b in zip(lst, lst[1:])]
@@ -20,7 +20,7 @@ class Medias:
         query = """
         query ProductMediaStatusByID($productId: ID!) {
             product(id: $productId) {
-                media(first: 100) {
+                media(first: 250) {
                     nodes {
                         id
                         alt
