@@ -1,4 +1,7 @@
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Publications:
@@ -26,6 +29,9 @@ class Publications:
         """
         publish the product immediately or at a scheduled time, and activate it
         """
+        logger.info(
+            f"Publishing product {product_id} {'at {scheduled_time}' if scheduled_time else 'immediately'}"
+        )
         publications = self.publications()
         params = {"product_id": product_id}
         for publication in publications:
