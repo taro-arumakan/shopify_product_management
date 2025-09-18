@@ -196,14 +196,23 @@ class ProductQueries:
     def product_variants_by_product_id(self, product_id):
         product_id = self.sanitize_id(product_id)
         product_id = product_id.rsplit("/", 1)[-1]
-        return self.product_variants_by_query(f"product_id:{product_id}")
+        return self.product_variants_by_query(
+            f"product_id:{product_id}", filter_archived=False
+        )
 
-    def product_variants_by_tag(self, tag):
-        return self.product_variants_by_query(f"tag:'{tag}'")
+    def product_variants_by_tag(self, tag, **kwargs):
+        return self.product_variants_by_query(f"tag:'{tag}'", **kwargs)
 
     def variant_by_variant_id(self, variant_id):
         variant_id = self.sanitize_id(variant_id, "ProductVariant").rsplit("/", 1)[-1]
-        if len(res := self.product_variants_by_query(f"id:{variant_id}")) != 1:
+        if (
+            len(
+                res := self.product_variants_by_query(
+                    f"id:{variant_id}", filter_archived=False
+                )
+            )
+            != 1
+        ):
             raise (MultipleVariantsFoundException if res else NoVariantsFoundException)(
                 f"{'Multiple' if res else 'No'} variants found for {variant_id}: {res}"
             )
