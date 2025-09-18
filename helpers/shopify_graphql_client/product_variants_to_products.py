@@ -120,7 +120,9 @@ class ProductVariantsToProducts:
 
     def _remove_unrelated_medias(self, product_id, variant_ids_to_keep):
         all_medias = self.medias_by_product_id(product_id)
-        keep_medias = self.medias_by_variant_id(variant_ids_to_keep[0])
+        keep_medias = sum(
+            (self.medias_by_variant_id(vid) for vid in variant_ids_to_keep), []
+        )
         media_ids_to_remove = [
             m["id"]
             for m in all_medias
@@ -143,9 +145,10 @@ class ProductVariantsToProducts:
             }
         }
         """
-        if product_id.isnumeric():
-            product_id = f"gid://shopify/Product/{product_id}"
-        variables = {"productId": product_id, "variantsIds": variant_ids}
+        variables = {
+            "productId": self.sanitize_id(product_id),
+            "variantsIds": variant_ids,
+        }
         res = self.run_query(query, variables)
         if res["productVariantsBulkDelete"]["userErrors"]:
             raise RuntimeError(
