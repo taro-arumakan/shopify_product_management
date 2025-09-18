@@ -7,7 +7,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def is_evenly_spaced_stddev(lst, max_stddev=6.85):
+def is_evenly_spaced_stdev(lst, max_stddev=6.85):
     if len(lst) < 3:
         return True
     diffs = [b - a for a, b in zip(lst, lst[1:])]
@@ -77,7 +77,7 @@ class Medias:
                 + [len(all_medias)]
             )
         )
-        assert is_evenly_spaced_stddev(
+        assert is_evenly_spaced_stdev(
             all_media_start_positions
         ), f"media start positions are not evenly spaced: {all_media_start_positions}"
         target_media_end_position = all_media_start_positions[
