@@ -43,7 +43,7 @@ class ArchiveAndRemoveVariant:
         variant_ids_to_remove = [
             v["id"] for v in new_variants if v["id"] not in variant_ids_to_keep
         ]
-
+        logger.debug("Removing other variants from the archived product")
         self._remove_unrelated_medias(archiving_product_id, variant_ids_to_keep)
         self.remove_product_variants(archiving_product_id, variant_ids_to_remove)
 
@@ -111,9 +111,12 @@ def main():
         df.groupby("Handle", sort=False)["SKU"].apply(list).reset_index(name="SKU_List")
     )
     skus_by_handle = grouped.set_index("Handle")["SKU_List"].to_dict()
+    handles = list(skus_by_handle.keys())
+    handles = handles[handles.index("pulpy-hobo-bag-Nylon -1") :]
     for handle, skus in skus_by_handle.items():
-        logger.info(f"Processing handle: {handle} with SKUs: {skus}")
-        client.archive_and_remove_variant_by_skus(skus, option_name="カラー")
+        if handle in handles:
+            logger.info(f"Processing handle: {handle} with SKUs: {skus}")
+            client.archive_and_remove_variant_by_skus(skus, option_name="カラー")
 
 
 if __name__ == "__main__":
