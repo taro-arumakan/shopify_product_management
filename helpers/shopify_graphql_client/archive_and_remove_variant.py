@@ -44,7 +44,9 @@ class ArchiveAndRemoveVariant:
             v["id"] for v in new_variants if v["id"] not in variant_ids_to_keep
         ]
         logger.debug("Removing other variants from the archived product")
-        self._remove_unrelated_medias(archiving_product_id, variant_ids_to_keep)
+        self.remove_unrelated_medias_by_variant_ids_to_keep(
+            archiving_product_id, variant_ids_to_keep
+        )
         self.remove_product_variants(archiving_product_id, variant_ids_to_remove)
 
     def archive_and_remove_variants(self, variant_ids, option_name="カラー"):
@@ -86,7 +88,9 @@ class ArchiveAndRemoveVariant:
             logger.info(
                 f"Removing variant IDs: {variant_ids} from product ID: {product_id}"
             )
-            self._remove_unrelated_medias(product_id, variant_ids_to_keep)
+            self.remove_unrelated_medias_by_variant_ids_to_keep(
+                product_id, variant_ids_to_keep
+            )
             self.remove_product_variants(product_id, variant_ids_to_remove)
         for variant in variants:
             self.disable_inventory_tracking_by_sku(variant["sku"])

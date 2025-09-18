@@ -277,6 +277,20 @@ class Medias:
             raise Exception("Error during media processing")
         return res
 
+    def remove_unrelated_medias_by_variant_ids_to_keep(
+        self, product_id, variant_ids_to_keep
+    ):
+        all_medias = self.medias_by_product_id(product_id)
+        keep_medias = sum(
+            (self.medias_by_variant_id(vid) for vid in variant_ids_to_keep), []
+        )
+        media_ids_to_remove = [
+            m["id"]
+            for m in all_medias
+            if m["id"] not in [km["id"] for km in keep_medias]
+        ]
+        self.remove_product_media_by_product_id(product_id, media_ids_to_remove)
+
     def detach_variant_media(self, product_id, variant_id, media_id):
         query = """
         mutation productVariantDetachMedia($productId: ID!, $variantMedia: [ProductVariantDetachMediaInput!]!) {

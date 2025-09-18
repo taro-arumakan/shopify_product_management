@@ -54,7 +54,9 @@ class ProductVariantsToProducts:
                 v["id"] for v in new_variants if v["id"] not in variant_ids_to_keep
             ]
 
-            self._remove_unrelated_medias(new_product_id, variant_ids_to_keep)
+            self.remove_unrelated_medias_by_variant_ids_to_keep(
+                new_product_id, variant_ids_to_keep
+            )
             self.remove_product_variants(new_product_id, variant_ids_to_remove)
             self.delete_product_options(new_product_id, [color_option_id])
             self.update_product_handle(new_product_id, new_product_handle)
@@ -115,44 +117,6 @@ class ProductVariantsToProducts:
         if res["productDuplicate"]["userErrors"]:
             raise RuntimeError(
                 f"Failed to duplicate the product: {res['productDuplicate']['userErrors']}"
-            )
-        return res
-
-    def _remove_unrelated_medias(self, product_id, variant_ids_to_keep):
-        all_medias = self.medias_by_product_id(product_id)
-        keep_medias = sum(
-            (self.medias_by_variant_id(vid) for vid in variant_ids_to_keep), []
-        )
-        media_ids_to_remove = [
-            m["id"]
-            for m in all_medias
-            if m["id"] not in [km["id"] for km in keep_medias]
-        ]
-        self.remove_product_media_by_product_id(product_id, media_ids_to_remove)
-
-    def remove_product_variants(self, product_id, variant_ids):
-        query = """
-        mutation bulkDeleteProductVariants($productId: ID!, $variantsIds: [ID!]!) {
-            productVariantsBulkDelete(productId: $productId, variantsIds: $variantsIds) {
-                product {
-                    id
-                    title
-                }
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """
-        variables = {
-            "productId": self.sanitize_id(product_id),
-            "variantsIds": variant_ids,
-        }
-        res = self.run_query(query, variables)
-        if res["productVariantsBulkDelete"]["userErrors"]:
-            raise RuntimeError(
-                f"Failed to remove variants: {res['productVariantsBulkDelete']['userErrors']}"
             )
         return res
 

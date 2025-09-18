@@ -115,3 +115,29 @@ class Variants:
             ],
         }
         return self.run_query(query, variables)
+
+    def remove_product_variants(self, product_id, variant_ids):
+        query = """
+        mutation bulkDeleteProductVariants($productId: ID!, $variantsIds: [ID!]!) {
+            productVariantsBulkDelete(productId: $productId, variantsIds: $variantsIds) {
+                product {
+                    id
+                    title
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        variables = {
+            "productId": self.sanitize_id(product_id),
+            "variantsIds": variant_ids,
+        }
+        res = self.run_query(query, variables)
+        if res["productVariantsBulkDelete"]["userErrors"]:
+            raise RuntimeError(
+                f"Failed to remove variants: {res['productVariantsBulkDelete']['userErrors']}"
+            )
+        return res
