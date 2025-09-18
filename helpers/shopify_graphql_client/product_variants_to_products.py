@@ -152,7 +152,7 @@ class ProductVariantsToProducts:
         res = self.run_query(query, variables)
         if res["productVariantsBulkDelete"]["userErrors"]:
             raise RuntimeError(
-                f"Failed to update the tags: {res['productSet']['userErrors']}"
+                f"Failed to remove variants: {res['productVariantsBulkDelete']['userErrors']}"
             )
         return res
 
