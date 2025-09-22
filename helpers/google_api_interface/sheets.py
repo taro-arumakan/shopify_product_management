@@ -1,12 +1,16 @@
 import datetime
 import logging
 import re
+import string
 import gspread
 
 logger = logging.getLogger(__name__)
 
 
 class GoogleSheetsApiInterface:
+
+    def __init__(self):
+        self.drive_link_cache = {}
 
     def to_products_list(
         self,
@@ -81,9 +85,7 @@ class GoogleSheetsApiInterface:
                 v = str(v).strip()
             elif column_name == "drive_link":
                 if all([v, v != "no image", not v.startswith("http")]):
-                    v = self.get_richtext_link(
-                        sheet_id, sheet_title, row_num, column_index
-                    )
+                    v = self.get_richtext_link(sheet_title, row_num, column_index)
             elif column_name in ["weight"]:
                 assert isinstance(
                     v, (int, float)
@@ -110,34 +112,36 @@ class GoogleSheetsApiInterface:
     def get_link(self, spreadsheet_id, sheet_title, row, row_num, column_num):
         link = row[column_num]
         if all([link, link != "no image", not link.startswith("http")]):
-            link = self.get_richtext_link(
-                spreadsheet_id, sheet_title, row_num, column_num
-            )
+            link = self.get_richtext_link(sheet_title, row_num, column_num)
         return link
 
-    def get_richtext_link(self, spreadsheet_id, sheet_title, row, column):
-        # Use the Google Sheets API directly for rich text data
-        import string
-
-        range_notation = f"{sheet_title}!{string.ascii_uppercase[column]}{row}"
+    def populate_drive_link_cache(self, sheet_title, column_index):
+        # Use the Google Sheets API directly for rich text data. Cache range to avoid API call quota.
+        range_notation = f"{sheet_title}!{string.ascii_uppercase[column_index]}1:{string.ascii_uppercase[column_index]}9999"
         response = (
             self.sheets_service.spreadsheets()
             .get(
-                spreadsheetId=spreadsheet_id,
+                spreadsheetId=self.sheet_id,
                 ranges=range_notation,
                 fields="sheets(data(rowData(values)))",
             )
             .execute()
         )
-        hyperlink = (
-            response.get("sheets", [])[0]
-            .get("data", [])[0]
-            .get("rowData", [])[0]
-            .get("values", [])[0]
-            .get("hyperlink")
-        )
-        print(f"The hyperlink is: {hyperlink}")
-        return hyperlink
+        row_data = response["sheets"][0]["data"][0]["rowData"]
+        self.drive_link_cache = {}
+        for row_index, row in enumerate(row_data):
+            values = row.get("values")[0]
+            if "chipRuns" in values:
+                hyperlink = values["chipRuns"][0]["chip"]["richLinkProperties"]["uri"]
+            else:
+                hyperlink = values.get("hyperlink")
+            if hyperlink:
+                self.drive_link_cache[row_index + 1] = hyperlink
+
+    def get_richtext_link(self, sheet_title, row_num, column_index):
+        if not self.drive_link_cache:
+            self.populate_drive_link_cache(sheet_title, column_index)
+        return self.drive_link_cache.get(row_num)
 
     def drive_link_to_id(self, link):
         res = (
