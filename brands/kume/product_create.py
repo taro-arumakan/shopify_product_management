@@ -183,15 +183,9 @@ def main():
     client = utils.client("kumej")
     vendor = "KUME"
     product_info_list = product_info_list_from_sheet(
-        client, client.sheet_id, "25FW_9月12日"
+        client, client.sheet_id, "25fw-men_9月22日"
     )
 
-    product_info_list = [
-        product_info
-        for product_info in product_info_list
-        if product_info["release_date"] == "2025-09-12"
-    ]
-    product_info_list = product_info_list[:1]
     ress = create_products(
         client,
         product_info_list,
@@ -201,7 +195,7 @@ def main():
     pprint.pprint(ress)
 
     scheduled_time = pytz.timezone("Asia/Tokyo").localize(
-        datetime.datetime(2025, 9, 12, 0, 0, 0)
+        datetime.datetime(2025, 9, 22, 0, 0, 0)
     )
     for pi in product_info_list:
         product_id = client.product_id_by_title(pi["title"])
