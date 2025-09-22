@@ -1,6 +1,8 @@
 import datetime
 import logging
 import os
+import pathlib
+import re
 import string
 import utils
 from product_metafields_update_product_description import (
@@ -11,15 +13,14 @@ from product_description_include_metafield_value import (
     update_description_include_metafield_value,
 )
 from helpers.dropbox_utils import download_and_rename_images_from_dropbox
-import re
 
 logging.basicConfig(level=logging.INFO)
 
 IMAGES_LOCAL_DIR = (
-    f"/Users/taro/Downloads/apricotstudios_{datetime.date.today():%Y%m%d}/"
+    f"{pathlib.Path.home()}/Downloads/apricotstudios_{datetime.date.today():%Y%m%d}/"
 )
-DUMMY_PRODUCT = "gid://shopify/Product/9119951454464"
-PRODUCT_DETAIL_IMAGES_FOLDER_ID = "1ZLeHMyXiRVbWBVAJR-RQeVhAlpkdkU5X"
+DUMMY_PRODUCT = "gid://shopify/Product/9181957095680"
+PRODUCT_DETAIL_IMAGES_FOLDER_ID = "1jOg_no7MS8tGwMLKvOpodPg58nWKXSgX"
 
 
 def product_info_list_from_sheet_color_and_size(
@@ -295,23 +296,41 @@ def update_stocks(sgc: utils.Client, product_info_list, location_name):
     return ress
 
 
+def check_size_text(product_info_list):
+    for product_info in product_info_list:
+        size_text = product_info.get("size_text")
+        if size_text:
+            try:
+                text_to_html_tables_and_paragraphs(size_text)
+            except Exception as e:
+                print(
+                    f"Error parsing size information for {product_info['title']}: {e}"
+                )
+        else:
+            print(f"No size information found for {product_info['title']}")
+
+
 def main():
     import pprint
 
     client = utils.client("apricot-studios")
     vendor = "Apricot Studios"
     product_info_list = product_info_list_from_sheet_color_and_size(
-        client, client.sheet_id, "9.11 25Autumn(1st)"
+        client, client.sheet_id, "9.25 25Autumn(2nd)"
     )
-    # for index, product_info in enumerate(product_info_list):
-    #     if product_info["title"] == "Cable Vest":
-    #         break
-    # product_info_list = product_info_list[index:]
+
+    # first checking the size text parsing
+    check_size_text(product_info_list)
+
+    for index, product_info in enumerate(product_info_list):
+        if product_info["title"] == "Coco Collar Set":
+            break
+    product_info_list = product_info_list[index:]
     ress = create_products(
         client,
         product_info_list,
         vendor,
-        additional_tags=["New Arrival", "25 Autumn"],
+        additional_tags=["New Arrival", "25 Autumn", "25 Autumn 2nd"],
     )
     pprint.pprint(ress)
     ress2 = update_stocks(client, product_info_list, ["Apricot Studios Warehouse"])
