@@ -1,7 +1,9 @@
+import datetime
 import logging
+import pathlib
 import string
 import utils
-from gbh.get_size_table_html import size_table_html_from_size_dict_space_pairs
+from brands.gbh.get_size_table_html import size_table_html_from_size_dict_space_pairs
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,8 +20,8 @@ def product_info_list_from_sheet_color_and_size(
         release_date=string.ascii_lowercase.index("b"),
         description=string.ascii_lowercase.index("q"),
         product_care=string.ascii_lowercase.index("s"),
-        material=string.ascii_lowercase.index("v"),
-        made_in=string.ascii_lowercase.index("w"),
+        material=string.ascii_lowercase.index("u"),
+        made_in=string.ascii_lowercase.index("v"),
     )
     option1_attrs = {"カラー": string.ascii_lowercase.index("g")}
     option1_attrs.update(
@@ -30,7 +32,7 @@ def product_info_list_from_sheet_color_and_size(
         price=string.ascii_lowercase.index("l"),
         sku=string.ascii_lowercase.index("i"),
         stock=string.ascii_lowercase.index("m"),
-        size_text=string.ascii_lowercase.index("u"),
+        size_text=string.ascii_lowercase.index("t"),
     )
     return gai.to_products_list(
         sheet_id,
@@ -118,27 +120,57 @@ def update_stocks(sgc: utils.Client, product_info_list, location_name):
     return ress
 
 
+def check_size_text(product_info_list):
+    for product_info in product_info_list:
+        size_texts = {
+            option2["サイズ"]: option2["size_text"]
+            for option1 in product_info["options"]
+            for option2 in option1["options"]
+        }
+        try:
+            res = size_table_html_from_size_dict_space_pairs(size_texts)
+            print(f"{product_info['title']}\n{res}")
+        except Exception as e:
+            logging.error(f'error parsing size text for {product_info["title"]}: {e}')
+
+
+def check_skus(client: utils.Client, product_info_list):
+    for pi in product_info_list:
+        for option1 in pi["options"]:
+            for option2 in option1["options"]:
+                try:
+                    client.variant_by_sku(option2["sku"])
+                except utils.NoVariantsFoundException as e:
+                    pass
+                else:
+                    logging.error(f'sku already exists: {option2["sku"]}')
+
+
 def main():
     import pprint
 
     client = utils.client("gbhjapan")
     vendor = "GBH"
     product_info_list = product_info_list_from_sheet_color_and_size(
-        client, client.sheet_id, "APPAREL SS 25.04.28"
+        client, client.sheet_id, "APPAREL 25FW (FALL 1次)"
     )
+    check_size_text(product_info_list)
+    check_skus(client, product_info_list)
     ress = create_products(
         client,
         product_info_list,
         vendor,
         size_table_html_from_size_dict_space_pairs,
-        additional_tags=["New Arrival", "25SS (Summer)"],
+        additional_tags=["New Arrival", "25FW"],
     )
     pprint.pprint(ress)
     ress = []
     for product_info in product_info_list:
         ress.append(
             client.process_product_images(
-                product_info, "/Users/taro/Downloads/gbh20250425/", "upload_20250425_"
+                product_info,
+                f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
+                f"upload_{datetime.date.today():%Y%m%d}_",
             )
         )
     pprint.pprint(ress)
