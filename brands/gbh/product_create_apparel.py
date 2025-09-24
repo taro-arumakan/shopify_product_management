@@ -129,7 +129,7 @@ def check_size_text(product_info_list):
         }
         try:
             res = size_table_html_from_size_dict_space_pairs(size_texts)
-            print(f"{product_info['title']}\n{res}")
+            print(f"{product_info['title']}\n{res}\n")
         except Exception as e:
             logging.error(f'error parsing size text for {product_info["title"]}: {e}')
 
@@ -154,13 +154,19 @@ def main():
     product_info_list = product_info_list_from_sheet_color_and_size(
         client, client.sheet_id, "APPAREL 25FW (FALL 1次)"
     )
+    product_info_list = [
+        pi
+        for pi in product_info_list
+        if pi["title"]
+        not in ["HUNTING FAUX LEATHER JACKET", "MERINO WOOL HIGHNECK CARDIGAN"]
+    ]
     check_size_text(product_info_list)
     check_skus(client, product_info_list)
     ress = create_products(
         client,
         product_info_list,
         vendor,
-        size_table_html_from_size_dict_space_pairs,
+        get_size_table_html_func=size_table_html_from_size_dict_space_pairs,
         additional_tags=["New Arrival", "25FW"],
     )
     pprint.pprint(ress)
