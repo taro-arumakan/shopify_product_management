@@ -19,20 +19,35 @@ def size_table_html(size_text):
 
 def size_table_html_from_size_dict_space_pairs(size_text_dict):
     """
-    着丈 34 ウエスト 34 ヒップ 48 裾幅 31.5 前股上 34cm
-    着丈106 ウエスト35.5 ヒップ45 裾幅22 前股上31.5
+    {
+        "S": "着丈 34 ウエスト 34 ヒップ 48 裾幅 31.5 前股上 34cm",
+        "M": "着丈106 ウエスト35.5 ヒップ45 裾幅22 前股上31.5",
+        "S": "着丈99 / ウエスト38 / ヒップ46 / 裾29 / 前股上24.2",
+        "M": "着丈100 / ウエスト40 / ヒップ48 / 裾29.5 / 前股上24.9",
+    }
     """
     rows = []
     headers = [""]
-    regx = re.compile(r"([^\d]+)\s*?([\d\.]+)")
+    regx = re.compile(r"([^\d\s/\-\~]+?)[\s/]*([\d\.\-\~]+)")
     for index, (size, size_text) in enumerate(size_text_dict.items()):
-        headers_and_values = regx.findall(size_text)
-        if index == 0:
-            headers += [header_value[0].strip() for header_value in headers_and_values]
-        row_values = [size] + [
-            header_value[1].strip() for header_value in headers_and_values
-        ]
-        rows.append(row_values)
+        if "X" not in size_text:
+            headers_and_values = regx.findall(size_text)
+            if index == 0:
+                headers += [
+                    header_value[0].strip() for header_value in headers_and_values
+                ]
+            row_values = [size] + [
+                header_value[1].strip() for header_value in headers_and_values
+            ]
+            rows.append(row_values)
+        elif "\n" in size_text:
+            pairs = size_text.split("\n")
+            if index == 0:
+                headers += [pairs[0].strip()]
+            rows.append([size, pairs[1].strip()])
+        else:
+            headers = []
+            rows.append([size, size_text.strip()])
     return generate_html(headers, rows)
 
 
