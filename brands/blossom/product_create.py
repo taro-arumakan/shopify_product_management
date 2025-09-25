@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 def product_info_list_from_sheet(
     gai: utils.Client, sheet_id, sheet_name, row_filter_func=None
 ):
-    start_row = 7
+    start_row = 1
     column_product_attrs = dict(
         title=string.ascii_lowercase.index("a"),
         tags=string.ascii_lowercase.index("b"),
@@ -101,7 +101,7 @@ def create_products(sgc: utils.Client, product_info_list, vendor):
 
 def update_stocks(sgc: utils.Client, product_info_list):
     logging.info("updating inventory")
-    location_id = sgc.location_id_by_name("Shop location")
+    location_id = sgc.location_id_by_name("Blossom Warehouse")
     sku_stock_map = {
         option2["sku"]: option2["stock"]
         for product_info in product_info_list
@@ -144,8 +144,7 @@ def process_product_images(client: utils.Client, product_info):
 
 def main():
     c = utils.client("blossomhcompany")
-    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes")
-    product_info_list = product_info_list[-3:]
+    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes0924")
 
     # for index, product_info in enumerate(product_info_list):
     #     if product_info["title"] == "Liberaiders PX LOGO TEE":
@@ -160,6 +159,10 @@ def main():
     for product_info in product_info_list:
         res = process_product_images(c, product_info)
         pprint.pprint(res)
+
+    for product_info in product_info_list:
+        product_id = c.product_id_by_title(product_info["title"])
+        c.activate_and_publish_by_product_id(product_id)
 
 
 if __name__ == "__main__":
