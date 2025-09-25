@@ -16,7 +16,7 @@ def main():
     )
     skus_by_handle = grouped.set_index("Handle")["SKU_List"].to_dict()
     handles = list(skus_by_handle.keys())
-    handles = handles[handles.index("pulpy-crossbody-bag-nylon") + 1 :]
+    handles = handles[handles.index("pulpy-crossbody-bag-Nylon") + 1 :]
     for handle, skus in skus_by_handle.items():
         if handle in handles:
             logger.info(f"Processing handle: {handle} with SKUs: {skus}")
