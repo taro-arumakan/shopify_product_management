@@ -2,6 +2,9 @@ import datetime
 import logging
 import string
 import utils
+from brands.gbh.product_create_apparel import (
+    product_info_list_from_sheet_color_and_size,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -9,25 +12,31 @@ logger = logging.getLogger(__name__)
 UPLOAD_IMAGE_PREFIX = f"uplaod{datetime.date.today():%Y%m%d}_gbh"
 IMAGES_LOCAL_DIR = f"/Users/taro/Downloads/{datetime.date.today():%Y%m%d}/"
 
-skus = ["APA3JK040BKFF", "APA3CD020BKFF", "APA3CD020RDFF", "APA3CD020MGFF"]
-
 
 def main():
     client = utils.client("gbhjapan")
-    rows = client.worksheet_rows(client.sheet_id, "APPAREL 25FW (FALL 1次)")
-    sku_column_index = string.ascii_lowercase.index("i")
-    drive_link_column_index = string.ascii_lowercase.index("o")
-    for row in rows:
-        sku = row[sku_column_index]
-        if sku in skus:
-            drive_id = client.drive_link_to_id(row[drive_link_column_index])
-            if drive_id:
-                logger.info(f"going to process: {sku} - {drive_id}")
-                client.replace_images_by_sku(
-                    sku,
+    product_info_list = product_info_list_from_sheet_color_and_size(
+        client, client.sheet_id, "APPAREL 25FW (FALL 1次)"
+    )
+    for index, pi in enumerate(product_info_list):
+        if pi["title"] == "SKIRT WRAP BELT":
+            break
+    product_info_list = product_info_list[index:]
+
+    for product_info in product_info_list:
+        for option1 in product_info["options"]:
+            drive_link = option1["drive_link"]
+            drive_id = client.drive_link_to_id(drive_link)
+            skus = [option2["sku"] for option2 in option1["options"]]
+            if "APB3KN040SBFF" not in skus:
+                logger.info(
+                    f"going to process: {product_info['title']} - {skus} - {drive_id}"
+                )
+                client.replace_images_by_skus(
+                    skus,
                     drive_id,
                     IMAGES_LOCAL_DIR,
-                    download_filename_prefix=f"{UPLOAD_IMAGE_PREFIX}_{sku}_",
+                    download_filename_prefix=f"{UPLOAD_IMAGE_PREFIX}_{skus[0]}_",
                 )
 
 

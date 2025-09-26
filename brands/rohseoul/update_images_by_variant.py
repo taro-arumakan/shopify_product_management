@@ -26,8 +26,8 @@ def main():
             drive_id = client.drive_link_to_id(row[drive_link_column_index])
             if drive_id:
                 logger.info(f"going to process: {sku} - {drive_id}")
-                client.replace_images_by_sku(
-                    sku,
+                client.replace_images_by_skus(
+                    [sku],
                     drive_id,
                     IMAGES_LOCAL_DIR,
                     download_filename_prefix=f"{UPLOAD_IMAGE_PREFIX}_{sku}_",

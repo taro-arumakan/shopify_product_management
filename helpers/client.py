@@ -88,12 +88,12 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         res2 = [self.enable_and_activate_inventory(sku, location_names) for sku in skus]
         return res2
 
-    def replace_images_by_sku(
-        self, sku, folder_id, image_local_dir, download_filename_prefix
+    def replace_images_by_skus(
+        self, skus, folder_id, image_local_dir, download_filename_prefix
     ):
-        medias = self.medias_by_sku(sku)
+        medias = self.medias_by_sku(skus[0])
         existing_ids = [m["id"] for m in medias]
-        logger.info(f"going to replace images of {sku} with {folder_id}")
+        logger.info(f"going to replace images of {skus} with {folder_id}")
         local_paths = self.drive_images_to_local(
             folder_id,
             image_local_dir,
@@ -105,7 +105,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         logger.info(f"generated staged upload targets: {len(staged_targets)}")
         self.upload_images_to_shopify_parallel(staged_targets, local_paths, mime_types)
 
-        product_id = self.product_id_by_sku(sku)
+        product_id = self.product_id_by_sku(skus[0])
         logger.info(
             f"Images uploaded for {product_id}, going to remove existing and assign."
         )
@@ -118,8 +118,8 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             alts=file_names,
             product_id=product_id,
         )
-        logger.info(f"adding a media to {sku}")
+        logger.info(f"adding a media to {skus}")
         uploaded_variant_media = self.media_by_product_id_by_file_name(
             product_id, file_names[0]
         )
-        self.assign_image_to_skus(product_id, uploaded_variant_media["id"], [sku])
+        self.assign_image_to_skus(product_id, uploaded_variant_media["id"], skus)
