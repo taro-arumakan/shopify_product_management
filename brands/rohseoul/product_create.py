@@ -21,23 +21,23 @@ def product_info_lists_from_sheet(
 ):
     start_row = 2
     column_product_attrs = dict(
-        title=string.ascii_lowercase.index("f"),
-        release_date=string.ascii_lowercase.index("e"),
-        collection=string.ascii_lowercase.index("h"),
-        bag_category=string.ascii_lowercase.index("i"),
-        category=string.ascii_lowercase.index("j"),
-        description=string.ascii_lowercase.index("s"),
-        size_text=string.ascii_lowercase.index("v"),
-        material=string.ascii_lowercase.index("w"),
-        made_in=string.ascii_lowercase.index("x"),
+        title=string.ascii_lowercase.index("e"),
+        release_date=string.ascii_lowercase.index("d"),
+        collection=string.ascii_lowercase.index("g"),
+        bag_category=string.ascii_lowercase.index("h"),
+        category=string.ascii_lowercase.index("i"),
+        description=string.ascii_lowercase.index("r"),
+        size_text=string.ascii_lowercase.index("u"),
+        material=string.ascii_lowercase.index("v"),
+        made_in=string.ascii_lowercase.index("w"),
     )
-    column_variant_attrs = {"カラー": string.ascii_lowercase.index("k")}
+    column_variant_attrs = {"カラー": string.ascii_lowercase.index("j")}
     column_variant_attrs.update(
-        sku=string.ascii_lowercase.index("g"),
-        price=string.ascii_lowercase.index("n"),
-        stock=string.ascii_lowercase.index("o"),
-        drive_link=string.ascii_lowercase.index("q"),
-        status=string.ascii_lowercase.index("b"),
+        sku=string.ascii_lowercase.index("f"),
+        price=string.ascii_lowercase.index("m"),
+        stock=string.ascii_lowercase.index("n"),
+        drive_link=string.ascii_lowercase.index("p"),
+        status=string.ascii_lowercase.index("a"),
     )
     product_info_list = gai.to_products_list(
         sheet_id,
@@ -46,9 +46,6 @@ def product_info_lists_from_sheet(
         column_product_attrs,
         column_variant_attrs,
         handle_suffix=handle_suffix,
-    )
-    product_info_list = list(
-        filter(None, (filter_variants_by_status(pi) for pi in product_info_list))
     )
     return product_info_list
 
@@ -138,12 +135,12 @@ def update_stocks(sgc: utils.Client, product_info_list):
 
 
 def main():
-    handle_suffix = "25fw-1st"
+    handle_suffix = ""
     import pprint
 
     client = utils.client("rohseoul")
     product_info_list = product_info_lists_from_sheet(
-        client, client.sheet_id, "25FW 1ST", handle_suffix
+        client, client.sheet_id, "25FW 2ST 민하가방", handle_suffix
     )
     ress = create_products(client, product_info_list, client.shop_name)
     pprint.pprint(ress)
