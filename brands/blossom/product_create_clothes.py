@@ -17,19 +17,19 @@ def product_info_list_from_sheet(
         tags=string.ascii_lowercase.index("b"),
         price=string.ascii_lowercase.index("d"),
         description=string.ascii_lowercase.index("f"),
-        product_care=string.ascii_lowercase.index("h"),
-        material=string.ascii_lowercase.index("i"),
-        size_text=string.ascii_lowercase.index("j"),
-        made_in=string.ascii_lowercase.index("k"),
+        product_care=string.ascii_lowercase.index("i"),
+        material=string.ascii_lowercase.index("j"),
+        size_text=string.ascii_lowercase.index("k"),
+        made_in=string.ascii_lowercase.index("l"),
     )
-    option1_attrs = {"Color": string.ascii_lowercase.index("l")}
+    option1_attrs = {"Color": string.ascii_lowercase.index("m")}
     option1_attrs.update(
-        drive_link=string.ascii_lowercase.index("m"),
+        drive_link=string.ascii_lowercase.index("n"),
     )
-    option2_attrs = {"Size": string.ascii_lowercase.index("no")}
+    option2_attrs = {"Size": string.ascii_lowercase.index("o")}
     option2_attrs.update(
-        sku=string.ascii_lowercase.index("o"),
-        stock=string.ascii_lowercase.index("p"),
+        sku=string.ascii_lowercase.index("p"),
+        stock=string.ascii_lowercase.index("q"),
     )
     return gai.to_products_list(
         sheet_id,
@@ -144,7 +144,7 @@ def process_product_images(client: utils.Client, product_info):
 
 def main():
     c = utils.client("blossomhcompany")
-    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes0924")
+    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes")
 
     # for index, product_info in enumerate(product_info_list):
     #     if product_info["title"] == "Liberaiders PX LOGO TEE":
