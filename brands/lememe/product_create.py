@@ -24,9 +24,10 @@ def product_info_list_from_sheet(
     )
     option1_attrs = {"Color": string.ascii_lowercase.index("m")}
     option1_attrs.update(
-        drive_link=string.ascii_lowercase.index("n"),
-        sku=string.ascii_lowercase.index("o"),
-        stock=string.ascii_lowercase.index("p"),
+        filter_color=string.ascii_lowercase.index("n"),
+        drive_link=string.ascii_lowercase.index("o"),
+        sku=string.ascii_lowercase.index("p"),
+        stock=string.ascii_lowercase.index("q"),
     )
     return gai.to_products_list(
         sheet_id,

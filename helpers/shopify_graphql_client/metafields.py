@@ -166,6 +166,76 @@ class Metafields:
         res = self.run_query(query, variables)
         return res["product"]["metafieldValue"]["value"]
 
+    def update_variant_metafield(
+        self, product_id, variant_id, metafield_namespace, metafield_key, value
+    ):
+        query = """
+        mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+            productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                product {
+                    id
+                }
+                productVariants {
+                    id
+                    metafields (first:10) {
+                        nodes {
+                            id
+                            namespace
+                            key
+                            value
+                        }
+                    }
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        variables = {
+            "productId": self.sanitize_id(product_id),
+            "variants": [
+                {
+                    "id": self.sanitize_id(variant_id, "ProductVariant"),
+                    "metafields": [
+                        {
+                            "namespace": metafield_namespace,
+                            "key": metafield_key,
+                            "value": value,
+                        }
+                    ],
+                }
+            ],
+        }
+        res = self.run_query(query, variables)
+        if res["productVariantsBulkUpdate"]["userErrors"]:
+            raise RuntimeError(
+                f"Error updating {metafield_namespace}.{metafield_key}: {res['productUpdate']['userErrors']}"
+            )
+        return res
+
+    def variant_metafield_value_by_variant_id(
+        self, variant_id, namespace="custom", key="filter_color"
+    ):
+        query = """
+        query ProductVariantMetafield($namespace: String!, $key: String!, $ownerId: ID!) {
+            productVariant(id: $ownerId) {
+                metafield(namespace: $namespace, key: $key) {
+                    value
+                }
+            }
+        }
+        """
+        variables = {
+            "ownerId": self.sanitize_id(variant_id, "ProductVariant"),
+            "namespace": namespace,
+            "key": key,
+        }
+        res = self.run_query(query, variables)
+        if metafield := res["productVariant"]["metafield"]:
+            return metafield["value"]
+
     def convert_rich_text_to_html(self, json_value):
         def render_node(node):
             node_type = node.get("type")
@@ -189,3 +259,18 @@ class Metafields:
 
         parsed = json.loads(json_value)
         return render_node(parsed)
+
+
+def main():
+    import utils
+
+    client = utils.client("lememek")
+    for variant_id in ["46819940827362", "46819940860130"]:
+        res = client.variant_metafield_value_by_variant_id(
+            variant_id, "custom", "filter_color"
+        )
+        print(res)
+
+
+if __name__ == "__main__":
+    main()
