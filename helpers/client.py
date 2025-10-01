@@ -46,9 +46,14 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 remove_existings=index == 0,
             )
             ress.append(res)
-            variant_media_id = res[-1]["productCreateMedia"]["media"][0]["id"]
-            logger.info(f"assigning media {variant_media_id} to {skus}")
-            ress.append(self.assign_image_to_skus(product_id, variant_media_id, skus))
+            if res[-1]["productCreateMedia"]["media"]:
+                variant_media_id = res[-1]["productCreateMedia"]["media"][0]["id"]
+                logger.info(f"assigning media {variant_media_id} to {skus}")
+                ress.append(
+                    self.assign_image_to_skus(product_id, variant_media_id, skus)
+                )
+            else:
+                logger.error(f"\n\n!!! missing images: {skus} !!!\n\n")
         return ress
 
     def create_a_product(
