@@ -1,5 +1,7 @@
 import collections
+import datetime
 import logging
+import pathlib
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
 from exceptions import NoVariantsFoundException
@@ -28,7 +30,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         return res
 
     def process_product_images(
-        self, product_info, local_dir, filename_prefix, handle_suffix=None
+        self, product_info, local_dir=None, filename_prefix=None, handle_suffix=None
     ):
         if handle_suffix:
             product_id = self.product_id_by_handle(
@@ -36,6 +38,13 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             )
         else:
             product_id = self.product_id_by_title(product_info["title"])
+
+        local_dir = (
+            local_dir
+            or f"{pathlib.Path.home()}/Downloads/{self.shop_name}_{datetime.date.today():%Y%m%d}/"
+        )
+        filename_prefix = filename_prefix or f"upload_{datetime.date.today():%Y%m%d}"
+
         drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
         ress = []
         for index, (drive_id, skus) in enumerate(zip(drive_links, skuss)):

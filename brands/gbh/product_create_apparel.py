@@ -113,11 +113,7 @@ def main():
     client.update_stocks(product_info_list, location)
 
     for product_info in product_info_list:
-        client.process_product_images(
-            product_info,
-            f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
-            f"upload_{datetime.date.today():%Y%m%d}_",
-        )
+        client.process_product_images(product_info)
 
 
 if __name__ == "__main__":

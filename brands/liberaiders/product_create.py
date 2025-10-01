@@ -134,11 +134,7 @@ def main():
         create_a_product(
             c, product_info_list, vendor="liberaiders", locations=[location]
         )
-        c.process_product_images(
-            product_info,
-            localdir=f"{pathlib.Path.home()}/Downloads/liberaiders{datetime.date.today():%Y%m%d}/",
-            filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
-        )
+        c.process_product_images(product_info)
     assign_variant_images(c, product_info_list)
     c.update_stocks(product_info_list)
 

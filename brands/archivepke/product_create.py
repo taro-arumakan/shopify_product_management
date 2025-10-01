@@ -145,8 +145,6 @@ def main():
         ress.append(
             client.process_product_images(
                 product_info,
-                f"{pathlib.Path.home()}/Downloads/archivépke{datetime.date.today():%Y%m%d}/",
-                f"upload_{datetime.date.today():%Y%m%d}_",
                 handle_suffix=handle_suffix,
             )
         )

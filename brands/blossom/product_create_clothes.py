@@ -71,11 +71,7 @@ def update_metafields(sgc: utils.Client, product_id, product_info):
 
 def process_images(client: utils.Client, product_info_list):
     for product_info in product_info_list:
-        res = client.process_product_images(
-            product_info,
-            local_dir=f"{pathlib.Path.home()}/Downloads/blossom{datetime.date.today():%Y%m%d}/",
-            filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
-        )
+        res = client.process_product_images(product_info)
         logging.debug(res)
 
 

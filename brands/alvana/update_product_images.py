@@ -1,4 +1,4 @@
-from alvana.product_create import product_info_list_from_sheet, process_product_images
+from alvana.product_create import product_info_list_from_sheet
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -15,13 +15,7 @@ def main():
     for product_info in product_info_list:
         if product_info["title"] in titles:
             print(f'processing {product_info["title"]}')
-            ress.append(
-                c.process_product_images(
-                    product_info,
-                    local_dir="/Users/taro/Downloads/alvana20250418/",
-                    filename_prefix="upload_20250418",
-                )
-            )
+            ress.append(c.process_product_images(product_info))
     pprint.pprint(ress)
 
 

@@ -221,13 +221,7 @@ def main():
     pprint.pprint(ress)
     ress = []
     for product_info in product_info_list:
-        ress.append(
-            client.process_product_images(
-                product_info,
-                f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
-                f"upload_{datetime.date.today():%Y%m%d}_",
-            )
-        )
+        ress.append(client.process_product_images(product_info))
     pprint.pprint(ress)
     res = client.updaet_stocks(product_info_list, "Shop location")
     pprint.pprint(res)

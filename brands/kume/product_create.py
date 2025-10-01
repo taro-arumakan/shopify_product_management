@@ -153,13 +153,7 @@ def create_products(
     ress3 = []
     logging.info("processing product images")
     for product_info in product_info_list:
-        ress3.append(
-            sgc.process_product_images(
-                product_info,
-                f"{pathlib.Path.home()}/Downloads/{datetime.date.today():%Y%m%d}/",
-                filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
-            )
-        )
+        ress3.append(sgc.process_product_images(product_info))
 
     return ress, ress2, ress3
 

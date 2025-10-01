@@ -119,11 +119,7 @@ def main():
 
     for product_info in product_info_list:
         create_a_product(c, product_info, "lememe", [location])
-        c.process_product_images(
-            product_info,
-            local_dir=f"{pathlib.Path.home()}/Downloads/lememe{datetime.date.today():%Y%m%d}/",
-            filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
-        )
+        c.process_product_images(product_info)
     c.update_stocks(product_info_list, location)
     c.publish_products(product_info_list)
 
