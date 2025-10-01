@@ -66,7 +66,7 @@ def main():
         res = c.process_product_images(
             product_info,
             local_dir=f"/Users/taro/Downloads/alvana{datetime.date.today():%Y%m%d}/",
-            local_prefix=f"upload_{datetime.date.today():%Y%m%d}",
+            filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
         )
         pprint.pprint(res)
     c.update_stocks(product_info_list, location)

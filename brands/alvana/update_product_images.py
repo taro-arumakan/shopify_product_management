@@ -19,7 +19,7 @@ def main():
                 c.process_product_images(
                     product_info,
                     local_dir="/Users/taro/Downloads/alvana20250418/",
-                    local_prefix="upload_20250418_",
+                    filename_prefix="upload_20250418",
                 )
             )
     pprint.pprint(ress)

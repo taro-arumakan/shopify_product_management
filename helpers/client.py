@@ -17,10 +17,10 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         )
 
     def add_product_images(
-        self, product_id, drive_id, local_dir, local_prefix, remove_existings=False
+        self, product_id, drive_id, local_dir, filename_prefix, remove_existings=False
     ):
         local_paths = self.drive_images_to_local(
-            drive_id, local_dir, filename_prefix=local_prefix
+            drive_id, local_dir, filename_prefix=filename_prefix
         )
         res = self.upload_and_assign_images_to_product(
             product_id, local_paths, remove_existings
@@ -28,7 +28,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         return res
 
     def process_product_images(
-        self, product_info, local_dir, local_prefix, handle_suffix=None
+        self, product_info, local_dir, filename_prefix, handle_suffix=None
     ):
         if handle_suffix:
             product_id = self.product_id_by_handle(
@@ -43,7 +43,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 product_id,
                 drive_id,
                 local_dir,
-                local_prefix=f"{local_prefix}_{skus[0]}",
+                filename_prefix=f"{filename_prefix}_{skus[0]}",
                 remove_existings=index == 0,
             )
             ress.append(res)

@@ -121,7 +121,7 @@ def main():
         c.process_product_images(
             product_info,
             local_dir=f"/Users/taro/Downloads/lememe{datetime.date.today():%Y%m%d}/",
-            local_prefix=f"upload_{datetime.date.today():%Y%m%d}",
+            filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
         )
     c.update_stocks(product_info_list, location)
     c.publish_products(product_info_list)

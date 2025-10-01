@@ -157,7 +157,7 @@ def create_products(
             sgc.process_product_images(
                 product_info,
                 f"/Users/taro/Downloads/{datetime.date.today():%Y%m%d}/",
-                local_prefix=f"upload_{datetime.date.today():%Y%m%d}_",
+                filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
             )
         )
 

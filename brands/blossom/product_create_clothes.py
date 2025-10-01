@@ -73,7 +73,7 @@ def process_images(client: utils.Client, product_info_list):
         res = client.process_product_images(
             product_info,
             local_dir=f"/Users/taro/Downloads/blossom{datetime.date.today():%Y%m%d}/",
-            local_prefix=f"upload_{datetime.date.today():%Y%m%d}",
+            filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
         )
         logging.debug(res)
 
