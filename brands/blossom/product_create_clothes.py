@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pprint
 import string
 import utils
 from brands.blossom.update_descriptions import get_description
@@ -68,43 +69,47 @@ def update_metafields(sgc: utils.Client, product_id, product_info):
         print(res)
 
 
-def main():
-    c = utils.client("blossomhcompany")
-    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes")
-
-    # for index, product_info in enumerate(product_info_list):
-    #     if product_info["title"] == "Liberaiders PX LOGO TEE":
-    #         break
-    # product_info_list = product_info_list[index:]
-    product_info_list = [
-        pi
-        for pi in product_info_list
-        if pi["title"] not in ["GENTO SHIRRING TOP", "GENTO BALLOON SKIRT"]
-    ]
-    c.sanity_check_product_info_list(
-        product_info_list=product_info_list,
-        text_to_html_func=c.formatted_size_text_to_html_table,
-    )
-
-    import pprint
-
-    location = "Blossom Warehouse"
+def process_images(client: utils.Client, product_info_list):
     for product_info in product_info_list:
-        create_a_product(c, product_info, vendor="blossom", locations=[location])
-
-    c.update_stocks(product_info_list, location)
-
-    for product_info in product_info_list:
-        res = c.process_product_images(
+        res = client.process_product_images(
             product_info,
             local_dir=f"/Users/taro/Downloads/blossom{datetime.date.today():%Y%m%d}/",
             local_prefix=f"upload_{datetime.date.today():%Y%m%d}",
         )
         pprint.pprint(res)
 
+
+def publish(client: utils.Client, product_info_list):
     for product_info in product_info_list:
         product_id = c.product_id_by_title(product_info["title"])
         c.activate_and_publish_by_product_id(product_id)
+
+
+def main():
+    c = utils.client("blossomhcompany")
+    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes")
+
+    product_info_list = [
+        pi
+        for pi in product_info_list
+        if pi["title"] not in ["GENTO SHIRRING TOP", "GENTO BALLOON SKIRT"]
+    ]
+    for index, product_info in enumerate(product_info_list):
+        if product_info["title"] == "TIEN TURTLE-NECK T-SHIRT":
+            break
+    product_info_list = product_info_list[index:]
+
+    c.sanity_check_product_info_list(
+        product_info_list=product_info_list,
+        text_to_html_func=c.formatted_size_text_to_html_table,
+    )
+
+    # location = "Blossom Warehouse"
+    # for product_info in product_info_list:
+    #     create_a_product(c, product_info, vendor="blossom", locations=[location])
+    # c.update_stocks(product_info_list, location)
+    process_images(c, product_info_list)
+    publish(c, product_info_list)
 
 
 if __name__ == "__main__":
