@@ -1,12 +1,11 @@
 import datetime
 import logging
-import pprint
 import string
 import utils
 from brands.blossom.update_descriptions import get_description
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 
 def product_info_list_from_sheet(
@@ -76,7 +75,7 @@ def process_images(client: utils.Client, product_info_list):
             local_dir=f"/Users/taro/Downloads/blossom{datetime.date.today():%Y%m%d}/",
             local_prefix=f"upload_{datetime.date.today():%Y%m%d}",
         )
-        pprint.pprint(res)
+        logging.debug(res)
 
 
 def publish(client: utils.Client, product_info_list):
@@ -94,20 +93,20 @@ def main():
         for pi in product_info_list
         if pi["title"] not in ["GENTO SHIRRING TOP", "GENTO BALLOON SKIRT"]
     ]
-    for index, product_info in enumerate(product_info_list):
-        if product_info["title"] == "TIEN TURTLE-NECK T-SHIRT":
-            break
-    product_info_list = product_info_list[index:]
+    # for index, product_info in enumerate(product_info_list):
+    #     if product_info["title"] == "GAEIL SUEDE BEMUDA PANTS":
+    #         break
+    # product_info_list = product_info_list[index:]
 
     c.sanity_check_product_info_list(
         product_info_list=product_info_list,
         text_to_html_func=c.formatted_size_text_to_html_table,
     )
 
-    # location = "Blossom Warehouse"
-    # for product_info in product_info_list:
-    #     create_a_product(c, product_info, vendor="blossom", locations=[location])
-    # c.update_stocks(product_info_list, location)
+    location = "Blossom Warehouse"
+    for product_info in product_info_list:
+        create_a_product(c, product_info, vendor="blossom", locations=[location])
+    c.update_stocks(product_info_list, location)
     process_images(c, product_info_list)
     publish(c, product_info_list)
 
