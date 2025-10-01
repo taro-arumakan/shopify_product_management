@@ -182,10 +182,11 @@ def main():
 
     client = utils.client("kumej")
     vendor = "KUME"
-    product_info_list = product_info_list_from_sheet(
-        client, client.sheet_id, "25fw-men_9月22日"
-    )
+    product_info_list = product_info_list_from_sheet(client, client.sheet_id, "25FW")
 
+    product_info_list = [
+        pi for pi in product_info_list if pi["title"] == "Alpaca Boucle Midi Jacket"
+    ]
     ress = create_products(
         client,
         product_info_list,
@@ -194,9 +195,10 @@ def main():
     )
     pprint.pprint(ress)
 
-    scheduled_time = pytz.timezone("Asia/Tokyo").localize(
-        datetime.datetime(2025, 9, 22, 0, 0, 0)
-    )
+    scheduled_time = None
+    # scheduled_time = pytz.timezone("Asia/Tokyo").localize(
+    #     datetime.datetime(2025, 9, 22, 0, 0, 0)
+    # )
     for pi in product_info_list:
         product_id = client.product_id_by_title(pi["title"])
         client.activate_and_publish_by_product_id(
