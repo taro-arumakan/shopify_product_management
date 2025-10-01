@@ -81,8 +81,8 @@ def process_images(client: utils.Client, product_info_list):
 
 def publish(client: utils.Client, product_info_list):
     for product_info in product_info_list:
-        product_id = c.product_id_by_title(product_info["title"])
-        c.activate_and_publish_by_product_id(product_id)
+        product_id = client.product_id_by_title(product_info["title"])
+        client.activate_and_publish_by_product_id(product_id)
 
 
 def main():
