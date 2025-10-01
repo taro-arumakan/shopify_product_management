@@ -2,6 +2,7 @@ import collections
 import logging
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
+from exceptions import NoVariantsFoundException
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +155,11 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         for product_info in product_info_list:
             size_text = product_info.get("size_text", "").strip()
             if not size_text:
-                logger.warning(f'no size text for {product_info["title"]}')
+                m = f'no size text for {product_info["title"]}'
+                if raise_on_error:
+                    logger.warning(m)
+                else:
+                    res.append(m)
             else:
                 try:
                     size_table_html = text_to_html_func(size_text)
@@ -171,7 +176,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         if not raise_on_error:
             return res
 
-    def check_skus(self, product_info_list):
+    def product_info_list_to_skus(self, product_info_list):
         options = self.populate_option(product_info_list[0])
         key_length = len(options[0][0].keys())
         if key_length == 2:
@@ -185,7 +190,10 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             skus = [o["sku"] for pi in product_info_list for o in pi["options"]]
         else:
             skus = [pi["sku"] for pi in product_info_list]
+        return skus
 
+    def check_sku_duplicates(self, product_info_list):
+        skus = self.product_info_list_to_skus(product_info_list)
         counts_by_sku = collections.Counter(skus)
         counts_by_sku = {
             sku: count for sku, count in counts_by_sku.items() if count > 1
@@ -195,17 +203,31 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 f"Duplicate SKUs found:\n{'\n'.join(": ".join(map(str, [sku, count])) for sku, count in counts_by_sku.items())}"
             )
 
+    def check_existing_skus(self, product_info_list):
+        skus = self.product_info_list_to_skus(product_info_list)
+        res = []
+        for sku in skus:
+            try:
+                self.variant_by_sku(sku)
+            except NoVariantsFoundException:
+                pass
+            else:
+                res.append(f"Existing SKU found: {sku}")
+        return res
+
     def sanity_check_product_info_list(self, product_info_list, text_to_html_func):
         res = []
         try:
-            self.check_skus(product_info_list)
+            self.check_sku_duplicates(product_info_list)
         except RuntimeError as e1:
             logger.error(e1)
             res.append(e1)
+        res = self.check_existing_skus(product_info_list)
         res += self.check_size_texts(
             product_info_list, text_to_html_func, raise_on_error=False
         )
         for r in res:
             logger.error(r)
+
         if res:
             raise RuntimeError("Failed sanity check")
