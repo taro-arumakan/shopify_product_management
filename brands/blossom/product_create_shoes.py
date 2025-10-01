@@ -1,3 +1,4 @@
+import functools
 import datetime
 import logging
 import string
@@ -148,16 +149,6 @@ def process_product_images(client: utils.Client, product_info):
     return ress
 
 
-def check_size_texts(client: utils.Client, product_info_list):
-    for product_info in product_info_list:
-        size_text = product_info.get("size_text", "").strip()
-        if not size_text:
-            logging.warning(f'no size text for {product_info["title"]}')
-        else:
-            size_table_html = get_size_table_html(client, size_text)
-            print(size_table_html)
-
-
 def main():
     c = utils.client("blossomhcompany")
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "shoes")
@@ -167,7 +158,10 @@ def main():
     #         break
     # product_info_list = product_info_list[index:]
 
-    check_size_texts(c, product_info_list=product_info_list)
+    c.check_size_texts(
+        product_info_list=product_info_list,
+        text_to_html_func=functools.partial(get_size_table_html, c),
+    )
     import pprint
 
     res = create_products(c, product_info_list, vendor="blossom")
