@@ -290,26 +290,6 @@ class ProductCreate:
 
         return description_html
 
-    def check_size_texts(
-        self, product_info_list, text_to_html_func, raise_on_error=True
-    ):
-        for product_info in product_info_list:
-            size_text = product_info.get("size_text", "").strip()
-            if not size_text:
-                logging.warning(f'no size text for {product_info["title"]}')
-            else:
-                try:
-                    size_table_html = text_to_html_func(size_text)
-                except Exception as e:
-                    logging.error(
-                        f"Error formatting size text for {product_info['title']}: {e}"
-                    )
-                    if raise_on_error:
-                        raise
-                else:
-                    if raise_on_error:
-                        print(size_table_html)
-
 
 def product_description_template():
     return """<!DOCTYPE html>
