@@ -290,31 +290,6 @@ class ProductCreate:
 
         return description_html
 
-    def product_variants_bulk_create(self, product_id, variants):
-        query = """
-        mutation productVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-            productVariantsBulkCreate(productId: $productId, variants: $variants) {
-                productVariants {
-                    id
-                    title
-                    selectedOptions {
-                        name
-                        value
-                    }
-                }
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """
-        variables = {"productId": product_id, "variants": variants}
-        res = self.run_query(query, variables)
-        if errors := res["productVariantsBulkCreate"]["userErrors"]:
-            raise RuntimeError(f"Product variants creation failed: {errors}")
-        return res["productVariantsBulkCreate"]["productVariants"]
-
 
 def product_description_template():
     return """<!DOCTYPE html>
