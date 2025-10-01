@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import string
 import utils
 
@@ -7,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 UPLOAD_IMAGE_PREFIX = f"uplaod{datetime.date.today():%Y%m%d}_rohseoul_"
-IMAGES_LOCAL_DIR = f"/Users/taro/Downloads/{datetime.date.today():%Y%m%d}/"
+IMAGES_LOCAL_DIR = f"{pathlib.Path.home()}/Downloads/{datetime.date.today():%Y%m%d}/"
 
 
 def main():

@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import string
 import utils
 from brands.alvana.update_descriptions import get_description
@@ -120,7 +121,7 @@ def main():
         create_a_product(c, product_info, "lememe", [location])
         c.process_product_images(
             product_info,
-            local_dir=f"/Users/taro/Downloads/lememe{datetime.date.today():%Y%m%d}/",
+            local_dir=f"{pathlib.Path.home()}/Downloads/lememe{datetime.date.today():%Y%m%d}/",
             filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
         )
     c.update_stocks(product_info_list, location)

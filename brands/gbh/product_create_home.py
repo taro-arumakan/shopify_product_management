@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import string
 import utils
 from brands.gbh.get_size_table_html import (
@@ -223,7 +224,7 @@ def main():
         ress.append(
             client.process_product_images(
                 product_info,
-                f"/Users/taro/Downloads/gbh{datetime.date.today():%Y%m%d}/",
+                f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
                 f"upload_{datetime.date.today():%Y%m%d}_",
             )
         )

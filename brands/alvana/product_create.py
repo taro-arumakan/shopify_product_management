@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import string
 import utils
 from brands.alvana.update_descriptions import get_description
@@ -65,7 +66,7 @@ def main():
     for product_info in product_info_list:
         res = c.process_product_images(
             product_info,
-            local_dir=f"/Users/taro/Downloads/alvana{datetime.date.today():%Y%m%d}/",
+            local_dir=f"{pathlib.Path.home()}/Downloads/alvana{datetime.date.today():%Y%m%d}/",
             filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
         )
         pprint.pprint(res)

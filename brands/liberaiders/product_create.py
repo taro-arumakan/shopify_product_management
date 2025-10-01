@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import string
 import utils
 from brands.liberaiders.update_descriptions import get_description
@@ -135,7 +136,7 @@ def main():
         )
         c.process_product_images(
             product_info,
-            localdir=f"/Users/taro/Downloads/liberaiders{datetime.date.today():%Y%m%d}/",
+            localdir=f"{pathlib.Path.home()}/Downloads/liberaiders{datetime.date.today():%Y%m%d}/",
             filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
         )
     assign_variant_images(c, product_info_list)

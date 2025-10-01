@@ -1,6 +1,6 @@
 import datetime
 import logging
-import pytz
+import pathlib
 import string
 import utils
 
@@ -156,7 +156,7 @@ def create_products(
         ress3.append(
             sgc.process_product_images(
                 product_info,
-                f"/Users/taro/Downloads/{datetime.date.today():%Y%m%d}/",
+                f"{pathlib.Path.home()}/Downloads/{datetime.date.today():%Y%m%d}/",
                 filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
             )
         )

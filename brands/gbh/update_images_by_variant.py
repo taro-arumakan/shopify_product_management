@@ -1,6 +1,6 @@
 import datetime
 import logging
-import string
+import pathlib
 import utils
 from brands.gbh.product_create_apparel import (
     product_info_list_from_sheet_color_and_size,
@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 UPLOAD_IMAGE_PREFIX = f"uplaod{datetime.date.today():%Y%m%d}_gbh"
-IMAGES_LOCAL_DIR = f"/Users/taro/Downloads/{datetime.date.today():%Y%m%d}/"
+IMAGES_LOCAL_DIR = f"{pathlib.Path.home()}/Downloads/{datetime.date.today():%Y%m%d}/"
 
 
 def main():
