@@ -45,19 +45,7 @@ def product_info_list_from_sheet(
     )
 
 
-def populate_option(product_info, option1_key, option2_key):
-    return [
-        [
-            {option1_key: option1[option1_key], option2_key: option2[option2_key]},
-            product_info["price"],
-            option2["sku"],
-        ]
-        for option1 in product_info["options"]
-        for option2 in option1["options"]
-    ]
-
-
-def create_a_product(sgc: utils.Client, product_info, vendor):
+def create_a_product(sgc: utils.Client, product_info, vendor, locations):
     logging.info(f'creating {product_info["title"]}')
     description_html = get_description(
         product_info["description"],
@@ -65,23 +53,10 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
         # product_info.get("made_in", ""),
     )
     tags = product_info["tags"]
-    options = populate_option(product_info, "Color", "Size")
-    res = sgc.product_create(
-        title=product_info["title"],
-        description_html=description_html,
-        vendor=vendor,
-        tags=tags,
-        option_lists=options,
-    )
-    product_id = res["id"]
+    res = sgc.create_a_product(product_info, vendor, description_html, tags, locations)
+    product_id = res[0]["id"]
     update_metafields(sgc, product_id, product_info)
-
     res = [
-        sgc.enable_and_activate_inventory(option2["sku"], [])
-        for option1 in product_info["options"]
-        for option2 in option1["options"]
-    ]
-    res += [
         sgc.update_inventory_item_weight_by_sku(option2["sku"], product_info["weight"])
         for option1 in product_info["options"]
         for option2 in option1["options"]
@@ -112,42 +87,6 @@ def update_metafields(sgc: utils.Client, product_id, product_info):
         print(res)
 
 
-def create_products(sgc: utils.Client, product_info_list, vendor):
-    ress = []
-    for product_info in product_info_list:
-        ress.append(create_a_product(sgc, product_info, vendor))
-    return ress
-
-
-def update_stocks(sgc: utils.Client, product_info_list):
-    logging.info("updating inventory")
-    location_id = sgc.location_id_by_name("Liberaiders オンライン")
-    sku_stock_map = {
-        option2["sku"]: option2["stock"]
-        for product_info in product_info_list
-        for option1 in product_info["options"]
-        for option2 in option1["options"]
-        if option2.get("stock")
-    }
-    return [
-        sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-        for sku, stock in sku_stock_map.items()
-    ]
-
-
-def process_product_images(client: utils.Client, product_info):
-    product_id = client.product_id_by_title(product_info["title"])
-    local_paths = []
-    if "drive_link" in product_info:
-        drive_id = client.drive_link_to_id(product_info["drive_link"])
-        local_paths += client.drive_images_to_local(
-            drive_id,
-            f"/Users/taro/Downloads/liberaiders{datetime.date.today():%Y%m%d}/",
-            f"upload_{datetime.date.today():%Y%m%d}_{product_info['title'].replace('/', '_')}",
-        )
-        return client.upload_and_assign_images_to_product(product_id, local_paths)
-
-
 def assign_variant_images(client: utils.Client, product_info_list):
     for product_info in product_info_list:
         product_id = client.product_by_title(product_info["title"])["id"]
@@ -175,6 +114,7 @@ def assign_variant_images(client: utils.Client, product_info_list):
 
 def main():
     c = utils.client("liberaiders")
+    location = "Liberaiders オンライン"
     product_info_list = product_info_list_from_sheet(
         c,
         c.sheet_id,
@@ -186,12 +126,20 @@ def main():
     #         break
     # product_info_list = product_info_list[index:]
     # product_info_list = [pi for pi in product_info_list if pi['title'] == 'DESTINATION UNKNOWN L/S TEE']
-
-    create_products(c, product_info_list, vendor="liberaiders")
+    c.sanity_check_product_info_list(
+        product_info_list, c.formatted_size_text_to_html_table
+    )
     for product_info in product_info_list:
-        process_product_images(c, product_info)
+        create_a_product(
+            c, product_info_list, vendor="liberaiders", locations=[location]
+        )
+        c.process_product_images(
+            product_info,
+            localdir=f"/Users/taro/Downloads/liberaiders{datetime.date.today():%Y%m%d}/",
+            local_prefix=f"upload_{datetime.date.today():%Y%m%d}",
+        )
     assign_variant_images(c, product_info_list)
-    update_stocks(c, product_info_list)
+    c.update_stocks(product_info_list)
 
 
 if __name__ == "__main__":

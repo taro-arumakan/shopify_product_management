@@ -130,20 +130,6 @@ def create_a_product(
     )
 
 
-def update_stocks(sgc: utils.Client, product_info_list, location_name):
-    logging.info("updating inventory")
-    location_id = sgc.location_id_by_name(location_name)
-    sku_stock_map = {}
-    for product_info in product_info_list:
-        sku_stock_map.update(sgc.get_sku_stocks_map(product_info))
-    ress = []
-    for sku, stock in sku_stock_map.items():
-        ress.append(
-            sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-        )
-    return ress
-
-
 def create_products(
     sgc: utils.Client,
     product_info_list,
@@ -162,7 +148,7 @@ def create_products(
         )
 
     logging.info("updating inventory")
-    ress2 = update_stocks(sgc, product_info_list, "KUME Warehouse")
+    ress2 = sgc.update_stocks(product_info_list, "KUME Warehouse")
 
     ress3 = []
     logging.info("processing product images")
@@ -174,6 +160,7 @@ def create_products(
                 local_prefix=f"upload_{datetime.date.today():%Y%m%d}_",
             )
         )
+
     return ress, ress2, ress3
 
 
@@ -199,11 +186,7 @@ def main():
     # scheduled_time = pytz.timezone("Asia/Tokyo").localize(
     #     datetime.datetime(2025, 9, 22, 0, 0, 0)
     # )
-    for pi in product_info_list:
-        product_id = client.product_id_by_title(pi["title"])
-        client.activate_and_publish_by_product_id(
-            product_id, scheduled_time=scheduled_time
-        )
+    client.publish_products(product_info_list, scheduled_time)
 
 
 if __name__ == "__main__":

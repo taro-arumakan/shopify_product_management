@@ -82,7 +82,9 @@ def get_description_html(sgc: utils.Client, description, material, size_text, ma
     )
 
 
-def create_products(client: utils.Client, product_info_list, vendor):
+def create_products(
+    client: utils.Client, product_info_list, vendor, locations, additional_tags=None
+):
     description_html_map = {
         product_info["title"]: get_description_html(
             client,
@@ -105,7 +107,7 @@ def create_products(client: utils.Client, product_info_list, vendor):
                 product_info["collection"],
                 product_info["category"],
                 product_info["bag_category"],
-                "New Arrival",
+                (additional_tags or []) + ["New Arrival"],
             ]
         )
         ress.append(
@@ -114,24 +116,10 @@ def create_products(client: utils.Client, product_info_list, vendor):
                 vendor,
                 description_html=description_html,
                 tags=tags,
-                location_names=["Shop location"],
+                location_names=locations,
             )
         )
     return ress
-
-
-def update_stocks(sgc: utils.Client, product_info_list):
-    logging.info("updating inventory")
-    location_id = sgc.location_id_by_name("Shop location")
-    sku_stock_map = {
-        variant_info["sku"]: variant_info["stock"]
-        for product_info in product_info_list
-        for variant_info in product_info["options"]
-    }
-    return [
-        sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-        for sku, stock in sku_stock_map.items()
-    ]
 
 
 def main():
@@ -139,12 +127,17 @@ def main():
     import pprint
 
     client = utils.client("rohseoul")
+    location = "Shop location"
     product_info_list = product_info_lists_from_sheet(
         client, client.sheet_id, "25FW 2ST 민하가방", handle_suffix
     )
-    ress = create_products(client, product_info_list, client.shop_name)
+    client.sanity_check_product_info_list(
+        product_info_list, text_to_html_func=get_size_table_html
+    )
+
+    ress = create_products(client, product_info_list, client.shop_name, [location])
     pprint.pprint(ress)
-    ress = update_stocks(client, product_info_list)
+    ress = client.update_stocks(product_info_list, location)
     pprint.pprint(ress)
     ress = []
     for product_info in product_info_list:

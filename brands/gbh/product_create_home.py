@@ -188,20 +188,6 @@ def create_products(
     return ress
 
 
-def update_stocks(sgc: utils.Client, product_info_list, location_name):
-    logging.info("updating inventory")
-    location_id = sgc.location_id_by_name(location_name)
-    sku_stock_map = {}
-    [
-        sku_stock_map.update(sgc.get_sku_stocks_map(product_info))
-        for product_info in product_info_list
-    ]
-    return [
-        sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-        for sku, stock in sku_stock_map.items()
-    ]
-
-
 def main():
     import pprint
 
@@ -242,7 +228,7 @@ def main():
             )
         )
     pprint.pprint(ress)
-    res = update_stocks(client, product_info_list, "Shop location")
+    res = client.updaet_stocks(product_info_list, "Shop location")
     pprint.pprint(res)
 
 

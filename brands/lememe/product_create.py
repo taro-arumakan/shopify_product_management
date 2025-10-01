@@ -50,7 +50,7 @@ def populate_option(product_info, option1_key):
     ]
 
 
-def create_a_product(sgc: utils.Client, product_info, vendor):
+def create_a_product(sgc: utils.Client, product_info, vendor, locations):
     logging.info(f'creating {product_info["title"]}')
     description_html = get_description(
         product_info["description"],
@@ -59,6 +59,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
     )
     tags = product_info["tags"]
     options = populate_option(product_info, "Color")
+    res = sgc.create_a_product(product_info, vendor, description_html, tags, locations)
     res = sgc.product_create(
         title=product_info["title"],
         description_html=description_html,
@@ -68,11 +69,6 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
     )
     product_id = res["id"]
     update_metafields(sgc, product_id, product_info)
-    res = [
-        sgc.enable_and_activate_inventory(option1["sku"], [])
-        for option1 in product_info["options"]
-    ]
-    print(res)
 
 
 def get_size_table_html(size_text):
@@ -108,56 +104,10 @@ def create_products(sgc: utils.Client, product_info_list, vendor):
     return ress
 
 
-def update_stocks(sgc: utils.Client, product_info_list):
-    logging.info("updating inventory")
-    location_id = sgc.location_id_by_name("Shop location")
-    sku_stock_map = {
-        option1["sku"]: option1.get("stock", 0)
-        for product_info in product_info_list
-        for option1 in product_info["options"]
-    }
-    return [
-        sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-        for sku, stock in sku_stock_map.items()
-    ]
-
-
-def process_product_images(client: utils.Client, product_info):
-    product_id = client.product_id_by_title(product_info["title"])
-    local_paths = []
-    image_positions = []
-    skuss = []
-    for variant in product_info["options"]:
-        if "drive_link" in variant:
-            # assert variant[
-            #     "drive_link"
-            # ], f"no drive link for {product_info['title'], {variant}}"
-            drive_id = client.drive_link_to_id(variant["drive_link"])
-            image_positions.append(len(local_paths))
-            skuss.append([variant["sku"]])
-            local_paths += client.drive_images_to_local(
-                drive_id,
-                f"/Users/taro/Downloads/lememe{datetime.date.today():%Y%m%d}/",
-                f"upload_{datetime.date.today():%Y%m%d}_{product_info['title'].replace('/', '_')}_{variant['sku']}",
-            )
-    ress = []
-    ress.append(client.upload_and_assign_images_to_product(product_id, local_paths))
-    for image_position, skus in zip(image_positions, skuss):
-        ress.append(
-            client.assign_image_to_skus_by_position(product_id, image_position, skus)
-        )
-    return ress
-
-
-def publish_products(client: utils.Client, product_info_list):
-    for pi in product_info_list:
-        logging.info(f"publishing product: {pi['title']}")
-        product_id = client.product_id_by_title(pi["title"])
-        client.activate_and_publish_by_product_id(product_id)
-
-
 def main():
     c = utils.client("lememek")
+    location = "Shop location"
+
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "bags - launch")
     # product_info_list = product_info_list[:3]
 
@@ -166,15 +116,15 @@ def main():
     #         break
     # product_info_list = product_info_list[index:]
 
-    import pprint
-
-    res = create_products(c, product_info_list, vendor="lememe")
-    pprint.pprint(res)
     for product_info in product_info_list:
-        res = process_product_images(c, product_info)
-        pprint.pprint(res)
-    update_stocks(c, product_info_list)
-    publish_products(c, product_info_list)
+        create_a_product(c, product_info, "lememe", [location])
+        c.process_product_images(
+            product_info,
+            local_dir=f"/Users/taro/Downloads/lememe{datetime.date.today():%Y%m%d}/",
+            local_prefix=f"upload_{datetime.date.today():%Y%m%d}",
+        )
+    c.update_stocks(product_info_list, location)
+    c.publish_products(product_info_list)
 
 
 if __name__ == "__main__":

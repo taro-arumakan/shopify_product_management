@@ -1,12 +1,7 @@
-import datetime
 import logging
 import string
 import utils
-from brands.blossom.product_create_clothes import (
-    create_a_product,
-    process_images,
-    publish,
-)
+from brands.blossom.product_create_clothes import create_a_product, process_images
 
 
 logging.basicConfig(level=logging.INFO)
@@ -63,7 +58,7 @@ def main():
     c.update_stocks(product_info_list, location)
 
     process_images(c, product_info_list)
-    publish(c, product_info_list)
+    c.publish_products(product_info_list)
 
 
 if __name__ == "__main__":

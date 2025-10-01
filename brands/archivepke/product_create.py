@@ -118,20 +118,6 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
     )
 
 
-def update_stocks(sgc: utils.Client, product_info_list):
-    logging.info("updating inventory")
-    location_id = sgc.location_id_by_name("Archivépke Warehouse")
-    sku_stock_map = {
-        variant_info["sku"]: variant_info["stock"]
-        for product_info in product_info_list
-        for variant_info in product_info["options"]
-    }
-    return [
-        sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-        for sku, stock in sku_stock_map.items()
-    ]
-
-
 def main():
     client = utils.client("archive-epke")
     handle_suffix = "25fw"
@@ -150,7 +136,7 @@ def main():
         ress.append(res)
     pprint.pprint(ress)
 
-    res = update_stocks(client, product_info_list)
+    client.update_stocks(product_info_list, "Archivépke Warehouse")
     pprint.pprint(res)
 
     ress = []

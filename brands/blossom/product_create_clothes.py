@@ -78,12 +78,6 @@ def process_images(client: utils.Client, product_info_list):
         logging.debug(res)
 
 
-def publish(client: utils.Client, product_info_list):
-    for product_info in product_info_list:
-        product_id = client.product_id_by_title(product_info["title"])
-        client.activate_and_publish_by_product_id(product_id)
-
-
 def main():
     c = utils.client("blossomhcompany")
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes")
@@ -108,7 +102,7 @@ def main():
         create_a_product(c, product_info, vendor="blossom", locations=[location])
     c.update_stocks(product_info_list, location)
     process_images(c, product_info_list)
-    publish(c, product_info_list)
+    c.publish_products(product_info_list)
 
 
 if __name__ == "__main__":

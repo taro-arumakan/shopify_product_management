@@ -226,6 +226,10 @@ def download_images(dirpath: str, images_link, prefix, tempdir):
 
 
 def process_images(sgc: utils.Client, product_info):
+    """
+    As Apricot Studios has their images in Dropbox and also its images structure differs from other brands,
+    keeping this customized processing logic.
+    """
     logging.info("downloading product main images")
     image_pathss = [
         download_images(
@@ -282,34 +286,6 @@ def process_images(sgc: utils.Client, product_info):
     )
 
 
-def update_stocks(sgc: utils.Client, product_info_list, location_name):
-    logging.info("updating inventory")
-    location_id = sgc.location_id_by_name(location_name)
-    sku_stock_map = {}
-    for product_info in product_info_list:
-        sku_stock_map.update(sgc.get_sku_stocks_map(product_info))
-    ress = []
-    for sku, stock in sku_stock_map.items():
-        ress.append(
-            sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-        )
-    return ress
-
-
-def check_size_text(product_info_list):
-    for product_info in product_info_list:
-        size_text = product_info.get("size_text")
-        if size_text:
-            try:
-                text_to_html_tables_and_paragraphs(size_text)
-            except Exception as e:
-                print(
-                    f"Error parsing size information for {product_info['title']}: {e}"
-                )
-        else:
-            print(f"No size information found for {product_info['title']}")
-
-
 def main():
     import pprint
 
@@ -318,9 +294,9 @@ def main():
     product_info_list = product_info_list_from_sheet_color_and_size(
         client, client.sheet_id, "9.25 25Autumn(2nd)"
     )
-
-    # first checking the size text parsing
-    check_size_text(product_info_list)
+    client.sanity_check_product_info_list(
+        product_info_list, text_to_html_func=text_to_html_tables_and_paragraphs
+    )
 
     for index, product_info in enumerate(product_info_list):
         if product_info["title"] == "Coco Collar Set":
@@ -333,8 +309,8 @@ def main():
         additional_tags=["New Arrival", "25 Autumn", "25 Autumn 2nd"],
     )
     pprint.pprint(ress)
-    ress2 = update_stocks(client, product_info_list, ["Apricot Studios Warehouse"])
 
+    ress2 = client.update_stocks(product_info_list, ["Apricot Studios Warehouse"])
     pprint.pprint(ress2)
 
 

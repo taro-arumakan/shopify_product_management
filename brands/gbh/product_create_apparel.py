@@ -48,18 +48,22 @@ def create_a_product(
     sgc: utils.Client,
     product_info,
     vendor,
-    size_texts=None,
-    get_size_table_html_func=None,
+    locations,
     additional_tags=None,
 ):
     logging.info(f'creating {product_info["title"]}')
+    size_texts = {
+        option2["サイズ"]: option2["size_text"]
+        for option1 in product_info["options"]
+        for option2 in option1["options"]
+    }
     description_html = sgc.get_description_html(
         description=product_info["description"],
         product_care=product_info["product_care"],
         material=product_info["material"],
         size_text=size_texts or product_info["size_text"],
         made_in=product_info["made_in"],
-        get_size_table_html_func=get_size_table_html_func,
+        get_size_table_html_func=size_table_html_from_size_dict_space_pairs,
     )
     tags = ",".join(
         [
@@ -74,76 +78,8 @@ def create_a_product(
         vendor=vendor,
         description_html=description_html,
         tags=tags,
-        location_names=["Shop location"],
+        location_names=locations,
     )
-
-
-def create_products(
-    sgc: utils.Client,
-    product_info_list,
-    vendor,
-    get_size_table_html_func=None,
-    additional_tags=None,
-):
-    ress = []
-    for product_info in product_info_list:
-        size_texts = {
-            option2["サイズ"]: option2["size_text"]
-            for option1 in product_info["options"]
-            for option2 in option1["options"]
-        }
-        ress.append(
-            create_a_product(
-                sgc,
-                product_info,
-                vendor,
-                size_texts=size_texts,
-                get_size_table_html_func=get_size_table_html_func,
-                additional_tags=additional_tags,
-            )
-        )
-    ress2 = update_stocks(sgc, product_info_list, ["Shop location"])
-    return ress, ress2
-
-
-def update_stocks(sgc: utils.Client, product_info_list, location_name):
-    logging.info("updating inventory")
-    location_id = sgc.location_id_by_name(location_name)
-    sku_stock_map = {}
-    for product_info in product_info_list:
-        sku_stock_map.update(sgc.get_sku_stocks_map(product_info))
-    ress = []
-    for sku, stock in sku_stock_map.items():
-        ress.append(
-            sgc.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-        )
-    return ress
-
-
-def check_size_text(product_info_list):
-    for product_info in product_info_list:
-        size_texts = {
-            option2["サイズ"]: option2["size_text"]
-            for option1 in product_info["options"]
-            for option2 in option1["options"]
-        }
-        try:
-            res = size_table_html_from_size_dict_space_pairs(size_texts)
-            print(f"{product_info['title']}\n{res}\n")
-        except Exception as e:
-            logging.error(f'error parsing size text for {product_info["title"]}: {e}')
-
-
-def check_skus(client: utils.Client, product_info_list):
-    for pi in product_info_list:
-        for option1 in pi["options"]:
-            for option2 in option1["options"]:
-                try:
-                    client.variant_by_sku(option2["sku"])
-                except utils.NoVariantsFoundException as e:
-                    pass
-                else:
-                    logging.error(f'sku already exists: {option2["sku"]}')
 
 
 def main():
@@ -151,6 +87,8 @@ def main():
 
     client = utils.client("gbhjapan")
     vendor = "GBH"
+    location = "Shop location"
+
     product_info_list = product_info_list_from_sheet_color_and_size(
         client, client.sheet_id, "APPAREL 25FW (FALL 1次)"
     )
@@ -160,26 +98,26 @@ def main():
         if pi["title"]
         not in ["HUNTING FAUX LEATHER JACKET", "MERINO WOOL HIGHNECK CARDIGAN"]
     ]
-    check_size_text(product_info_list)
-    check_skus(client, product_info_list)
-    ress = create_products(
-        client,
-        product_info_list,
-        vendor,
-        get_size_table_html_func=size_table_html_from_size_dict_space_pairs,
-        additional_tags=["New Arrival", "25FW"],
+    client.sanity_check_product_info_list(
+        product_info_list, text_to_html_func=size_table_html_from_size_dict_space_pairs
     )
-    pprint.pprint(ress)
-    ress = []
     for product_info in product_info_list:
-        ress.append(
-            client.process_product_images(
-                product_info,
-                f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
-                f"upload_{datetime.date.today():%Y%m%d}_",
-            )
+        create_a_product(
+            client,
+            product_info,
+            vendor,
+            [location],
+            additional_tags=["New Arrival", "25FW"],
         )
-    pprint.pprint(ress)
+
+    client.update_stocks(product_info_list, location)
+
+    for product_info in product_info_list:
+        client.process_product_images(
+            product_info,
+            f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
+            f"upload_{datetime.date.today():%Y%m%d}_",
+        )
 
 
 if __name__ == "__main__":

@@ -112,6 +112,13 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             for sku, stock in sku_stock_map.items()
         ]
 
+    def publish_products(self, product_info_list, scheduled_time):
+        for pi in product_info_list:
+            product_id = self.product_id_by_title(pi["title"])
+            self.activate_and_publish_by_product_id(
+                product_id, scheduled_time=scheduled_time
+            )
+
     def replace_images_by_skus(
         self, skus, folder_id, image_local_dir, download_filename_prefix
     ):
