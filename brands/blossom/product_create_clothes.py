@@ -17,19 +17,19 @@ def product_info_list_from_sheet(
         tags=string.ascii_lowercase.index("b"),
         price=string.ascii_lowercase.index("d"),
         description=string.ascii_lowercase.index("f"),
-        product_care=string.ascii_lowercase.index("i"),
-        material=string.ascii_lowercase.index("j"),
-        size_text=string.ascii_lowercase.index("k"),
-        made_in=string.ascii_lowercase.index("l"),
+        product_care=string.ascii_lowercase.index("h"),
+        material=string.ascii_lowercase.index("i"),
+        size_text=string.ascii_lowercase.index("j"),
+        made_in=string.ascii_lowercase.index("k"),
     )
-    option1_attrs = {"Color": string.ascii_lowercase.index("m")}
+    option1_attrs = {"Color": string.ascii_lowercase.index("l")}
     option1_attrs.update(
-        drive_link=string.ascii_lowercase.index("n"),
+        drive_link=string.ascii_lowercase.index("m"),
     )
-    option2_attrs = {"Size": string.ascii_lowercase.index("o")}
+    option2_attrs = {"Size": string.ascii_lowercase.index("n")}
     option2_attrs.update(
-        sku=string.ascii_lowercase.index("p"),
-        stock=string.ascii_lowercase.index("q"),
+        sku=string.ascii_lowercase.index("o"),
+        stock=string.ascii_lowercase.index("p"),
     )
     return gai.to_products_list(
         sheet_id,
@@ -150,6 +150,12 @@ def main():
     #     if product_info["title"] == "Liberaiders PX LOGO TEE":
     #         break
     # product_info_list = product_info_list[index:]
+
+    c.check_size_texts(
+        product_info_list=product_info_list,
+        text_to_html_func=c.formatted_size_text_to_html_table,
+        raise_on_error=False,
+    )
 
     import pprint
 
