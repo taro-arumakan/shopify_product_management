@@ -177,23 +177,6 @@ class GoogleSheetsApiInterface:
             raise ValueError(f"No variant {key} found in product info: {product_info}")
         return variants_info
 
-    def get_sku_stocks_map(self, product_info):
-        variants_info = self.get_variants_level_info(product_info)
-        return {variant["sku"]: variant.get("stock", 0) for variant in variants_info}
-
-    def update_stocks(self, product_info_list, location_name):
-        logger.info("updating inventory")
-        location_id = self.location_id_by_name(location_name)
-        sku_stock_map = {}
-        [
-            sku_stock_map.update(self.get_sku_stocks_map(product_info))
-            for product_info in product_info_list
-        ]
-        return [
-            self.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
-            for sku, stock in sku_stock_map.items()
-        ]
-
     def populate_option(self, product_info):
         option1_key, option2_key = None, None
         if option1 := product_info.get("options"):

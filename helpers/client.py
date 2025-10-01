@@ -1,3 +1,4 @@
+import collections
 import logging
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
@@ -75,18 +76,35 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 sku=product_info["sku"],
             )
         logger.info(f"activating inventory")
-        res2 = self._enable_and_activate_inventory(
+        res2 = self.enable_and_activate_inventory_by_product_info(
             product_info, location_names, options
         )
         return (res, res2)
 
-    def _enable_and_activate_inventory(
+    def enable_and_activate_inventory_by_product_info(
         self, product_info, location_names, options=None
     ):
         options = options or self.populate_option(product_info)
         skus = [option[2] for option in options] if options else [product_info["sku"]]
         res2 = [self.enable_and_activate_inventory(sku, location_names) for sku in skus]
         return res2
+
+    def get_sku_stocks_map(self, product_info):
+        variants_info = self.get_variants_level_info(product_info)
+        return {variant["sku"]: variant.get("stock", 0) for variant in variants_info}
+
+    def update_stocks(self, product_info_list, location_name):
+        logger.info("updating inventory")
+        location_id = self.location_id_by_name(location_name)
+        sku_stock_map = {}
+        [
+            sku_stock_map.update(self.get_sku_stocks_map(product_info))
+            for product_info in product_info_list
+        ]
+        return [
+            self.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
+            for sku, stock in sku_stock_map.items()
+        ]
 
     def replace_images_by_skus(
         self, skus, folder_id, image_local_dir, download_filename_prefix
@@ -123,3 +141,66 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             product_id, file_names[0]
         )
         self.assign_image_to_skus(product_id, uploaded_variant_media["id"], skus)
+
+    def check_size_texts(
+        self, product_info_list, text_to_html_func, raise_on_error=True
+    ):
+        res = []
+        for product_info in product_info_list:
+            size_text = product_info.get("size_text", "").strip()
+            if not size_text:
+                logger.warning(f'no size text for {product_info["title"]}')
+            else:
+                try:
+                    size_table_html = text_to_html_func(size_text)
+                except Exception as e:
+                    m = f"Error formatting size text for {product_info['title']}: {e}"
+                    if raise_on_error:
+                        logger.error(m)
+                        raise
+                    else:
+                        res.append(m)
+                else:
+                    if raise_on_error:
+                        print(size_table_html)
+        if not raise_on_error:
+            return res
+
+    def check_skus(self, product_info_list):
+        options = self.populate_option(product_info_list[0])
+        key_length = len(options[0][0].keys())
+        if key_length == 2:
+            skus = [
+                o2["sku"]
+                for pi in product_info_list
+                for o1 in pi["options"]
+                for o2 in o1["options"]
+            ]
+        elif key_length == 1:
+            skus = [o["sku"] for pi in product_info_list for o in pi["options"]]
+        else:
+            skus = [pi["sku"] for pi in product_info_list]
+
+        counts_by_sku = collections.Counter(skus)
+        counts_by_sku = {
+            sku: count for sku, count in counts_by_sku.items() if count > 1
+        }
+        if counts_by_sku:
+            raise RuntimeError(
+                f"Duplicate SKUs found:\n{'\n'.join(": ".join(map(str, [sku, count])) for sku, count in counts_by_sku.items())}"
+            )
+
+    def sanity_check_product_info_list(self, product_info_list, text_to_html_func):
+        res = []
+        try:
+            self.check_skus(product_info_list)
+        except RuntimeError as e1:
+            logger.error(e1)
+            res.append(e1)
+        res += self.check_size_texts(
+            product_info_list, text_to_html_func, raise_on_error=False
+        )
+        for r in res:
+            logger.error(r)
+        if res:
+            raise RuntimeError("Failed sanity check")
