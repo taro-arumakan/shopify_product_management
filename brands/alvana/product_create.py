@@ -64,11 +64,7 @@ def main():
         res = create_a_product(c, product_info, "alvana", [location])
         pprint.pprint(res)
     for product_info in product_info_list:
-        res = c.process_product_images(
-            product_info,
-            local_dir=f"{pathlib.Path.home()}/Downloads/alvana{datetime.date.today():%Y%m%d}/",
-            filename_prefix=f"upload_{datetime.date.today():%Y%m%d}",
-        )
+        res = c.process_product_images(product_info)
         pprint.pprint(res)
     c.update_stocks(product_info_list, location)
 
