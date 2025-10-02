@@ -82,24 +82,32 @@ def main():
     product_info_list = [
         pi
         for pi in product_info_list
-        if pi["title"] not in ["GENTO SHIRRING TOP", "GENTO BALLOON SKIRT"]
+        if pi["title"]
+        in ["TIEN TURTLE-NECK T-SHIRT", "BRIN SLEEVELESS KNIT", "TIEN U-NECK T-SHIRT"]
     ]
     # for index, product_info in enumerate(product_info_list):
     #     if product_info["title"] == "GAEIL SUEDE BEMUDA PANTS":
     #         break
     # product_info_list = product_info_list[index:]
 
-    c.sanity_check_product_info_list(
-        product_info_list=product_info_list,
-        text_to_html_func=c.formatted_size_text_to_html_table,
-    )
+    # c.sanity_check_product_info_list(
+    #     product_info_list=product_info_list,
+    #     text_to_html_func=c.formatted_size_text_to_html_table,
+    # )
 
-    location = "Blossom Warehouse"
-    for product_info in product_info_list:
-        create_a_product(c, product_info, vendor="blossom", locations=[location])
-    c.update_stocks(product_info_list, location)
+    # location = "Blossom Warehouse"
+    # for product_info in product_info_list:
+    #     create_a_product(c, product_info, vendor="blossom", locations=[location])
+    # c.update_stocks(product_info_list, location)
+
     process_images(c, product_info_list)
-    c.publish_products(product_info_list)
+
+    # scheduled_time = None
+    # import pytz
+    # scheduled_time = pytz.timezone("Asia/Tokyo").localize(
+    #     datetime.datetime(2025, 10, 3, 0, 0, 0)
+    # )
+    # c.publish_products(product_info_list, scheduled_time=scheduled_time)
 
 
 if __name__ == "__main__":
