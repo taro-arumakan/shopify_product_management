@@ -4,7 +4,7 @@ import logging
 import pathlib
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
-from exceptions import NoVariantsFoundException
+from helpers.exceptions import NoVariantsFoundException
 
 logger = logging.getLogger(__name__)
 
