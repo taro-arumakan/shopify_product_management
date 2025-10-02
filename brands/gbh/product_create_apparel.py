@@ -1,6 +1,5 @@
-import datetime
+import copy
 import logging
-import pathlib
 import string
 import utils
 from brands.gbh.get_size_table_html import size_table_html_from_size_dict_space_pairs
@@ -11,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 def product_info_list_from_sheet_color_and_size(
     gai: utils.Client, sheet_id, sheet_name
 ):
-    start_row = 2
+    start_row = 1
     column_product_attrs = dict(
         title=string.ascii_lowercase.index("f"),
         collection=string.ascii_lowercase.index("c"),
@@ -82,6 +81,24 @@ def create_a_product(
     )
 
 
+def merge_size_texts(product_info):
+    product_info = copy.deepcopy(product_info)
+    # uniquify size and size texts, keeping the order
+    sizes, size_texts = map(
+        dict.fromkeys,
+        zip(
+            *[
+                (o2["サイズ"], o2["size_text"])
+                for o1 in product_info["options"]
+                for o2 in o1["options"]
+            ]
+        ),
+    )
+    size_text = "\n".join(f"[{size}] {st}" for size, st in zip(sizes, size_texts))
+    product_info["size_text"] = size_text
+    return product_info
+
+
 def main():
     import pprint
 
@@ -92,14 +109,15 @@ def main():
     product_info_list = product_info_list_from_sheet_color_and_size(
         client, client.sheet_id, "APPAREL 25FW (FALL 1次)"
     )
-    product_info_list = [
-        pi
-        for pi in product_info_list
-        if pi["title"]
-        not in ["HUNTING FAUX LEATHER JACKET", "MERINO WOOL HIGHNECK CARDIGAN"]
-    ]
+    product_info_list = [merge_size_texts(pi) for pi in product_info_list]
+    # product_info_list = [
+    #     pi
+    #     for pi in product_info_list
+    #     if pi["title"]
+    #     in ["HUNTING FAUX LEATHER JACKET"]
+    # ]
     client.sanity_check_product_info_list(
-        product_info_list, text_to_html_func=size_table_html_from_size_dict_space_pairs
+        product_info_list, text_to_html_func=client.formatted_size_text_to_html_table
     )
     for product_info in product_info_list:
         create_a_product(
