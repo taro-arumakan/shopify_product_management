@@ -1,5 +1,7 @@
 import copy
+import datetime
 import logging
+import pytz
 import string
 import utils
 from brands.gbh.get_size_table_html import size_table_html_from_size_dict_space_pairs
@@ -110,10 +112,10 @@ def main():
         client, client.sheet_id, "APPAREL 25FW (FALL 2次)"
     )
     product_info_list = [merge_size_texts(pi) for pi in product_info_list]
+    skus_exists = ["FLEECE MOUNTAIN JACKET", "BOUCLE RAGLAN KNIT"]
+    titles_exists = ["WOOL CREW NECK KNIT", "WOOL V-NECK SWEATER"]
     product_info_list = [
-        pi
-        for pi in product_info_list
-        if pi["title"] not in ["FLEECE MOUNTAIN JACKET", "BOUCLE RAGLAN KNIT"]
+        pi for pi in product_info_list if pi["title"] not in skus_exists + titles_exists
     ]
 
     # client.check_size_texts(
@@ -137,6 +139,11 @@ def main():
 
     for product_info in product_info_list:
         client.process_product_images(product_info)
+
+    # scheduled_time = pytz.timezone("Asia/Tokyo").localize(
+    #     datetime.datetime(2025, 10, 9, 0, 0, 0)
+    # )
+    # client.publish_products(product_info_list, scheduled_time=scheduled_time)
 
 
 if __name__ == "__main__":
