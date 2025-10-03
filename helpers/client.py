@@ -192,24 +192,19 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         if not raise_on_error:
             return res
 
-    def product_info_list_to_skus(self, product_info_list):
-        options = self.populate_option(product_info_list[0])
+    def product_info_to_skus(self, product_info):
+        options = self.populate_option(product_info)
         key_length = len(options[0][0].keys())
         if key_length == 2:
-            skus = [
-                o2["sku"]
-                for pi in product_info_list
-                for o1 in pi["options"]
-                for o2 in o1["options"]
-            ]
+            skus = [o2["sku"] for o1 in product_info["options"] for o2 in o1["options"]]
         elif key_length == 1:
-            skus = [o["sku"] for pi in product_info_list for o in pi["options"]]
+            skus = [o["sku"] for o in product_info["options"]]
         else:
-            skus = [pi["sku"] for pi in product_info_list]
+            skus = [product_info["sku"]]
         return skus
 
     def check_sku_duplicates(self, product_info_list):
-        skus = self.product_info_list_to_skus(product_info_list)
+        skus = sum([self.product_info_to_skus(pi) for pi in product_info_list], [])
         counts_by_sku = collections.Counter(skus)
         counts_by_sku = {
             sku: count for sku, count in counts_by_sku.items() if count > 1
@@ -220,15 +215,16 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             )
 
     def check_existing_skus(self, product_info_list):
-        skus = self.product_info_list_to_skus(product_info_list)
         res = []
-        for sku in skus:
-            try:
-                self.variant_by_sku(sku)
-            except NoVariantsFoundException:
-                pass
-            else:
-                res.append(f"Existing SKU found: {sku}")
+        for pi in product_info_list:
+            skus = self.product_info_to_skus(pi)
+            for sku in skus:
+                try:
+                    self.variant_by_sku(sku)
+                except NoVariantsFoundException:
+                    pass
+                else:
+                    res.append(f"Existing SKU found: {pi['title']} - {sku}")
         return res
 
     def sanity_check_product_info_list(self, product_info_list, text_to_html_func):
