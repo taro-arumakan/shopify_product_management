@@ -107,25 +107,30 @@ def main():
     location = "Shop location"
 
     product_info_list = product_info_list_from_sheet_color_and_size(
-        client, client.sheet_id, "APPAREL 25FW (FALL 1次)"
+        client, client.sheet_id, "APPAREL 25FW (FALL 2次)"
     )
     product_info_list = [merge_size_texts(pi) for pi in product_info_list]
-    # product_info_list = [
-    #     pi
-    #     for pi in product_info_list
-    #     if pi["title"]
-    #     in ["HUNTING FAUX LEATHER JACKET"]
-    # ]
+    product_info_list = [
+        pi
+        for pi in product_info_list
+        if pi["title"] not in ["FLEECE MOUNTAIN JACKET", "BOUCLE RAGLAN KNIT"]
+    ]
+
+    # client.check_size_texts(
+    #     product_info_list, text_to_html_func=client.formatted_size_text_to_html_table, raise_on_error=True
+    # )
+
     client.sanity_check_product_info_list(
         product_info_list, text_to_html_func=client.formatted_size_text_to_html_table
     )
+
     for product_info in product_info_list:
         create_a_product(
             client,
             product_info,
             vendor,
             [location],
-            additional_tags=["New Arrival", "25FW"],
+            additional_tags=["New Arrival", "25FW", "25FW_Fall_2nd"],
         )
 
     client.update_stocks(product_info_list, location)
