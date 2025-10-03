@@ -1,4 +1,7 @@
 {
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}"
+  },
   "python.testing.pytestArgs": [
     "shopify_product_management"
   ],
