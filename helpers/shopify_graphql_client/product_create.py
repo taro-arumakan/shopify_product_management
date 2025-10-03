@@ -191,7 +191,7 @@ class ProductCreate:
         [3] 着丈 90 / 肩幅 xxx / 袖丈 yyy
         [4] 着丈 90 / 肩幅 xxx / 袖丈 yyy
         """
-        size_expression = re.compile(r"\[(\w+)\]\s+(.*)")
+        size_expression = re.compile(r"\[(.+?)\]\s+(.*)")
         header_value_expression = re.compile(r"([^\d]+)\s*([\d\.]+)")
 
         rows = []
