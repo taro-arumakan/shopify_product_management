@@ -115,6 +115,13 @@ class ProductQueries:
     def products_by_tag(self, tag, *args, **kwargs):
         return self.products_by_query(f"tag:'{tag}'", *args, **kwargs)
 
+    def products_by_metafield(
+        self, metafield_namespace, metafield_key, metafield_value
+    ):
+        return self.products_by_query(
+            f'metafields.{metafield_namespace}.{metafield_key}:"{metafield_value}"'
+        )
+
     def product_by_query(self, query_string, *args, **kwargs):
         products = self.products_by_query(query_string, *args, **kwargs)
         if len(products) != 1:
