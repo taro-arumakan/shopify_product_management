@@ -129,7 +129,7 @@ class CollectionQueries:
         }
         """
         variables = {
-            "id": collection_id,
+            "id": self.sanitize_id(collection_id, prefix="Collection"),
             "productIds": [self.sanitize_id(product_id) for product_id in product_ids],
         }
         res = self.run_query(query, variables)
