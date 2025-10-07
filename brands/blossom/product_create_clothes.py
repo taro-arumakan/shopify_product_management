@@ -103,10 +103,8 @@ def main():
     process_images(c, product_info_list)
 
     # scheduled_time = None
-    # import pytz
-    # scheduled_time = pytz.timezone("Asia/Tokyo").localize(
-    #     datetime.datetime(2025, 10, 3, 0, 0, 0)
-    # )
+    # import zoneinfo
+    # scheduled_time = datetime.datetime(2025, 10, 3, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo('Asia/Tokyo'))
     # c.publish_products(product_info_list, scheduled_time=scheduled_time)
 
 

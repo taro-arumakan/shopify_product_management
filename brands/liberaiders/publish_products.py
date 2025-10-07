@@ -1,6 +1,6 @@
 import datetime
 import logging
-import pytz
+import zoneinfo
 import utils
 
 logging.basicConfig(level=logging.INFO)

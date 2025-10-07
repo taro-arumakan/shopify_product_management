@@ -1,7 +1,7 @@
 import copy
 import datetime
 import logging
-import pytz
+import zoneinfo
 import string
 import utils
 from brands.gbh.get_size_table_html import size_table_html_from_size_dict_space_pairs
@@ -140,9 +140,7 @@ def main():
     for product_info in product_info_list:
         client.process_product_images(product_info)
 
-    # scheduled_time = pytz.timezone("Asia/Tokyo").localize(
-    #     datetime.datetime(2025, 10, 9, 0, 0, 0)
-    # )
+    # scheduled_time = datetime.datetime(2025, 10, 9, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo('Asia/Tokyo'))
     # client.publish_products(product_info_list, scheduled_time=scheduled_time)
 
 

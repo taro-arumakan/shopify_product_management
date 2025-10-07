@@ -1,5 +1,5 @@
 import datetime
-import pytz
+import zoneinfo
 import logging
 import utils
 
@@ -8,8 +8,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    scheduled_time = pytz.timezone("Asia/Tokyo").localize(
-        datetime.datetime(2025, 9, 1, 0, 0, 0)
+    scheduled_time = datetime.datetime(
+        2025, 9, 1, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
     client = utils.client("kumej")
     products = client.products_by_tag("25FW")

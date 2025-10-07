@@ -177,9 +177,7 @@ def main():
     pprint.pprint(ress)
 
     scheduled_time = None
-    # scheduled_time = pytz.timezone("Asia/Tokyo").localize(
-    #     datetime.datetime(2025, 9, 22, 0, 0, 0)
-    # )
+    # datetime.datetime(2025, 9, 22, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo('Asia/Tokyo'))
     client.publish_products(product_info_list, scheduled_time)
 
 
