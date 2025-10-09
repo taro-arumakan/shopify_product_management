@@ -27,46 +27,78 @@ class Metafields:
         }
         return res
 
+    def clear_metafield_value_by_metafield_id(
+        self, product_id, namespace, metafield_key
+    ):
+        query = """
+            mutation MetafieldsDelete($metafields: [MetafieldIdentifierInput!]!) {
+                metafieldsDelete(metafields: $metafields) {
+                    deletedMetafields {
+                        key
+                        namespace
+                        ownerId
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }"""
+        variables = {
+            "metafields": [
+                {"ownerId": product_id, "namespace": namespace, "key": metafield_key}
+            ]
+        }
+
+        return self.run_query(query, variables)
+
     def update_product_metafield(
         self, product_id, metafield_namespace, metafield_key, value
     ):
-        query = """
-        mutation updateProductMetafield($input: ProductInput!) {
-            productUpdate(input: $input) {
-                product {
-                    id
-                    metafields (first:10) {
-                        nodes {
-                            id
-                            namespace
-                            key
-                            value
+        if not value:
+            res = self.clear_metafield_value_by_metafield_id(
+                product_id, metafield_namespace, metafield_key
+            )
+            res = res["metafieldsDelete"]
+        else:
+            query = """
+            mutation updateProductMetafield($input: ProductInput!) {
+                productUpdate(input: $input) {
+                    product {
+                        id
+                        metafields (first:10) {
+                            nodes {
+                                id
+                                namespace
+                                key
+                                value
+                            }
                         }
                     }
-                }
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """
-        variables = {
-            "input": {
-                "id": self.sanitize_id(product_id),
-                "metafields": [
-                    {
-                        "namespace": metafield_namespace,
-                        "key": metafield_key,
-                        "value": value,
+                    userErrors {
+                        field
+                        message
                     }
-                ],
+                }
             }
-        }
-        res = self.run_query(query, variables)
-        if res["productUpdate"]["userErrors"]:
+            """
+            variables = {
+                "input": {
+                    "id": self.sanitize_id(product_id),
+                    "metafields": [
+                        {
+                            "namespace": metafield_namespace,
+                            "key": metafield_key,
+                            "value": value,
+                        }
+                    ],
+                }
+            }
+            res = self.run_query(query, variables)
+            res = res["productUpdate"]
+        if errors := res["userErrors"]:
             raise RuntimeError(
-                f"Error updating {metafield_namespace}.{metafield_key}: {res['productUpdate']['userErrors']}"
+                f"Error updating {metafield_namespace}.{metafield_key}: {errors}"
             )
         return res
 
@@ -150,13 +182,14 @@ class Metafields:
         ), f'{"Multiple" if res else "No"} metafields found for {namespace}:{key}: {res}'
         return res[0]["id"]
 
-    def product_metafield_value_by_product_id(
+    def product_metafield_by_product_id(
         self, product_id, namespace="custom", key="product_description"
     ):
         query = """
         query ProductMetafield($namespace: String!, $key: String!, $ownerId: ID!) {
             product(id: $ownerId) {
-                metafieldValue: metafield(namespace: $namespace, key: $key) {
+                metafield(namespace: $namespace, key: $key) {
+                    id
                     value
                 }
             }
@@ -164,7 +197,12 @@ class Metafields:
         """
         variables = {"ownerId": product_id, "namespace": namespace, "key": key}
         res = self.run_query(query, variables)
-        return res["product"]["metafieldValue"]["value"]
+        return res["product"]["metafield"]
+
+    def product_metafield_value_by_product_id(
+        self, product_id, namespace="custom", key="product_description"
+    ):
+        return self.product_metafield_by_product_id(product_id, namespace, key)["value"]
 
     def update_variant_metafield(
         self, product_id, variant_id, metafield_namespace, metafield_key, value
