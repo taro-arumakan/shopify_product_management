@@ -18,16 +18,17 @@ def product_info_list_from_sheet(gai: utils.Client, sheet_id, sheet_name):
         product_care=string.ascii_lowercase.index("f"),
         material=string.ascii_lowercase.index("g"),
         size_text=string.ascii_lowercase.index("h"),
-        made_in=string.ascii_lowercase.index("i"),
+        weight=string.ascii_lowercase.index("i"),
+        made_in=string.ascii_lowercase.index("j"),
     )
-    option1_attrs = {"カラー": string.ascii_lowercase.index("j")}
+    option1_attrs = {"カラー": string.ascii_lowercase.index("k")}
     option1_attrs.update(
-        drive_link=string.ascii_lowercase.index("k"),
+        drive_link=string.ascii_lowercase.index("l"),
     )
-    option2_attrs = {"サイズ": string.ascii_lowercase.index("l")}
+    option2_attrs = {"サイズ": string.ascii_lowercase.index("m")}
     option2_attrs.update(
-        sku=string.ascii_lowercase.index("m"),
-        stock=string.ascii_lowercase.index("n"),
+        sku=string.ascii_lowercase.index("n"),
+        stock=string.ascii_lowercase.index("o"),
     )
     return gai.to_products_list(
         sheet_id,
