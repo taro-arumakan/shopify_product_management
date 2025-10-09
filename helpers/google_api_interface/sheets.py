@@ -130,13 +130,16 @@ class GoogleSheetsApiInterface:
         row_data = response["sheets"][0]["data"][0]["rowData"]
         self.drive_link_cache = {}
         for row_index, row in enumerate(row_data):
-            values = row.get("values")[0]
-            if "chipRuns" in values:
-                hyperlink = values["chipRuns"][0]["chip"]["richLinkProperties"]["uri"]
-            else:
-                hyperlink = values.get("hyperlink")
-            if hyperlink:
-                self.drive_link_cache[row_index + 1] = hyperlink
+            if values := row.get("values"):
+                values = values[0]
+                if "chipRuns" in values:
+                    hyperlink = values["chipRuns"][0]["chip"]["richLinkProperties"][
+                        "uri"
+                    ]
+                else:
+                    hyperlink = values.get("hyperlink")
+                if hyperlink:
+                    self.drive_link_cache[row_index + 1] = hyperlink
 
     def get_richtext_link(self, sheet_title, row_num, column_index):
         if not self.drive_link_cache:
