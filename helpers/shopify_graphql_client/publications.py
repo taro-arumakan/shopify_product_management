@@ -16,12 +16,39 @@ class Publications:
                         title
                         status
                     }
+                    products(first:250) {
+                        nodes {
+                            id
+                            title
+                            variants(first:30) {
+                                nodes {
+                                    id
+                                    title
+                                    sku
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
         """
         res = self.run_query(query)
         return res["publications"]["nodes"]
+
+    def publication_by_publication_name(self, name):
+        publications = self.publications()
+        for publication in publications:
+            if publication["name"] == name:
+                return publication
+
+    def online_store_publication(self):
+        publication = self.publication_by_publication_name("Online Store")
+        if len(publication["products"]["nodes"]) == 250:
+            raise RuntimeError(
+                f"number of products included in the publicaiton may have exceeded the query limit. check the products."
+            )
+        return publication
 
     def activate_and_publish_by_product_id(
         self, product_id, scheduled_time: datetime.datetime = None
