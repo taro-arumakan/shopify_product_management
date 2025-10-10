@@ -54,7 +54,7 @@ class ProductQueries:
                             value
                         }
                     }
-                    variants (first:10) {
+                    variants (first:30) {
                         nodes {
                             id
                             title
