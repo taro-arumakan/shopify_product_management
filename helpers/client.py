@@ -4,7 +4,11 @@ import logging
 import pathlib
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
-from helpers.exceptions import NoVariantsFoundException, NoProductsFoundException
+from helpers.exceptions import (
+    NoVariantsFoundException,
+    NoProductsFoundException,
+    MultipleProductsFoundException,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -227,13 +231,17 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                     res.append(f"Existing SKU found: {pi['title']} - {sku}")
         return res
 
-    def check_existing_titles(self, product_info_list):
+    def check_existing_products(self, product_info_list):
         res = []
         for pi in product_info_list:
             try:
-                self.product_by_title(pi["title"])
+                f = self.product_by_handle if "handle" in pi else self.product_by_title
+                p = pi["handle"] if "handle" in pi else pi["title"]
+                f(p)
             except NoProductsFoundException:
                 pass
+            except MultipleProductsFoundException:
+                res.append(f"Existing product found with title: {pi['title']}")
             else:
                 res.append(f"Existing product found with title: {pi['title']}")
         return res
@@ -246,7 +254,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             logger.error(e1)
             res.append(e1)
         res = self.check_existing_skus(product_info_list)
-        res += self.check_existing_titles(product_info_list)
+        res += self.check_existing_products(product_info_list)
         res += self.check_size_texts(
             product_info_list, text_to_html_func, raise_on_error=False
         )
