@@ -23,14 +23,14 @@ def product_info_lists_from_sheet(
     start_row = 2
     column_product_attrs = dict(
         title=string.ascii_lowercase.index("e"),
-        release_date=string.ascii_lowercase.index("d"),
+        release_date=string.ascii_lowercase.index("c"),
         collection=string.ascii_lowercase.index("g"),
         bag_category=string.ascii_lowercase.index("h"),
         category=string.ascii_lowercase.index("i"),
         description=string.ascii_lowercase.index("r"),
-        size_text=string.ascii_lowercase.index("u"),
-        material=string.ascii_lowercase.index("v"),
-        made_in=string.ascii_lowercase.index("w"),
+        size_text=string.ascii_lowercase.index("v"),
+        material=string.ascii_lowercase.index("w"),
+        made_in=string.ascii_lowercase.index("x"),
     )
     column_variant_attrs = {"カラー": string.ascii_lowercase.index("j")}
     column_variant_attrs.update(
@@ -108,8 +108,9 @@ def create_products(
                 product_info["collection"],
                 product_info["category"],
                 product_info["bag_category"],
-                (additional_tags or []) + ["New Arrival"],
             ]
+            + (additional_tags or [])
+            + ["New Arrival"]
         )
         ress.append(
             client.create_a_product(
@@ -124,13 +125,13 @@ def create_products(
 
 
 def main():
-    handle_suffix = ""
+    handle_suffix = "25fw-3rd"
     import pprint
 
     client = utils.client("rohseoul")
     location = "Shop location"
     product_info_list = product_info_lists_from_sheet(
-        client, client.sheet_id, "25FW 2ST 민하가방", handle_suffix
+        client, client.sheet_id, "25FW WINTER - copy", handle_suffix
     )
     client.sanity_check_product_info_list(
         product_info_list, text_to_html_func=get_size_table_html
