@@ -231,7 +231,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         res = []
         for pi in product_info_list:
             try:
-                self.produt_by_title(pi["title"])
+                self.product_by_title(pi["title"])
             except NoProductsFoundException:
                 pass
             else:
