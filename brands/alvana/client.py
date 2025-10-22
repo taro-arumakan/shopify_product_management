@@ -61,6 +61,23 @@ class AlvanaClient(Client):
             "BHARAT DENIM JACKET",
         ]
 
+    def update_metafields(self, product_id, product_info):
+        logger.info(f'updating metafields for {product_info["title"]}')
+        size_text = product_info["size_text"]
+        size_table_html = self.formatted_size_text_to_html_table(size_text)
+        if self.to_add_disclaimer_html(product_info["title"]):
+            size_table_html += "<br>"
+            size_table_html += "<p>注: 製造後に洗い加工を施しているため、記載されているサイズに若干の誤差が生じる場合がございます。</p>"
+        self.update_size_table_html_metafield(product_id, size_table_html)
+        product_care = self.text_to_simple_richtext(product_info["product_care"])
+        self.update_product_care_metafield(product_id, product_care)
+
+    def update_weight(self, skus, product_info):
+        weight = product_info.get("weight")
+        if weight:
+            for sku in skus:
+                self.update_inventory_item_weight_by_sku(sku, weight, unit="KILOGRAMS")
+
     def create_a_product(self, product_info):
         logger.info(f'creating {product_info["title"]}')
         description_html = self.get_description(
@@ -74,19 +91,8 @@ class AlvanaClient(Client):
         )
         product_id = res[0]["id"]
         skus = [v["sku"] for v in res[0]["variants"]["nodes"]]
-        logger.info(f'updating metafields for {product_info["title"]}')
-        size_text = product_info["size_text"]
-        size_table_html = self.formatted_size_text_to_html_table(size_text)
-        if self.to_add_disclaimer_html(product_info["title"]):
-            size_table_html += "<br>"
-            size_table_html += "<p>注: 製造後に洗い加工を施しているため、記載されているサイズに若干の誤差が生じる場合がございます。</p>"
-        self.update_size_table_html_metafield(product_id, size_table_html)
-        product_care = self.text_to_simple_richtext(product_info["product_care"])
-        self.update_product_care_metafield(product_id, product_care)
-        weight = product_info.get("weight")
-        if weight:
-            for sku in skus:
-                self.update_inventory_item_weight_by_sku(sku, weight, unit="KILOGRAMS")
+        self.update_metafields(product_id, product_info)
+        self.update_weight(skus, product_info)
         return product_id
 
     def get_description(self, product_description, material, made_in):
