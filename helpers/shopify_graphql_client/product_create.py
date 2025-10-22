@@ -99,6 +99,13 @@ class ProductCreate:
                     vendor
                     status
                     templateSuffix
+                    variants(first: 20) {
+                        nodes {
+                            id
+                            title
+                            sku
+                        }
+                    }
                 }
                 userErrors {
                     field
