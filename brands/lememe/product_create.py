@@ -27,8 +27,8 @@ def product_info_list_from_sheet(
     option1_attrs.update(
         filter_color=string.ascii_lowercase.index("n"),
         drive_link=string.ascii_lowercase.index("o"),
-        sku=string.ascii_lowercase.index("p"),
-        stock=string.ascii_lowercase.index("q"),
+        sku=string.ascii_lowercase.index("r"),
+        stock=string.ascii_lowercase.index("s"),
     )
     return gai.to_products_list(
         sheet_id,
@@ -105,11 +105,26 @@ def create_products(sgc: utils.Client, product_info_list, vendor):
     return ress
 
 
+def update_description(sgc: utils.Client, product_info_list):
+    for pi in product_info_list:
+        if "別売" in pi["description"]:
+            description_html = get_description(
+                pi["description"],
+                pi.get("material", ""),
+                pi.get("made_in", ""),
+            )
+
+            product_id = sgc.product_id_by_title(pi["title"])
+            logging.info(f'updating description for {pi["title"]}')
+            sgc.update_product_description(product_id, description_html)
+
+
 def main():
     c = utils.client("lememek")
     location = "Shop location"
 
     product_info_list = product_info_list_from_sheet(c, c.sheet_id, "bags - launch")
+    update_description(c, product_info_list)
     # product_info_list = product_info_list[:3]
 
     # for index, product_info in enumerate(product_info_list):
@@ -117,11 +132,11 @@ def main():
     #         break
     # product_info_list = product_info_list[index:]
 
-    for product_info in product_info_list:
-        create_a_product(c, product_info, "lememe", [location])
-        c.process_product_images(product_info)
-    c.update_stocks(product_info_list, location)
-    c.publish_products(product_info_list)
+    # for product_info in product_info_list:
+    #     create_a_product(c, product_info, "lememe", [location])
+    #     c.process_product_images(product_info)
+    # c.update_stocks(product_info_list, location)
+    # c.publish_products(product_info_list)
 
 
 if __name__ == "__main__":
