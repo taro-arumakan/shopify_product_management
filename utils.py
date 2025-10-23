@@ -32,11 +32,25 @@ def credentials(shop_name):
     return Credentials(**res)
 
 
-def client(shop_name):
-    cred = credentials(shop_name)
-    return Client(
-        shop_name=cred.shop_name,
-        access_token=cred.access_token,
-        google_credential_path=cred.google_credential_path,
-        sheet_id=cred.google_sheet_id,
-    )
+def client(shop_name: str) -> Client:
+    if shop_name.lower() in ["alvanas", "alvana"]:
+        from brands.alvana.client import AlvanaClient
+
+        res = AlvanaClient()
+    elif shop_name.lower() in ["ssilkr", "ssil"]:
+        from brands.ssil.client import SsilClient
+
+        res = SsilClient()
+    elif shop_name.lower() == "rohseoul":
+        from brands.rohseoul.client import RohseoulClient
+
+        res = RohseoulClient()
+    else:
+        cred = credentials(shop_name)
+        res = Client(
+            shop_name=cred.shop_name,
+            access_token=cred.access_token,
+            google_credential_path=cred.google_credential_path,
+            sheet_id=cred.google_sheet_id,
+        )
+    return res
