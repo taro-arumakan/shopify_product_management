@@ -1,24 +1,16 @@
 import json
 import logging
 import string
-from helpers.client import Client
-from utils import credentials
+from brands.brandclientbase import BrandClientBase
 
 logger = logging.getLogger(__name__)
 
 
-class SsilClient(Client):
+class SsilClient(BrandClientBase):
 
-    def __init__(self):
-        cred = credentials("ssilkr")
-        super().__init__(
-            shop_name=cred.shop_name,
-            access_token=cred.access_token,
-            google_credential_path=cred.google_credential_path,
-            sheet_id=cred.google_sheet_id,
-        )
-        self.vendor = "ssil"
-        self.locations = ["Shop location"]
+    SHOPNAME = "ssilkr"
+    VENDOR = "ssil"
+    LOCATIONS = ["Shop location"]
 
     def product_info_list_from_sheet(self, sheet_name):
         start_row = 1
@@ -77,7 +69,7 @@ class SsilClient(Client):
         )
         tags = product_info["tags"]
         res = super().create_a_product(
-            product_info, self.vendor, description_html, tags, self.locations
+            product_info, self.VENDOR, description_html, tags, self.LOCATIONS
         )
         product_id = res[0]["id"]
         self.update_metafields(product_id, product_info)
@@ -90,9 +82,6 @@ class SsilClient(Client):
         )
         description_html = description_html.replace("${MADEIN}", made_in)
         return description_html
-
-    def update_stocks(self, product_info_list):
-        super().update_stocks(product_info_list, self.locations[0])
 
 
 def product_description_template():

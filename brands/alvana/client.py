@@ -1,23 +1,16 @@
 import logging
 import string
-from helpers.client import Client
-from utils import credentials
+from brands.brandclientbase import BrandClientBase
+
 
 logger = logging.getLogger(__name__)
 
 
-class AlvanaClient(Client):
+class AlvanaClient(BrandClientBase):
 
-    def __init__(self):
-        cred = credentials("alvanas")
-        super().__init__(
-            shop_name=cred.shop_name,
-            access_token=cred.access_token,
-            google_credential_path=cred.google_credential_path,
-            sheet_id=cred.google_sheet_id,
-        )
-        self.vendor = "alvana"
-        self.locations = ["Jingumae"]
+    SHOPNAME = "alvanas"
+    VENDOR = "alvana"
+    LOCATIONS = ["Jingumae"]
 
     def product_info_list_from_sheet(self, sheet_name):
         start_row = 1
@@ -86,9 +79,7 @@ class AlvanaClient(Client):
             product_info["made_in"],
         )
         tags = product_info["tags"]
-        res = super().create_a_product(
-            product_info, self.vendor, description_html, tags, self.locations
-        )
+        res = super().create_a_product(product_info, description_html, tags)
         product_id = res[0]["id"]
         skus = [v["sku"] for v in res[0]["variants"]["nodes"]]
         self.update_metafields(product_id, product_info)
@@ -103,9 +94,6 @@ class AlvanaClient(Client):
         description_html = description_html.replace("${MATERIAL}", material)
         description_html = description_html.replace("${MADEIN}", made_in)
         return description_html
-
-    def update_stocks(self, product_info_list):
-        super().update_stocks(product_info_list, self.locations[0])
 
 
 def product_description_template():
