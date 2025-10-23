@@ -16,6 +16,8 @@ def is_evenly_spaced_stdev(lst, max_stddev=6.85):
 
 class Medias:
 
+    EXCLUDED_MEDIA_EXTENSTIONS = (".psd",)
+
     def medias_by_product_id(self, product_id):
         query = """
         query ProductMediaStatusByID($productId: ID!) {
@@ -355,6 +357,11 @@ class Medias:
     def upload_and_assign_images_to_product(
         self, product_id, local_paths, remove_existings=True
     ):
+        local_paths = [
+            path
+            for path in local_paths
+            if not path.endswith(self.EXCLUDED_MEDIA_EXTENSTIONS)
+        ]
         file_names = [local_path.rsplit("/", 1)[-1] for local_path in local_paths]
         mime_types = [
             f"image/{local_path.rsplit('.', 1)[-1].lower()}"
