@@ -11,10 +11,10 @@ class AlvanaClient(BrandClientBase):
     SHOPNAME = "alvanas"
     VENDOR = "alvana"
     LOCATIONS = ["Jingumae"]
+    PRODUCT_SHEET_START_ROW = 1
 
-    def product_info_list_from_sheet(self, sheet_name):
-        start_row = 1
-        column_product_attrs = dict(
+    def product_attr_column_map(self):
+        return dict(
             title=string.ascii_lowercase.index("b"),
             tags=string.ascii_lowercase.index("d"),
             price=string.ascii_lowercase.index("e"),
@@ -25,34 +25,44 @@ class AlvanaClient(BrandClientBase):
             weight=string.ascii_lowercase.index("j"),
             made_in=string.ascii_lowercase.index("k"),
         )
+
+    def option1_attr_column_map(self):
         option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
         option1_attrs.update(
             drive_link=string.ascii_lowercase.index("m"),
         )
+        return option1_attrs
+
+    def option2_attr_column_map(self):
         option2_attrs = {"サイズ": string.ascii_lowercase.index("n")}
         option2_attrs.update(
             sku=string.ascii_lowercase.index("o"),
             stock=string.ascii_lowercase.index("p"),
         )
-        return self.to_products_list(
-            self.sheet_id,
-            sheet_name,
-            start_row,
-            column_product_attrs,
-            option1_attrs,
-            option2_attrs,
-        )
+        return option2_attrs
 
-    def sanity_check_product_info_list(self, product_info_list):
-        super().sanity_check_product_info_list(
-            product_info_list, self.formatted_size_text_to_html_table
+    def get_description_html(self, product_info):
+        description_html = product_description_template()
+        description_html = description_html.replace(
+            "${DESCRIPTION}", product_info["description"].replace("\n", "<br>")
         )
+        description_html = description_html.replace(
+            "${MATERIAL}", product_info["material"]
+        )
+        description_html = description_html.replace(
+            "${MADEIN}", product_info["made_in"]
+        )
+        return description_html
 
-    def to_add_disclaimer_html(self, title):
-        return title.startswith("NATURAL TWILL") or title in [
-            "FADE CENTER SEAM S/S TEE SHIRTS",
-            "BHARAT DENIM JACKET",
-        ]
+    def get_tags(self, product_info):
+        return product_info["tags"]
+
+    def post_create_a_product(self, create_a_product_res, product_info):
+        product_id = create_a_product_res[0]["id"]
+        skus = [v["sku"] for v in create_a_product_res[0]["variants"]["nodes"]]
+        self.update_metafields(product_id, product_info)
+        self.update_weight(skus, product_info)
+        return product_id
 
     def update_metafields(self, product_id, product_info):
         logger.info(f'updating metafields for {product_info["title"]}')
@@ -65,35 +75,17 @@ class AlvanaClient(BrandClientBase):
         product_care = self.text_to_simple_richtext(product_info["product_care"])
         self.update_product_care_metafield(product_id, product_care)
 
+    def to_add_disclaimer_html(self, title):
+        return title.startswith("NATURAL TWILL") or title in [
+            "FADE CENTER SEAM S/S TEE SHIRTS",
+            "BHARAT DENIM JACKET",
+        ]
+
     def update_weight(self, skus, product_info):
         weight = product_info.get("weight")
         if weight:
             for sku in skus:
                 self.update_inventory_item_weight_by_sku(sku, weight, unit="KILOGRAMS")
-
-    def create_a_product(self, product_info):
-        logger.info(f'creating {product_info["title"]}')
-        description_html = self.get_description(
-            product_info["description"],
-            product_info["material"],
-            product_info["made_in"],
-        )
-        tags = product_info["tags"]
-        res = super().create_a_product(product_info, description_html, tags)
-        product_id = res[0]["id"]
-        skus = [v["sku"] for v in res[0]["variants"]["nodes"]]
-        self.update_metafields(product_id, product_info)
-        self.update_weight(skus, product_info)
-        return product_id
-
-    def get_description(self, product_description, material, made_in):
-        description_html = product_description_template()
-        description_html = description_html.replace(
-            "${DESCRIPTION}", product_description.replace("\n", "<br>")
-        )
-        description_html = description_html.replace("${MATERIAL}", material)
-        description_html = description_html.replace("${MADEIN}", made_in)
-        return description_html
 
 
 def product_description_template():
