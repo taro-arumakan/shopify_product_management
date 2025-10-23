@@ -235,15 +235,16 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         res = []
         for pi in product_info_list:
             try:
-                f = self.product_by_handle if "handle" in pi else self.product_by_title
-                p = pi["handle"] if "handle" in pi else pi["title"]
-                f(p)
+                checking = "handle" if "handle" in pi else "title"
+                func = getattr(self, f"product_by_{checking}")
+                param = pi[checking]
+                func(param)
             except NoProductsFoundException:
                 pass
             except MultipleProductsFoundException:
-                res.append(f"Existing product found with title: {pi['title']}")
+                res.append(f"Existing product found by {checking}: {param}")
             else:
-                res.append(f"Existing product found with title: {pi['title']}")
+                res.append(f"Existing product found by {checking}: {param}")
         return res
 
     def sanity_check_product_info_list(self, product_info_list, text_to_html_func):
