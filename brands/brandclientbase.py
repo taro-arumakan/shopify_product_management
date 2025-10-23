@@ -32,7 +32,7 @@ class BrandClientBase(Client):
     def option2_attr_column_map(self):
         raise NotImplementedError
 
-    def product_info_list_from_sheet(self, sheet_name):
+    def product_info_list_from_sheet(self, sheet_name, handle_suffix=None):
         return self.to_products_list(
             self.sheet_id,
             sheet_name,
@@ -40,6 +40,7 @@ class BrandClientBase(Client):
             product_attr_column_map=self.product_attr_column_map(),
             option1_attr_column_map=self.option1_attr_column_map(),
             option2_attr_column_map=self.option2_attr_column_map(),
+            handle_suffix=handle_suffix,
         )
 
     def get_description_html(self, product_info):
@@ -64,3 +65,12 @@ class BrandClientBase(Client):
 
     def update_stocks(self, product_info_list):
         super().update_stocks(product_info_list, self.LOCATIONS[0])
+
+    def sanity_check_sheet(self, sheet_name, handle_suffix=None):
+        product_info_list = self.product_info_list_from_sheet(
+            sheet_name, handle_suffix=handle_suffix
+        )
+        logger.info(
+            f"Sanity checking {len(product_info_list)} products from sheet {sheet_name}"
+        )
+        return self.sanity_check_product_info_list(product_info_list)
