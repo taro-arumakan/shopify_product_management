@@ -11,7 +11,7 @@ def main():
         "material & size options (rings etc)"
     )
     for i, product_info in enumerate(product_info_list):
-        if product_info["title"] == "3 LINE HOOPS_L":
+        if product_info["title"] == "Lucky Clover Drop R_WG":
             break
     product_info_list = product_info_list[i:]
     c.sanity_check_product_info_list(product_info_list)

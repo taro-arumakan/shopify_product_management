@@ -50,12 +50,15 @@ class SsilClient(BrandClientBase):
 
     def update_metafields(self, product_id, product_info):
         logger.info(f'updating metafields for {product_info["title"]}')
-        size_text = self.text_to_simple_richtext(product_info["size_text"])
+        if size_text := product_info.get("size_text"):
+            size_text = self.text_to_simple_richtext(size_text)
+            self.update_product_metafield(
+                product_id, "custom", "size_text", json.dumps(size_text)
+            )
+        else:
+            logger.warning(f"no size_text for {product_info['title']}")
         product_care = self.text_to_simple_richtext(product_info["product_care"])
         self.update_product_care_metafield(product_id, product_care)
-        self.update_product_metafield(
-            product_id, "custom", "size_text", json.dumps(size_text)
-        )
         material_text = self.text_to_simple_richtext(product_info["material"])
         self.update_product_metafield(
             product_id, "custom", "material_text", json.dumps(material_text)
