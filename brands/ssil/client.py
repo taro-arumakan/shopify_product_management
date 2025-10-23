@@ -68,9 +68,7 @@ class SsilClient(BrandClientBase):
             product_info["made_in"],
         )
         tags = product_info["tags"]
-        res = super().create_a_product(
-            product_info, self.VENDOR, description_html, tags, self.LOCATIONS
-        )
+        res = super().create_a_product(product_info, description_html, tags)
         product_id = res[0]["id"]
         self.update_metafields(product_id, product_info)
         return product_id
