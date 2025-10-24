@@ -81,7 +81,7 @@ class GoogleSheetsApiInterface:
                     isinstance(v, (int, float)) or v.isnumeric()
                 ), f"expected int for {column_name}, got {type(v)}: {v}"
                 v = int(v)
-            elif column_name in ["サイズ", "sku", "product_number", "barcode"]:
+            elif column_name in ["sku", "product_number", "barcode"]:
                 v = str(v).strip()
             elif column_name == "drive_link":
                 if all([v, v != "no image", not v.startswith("http")]):
@@ -90,7 +90,7 @@ class GoogleSheetsApiInterface:
                 assert isinstance(
                     v, (int, float)
                 ), f"expected int or float for {column_name}, got {type(v)}: {v}"
-            elif column_name in ["Size", "size"]:
+            elif column_name in ["Size", "size", "サイズ"]:
                 assert isinstance(
                     v, (str, int)
                 ), f"expected str or int for {column_name}, got {type(v)}: {v}"
@@ -99,8 +99,17 @@ class GoogleSheetsApiInterface:
                 assert isinstance(
                     v, str
                 ), f"expected str for {column_name}, got {type(v)}: {v}"
-                v = v.strip()
+                if self.should_remove_empty_charactoers(column_name):
+                    v = " ".join(v.strip().split())
+                else:
+                    v = v.strip()
         return v
+
+    def should_remove_empty_charactoers(self, column_name):
+        return all(
+            s not in column_name
+            for s in ["description", "material", "product_care", "size_text", "image"]
+        )
 
     def get_sheet_index_by_title(self, sheet_id, sheet_title):
         worksheet = self.gspread_client.open_by_key(sheet_id)
