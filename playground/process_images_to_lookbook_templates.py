@@ -83,7 +83,7 @@ def to_sections_dict(dirname):
     for i, filename in enumerate(
         sorted(os.listdir(os.path.join(images_base_dir, dirname)))
     ):
-        if "썸네일" in filename:  # skip thumbnail image
+        if "썸네일" in filename or filename in ".DS_Store":  # skip thumbnail image
             continue
         if (i - 1) % 10 == 9:
             if section_count:
@@ -113,7 +113,7 @@ def to_sections_dict(dirname):
 
 
 def dirname_to_lookbook_name(dirname):
-    return dirname.split(". ")[-1].replace(" ", "_")
+    return dirname.split(". ")[-1].replace(" ", "_").replace("&", "_")
 
 
 def write_to_json(dirname, sections_dict):
@@ -133,12 +133,17 @@ def write_to_json(dirname, sections_dict):
 
 def generate_jsons():
     for dirname in sorted(os.listdir(images_base_dir)):
-        print("processing", dirname)
-        sections_dict = to_sections_dict(dirname)
-        write_to_json(dirname, sections_dict)
+        if dirname != ".DS_Store":
+            print("processing", dirname)
+            sections_dict = to_sections_dict(dirname)
+            write_to_json(dirname, sections_dict)
 
 
 def main():
     # rename_dirs()
     # rename_files()
     generate_jsons()
+
+
+if __name__ == "__main__":
+    main()
