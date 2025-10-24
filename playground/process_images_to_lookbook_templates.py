@@ -83,6 +83,8 @@ def to_sections_dict(dirname):
     for i, filename in enumerate(
         sorted(os.listdir(os.path.join(images_base_dir, dirname)))
     ):
+        if "썸네일" in filename:  # skip thumbnail image
+            continue
         if (i - 1) % 10 == 9:
             if section_count:
                 sections.update(section)
