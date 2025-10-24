@@ -2,6 +2,7 @@ import copy
 import json
 import os
 import shutil
+import utils
 
 images_base_dir = "/Users/taro/Downloads/EC用画像（オープン時）/4.LOOK BOOK/4.LOOK BOOK"
 theme_base_dir = "/Users/taro/sc/ssil/"
@@ -113,7 +114,11 @@ def to_sections_dict(dirname):
 
 
 def dirname_to_lookbook_name(dirname):
-    return dirname.split(". ")[-1].replace(" ", "_").replace("&", "_")
+    return dirname.split(". ")[-1]
+
+
+def dirname_to_lookbook_template_name(dirname):
+    return dirname_to_lookbook_name(dirname).replace(" ", "_").replace("&", "_")
 
 
 def write_to_json(dirname, sections_dict):
@@ -124,7 +129,7 @@ def write_to_json(dirname, sections_dict):
     with open(
         os.path.join(
             theme_base_dir,
-            f"templates/article.lookbook-{dirname_to_lookbook_name(dirname)}.json",
+            f"templates/article.lookbook-{dirname_to_lookbook_template_name(dirname)}.json",
         ),
         "w",
     ) as of:
@@ -139,10 +144,40 @@ def generate_jsons():
             write_to_json(dirname, sections_dict)
 
 
+def find_thumbnail_image(dirname):
+    filenames = sorted(os.listdir(os.path.join(images_base_dir, dirname)))
+    for filename in filenames:
+        if "썸네일" in filename:
+            return filename
+    return filenames[0]
+
+
+def add_article(dirname):
+    client = utils.client("ssil")
+    template_name = f"lookbook-{dirname_to_lookbook_template_name(dirname)}"
+    article_title = dirname_to_lookbook_name(dirname)
+    media = client.file_by_file_name(find_thumbnail_image(dirname))
+    media_url = media["image"]["url"]
+    client.article_create(
+        blog_title="Lookbook",
+        title=article_title,
+        template_suffix=template_name,
+        media_url=media_url,
+    )
+
+
+def add_articles():
+    for dirname in sorted(os.listdir(images_base_dir)):
+        if dirname != ".DS_Store":
+            print("processing", dirname)
+            add_article(dirname)
+
+
 def main():
     # rename_dirs()
     # rename_files()
     generate_jsons()
+    add_articles()
 
 
 if __name__ == "__main__":

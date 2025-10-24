@@ -96,18 +96,17 @@ class Medias:
             if name.rsplit(".", 1)[0] in media["image"]["url"]:
                 return media
 
-    def file_id_by_file_name(self, file_name):
+    def file_by_file_name(self, file_name):
         query = (
             """
-
         query {
             files(first:10 query:"filename:'%s'") {
             nodes {
                 id
                 ... on MediaImage {
-                image {
-                    url
-                }
+                    image {
+                        url
+                    }
                 }
             }
             }
@@ -126,7 +125,11 @@ class Medias:
         assert (
             len(res) == 1
         ), f'{"Multiple" if res else "No"} files found for {file_name}: {res}'
-        return res[0]["id"]
+        return res[0]
+
+    def file_id_by_file_name(self, file_name):
+        res = self.file_by_file_name(file_name)
+        return res["id"]
 
     def assign_existing_image_to_products_by_id(self, media_id, product_ids):
         query = """
