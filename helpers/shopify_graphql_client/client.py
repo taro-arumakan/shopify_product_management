@@ -3,6 +3,7 @@ import requests
 from helpers.shopify_graphql_client.archive_and_remove_variant import (
     ArchiveAndRemoveVariant,
 )
+from helpers.shopify_graphql_client.article import Article
 from helpers.shopify_graphql_client.contents import Contents
 from helpers.shopify_graphql_client.collection_queries import CollectionQueries
 from helpers.shopify_graphql_client.inventory import Inventory
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class ShopifyGraphqlClient(
     ArchiveAndRemoveVariant,
+    Article,
     Contents,
     CollectionQueries,
     Inventory,
@@ -44,7 +46,7 @@ class ShopifyGraphqlClient(
         self.shop_name = shop_name
         self.access_token = access_token
         self.base_url = (
-            f"https://{shop_name}.myshopify.com/admin/api/2025-04/graphql.json"
+            f"https://{shop_name}.myshopify.com/admin/api/2025-10/graphql.json"
         )
 
     def sanitize_id(self, identifier, prefix="Product"):
