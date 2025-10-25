@@ -48,7 +48,9 @@ def to_filename(filename):
     name, ext = filename.split(".")
     if name.isdigit():
         return ".".join([name.zfill(3), ext])
-    return filename
+    elif "썸네일" in filename:
+        return filename.replace("썸네일", "_cover")
+    return filename.replace("&", "_")
 
 
 def rename_files():
@@ -147,7 +149,7 @@ def generate_jsons():
 def find_thumbnail_image(dirname):
     filenames = sorted(os.listdir(os.path.join(images_base_dir, dirname)))
     for filename in filenames:
-        if "썸네일" in filename:
+        if "_cover" in filename:
             return filename
     return filenames[0]
 
