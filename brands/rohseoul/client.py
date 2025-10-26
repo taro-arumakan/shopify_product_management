@@ -74,13 +74,12 @@ class RohseoulClient(BrandClientBase):
             5: アルコール、オイル、香水、化粧品などにより製品が損傷することがありますので、ご使用の際はご注意ください。
             """
         ).strip()
-        return self.get_description_html(
+        return super().get_description_html(
             product_info["description"],
             product_care,
             product_info["material"],
             product_info["size_text"],
             product_info["made_in"],
-            get_size_table_html_func=self.get_size_table_html,
         )
 
     def get_tags(self, product_info):

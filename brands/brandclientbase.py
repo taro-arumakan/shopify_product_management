@@ -43,9 +43,6 @@ class BrandClientBase(Client):
             handle_suffix=handle_suffix,
         )
 
-    def get_description_html(self, product_info):
-        raise NotImplementedError
-
     def get_tags(self, product_info):
         raise NotImplementedError
 
