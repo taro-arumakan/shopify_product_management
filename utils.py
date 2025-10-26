@@ -45,6 +45,10 @@ def client(shop_name: str) -> Client:
         from brands.rohseoul.client import RohseoulClient
 
         res = RohseoulClient()
+    elif shop_name.lower() in ["gbhjapan", "gbh"]:
+        from brands.gbh.client import GbhClient
+
+        res = GbhClient()
     else:
         cred = credentials(shop_name)
         res = Client(
