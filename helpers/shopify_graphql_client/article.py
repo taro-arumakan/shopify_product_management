@@ -1,4 +1,8 @@
+import copy
+import json
 import logging
+import os
+from helpers.shopify_graphql_client.images_list_template import images_list_template
 
 logger = logging.getLogger(__name__)
 
@@ -102,3 +106,99 @@ class Article:
         if errors := res["articleCreate"]["userErrors"]:
             raise RuntimeError(f"Failed to create an article: {errors}")
         return res["articleCreate"]["article"]
+
+    def article_from_image_file_names(
+        self, theme_dir, blog_title, article_title, image_file_names
+    ):
+        thumbnail_image_name = self.find_thumbnail_image(image_file_names)
+        self.write_json_from_image_file_names(
+            theme_dir, blog_title, article_title, image_file_names
+        )
+        self.add_article(
+            self, blog_title, article_title, thumbnail_image_name=thumbnail_image_name
+        )
+
+    def write_json_from_image_file_names(
+        self, theme_dir, blog_title, article_title, image_file_names
+    ):
+        sections = self.to_images_list_sections_dict(image_file_names)
+        self.write_to_json(
+            theme_file_path=os.path.join(
+                theme_dir,
+                self.lookbook_template_path(theme_dir, blog_title, article_title),
+            ),
+            sections_dict=sections,
+        )
+
+    def to_images_list_sections_dict(self, file_names):
+        base_attrs = {
+            "type": "image",
+            "settings": {
+                "image_link": "",
+                "margin_top": 10,
+                "margin_bottom": 10,
+                "max_width": 600,
+                "mobile_max_width": 400,
+            },
+        }
+        sections = {}
+        section_count = 0
+        for i, filename in enumerate(file_names):
+            if (i - 1) % 10 == 9:
+                if section_count:
+                    sections.update(section)
+                section_count += 1
+                section = {
+                    f"images_list_{section_count}": {
+                        "type": "images-list",
+                        "blocks": {},
+                        "block_order": [],
+                        "name": "t:sections.images_list.presets.images_list.name",
+                        "settings": {
+                            "color_scheme": "",
+                            "image_position": "center",
+                            "overlay_color": "#000000",
+                            "overlay_opacity": 0,
+                        },
+                    }
+                }
+
+            block_name = f"image_{str(i).zfill(3)}"
+            block = {block_name: copy.deepcopy(base_attrs)}
+            block[block_name]["settings"]["image"] = f"shopify://shop_images/{filename}"
+            section[f"images_list_{section_count}"]["blocks"].update(block)
+            section[f"images_list_{section_count}"]["block_order"].append(block_name)
+        return sections
+
+    def write_to_json(self, theme_file_path, sections_dict):
+        output_dict = json.loads(images_list_template())
+        output_dict["sections"].update(sections_dict)
+        output_dict["order"] += sections_dict.keys()
+        with open(theme_file_path, "w") as of:
+            of.write(json.dumps(output_dict, indent=2))
+
+    def find_thumbnail_image(self, filenames):
+        for filename in filenames:
+            if "_cover" in filename:
+                return filename
+        return filenames[0]
+
+    def add_article(self, blog_title, article_title, thumbnail_image_name):
+        template_name = self.to_lookbook_template_name(article_title)
+        media = self.file_by_file_name(thumbnail_image_name)
+        media_url = media["image"]["url"]
+        self.article_create(
+            blog_title=blog_title,
+            title=article_title,
+            template_suffix=template_name,
+            media_url=media_url,
+        )
+
+    def lookbook_template_path(self, theme_dir, blog_title, article_title):
+        os.path.join(
+            theme_dir,
+            f"templates/article.{blog_title.lower()}-{self.to_lookbook_template_name(article_title)}.json",
+        )
+
+    def to_lookbook_template_name(self, article_title):
+        return f"lookbook-{self.escape_characters(article_title)}"

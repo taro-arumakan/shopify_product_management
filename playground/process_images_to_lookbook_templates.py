@@ -1,5 +1,3 @@
-import copy
-import json
 import os
 import shutil
 import utils
@@ -70,116 +68,36 @@ def rename_files():
                     shutil.move(filepath, newfilepath)
 
 
-def to_sections_dict(dirname):
-    base_attrs = {
-        "type": "image",
-        "settings": {
-            "image_link": "",
-            "margin_top": 10,
-            "margin_bottom": 10,
-            "max_width": 600,
-            "mobile_max_width": 400,
-        },
-    }
-    sections = {}
-    section_count = 0
-    for i, filename in enumerate(
-        sorted(os.listdir(os.path.join(images_base_dir, dirname)))
-    ):
-        if "썸네일" in filename or filename in ".DS_Store":  # skip thumbnail image
-            continue
-        if (i - 1) % 10 == 9:
-            if section_count:
-                sections.update(section)
-            section_count += 1
-            section = {
-                f"images_list_{section_count}": {
-                    "type": "images-list",
-                    "blocks": {},
-                    "block_order": [],
-                    "name": "t:sections.images_list.presets.images_list.name",
-                    "settings": {
-                        "color_scheme": "",
-                        "image_position": "center",
-                        "overlay_color": "#000000",
-                        "overlay_opacity": 0,
-                    },
-                }
-            }
-
-        block_name = f"image_{str(i).zfill(3)}"
-        block = {block_name: copy.deepcopy(base_attrs)}
-        block[block_name]["settings"]["image"] = f"shopify://shop_images/{filename}"
-        section[f"images_list_{section_count}"]["blocks"].update(block)
-        section[f"images_list_{section_count}"]["block_order"].append(block_name)
-    return sections
-
-
-def dirname_to_lookbook_name(dirname):
-    return dirname.split(". ")[-1]
-
-
-def dirname_to_lookbook_template_name(dirname):
-    return dirname_to_lookbook_name(dirname).replace(" ", "_").replace("&", "_")
-
-
-def write_to_json(dirname, sections_dict):
-    with open("playground/lookbook_template.txt") as f:
-        output_dict = json.loads(f.read())
-    output_dict["sections"].update(sections_dict)
-    output_dict["order"] += sections_dict.keys()
-    with open(
-        os.path.join(
-            theme_base_dir,
-            f"templates/article.lookbook-{dirname_to_lookbook_template_name(dirname)}.json",
-        ),
-        "w",
-    ) as of:
-        of.write(json.dumps(output_dict, indent=2))
-
-
-def generate_jsons():
-    for dirname in sorted(os.listdir(images_base_dir)):
-        if dirname != ".DS_Store":
-            print("processing", dirname)
-            sections_dict = to_sections_dict(dirname)
-            write_to_json(dirname, sections_dict)
-
-
-def find_thumbnail_image(dirname):
-    filenames = sorted(os.listdir(os.path.join(images_base_dir, dirname)))
-    for filename in filenames:
-        if "_cover" in filename:
-            return filename
-    return filenames[0]
-
-
-def add_article(dirname):
-    client = utils.client("ssil")
-    template_name = f"lookbook-{dirname_to_lookbook_template_name(dirname)}"
-    article_title = dirname_to_lookbook_name(dirname)
-    media = client.file_by_file_name(find_thumbnail_image(dirname))
-    media_url = media["image"]["url"]
-    client.article_create(
-        blog_title="Lookbook",
-        title=article_title,
-        template_suffix=template_name,
-        media_url=media_url,
+def process_dir(client: utils.Client, dirname):
+    file_names = [
+        filename
+        for filename in sorted(os.listdir(os.path.join(images_base_dir, dirname)))
+    ]
+    file_names = [
+        filename
+        for filename in file_names
+        if not any(
+            ("썸네일" in filename, "_cover" in filename, filename in [".DS_Store"])
+        )
+    ]  # skip thumbnail image
+    article_title = dirname.split(". ")[-1]
+    client.article_from_image_file_names(
+        theme_base_dir, "Lookbook", article_title, file_names
     )
 
 
-def add_articles():
+def process_dirs():
+    client = utils.client("ssil")
     for dirname in sorted(os.listdir(images_base_dir)):
         if dirname != ".DS_Store":
             print("processing", dirname)
-            add_article(dirname)
+            process_dir(client, dirname)
 
 
 def main():
-    # rename_dirs()
-    # rename_files()
-    generate_jsons()
-    add_articles()
+    rename_dirs()
+    rename_files()
+    process_dirs()
 
 
 if __name__ == "__main__":
