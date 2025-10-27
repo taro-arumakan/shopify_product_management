@@ -22,7 +22,7 @@ class ProductQueries:
     A class to handle GraphQL queries related to products in Shopify, inherited by the ShopifyGraphqlClient class.
     """
 
-    def escape_characters(self, s):
+    def remove_punctuations(self, s):
         parts = s.lower().split(" ")
         parts = [part.translate(punctuation_translator) for part in parts]
         return "-".join(parts)
@@ -30,7 +30,7 @@ class ProductQueries:
     def product_title_to_handle(self, title, handle_suffix=None):
         if handle_suffix:
             title += f" handle_suffix"
-        return self.escape_characters(title)
+        return self.remove_punctuations(title)
 
     def products_by_query(
         self,
