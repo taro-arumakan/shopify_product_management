@@ -152,17 +152,13 @@ class Article:
         theme_dir,
         blog_title,
         article_title,
-        image_file_names,
+        thumbnail_image_file_name,
+        article_image_file_names,
         theme_name,
         publish_article=True,
     ):
         # for file_name in image_file_names:
         #     self.file_by_file_name(file_name)
-
-        thumbnail_image_name = self.find_thumbnail_image(image_file_names)
-        article_image_file_names = [
-            name for name in image_file_names if name != thumbnail_image_name
-        ]
         theme_file_path = self.write_json_from_image_file_names(
             theme_dir, blog_title, article_title, article_image_file_names
         )
@@ -175,7 +171,9 @@ class Article:
                 time.sleep(1.5)  # wait for the new json file upload
 
             self.add_article(
-                blog_title, article_title, thumbnail_image_name=thumbnail_image_name
+                blog_title,
+                article_title,
+                thumbnail_image_name=thumbnail_image_file_name,
             )
 
     def write_json_from_image_file_names(
@@ -239,12 +237,6 @@ class Article:
         output_dict["order"] += sections_dict.keys()
         with open(theme_file_path, "w") as of:
             of.write(json.dumps(output_dict, indent=2))
-
-    def find_thumbnail_image(self, filenames):
-        for filename in filenames:
-            if "_cover" in filename:
-                return filename
-        return filenames[0]
 
     def add_article(self, blog_title, article_title, thumbnail_image_name):
         template_name = self.article_template_name(blog_title, article_title)
