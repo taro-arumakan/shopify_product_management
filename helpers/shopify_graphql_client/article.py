@@ -2,12 +2,32 @@ import copy
 import json
 import logging
 import os
+import string
+import time
 from helpers.shopify_graphql_client.images_list_template import images_list_template
 
 logger = logging.getLogger(__name__)
 
+additional_punctuation_chars = "‘’“” "
+punctuation_chrs = (
+    "".join([s for s in string.punctuation if s not in ["-"]])
+    + additional_punctuation_chars
+)
+punctuation_translator = str.maketrans({s: "_" for s in punctuation_chrs})
+
 
 class Article:
+    def shopify_compatible_name(self, name):
+        name = self.punctuations_to_underscore(name)
+        if name.startswith("_"):
+            name = name[1:]
+        return name
+
+    def punctuations_to_underscore(self, s):
+        parts = s.lower().split(" ")
+        parts = [part.translate(punctuation_translator) for part in parts]
+        return "-".join(parts)
+
     def blogs_by_query(self, query_string):
         query = """
         query blogsByQuery($query_string: String!) {
@@ -107,28 +127,70 @@ class Article:
             raise RuntimeError(f"Failed to create an article: {errors}")
         return res["articleCreate"]["article"]
 
+    def theme_file_by_theme_name_and_file_name(self, theme_name, file_name):
+        query = """
+            query {
+                themes(names:"%s" first:1) {
+                    nodes {
+                        files(filenames:"*%s*" first:50) {
+                            nodes {
+                                filename
+                            }
+                        }
+                    }
+                }
+            }
+            """ % (
+            theme_name,
+            file_name,
+        )
+        res = self.run_query(query)
+        return res["themes"]["nodes"][0]["files"]["nodes"]
+
     def article_from_image_file_names(
-        self, theme_dir, blog_title, article_title, image_file_names
+        self,
+        theme_dir,
+        blog_title,
+        article_title,
+        image_file_names,
+        theme_name,
+        publish_article=True,
     ):
+        # for file_name in image_file_names:
+        #     self.file_by_file_name(file_name)
+
         thumbnail_image_name = self.find_thumbnail_image(image_file_names)
-        self.write_json_from_image_file_names(
-            theme_dir, blog_title, article_title, image_file_names
+        article_image_file_names = [
+            name for name in image_file_names if name != thumbnail_image_name
+        ]
+        theme_file_path = self.write_json_from_image_file_names(
+            theme_dir, blog_title, article_title, article_image_file_names
         )
-        self.add_article(
-            self, blog_title, article_title, thumbnail_image_name=thumbnail_image_name
-        )
+        if publish_article:
+            theme_file_name = theme_file_path.rsplit("templates/", 1)[-1]
+            while not self.theme_file_by_theme_name_and_file_name(
+                theme_name, theme_file_name
+            ):
+                logger.info(f"awaiting upload of {theme_file_name}")
+                time.sleep(1.5)  # wait for the new json file upload
+
+            self.add_article(
+                blog_title, article_title, thumbnail_image_name=thumbnail_image_name
+            )
 
     def write_json_from_image_file_names(
         self, theme_dir, blog_title, article_title, image_file_names
     ):
         sections = self.to_images_list_sections_dict(image_file_names)
+        theme_file_path = os.path.join(
+            theme_dir,
+            self.article_template_path(theme_dir, blog_title, article_title),
+        )
         self.write_to_json(
-            theme_file_path=os.path.join(
-                theme_dir,
-                self.lookbook_template_path(theme_dir, blog_title, article_title),
-            ),
+            theme_file_path=theme_file_path,
             sections_dict=sections,
         )
+        return theme_file_path
 
     def to_images_list_sections_dict(self, file_names):
         base_attrs = {
@@ -144,7 +206,7 @@ class Article:
         sections = {}
         section_count = 0
         for i, filename in enumerate(file_names):
-            if (i - 1) % 10 == 9:
+            if i % 10 == 0:
                 if section_count:
                     sections.update(section)
                 section_count += 1
@@ -168,6 +230,7 @@ class Article:
             block[block_name]["settings"]["image"] = f"shopify://shop_images/{filename}"
             section[f"images_list_{section_count}"]["blocks"].update(block)
             section[f"images_list_{section_count}"]["block_order"].append(block_name)
+        sections.update(section)
         return sections
 
     def write_to_json(self, theme_file_path, sections_dict):
@@ -184,7 +247,7 @@ class Article:
         return filenames[0]
 
     def add_article(self, blog_title, article_title, thumbnail_image_name):
-        template_name = self.to_lookbook_template_name(article_title)
+        template_name = self.article_template_name(blog_title, article_title)
         media = self.file_by_file_name(thumbnail_image_name)
         media_url = media["image"]["url"]
         self.article_create(
@@ -194,11 +257,11 @@ class Article:
             media_url=media_url,
         )
 
-    def lookbook_template_path(self, theme_dir, blog_title, article_title):
-        os.path.join(
+    def article_template_path(self, theme_dir, blog_title, article_title):
+        return os.path.join(
             theme_dir,
-            f"templates/article.{blog_title.lower()}-{self.to_lookbook_template_name(article_title)}.json",
+            f"templates/article.{self.article_template_name(blog_title, article_title)}.json",
         )
 
-    def to_lookbook_template_name(self, article_title):
-        return f"lookbook-{self.escape_characters(article_title)}"
+    def article_template_name(self, blog_title, article_title):
+        return f"{blog_title.lower()}-{self.punctuations_to_underscore(article_title)}"
