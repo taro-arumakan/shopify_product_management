@@ -22,11 +22,15 @@ class ProductQueries:
     A class to handle GraphQL queries related to products in Shopify, inherited by the ShopifyGraphqlClient class.
     """
 
-    @staticmethod
-    def product_title_to_handle(title, handle_suffix=None):
-        parts = title.lower().split(" ") + ([handle_suffix] if handle_suffix else [])
+    def escape_characters(self, s):
+        parts = s.lower().split(" ")
         parts = [part.translate(punctuation_translator) for part in parts]
         return "-".join(parts)
+
+    def product_title_to_handle(self, title, handle_suffix=None):
+        if handle_suffix:
+            title += f" handle_suffix"
+        return self.escape_characters(title)
 
     def products_by_query(
         self,
@@ -39,7 +43,7 @@ class ProductQueries:
         reverse = "true" if reverse else "false"
         query = """
         query productsByQuery($query_string: String!) {
-            products(first: 100, query: $query_string, sortKey: %s, reverse: %s) {
+            products(first: 200, query: $query_string, sortKey: %s, reverse: %s) {
                 nodes {
                     id
                     title
@@ -96,7 +100,7 @@ class ProductQueries:
         res = res["products"]["nodes"]
         if raise_if_too_many:
             assert (
-                len(res) < 100
+                len(res) < 200
             ), f"Too many products found for {query_string}: {len(res)}"
         return res
 
@@ -116,12 +120,14 @@ class ProductQueries:
         return self.products_by_query(f"tag:'{tag}'", *args, **kwargs)
 
     def products_by_metafield(
-        self, metafield_namespace, metafield_key, metafield_value
+        self, metafield_namespace, metafield_key, metafield_value, *args, **kwargs
     ):
         if type(metafield_value) is str:
             metafield_value = f'"{metafield_value}"'
         return self.products_by_query(
-            f"metafields.{metafield_namespace}.{metafield_key}:{metafield_value}"
+            f"metafields.{metafield_namespace}.{metafield_key}:{metafield_value}",
+            *args,
+            **kwargs,
         )
 
     def product_by_query(self, query_string, *args, **kwargs):
