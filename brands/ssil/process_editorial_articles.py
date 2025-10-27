@@ -1,6 +1,7 @@
 import os
 import shutil
 import utils
+from brands.ssil.process_lookbook_articles import find_thumbnail_image
 
 images_base_dir = "/Users/taro/Downloads/3.EDITORIAL"
 theme_base_dir = "/Users/taro/sc/ssil/"
@@ -41,23 +42,6 @@ def rename_files():
                     shutil.move(filepath, newfilepath)
 
 
-def check_files():
-    client = utils.client("ssil")
-    errors = []
-    for dirname in os.listdir(images_base_dir):
-        if dirname != ".DS_Store":
-            dirpath = os.path.join(images_base_dir, dirname)
-            for filename in os.listdir(dirpath):
-                if filename not in [".DS_Store"]:
-                    try:
-                        client.file_by_file_name(filename)
-                    except AssertionError as e:
-                        errors.append(e)
-                        print(e)
-    if errors:
-        raise RuntimeError("check files")
-
-
 def process_dir(client: utils.Client, dirname, publish_articles=False):
     file_names = [
         filename
@@ -65,28 +49,30 @@ def process_dir(client: utils.Client, dirname, publish_articles=False):
         if filename != ".DS_Store"
     ]
     article_title = dirname.split(".")[-1]
+    thumbnail_image_name = find_thumbnail_image(file_names)
+    article_image_file_names = [
+        name for name in file_names if name != thumbnail_image_name
+    ]
     client.article_from_image_file_names(
         theme_base_dir,
         "Editorial",
         article_title,
-        file_names,
+        thumbnail_image_file_name=thumbnail_image_name,
+        article_image_file_names=article_image_file_names,
         theme_name="ssil_dev",
         publish_article=publish_articles,
     )
 
 
-def process_dirs(publish_articles=False):
-    client = utils.client("ssil")
-    for dirname in sorted(os.listdir(images_base_dir), key=client.natural_compare):
-        if dirname != ".DS_Store":
-            print("processing", dirname)
-            process_dir(client, dirname, publish_articles=False)
-
-
 def main():
     # rename_files()      # after renaming the files, upload them to Shopify under Contents/Files
+    from brands.ssil.process_lookbook_articles import check_number_of_files
+
+    check_number_of_files()
+    # from brands.ssil.process_lookbook_articles import check_files
     # check_files()
-    process_dirs(publish_articles=False)
+    # from brands.ssil.process_lookbook_articles import process_dirs
+    # process_dirs(publish_articles=False)
 
 
 if __name__ == "__main__":
