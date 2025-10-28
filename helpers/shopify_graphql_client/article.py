@@ -1,4 +1,6 @@
+import collections
 import copy
+import datetime
 import json
 import logging
 import os
@@ -36,15 +38,19 @@ class Article:
                     id
                     handle
                     title
-                    updatedAt
                     commentPolicy
-                feed {
-                    path
-                    location
-                }
                     createdAt
+                    updatedAt
                     templateSuffix
                     tags
+                    articles(first:100) {
+                        nodes {
+                            id
+                            title
+                            publishedAt
+                            templateSuffix
+                        }
+                    }
                 }
             }
         }
@@ -53,13 +59,16 @@ class Article:
         res = self.run_query(query, variables)
         return res["blogs"]["nodes"]
 
-    def blog_id_by_blog_title(self, blog_title):
+    def blog_by_blog_title(self, blog_title):
         blogs = self.blogs_by_query(f"title:'{blog_title.replace("'", "\\'")}'")
         if len(blogs) != 1:
             raise RuntimeError(
                 f"{'Multiple' if blogs else 'No'} products found for {blog_title}: {blogs}"
             )
-        return blogs[0]["id"]
+        return blogs[0]
+
+    def blog_id_by_blog_title(self, blog_title):
+        return self.blog_by_blog_title(blog_title)[0]["id"]
 
     def articles_by_title(self, title):
         query = """
@@ -126,6 +135,79 @@ class Article:
         if errors := res["articleCreate"]["userErrors"]:
             raise RuntimeError(f"Failed to create an article: {errors}")
         return res["articleCreate"]["article"]
+
+    def article_update_published_at_by_article_id(
+        self, article_id, published_at: datetime.datetime
+    ):
+        assert (
+            published_at.tzinfo
+        ), f"published_at must be timezone-aware: {published_at}"
+        query = """
+        mutation UpdateArticle($id: ID!, $article: ArticleUpdateInput!) {
+            articleUpdate(id: $id, article: $article) {
+                article {
+                    id
+                    title
+                    handle
+                    image {
+                        altText
+                        originalSrc
+                    }
+                }
+                userErrors {
+                    code
+                    field
+                    message
+                }
+            }
+        }
+        """
+        variables = {
+            "id": article_id,
+            "article": {
+                "publishDate": published_at.isoformat(),
+            },
+        }
+        res = self.run_query(query, variables)
+        if errors := res["articleUpdate"]["userErrors"]:
+            raise RuntimeError(f"failed to update article publication time: {errors}")
+        return res["articleUpdate"]
+
+    def sort_articles_by_title(self, blog_title, article_titles_in_order):
+        """
+        swap publication datetime of articles in the order of article_titles_in_order variable.
+        first in the list becomes the newest, last in the list becomes the oldest.
+        """
+        articles = self.blog_by_blog_title(blog_title)["articles"]["nodes"]
+        articles = [
+            article
+            for article in articles
+            if article["title"] in article_titles_in_order
+        ]
+        c = collections.Counter([article["title"] for article in articles])
+        title_duplicate_articles = {k: v for k, v in c.items() if v > 1}
+        assert (
+            not title_duplicate_articles
+        ), f"multiple articles with the same title: {title_duplicate_articles}"
+        published_ats = sorted(article["publishedAt"] for article in articles)
+        for i, article_title in enumerate(reversed(article_titles_in_order)):
+            published_at = published_ats[i]
+            article = [
+                article for article in articles if article["title"] == article_title
+            ][0]
+            self.article_update_published_at_by_article_id(
+                article["id"], datetime.datetime.fromisoformat(published_at)
+            )
+
+    def reverse_articles(self, blog_title):
+        articles = self.blog_by_blog_title(blog_title)["articles"]["nodes"]
+        published_ats = [article["publishedAt"] for article in articles]
+        assert published_ats == sorted(
+            published_ats
+        ), "articles returned by GraphQL is not in order  of publication time"
+        self.sort_articles_by_title(
+            blog_title, [article["title"] for article in articles]
+        )
 
     def theme_file_by_theme_name_and_file_name(self, theme_name, file_name):
         query = """
@@ -257,3 +339,27 @@ class Article:
 
     def article_template_name(self, blog_title, article_title):
         return f"{blog_title.lower()}-{self.punctuations_to_underscore(article_title)}"
+
+
+def main():
+    import utils
+
+    client = utils.client("ssil")
+    titles = [
+        "SSIL NEW YORK POP UP",
+        "SSIL in NYC - PUBLIC HOTEL THE ROOF",
+        "11TH ANNIVERSARY",
+        "GANGNAM",
+        "PRESENTATION 23FW LAUNCHING",
+        "10TH + DOSAN FLAGSHIP STORE OPEN",
+        "[POP UP] 23SS LAUNCHING",
+        "[POP UP] 22FW LAUNCHING",
+        "GENTLE MONSTER BOLD COLLECTION",
+        "[COLLABORATION] AND YOU x SSIL",
+        "[COLLABORATION] HERA x SSIL",
+    ]
+    client.sort_articles_by_title("Editorial", titles)
+
+
+if __name__ == "__main__":
+    main()
