@@ -60,7 +60,9 @@ def create_a_product(sgc: utils.Client, product_info, vendor, locations):
     )
     tags = product_info["tags"]
     options = populate_option(product_info, "Color")
-    res = sgc.create_a_product(product_info, vendor, description_html, tags, locations)
+    res = sgc.create_product_from_product_info(
+        product_info, vendor, description_html, tags, locations
+    )
     res = sgc.product_create(
         title=product_info["title"],
         description_html=description_html,

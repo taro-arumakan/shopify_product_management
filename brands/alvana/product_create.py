@@ -11,7 +11,7 @@ def main():
     c.sanity_check_product_info_list(product_info_list)
     product_ids = []
     for product_info in product_info_list:
-        product_ids.append(c.create_a_product(product_info))
+        product_ids.append(c.create_product_from_product_info(product_info))
         c.process_product_images(product_info)
     c.update_stocks(product_info_list)
     for product_id in product_ids:

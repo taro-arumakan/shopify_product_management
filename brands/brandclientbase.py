@@ -52,9 +52,9 @@ class BrandClientBase(Client):
     def post_create_a_product(self, create_a_product_res, product_info):
         pass
 
-    def create_a_product(self, product_info):
+    def create_product_from_product_info(self, product_info):
         logger.info(f'creating {product_info["title"]}')
-        create_a_product_res = super().create_a_product(
+        create_a_product_res = super().create_product_from_product_info(
             product_info,
             self.VENDOR,
             description_html=self.get_description_html(product_info),
@@ -95,7 +95,7 @@ class BrandClientBase(Client):
                     break
 
         for product_info in product_info_list[i:]:
-            self.create_a_product(product_info)
+            self.create_product_from_product_info(product_info)
             self.process_product_images(product_info)
         self.update_stocks(product_info_list)
         self.publish_products(product_info_list)

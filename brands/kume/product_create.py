@@ -121,7 +121,7 @@ def create_a_product(
         + [product_info["collection"]]
         + (additional_tags or [])
     )
-    return sgc.create_a_product(
+    return sgc.create_product_from_product_info(
         product_info=product_info,
         vendor=vendor,
         description_html=description_html,

@@ -54,7 +54,9 @@ def create_a_product(sgc: utils.Client, product_info, vendor, locations):
         # product_info.get("made_in", ""),
     )
     tags = product_info["tags"]
-    res = sgc.create_a_product(product_info, vendor, description_html, tags, locations)
+    res = sgc.create_product_from_product_info(
+        product_info, vendor, description_html, tags, locations
+    )
     product_id = res[0]["id"]
     update_metafields(sgc, product_id, product_info)
     res = [

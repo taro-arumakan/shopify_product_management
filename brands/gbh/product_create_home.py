@@ -164,7 +164,7 @@ def create_a_product(
             "New Arrival",
         ]
     )
-    return sgc.create_a_product(
+    return sgc.create_product_from_product_info(
         product_info=product_info,
         vendor=vendor,
         description_html=description_html,

@@ -149,7 +149,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor, additional_tags=No
     )
     ress = []
     ress.append(
-        sgc.create_a_product(
+        sgc.create_product_from_product_info(
             product_info=product_info,
             description_html="",
             vendor=vendor,

@@ -110,7 +110,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor):
             "New Arrival",
         ]
     )
-    sgc.create_a_product(
+    sgc.create_product_from_product_info(
         product_info,
         vendor,
         description_html=description_html,
