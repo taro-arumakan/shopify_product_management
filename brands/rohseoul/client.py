@@ -46,23 +46,6 @@ class RohseoulClient(BrandClientBase):
     def option2_attr_column_map(self):
         return {}
 
-    @staticmethod
-    def get_size_table_html(size_text):
-        lines = list(filter(None, map(str.strip, size_text.split("\n"))))
-        kv_pairs = [line.rsplit(" ", 1) for line in lines]
-        kv_pairs = [
-            pair if len(pair) == 2 else ["Weight", pair[0]] for pair in kv_pairs
-        ]
-        headers, values = zip(*kv_pairs)
-        res = "<table><thead><tr>"
-        for header in headers:
-            res += f"<th>{header.replace(')', '')}</th>"
-        res += "</tr></thead><tbody><tr>"
-        for value in values:
-            res += f"<td>{value}</td>"
-        res += "</tr></tbody></table>"
-        return res
-
     def get_description_html(self, product_info):
         product_care = textwrap.dedent(
             """
@@ -92,3 +75,20 @@ class RohseoulClient(BrandClientBase):
             ]
             + ["New Arrival"]
         )
+
+    def get_size_field(self, product_info):
+        size_text = product_info["size_text"]
+        lines = list(filter(None, map(str.strip, size_text.split("\n"))))
+        kv_pairs = [line.rsplit(" ", 1) for line in lines]
+        kv_pairs = [
+            pair if len(pair) == 2 else ["Weight", pair[0]] for pair in kv_pairs
+        ]
+        headers, values = zip(*kv_pairs)
+        res = "<table><thead><tr>"
+        for header in headers:
+            res += f"<th>{header.replace(')', '')}</th>"
+        res += "</tr></thead><tbody><tr>"
+        for value in values:
+            res += f"<td>{value}</td>"
+        res += "</tr></tbody></table>"
+        return res

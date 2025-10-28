@@ -172,30 +172,25 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         self.assign_image_to_skus(product_id, uploaded_variant_media["id"], skus)
 
     def check_size_texts(
-        self, product_info_list, text_to_html_func, raise_on_error=True
+        self, product_info_list, text_to_html_func=None, raise_on_error=True
     ):
         res = []
         for product_info in product_info_list:
-            size_text = product_info.get("size_text", "").strip()
-            if not size_text:
-                m = f'no size text for {product_info["title"]}'
+            try:
+                if hasattr(self, "get_size_field"):
+                    size_text = self.get_size_field(product_info)
+                else:
+                    text_to_html_func(product_info["size_text"])
+            except Exception as e:
+                m = f"Error formatting size text for {product_info['title']}: {e}"
                 if raise_on_error:
-                    logger.warning(m)
+                    logger.error(m)
+                    raise
                 else:
                     res.append(m)
             else:
-                try:
-                    size_table_html = text_to_html_func(size_text)
-                except Exception as e:
-                    m = f"Error formatting size text for {product_info['title']}: {e}"
-                    if raise_on_error:
-                        logger.error(m)
-                        raise
-                    else:
-                        res.append(m)
-                else:
-                    if raise_on_error:
-                        print(size_table_html)
+                if raise_on_error:
+                    print(size_text)
         if not raise_on_error:
             return res
 
@@ -250,7 +245,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 res.append(f"Existing product found by {checking}: {param}")
         return res
 
-    def sanity_check_product_info_list(self, product_info_list, text_to_html_func):
+    def sanity_check_product_info_list(self, product_info_list, text_to_html_func=None):
         res = []
         try:
             self.check_sku_duplicates(product_info_list)

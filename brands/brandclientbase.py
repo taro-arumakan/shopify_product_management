@@ -46,6 +46,9 @@ class BrandClientBase(Client):
     def get_tags(self, product_info):
         raise NotImplementedError
 
+    def get_size_field(self, product_info):
+        raise NotImplementedError
+
     def post_create_a_product(self, create_a_product_res, product_info):
         pass
 
@@ -63,11 +66,25 @@ class BrandClientBase(Client):
     def update_stocks(self, product_info_list):
         super().update_stocks(product_info_list, self.LOCATIONS[0])
 
-    def sanity_check_sheet(self, sheet_name, handle_suffix=None):
+    def sanity_check_sheet(
+        self, sheet_name, handle_suffix=None, text_to_html_func=None
+    ):
         product_info_list = self.product_info_list_from_sheet(
             sheet_name, handle_suffix=handle_suffix
         )
         logger.info(
             f"Sanity checking {len(product_info_list)} products from sheet {sheet_name}"
         )
-        return self.sanity_check_product_info_list(product_info_list)
+        return self.sanity_check_product_info_list(
+            product_info_list,
+            text_to_html_func=text_to_html_func
+            or self.formatted_size_text_to_html_table,
+        )
+
+    def process_sheet_to_products(self, sheet_name, handle_suffix=None):
+        product_info_list = self.product_info_list_from_sheet(sheet_name, handle_suffix)
+        for product_info in product_info_list:
+            self.create_a_product(product_info)
+            self.process_product_images(product_info)
+        self.update_stocks(product_info_list)
+        self.publish_products(product_info_list)

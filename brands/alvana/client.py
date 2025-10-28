@@ -57,6 +57,9 @@ class AlvanaClient(BrandClientBase):
     def get_tags(self, product_info):
         return product_info["tags"]
 
+    def get_size_field(self, product_info):
+        return self.formatted_size_text_to_html_table(product_info["size_text"])
+
     def post_create_a_product(self, create_a_product_res, product_info):
         product_id = create_a_product_res[0]["id"]
         skus = [v["sku"] for v in create_a_product_res[0]["variants"]["nodes"]]
@@ -67,7 +70,7 @@ class AlvanaClient(BrandClientBase):
     def update_metafields(self, product_id, product_info):
         logger.info(f'updating metafields for {product_info["title"]}')
         size_text = product_info["size_text"]
-        size_table_html = self.formatted_size_text_to_html_table(size_text)
+        size_table_html = self.get_size_field(product_info)
         if self.to_add_disclaimer_html(product_info["title"]):
             size_table_html += "<br>"
             size_table_html += "<p>注: 製造後に洗い加工を施しているため、記載されているサイズに若干の誤差が生じる場合がございます。</p>"

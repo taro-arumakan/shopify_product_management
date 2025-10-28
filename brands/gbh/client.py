@@ -14,11 +14,6 @@ class GbhClient(BrandClientBase):
     LOCATIONS = ["Shop location"]
     PRODUCT_SHEET_START_ROW = 1
 
-    def sanity_check_product_info_list(self, product_info_list):
-        return super().sanity_check_product_info_list(
-            product_info_list, text_to_html_func=self.get_size_table_html
-        )
-
     def product_attr_column_map(self):
         return dict(
             title=string.ascii_lowercase.index("f"),
@@ -49,15 +44,7 @@ class GbhClient(BrandClientBase):
         )
         return option2_attrs
 
-    def product_info_list_from_sheet(self, sheet_name, handle_suffix=None):
-        res = super().product_info_list_from_sheet(
-            sheet_name, handle_suffix=handle_suffix
-        )
-        res = [self.merge_size_texts(pi) for pi in res]
-        return res
-
     def merge_size_texts(self, product_info):
-        product_info = copy.deepcopy(product_info)
         if product_info["title"] in ["WRAP SKIRT & PANTS"]:
             size_text = product_info["options"][0]["options"][0]["size_text"]
         else:
@@ -75,11 +62,7 @@ class GbhClient(BrandClientBase):
             size_text = "\n".join(
                 f"[{size}] {st}" for size, st in zip(sizes, size_texts)
             )
-        product_info["size_text"] = size_text
-        return product_info
-
-    def get_size_table_html(self, size_text):
-        return super().formatted_size_text_to_html_table(size_text)
+        return size_text
 
     def get_description_html(self, product_info):
         return super().get_description_html(
@@ -99,6 +82,10 @@ class GbhClient(BrandClientBase):
             ]
             + ["New Arrival", "25_winter_1st"]
         )
+
+    def get_size_field(self, product_info):
+        size_text = self.merge_size_texts(product_info)
+        return super().formatted_size_text_to_html_table(size_text)
 
 
 def main():
