@@ -8,7 +8,7 @@ def images_list_template():
         "liquid_RCdgVw": {
           "type": "liquid",
           "settings": {
-            "liquid": "<style>\n.blog-title {\nfont-family: \"Open Sans\";\nfont-size: 14px;\nfont-style: normal;\nfont-weight: 700;\nline-height: 32px; /* 228.571%\n}\n</style>\n<div class=\"blog-title reveal_tran_lr\">\n{{ blog.title }}\n</div>"
+            "liquid": "<div class=\"blog-title reveal_tran_lr\">\n{{ blog.title }}\n</div>"
           }
         },
         "heading_t3gXjy": {
