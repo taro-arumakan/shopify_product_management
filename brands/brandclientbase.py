@@ -81,9 +81,20 @@ class BrandClientBase(Client):
             or self.formatted_size_text_to_html_table,
         )
 
-    def process_sheet_to_products(self, sheet_name, handle_suffix=None):
+    def process_sheet_to_products(
+        self, sheet_name, handle_suffix=None, restart_at_product_name=None
+    ):
         product_info_list = self.product_info_list_from_sheet(sheet_name, handle_suffix)
-        for product_info in product_info_list:
+        if restart_at_product_name == "DO NOT CREATE":
+            i = len(product_info_list)
+        elif not restart_at_product_name:
+            i = 0
+        else:
+            for i, pi in enumerate(product_info_list):
+                if pi["title"] == restart_at_product_name:
+                    break
+
+        for product_info in product_info_list[i:]:
             self.create_a_product(product_info)
             self.process_product_images(product_info)
         self.update_stocks(product_info_list)
