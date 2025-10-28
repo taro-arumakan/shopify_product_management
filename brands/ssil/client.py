@@ -145,8 +145,8 @@ class SsilClientMaterialOptionOnly(SsilClient):
         option1_attrs = {"Color": string.ascii_lowercase.index("k")}
         option1_attrs.update(
             drive_link=string.ascii_lowercase.index("l"),
-            sku=string.ascii_lowercase.index("n"),
-            stock=string.ascii_lowercase.index("o"),
+            sku=string.ascii_lowercase.index("m"),
+            stock=string.ascii_lowercase.index("n"),
         )
         return option1_attrs
 
