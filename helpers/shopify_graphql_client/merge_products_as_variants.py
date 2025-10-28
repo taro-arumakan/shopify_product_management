@@ -80,7 +80,11 @@ class MergeProductsAsVariants:
                 f"/products/{product['handle']}", f"/products/{new_product_handle}"
             )
 
-    def merge_products_as_variants(self, product_title, location_name):
+    def merge_products_as_variants(self, product_title, location_names):
+        """
+        Total selling stock quantity gets added to the first in the list of location_names.
+        Pass the primary location first e.g. ["Archivépke Warehouse", "Envycube Warehouse"].
+        """
         products = self.products_by_title(product_title, sort_key="CREATED_AT")
         products = [p for p in reversed(products) if p["status"] == "ACTIVE"]
         logger.info(f"Merging {len(products)} products")
@@ -102,10 +106,11 @@ class MergeProductsAsVariants:
         rights = products[1:]
         for right in rights:
             self.add_product_to_product_as_variants(
-                new_product_id, right["id"], location_name, variant_option_names
+                new_product_id, right["id"], location_names[0], variant_option_names
             )
 
         logger.info(f"Activating the new product")
+        self.enable_and_activate_inventory_by_product_id(new_product_id, location_names)
         self.activate_and_publish_by_product_id(new_product_id)
 
         logger.info(f"Archiving and untracking the old products. Adding redirects")
@@ -118,7 +123,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
     client = utils.client("rohseoul")
-    client.merge_products_as_variants("Tin square shoulder bag", "Shop location")
+    client.merge_products_as_variants("Tin square shoulder bag", ["Shop location"])
 
 
 if __name__ == "__main__":

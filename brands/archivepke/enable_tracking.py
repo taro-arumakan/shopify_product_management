@@ -28,7 +28,9 @@ def main():
         for product in products:
             for variant in product["variants"]["nodes"]:
                 logging.info(f'activating {variant["sku"]} at {location_names}')
-                client.enable_and_activate_inventory(variant["sku"], location_names)
+                client.enable_and_activate_inventory_by_sku(
+                    variant["sku"], location_names
+                )
 
 
 if __name__ == "__main__":

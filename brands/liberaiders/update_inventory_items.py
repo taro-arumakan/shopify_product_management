@@ -13,5 +13,5 @@ for weight, title in zip(weights, titles):
     variants = product["variants"]["nodes"]
 
     for v in variants:
-        client.enable_and_activate_inventory(v["sku"], ["Shop Location"])
+        client.enable_and_activate_inventory_by_sku(v["sku"], ["Shop Location"])
         client.update_inventory_item_weight_by_sku(v["sku"], weight)

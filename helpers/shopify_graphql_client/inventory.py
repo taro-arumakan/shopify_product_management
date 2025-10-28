@@ -30,7 +30,12 @@ class Inventory:
         ), f'{"Multiple" if res else "No"} locations found for {name}: {res}'
         return res[0]["id"]
 
-    def enable_and_activate_inventory(self, sku, location_names):
+    def enable_and_activate_inventory_by_product_id(self, product_id, location_names):
+        product = self.product_by_id(product_id)
+        for variant in product["variants"]["nodes"]:
+            self.enable_and_activate_inventory_by_sku(variant["sku"], location_names)
+
+    def enable_and_activate_inventory_by_sku(self, sku, location_names):
         inventory_item_id = self.inventory_item_id_by_sku(sku)
         ress = [self.update_inventory_tracking(inventory_item_id, True)]
         for location_name in location_names:

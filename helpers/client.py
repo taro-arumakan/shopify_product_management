@@ -105,7 +105,10 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
     ):
         options = options or self.populate_option(product_info)
         skus = [option[2] for option in options] if options else [product_info["sku"]]
-        res2 = [self.enable_and_activate_inventory(sku, location_names) for sku in skus]
+        res2 = [
+            self.enable_and_activate_inventory_by_sku(sku, location_names)
+            for sku in skus
+        ]
         return res2
 
     def get_sku_stocks_map(self, product_info):
