@@ -142,7 +142,8 @@ class ProductCreate:
 
     def populate_product_options(self, option_lists):
         product_options = {}
-        for option_dict, _, _ in option_lists:
+        for option in option_lists:
+            option_dict = option[0]
             for k, v in option_dict.items():
                 if v not in product_options.get(k, []):
                     product_options.setdefault(k, []).append(v)
@@ -173,7 +174,7 @@ class ProductCreate:
                     for option_name, option_value in options_dict.items()
                 ],
             }
-            for i, (options_dict, price, sku) in enumerate(option_lists)
+            for i, (options_dict, price, sku, stock) in enumerate(option_lists)
         ]
 
     def escape_html(self, text):
