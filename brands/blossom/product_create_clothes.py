@@ -79,14 +79,9 @@ def process_images(client: utils.Client, product_info_list):
 
 def main():
     c = utils.client("blossomhcompany")
-    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "clothes")
-
-    product_info_list = [
-        pi
-        for pi in product_info_list
-        if pi["title"]
-        in ["TIEN TURTLE-NECK T-SHIRT", "BRIN SLEEVELESS KNIT", "TIEN U-NECK T-SHIRT"]
-    ]
+    product_info_list = product_info_list_from_sheet(
+        c, c.sheet_id, "clothes(drop4) のclone"
+    )
     # for index, product_info in enumerate(product_info_list):
     #     if product_info["title"] == "GAEIL SUEDE BEMUDA PANTS":
     #         break
@@ -97,17 +92,20 @@ def main():
     #     text_to_html_func=c.formatted_size_text_to_html_table,
     # )
 
-    # location = "Blossom Warehouse"
-    # for product_info in product_info_list:
-    #     create_a_product(c, product_info, vendor="blossom", locations=[location])
-    # c.update_stocks(product_info_list, location)
+    location = "Blossom Warehouse"
+    for product_info in product_info_list:
+        create_a_product(c, product_info, vendor="blossom", locations=[location])
+    c.update_stocks(product_info_list, location)
 
     process_images(c, product_info_list)
 
     # scheduled_time = None
-    # import zoneinfo
-    # scheduled_time = datetime.datetime(2025, 10, 3, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo('Asia/Tokyo'))
-    # c.publish_products(product_info_list, scheduled_time=scheduled_time)
+    import zoneinfo
+
+    scheduled_time = datetime.datetime(
+        2025, 10, 30, 12, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    )
+    c.publish_products(product_info_list, scheduled_time=scheduled_time)
 
 
 if __name__ == "__main__":
