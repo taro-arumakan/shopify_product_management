@@ -136,15 +136,24 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             )
 
     def replace_images_by_skus(
-        self, skus, folder_id, image_local_dir, download_filename_prefix
+        self, skus, folder_id, local_dir=None, filename_prefix=None
     ):
         medias = self.medias_by_sku(skus[0])
         existing_ids = [m["id"] for m in medias]
         logger.info(f"going to replace images of {skus} with {folder_id}")
+
+        local_dir = (
+            local_dir
+            or f"{pathlib.Path.home()}/Downloads/{self.shop_name}_{datetime.date.today():%Y%m%d}/"
+        )
+        filename_prefix = (
+            filename_prefix or f"upload_{datetime.date.today():%Y%m%d}_{skus[0]}"
+        )
+
         local_paths = self.drive_images_to_local(
             folder_id,
-            image_local_dir,
-            filename_prefix=download_filename_prefix,
+            local_dir,
+            filename_prefix=filename_prefix,
         )
         file_names = [path.rsplit("/", 1)[-1] for path in local_paths]
         mime_types = [f"image/{path.rsplit('.', 1)[-1]}" for path in local_paths]

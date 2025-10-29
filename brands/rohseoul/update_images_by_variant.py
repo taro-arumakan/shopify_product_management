@@ -31,7 +31,7 @@ def main():
                     [sku],
                     drive_id,
                     IMAGES_LOCAL_DIR,
-                    download_filename_prefix=f"{UPLOAD_IMAGE_PREFIX}_{sku}_",
+                    filename_prefix=f"{UPLOAD_IMAGE_PREFIX}_{sku}_",
                 )
 
 
