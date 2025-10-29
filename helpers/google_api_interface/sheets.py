@@ -190,6 +190,7 @@ class GoogleSheetsApiInterface:
         return variants_info
 
     def populate_option(self, product_info):
+        # TODO return as a dict for readability.
         option1_key, option2_key = None, None
         if option1 := product_info.get("options"):
             option1_key = list(option1[0].keys())[0]
@@ -206,6 +207,7 @@ class GoogleSheetsApiInterface:
                     or option1.get("price")
                     or product_info["price"],
                     option2["sku"],
+                    option2["stock"],
                 ]
                 for option1 in product_info["options"]
                 for option2 in option1["options"]
@@ -216,19 +218,20 @@ class GoogleSheetsApiInterface:
                     {option1_key: option1[option1_key]},
                     option1.get("price") or product_info["price"],
                     option1["sku"],
+                    option1["stock"],
                 ]
                 for option1 in product_info["options"]
             ]
         return []
 
-    def get_child_variant_skus(self, variant_info):
-        if "sku" in variant_info:
-            return [variant_info["sku"]]
-        if (o1 := variant_info["options"]) and "sku" in o1[0]:
-            return [option1["sku"] for option1 in variant_info["options"]]
-        if (o2 := variant_info["options"][0]["options"]) and "sku" in o2[0]:
+    def get_child_variants_attribute(self, variant_info, attribute_name):
+        if attribute_name in variant_info:
+            return [variant_info[attribute_name]]
+        if (o1 := variant_info["options"]) and attribute_name in o1[0]:
+            return [option1[attribute_name] for option1 in variant_info["options"]]
+        if (o2 := variant_info["options"][0]["options"]) and attribute_name in o2[0]:
             return [
-                option2["sku"]
+                option2[attribute_name]
                 for option1 in variant_info["options"]
                 for option2 in option1["options"]
             ]
@@ -245,5 +248,5 @@ class GoogleSheetsApiInterface:
                 "drive_link"
             ], f"no drive link for {product_info['title'], {variant}}"
             drive_ids.append(self.drive_link_to_id(variant["drive_link"]))
-            skuss.append(self.get_child_variant_skus(variant))
+            skuss.append(self.get_child_variants_attribute(variant, "sku"))
         return drive_ids, skuss
