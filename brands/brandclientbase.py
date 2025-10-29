@@ -1,4 +1,6 @@
+import datetime
 import logging
+import pathlib
 from helpers.client import Client
 from utils import credentials
 
@@ -62,6 +64,58 @@ class BrandClientBase(Client):
             location_names=self.LOCATIONS,
         )
         return self.post_create_a_product(create_a_product_res, product_info)
+
+    def segment_options_list_by_key_option(self, options):
+        """
+        group the flat options list to list of lists by the same first option i.e. color
+
+        [[{'カラー': 'KHAKI BROWN', 'サイズ': 'S'}, 18260, 'APB3PT030KBS', 3],
+         [{'カラー': 'KHAKI BROWN', 'サイズ': 'M'}, 18260, 'APB3PT030KBM', 3],
+         [{'カラー': 'BLACK', 'サイズ': 'S'}, 18260, 'APB3PT030BKS', 3],
+         [{'カラー': 'BLACK', 'サイズ': 'M'}, 18260, 'APB3PT030BKM', 3]]
+
+         becomes
+
+        [[[{'カラー': 'KHAKI BROWN', 'サイズ': 'S'}, 18260, 'APB3PT030KBS', 3],
+          [{'カラー': 'KHAKI BROWN', 'サイズ': 'M'}, 18260, 'APB3PT030KBM', 3]],
+         [[{'カラー': 'BLACK', 'サイズ': 'S'}, 18260, 'APB3PT030BKS', 3],
+          [{'カラー': 'BLACK', 'サイズ': 'M'}, 18260, 'APB3PT030BKM', 3]]]
+        """
+        res = {}
+        key_attr = list(options[0][0].keys())[0]
+        for option in options:
+            res.setdefault(option[0][key_attr], []).append(option)
+        return list(res.values())
+
+    def add_variants_from_product_info(self, product_info):
+        optionss = self.segment_options_list_by_key_option(
+            self.populate_option(product_info)
+        )
+        drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
+        product_id = self.product_id_by_title(product_info["title"])
+        for drive_link, skus, options in zip(drive_links, skuss, optionss):
+            logger.info(f"  processing sku: {skus} - {drive_link}")
+            res = self.add_product_images(
+                product_id,
+                drive_link,
+                f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
+                f"upload_{datetime.date.today():%Y%m%d}_{skus[0]}_",
+            )
+            new_media_ids = [m["id"] for m in res[-1]["productCreateMedia"]["media"]]
+            self.variants_add(
+                product_id=product_id,
+                skus=skus,
+                media_ids=[],
+                variant_media_ids=[new_media_ids[0]],
+                option_names=options[0][0].keys(),
+                variant_option_valuess=[option[0].values() for option in options],
+                prices=[option[1] for option in options],
+                stocks=[option[3] for option in options],
+                location_id=self.location_id_by_name(self.LOCATIONS[0]),
+            )
+        self.enable_and_activate_inventory_by_product_id(
+            product_id, location_names=self.LOCATIONS
+        )
 
     def update_stocks(self, product_info_list):
         super().update_stocks(product_info_list, self.LOCATIONS[0])
