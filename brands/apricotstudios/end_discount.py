@@ -17,7 +17,7 @@ def main():
             client.update_variant_attributes(
                 product_id=p["id"],
                 variant_id=variant["id"],
-                attribute_names=["compareAtPrice"],
+                attribute_names=["price"],
                 attribute_values=[str(compare_at_price)],
             )
 
