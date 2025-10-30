@@ -80,11 +80,13 @@ def process_dir(client: utils.Client, dirname, publish_articles=False):
     ]
     article_title = dirname.split(".")[-1]
     thumbnail_image_name = find_thumbnail_image(file_names)
-    article_image_file_names = (
-        [filename for filename in file_names if filename != thumbnail_image_name]
-        if thumbnail_image_name.endswith("000.jpg")
-        else file_names
-    )
+    if thumbnail_image_name.endswith("000.jpg"):
+        article_image_file_names = [
+            filename for filename in file_names if filename != thumbnail_image_name
+        ]
+    else:
+        article_image_file_names = file_names
+
     client.article_from_image_file_names(
         theme_base_dir,
         "Lookbook",
