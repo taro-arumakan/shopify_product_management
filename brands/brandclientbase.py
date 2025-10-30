@@ -51,19 +51,21 @@ class BrandClientBase(Client):
     def get_size_field(self, product_info):
         raise NotImplementedError
 
-    def post_create_a_product(self, create_a_product_res, product_info):
+    def post_create_product_from_product_info(
+        self, create_product_from_product_info_res, product_info
+    ):
         pass
 
     def create_product_from_product_info(self, product_info):
         logger.info(f'creating {product_info["title"]}')
-        create_a_product_res = super().create_product_from_product_info(
+        res = super().create_product_from_product_info(
             product_info,
             self.VENDOR,
             description_html=self.get_description_html(product_info),
             tags=self.get_tags(product_info),
             location_names=self.LOCATIONS,
         )
-        return self.post_create_a_product(create_a_product_res, product_info)
+        return self.post_create_product_from_product_info(res, product_info)
 
     def segment_options_list_by_key_option(self, options):
         """

@@ -60,9 +60,14 @@ class AlvanaClient(BrandClientBase):
     def get_size_field(self, product_info):
         return self.formatted_size_text_to_html_table(product_info["size_text"])
 
-    def post_create_a_product(self, create_a_product_res, product_info):
-        product_id = create_a_product_res[0]["id"]
-        skus = [v["sku"] for v in create_a_product_res[0]["variants"]["nodes"]]
+    def post_create_product_from_product_info(
+        self, create_product_from_product_info_res, product_info
+    ):
+        product_id = create_product_from_product_info_res[0]["id"]
+        skus = [
+            v["sku"]
+            for v in create_product_from_product_info_res[0]["variants"]["nodes"]
+        ]
         self.update_metafields(product_id, product_info)
         self.update_weight(skus, product_info)
         return product_id
