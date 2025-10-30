@@ -111,7 +111,58 @@ class BlossomClientClothes(BlossomClient):
 
 
 class BlossomClientShoes(BlossomClient):
-    pass
+    def product_attr_column_map(self):
+        return dict(
+            title=string.ascii_lowercase.index("b"),
+            tags=string.ascii_lowercase.index("c"),
+            price=string.ascii_lowercase.index("e"),
+            description=string.ascii_lowercase.index("g"),
+            product_care=string.ascii_lowercase.index("i"),
+            material=string.ascii_lowercase.index("j"),
+            size_text=string.ascii_lowercase.index("k"),
+            made_in=string.ascii_lowercase.index("l"),
+        )
+
+    def option1_attr_column_map(self):
+        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
+        option1_attrs.update(
+            drive_link=string.ascii_lowercase.index("n"),
+        )
+        return option1_attrs
+
+    def option2_attr_column_map(self):
+        option2_attrs = {"Size": string.ascii_lowercase.index("o")}
+        option2_attrs.update(
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
+        )
+        return option2_attrs
+
+
+class BlossomClientBags(BlossomClient):
+    def product_attr_column_map(self):
+        return dict(
+            title=string.ascii_lowercase.index("b"),
+            tags=string.ascii_lowercase.index("c"),
+            price=string.ascii_lowercase.index("e"),
+            description=string.ascii_lowercase.index("g"),
+            product_care=string.ascii_lowercase.index("i"),
+            material=string.ascii_lowercase.index("j"),
+            size_text=string.ascii_lowercase.index("k"),
+            made_in=string.ascii_lowercase.index("l"),
+        )
+
+    def option1_attr_column_map(self):
+        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
+        option1_attrs.update(
+            drive_link=string.ascii_lowercase.index("n"),
+            sku=string.ascii_lowercase.index("o"),
+            stock=string.ascii_lowercase.index("p"),
+        )
+        return option1_attrs
+
+    def option2_attr_column_map(self):
+        return {}
 
 
 def main():
