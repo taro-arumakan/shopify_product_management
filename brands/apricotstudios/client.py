@@ -18,13 +18,17 @@ class ApricotStudiosClient(BrandClientBase):
     LOCATIONS = ["Apricot Studios Warehouse"]
     PRODUCT_SHEET_START_ROW = 1
 
-    def __init__(self, dummy_product_id: str, product_detail_images_folder_id: str):
+    def __init__(self, dummy_product_id="", product_detail_images_folder_id=""):
         """
         dummy_product_id: a dummy product which holds product detail images
         product_detail_images_folder_id: Google Drive folder id where translated product detail images are stored by title
         """
         self.dummy_product_id = dummy_product_id
         self.product_detail_images_folder_id = product_detail_images_folder_id
+        if not all((self.dummy_product_id, self.product_detail_images_folder_id)):
+            logger.warning(
+                "dummy proudct id and product detail images folder id are required for product creation"
+            )
         super().__init__()
 
     def product_attr_column_map(self):
