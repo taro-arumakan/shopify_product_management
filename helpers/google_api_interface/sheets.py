@@ -218,7 +218,7 @@ class GoogleSheetsApiInterface:
                     {option1_key: option1[option1_key]},
                     option1.get("price") or product_info["price"],
                     option1["sku"],
-                    option1["stock"],
+                    option1.get("stock", 0),
                 ]
                 for option1 in product_info["options"]
             ]
