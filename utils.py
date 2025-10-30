@@ -37,18 +37,32 @@ def client(shop_name: str) -> Client:
         from brands.alvana.client import AlvanaClient
 
         res = AlvanaClient()
-    elif shop_name.lower() in ["ssilkr", "ssil"]:
-        from brands.ssil.client import SsilClient
 
-        res = SsilClient()
-    elif shop_name.lower() == "rohseoul":
-        from brands.rohseoul.client import RohseoulClient
+    elif shop_name.lower() in ["apricot-studios", "apricot", "apricotstudios"]:
+        from brands.apricotstudios.client import ApricotStudiosClient
 
-        res = RohseoulClient()
+        res = ApricotStudiosClient(None, None)
+
+    elif shop_name.lower() in ["blossom", "blossomhcompany"]:
+        from brands.blossom.client import BlossomClient
+
+        res = BlossomClient()
+
     elif shop_name.lower() in ["gbhjapan", "gbh"]:
         from brands.gbh.client import GbhClient
 
         res = GbhClient()
+
+    elif shop_name.lower() == "rohseoul":
+        from brands.rohseoul.client import RohseoulClient
+
+        res = RohseoulClient()
+
+    elif shop_name.lower() in ["ssilkr", "ssil"]:
+        from brands.ssil.client import SsilClient
+
+        res = SsilClient()
+
     else:
         cred = credentials(shop_name)
         res = Client(
