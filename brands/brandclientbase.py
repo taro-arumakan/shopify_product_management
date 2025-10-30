@@ -136,7 +136,11 @@ class BrandClientBase(Client):
         )
 
     def process_sheet_to_products(
-        self, sheet_name, handle_suffix=None, restart_at_product_name=None
+        self,
+        sheet_name,
+        handle_suffix=None,
+        restart_at_product_name=None,
+        scheduled_time=None,
     ):
         product_info_list = self.product_info_list_from_sheet(sheet_name, handle_suffix)
         if restart_at_product_name == "DO NOT CREATE":
@@ -152,4 +156,4 @@ class BrandClientBase(Client):
             self.create_product_from_product_info(product_info)
             self.process_product_images(product_info)
         self.update_stocks(product_info_list)
-        self.publish_products(product_info_list)
+        self.publish_products(product_info_list, scheduled_time=scheduled_time)
