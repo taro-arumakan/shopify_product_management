@@ -68,7 +68,7 @@ class Article:
         return blogs[0]
 
     def blog_id_by_blog_title(self, blog_title):
-        return self.blog_by_blog_title(blog_title)[0]["id"]
+        return self.blog_by_blog_title(blog_title)["id"]
 
     def articles_by_title(self, title):
         query = """
