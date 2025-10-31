@@ -127,6 +127,11 @@ class BrandClientBase(Client):
     def update_stocks(self, product_info_list):
         super().update_stocks(product_info_list, self.LOCATIONS[0])
 
+    def merge_products_as_variants(self, product_title):
+        return super().merge_products_as_variants(
+            product_title, location_names=self.LOCATIONS
+        )
+
     def sanity_check_sheet(
         self, sheet_name, handle_suffix=None, text_to_html_func=None
     ):
