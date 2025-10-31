@@ -33,7 +33,12 @@ def credentials(shop_name):
 
 
 def client(shop_name: str) -> Client:
-    if shop_name.lower() in ["alvanas", "alvana"]:
+    if shop_name.lower() in ["archive-epke", "archivepke"]:
+        from brands.archivepke.client import ArchivepkeClient
+
+        res = ArchivepkeClient()
+
+    elif shop_name.lower() in ["alvanas", "alvana"]:
         from brands.alvana.client import AlvanaClient
 
         res = AlvanaClient()
@@ -52,6 +57,16 @@ def client(shop_name: str) -> Client:
         from brands.gbh.client import GbhClient
 
         res = GbhClient()
+
+    elif shop_name.lower() in ["kumej", "kume"]:
+        from brands.kume.client import KumeClient
+
+        res = KumeClient()
+
+    elif shop_name.lower() in ["lememek", "lememe"]:
+        from brands.lememe.client import LememeClient
+
+        res = LememeClient()
 
     elif shop_name.lower() == "rohseoul":
         from brands.rohseoul.client import RohseoulClient
