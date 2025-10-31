@@ -261,6 +261,18 @@ class Article:
                 thumbnail_image_name=thumbnail_image_file_name,
             )
 
+    def update_image_file_extensions(self, image_file_names):
+        """
+        Some files can be uploaded by a wrong extension,
+        which then gets updated by Shopify to the correct extension,
+        e.g. .jpg to .png
+        """
+        res = []
+        for filename in image_file_names:
+            f = self.file_by_file_name(filename)
+            res.append(f["image"]["url"].rsplit("/", 1)[-1].split("?")[0])
+        return res
+
     def write_json_from_image_file_names_and_product_titles(
         self,
         theme_dir,
@@ -269,6 +281,7 @@ class Article:
         image_file_names,
         product_titles=None,
     ):
+        image_file_names = self.update_image_file_extensions(image_file_names)
         sections = self.to_template_sections(image_file_names, product_titles)
         theme_file_path = os.path.join(
             theme_dir,
