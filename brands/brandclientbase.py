@@ -2,7 +2,6 @@ import datetime
 import logging
 import pathlib
 from helpers.client import Client
-from utils import credentials
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +16,8 @@ class BrandClientBase(Client):
         assert self.SHOPNAME, "SHOPNAME must be set in subclass"
         assert self.VENDOR, "VENDOR must be set in subclass"
         assert self.LOCATIONS, "LOCATIONS must be set in subclass"
+        from utils import credentials
+
         cred = credentials(self.SHOPNAME)
         super().__init__(
             shop_name=cred.shop_name,

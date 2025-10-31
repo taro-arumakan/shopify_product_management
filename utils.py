@@ -1,4 +1,5 @@
 from helpers.client import Client
+from brands.brandclientbase import BrandClientBase
 from helpers.exceptions import (
     MultipleProductsFoundException,
     NoProductsFoundException,
@@ -32,7 +33,7 @@ def credentials(shop_name):
     return Credentials(**res)
 
 
-def client(shop_name: str) -> Client:
+def client(shop_name: str) -> BrandClientBase:
     if shop_name.lower() in ["archive-epke", "archivepke"]:
         from brands.archivepke.client import ArchivepkeClient
 
