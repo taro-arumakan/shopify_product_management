@@ -6,7 +6,7 @@ import logging
 import os
 import string
 import time
-from helpers.shopify_graphql_client.images_list_template import images_list_template
+from helpers.shopify_graphql_client.article_json_template import article_json_template
 
 logger = logging.getLogger(__name__)
 
@@ -241,7 +241,7 @@ class Article:
     ):
         # for file_name in image_file_names:
         #     self.file_by_file_name(file_name)
-        theme_file_path = self.write_json_from_image_file_names(
+        theme_file_path = self.write_json_from_image_file_names_and_product_titles(
             theme_dir, blog_title, article_title, article_image_file_names
         )
         if publish_article:
@@ -258,10 +258,15 @@ class Article:
                 thumbnail_image_name=thumbnail_image_file_name,
             )
 
-    def write_json_from_image_file_names(
-        self, theme_dir, blog_title, article_title, image_file_names
+    def write_json_from_image_file_names_and_product_titles(
+        self,
+        theme_dir,
+        blog_title,
+        article_title,
+        image_file_names,
+        product_titles=None,
     ):
-        sections = self.to_images_list_sections_dict(image_file_names)
+        sections = self.to_template_sections(image_file_names, product_titles)
         theme_file_path = os.path.join(
             theme_dir,
             self.article_template_path(theme_dir, blog_title, article_title),
@@ -271,6 +276,14 @@ class Article:
             sections_dict=sections,
         )
         return theme_file_path
+
+    def to_template_sections(self, file_names, product_titles):
+        sections = self.to_images_list_sections_dict(file_names)
+        if product_titles:
+            sections.update(
+                self.to_featured_product_sections_dict(product_titles=product_titles)
+            )
+        return sections
 
     def to_images_list_sections_dict(self, file_names):
         base_attrs = {
@@ -313,8 +326,49 @@ class Article:
         sections.update(section)
         return sections
 
+    def to_featured_product_sections_dict(self, product_titles):
+        base_attrs = {
+            "type": "featured-product",
+            "blocks": {
+                "title_HFiUhq": {"type": "title", "settings": {"heading_tag": "h3"}},
+                "price_8YCmTm": {
+                    "type": "price",
+                    "settings": {"show_taxes_notice": False},
+                },
+            },
+            "block_order": ["title_HFiUhq", "price_8YCmTm"],
+            "custom_css": [".container {padding: 2rem 1rem;}"],
+            "name": "t:sections.featured_product.presets.featured_product.name",
+            "settings": {
+                "color_scheme": "",
+                "product": None,
+                "separate_section_with_border": False,
+                "container_size": "full",
+                "product_info_size": 30,
+                "center_basic_info": True,
+                "desktop_media_layout": "carousel_dots",
+                "desktop_media_grid_gap": 30,
+                "mobile_controls": "dots",
+                "enable_media_autoplay": False,
+                "enable_video_looping": True,
+                "enable_image_zoom": False,
+                "max_image_zoom_level": 3,
+                "subheading": "",
+                "title": "",
+                "content": "",
+            },
+        }
+        sections = {}
+        for i, product_title in enumerate(product_titles):
+            product = self.product_by_title(product_title)
+            section_name = f"featured_product_{i}"
+            section = {section_name: copy.deepcopy(base_attrs)}
+            section[section_name]["settings"]["product"] = product["handle"]
+            sections.update(section)
+        return sections
+
     def write_to_json(self, theme_file_path, sections_dict):
-        output_dict = json.loads(images_list_template())
+        output_dict = json.loads(article_json_template())
         output_dict["sections"].update(sections_dict)
         output_dict["order"] += sections_dict.keys()
         with open(theme_file_path, "w") as of:

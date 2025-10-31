@@ -1,4 +1,4 @@
-def images_list_template():
+def article_json_template():
     return r"""{
   "wrapper": "div.fixed-width-wrapper",
   "sections": {
