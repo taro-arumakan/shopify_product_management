@@ -45,7 +45,7 @@ class BrandClientBase(Client):
             handle_suffix=handle_suffix,
         )
 
-    def get_tags(self, product_info):
+    def get_tags(self, product_info, additional_tags):
         raise NotImplementedError
 
     def get_size_field(self, product_info):
@@ -56,13 +56,13 @@ class BrandClientBase(Client):
     ):
         pass
 
-    def create_product_from_product_info(self, product_info):
+    def create_product_from_product_info(self, product_info, additional_tags=None):
         logger.info(f'creating {product_info["title"]}')
         res = super().create_product_from_product_info(
             product_info,
             self.VENDOR,
             description_html=self.get_description_html(product_info),
-            tags=self.get_tags(product_info),
+            tags=self.get_tags(product_info, additional_tags),
             location_names=self.LOCATIONS,
         )
         return self.post_create_product_from_product_info(res, product_info)
@@ -150,6 +150,7 @@ class BrandClientBase(Client):
     def process_sheet_to_products(
         self,
         sheet_name,
+        additional_tags=None,
         handle_suffix=None,
         restart_at_product_name=None,
         scheduled_time=None,
@@ -165,7 +166,7 @@ class BrandClientBase(Client):
                     break
 
         for product_info in product_info_list[i:]:
-            self.create_product_from_product_info(product_info)
+            self.create_product_from_product_info(product_info, additional_tags)
             self.process_product_images(product_info)
         self.update_stocks(product_info_list)
         self.publish_products(product_info_list, scheduled_time=scheduled_time)

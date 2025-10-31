@@ -9,7 +9,9 @@ def main():
     client = LememeClient()
     sheet_name = "Small Goods"
     client.sanity_check_sheet(sheet_name)
-    client.process_sheet_to_products(sheet_name)
+    client.process_sheet_to_products(
+        sheet_name, additional_tags=["small_good", "New Arrival"]
+    )
 
 
 if __name__ == "__main__":

@@ -9,13 +9,15 @@ def main():
     sheet_name = "material & size options (rings etc)"
     client.sanity_check_sheet(sheet_name)
     client.process_sheet_to_products(
-        sheet_name, restart_at_product_name="X LOCK OVAL PEARL N"
+        sheet_name,
+        restart_at_product_name="X LOCK OVAL PEARL N",
+        additinal_tags=["New Arrival"],
     )
 
     client = SsilClientMaterialOptionOnly()
     sheet_name = "material options only"
     client.sanity_check_sheet(sheet_name)
-    client.process_sheet_to_products(sheet_name)
+    client.process_sheet_to_products(sheet_name, additinal_tags=["New Arrival"])
 
 
 if __name__ == "__main__":

@@ -92,14 +92,14 @@ class ApricotStudiosClient(BrandClientBase):
         """
         return ""
 
-    def get_tags(self, product_info):
+    def get_tags(self, product_info, additional_tags=None):
         return ",".join(
             [
                 product_info["collection"],
                 product_info["category"],
                 product_info["release_date"],
             ]
-            + (["New Arrival"])
+            + (additional_tags or [])
         )
 
     def get_size_field(self, product_info):

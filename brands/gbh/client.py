@@ -73,14 +73,14 @@ class GbhClient(BrandClientBase):
             made_in=product_info["made_in"],
         )
 
-    def get_tags(self, product_info):
+    def get_tags(self, product_info, additional_tags=None):
         return ",".join(
             [
                 product_info["category"],
                 product_info["category2"],
                 product_info["release_date"],
             ]
-            + ["New Arrival", "25_winter_1st"]
+            + (additional_tags or [])
         )
 
     def get_size_field(self, product_info):

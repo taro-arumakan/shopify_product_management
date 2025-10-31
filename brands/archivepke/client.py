@@ -48,7 +48,7 @@ class ArchivepkeClient(BrandClientBase):
         product_care = """水や汗にさらされると、湿気によるカビや変色の恐れがあります。そのため、雨などに濡れないようご注意ください。
 
 長時間水分に触れた場合は、革が水分を吸収する前にタオルで余分な水分を取り除いてください。内側に新聞紙などを詰め、風通しの良い場所で保管してください。"""
-        
+
         return super().get_description_html(
             description=product_info["description"],
             product_care=product_care,
@@ -58,22 +58,20 @@ class ArchivepkeClient(BrandClientBase):
             get_size_table_html_func=self.get_size_table_html,
         )
 
-    def get_tags(self, product_info):
+    def get_tags(self, product_info, additional_tags=None):
         tag_mapping = {
             "Standard": "Standard Line",
         }
-        collection = tag_mapping.get(product_info["collection"], product_info["collection"])
+        collection = tag_mapping.get(
+            product_info["collection"], product_info["collection"]
+        )
         category = tag_mapping.get(
             product_info.get("category", ""), product_info.get("category", "")
         )
-        
+
         return ",".join(
-            [
-                product_info["release_date"],
-                collection,
-                category,
-                "New Arrival",
-            ]
+            [product_info["release_date"], collection, category]
+            + (additional_tags or [])
         )
 
     def get_size_field(self, product_info):
@@ -91,4 +89,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

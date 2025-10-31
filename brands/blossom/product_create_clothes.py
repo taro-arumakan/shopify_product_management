@@ -16,7 +16,11 @@ def main():
     scheduled_time = datetime.datetime(
         2025, 10, 30, 12, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
-    client.process_sheet_to_products(sheet_name, scheduled_time=scheduled_time)
+    client.process_sheet_to_products(
+        sheet_name,
+        additional_tags=["25_drop4", "New Arrival"],
+        scheduled_time=scheduled_time,
+    )
 
 
 if __name__ == "__main__":

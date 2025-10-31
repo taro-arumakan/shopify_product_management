@@ -107,10 +107,11 @@ class KumeClient(BrandClientBase):
             get_size_table_html_func=self.parse_size_text_to_html,
         )
 
-    def get_tags(self, product_info):
-        additional_tags = ["New Arrival"]
+    def get_tags(self, product_info, additional_tags=None):
         category_tags = list(map(str.strip, product_info["category"].split(" AND ")))
-        return ",".join(category_tags + [product_info["collection"]] + additional_tags)
+        return ",".join(
+            category_tags + [product_info["collection"]] + (additional_tags or [])
+        )
 
     def get_size_field(self, product_info):
         size_text = product_info.get("size_text")
@@ -127,4 +128,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -65,7 +65,7 @@ class RohseoulClient(BrandClientBase):
             product_info["made_in"],
         )
 
-    def get_tags(self, product_info):
+    def get_tags(self, product_info, additional_tags=None):
         return ",".join(
             [
                 product_info["release_date"],
@@ -73,7 +73,7 @@ class RohseoulClient(BrandClientBase):
                 product_info["category"],
                 product_info["bag_category"],
             ]
-            + ["New Arrival"]
+            + (additional_tags or [])
         )
 
     def get_size_field(self, product_info):
