@@ -109,13 +109,13 @@ class MergeProductsAsVariants:
                 new_product_id, right["id"], location_names[0], variant_option_names
             )
 
-        logger.info(f"Activating the new product")
-        self.enable_and_activate_inventory_by_product_id(new_product_id, location_names)
-        self.activate_and_publish_by_product_id(new_product_id)
-
         logger.info(f"Archiving and untracking the old products. Adding redirects")
         for product in products:
             self.archive_product(product, new_product_handle)
+
+        logger.info(f"Activating the new product")
+        self.enable_and_activate_inventory_by_product_id(new_product_id, location_names)
+        self.activate_and_publish_by_product_id(new_product_id)
 
 
 def main():
