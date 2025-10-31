@@ -229,20 +229,23 @@ class Article:
         res = self.run_query(query)
         return res["themes"]["nodes"][0]["files"]["nodes"]
 
-    def article_from_image_file_names(
+    def article_from_image_file_names_and_product_titles(
         self,
+        theme_name,
         theme_dir,
         blog_title,
         article_title,
         thumbnail_image_file_name,
         article_image_file_names,
-        theme_name,
+        product_titles=None,
         publish_article=True,
     ):
-        # for file_name in image_file_names:
-        #     self.file_by_file_name(file_name)
         theme_file_path = self.write_json_from_image_file_names_and_product_titles(
-            theme_dir, blog_title, article_title, article_image_file_names
+            theme_dir,
+            blog_title,
+            article_title,
+            article_image_file_names,
+            product_titles,
         )
         if publish_article:
             theme_file_name = theme_file_path.rsplit("templates/", 1)[-1]
@@ -250,7 +253,7 @@ class Article:
                 theme_name, theme_file_name
             ):
                 logger.info(f"awaiting upload of {theme_file_name}")
-                time.sleep(1.5)  # wait for the new json file upload
+                time.sleep(0.5)  # wait for the new json file upload
 
             self.add_article(
                 blog_title,
@@ -337,7 +340,10 @@ class Article:
                 },
             },
             "block_order": ["title_HFiUhq", "price_8YCmTm"],
-            "custom_css": [".container {padding: 2rem 1rem;}"],
+            "custom_css": [
+                ".section-spacing {padding-block-start: 0;}",
+                ".container {padding: 0;}",
+            ],
             "name": "t:sections.featured_product.presets.featured_product.name",
             "settings": {
                 "color_scheme": "",
