@@ -74,7 +74,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         self, product_info, vendor, description_html, tags, location_names
     ):
         logger.info(f'creating {product_info["title"]}')
-        options = self.populate_option(product_info)
+        options = self.populate_option_dicts(product_info)
         if options:
             res = self.product_create(
                 title=product_info["title"],
@@ -82,7 +82,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 description_html=description_html,
                 vendor=vendor,
                 tags=tags,
-                option_lists=options,
+                option_dicts=options,
             )
         else:
             res = self.product_create_default_variant(
@@ -96,20 +96,19 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             )
         logger.info(f"activating inventory")
         res2 = self.enable_and_activate_inventory_by_product_info(
-            product_info, location_names, options
+            product_info, location_names
         )
         return (res, res2)
 
     def enable_and_activate_inventory_by_product_info(
-        self, product_info, location_names, options=None
+        self, product_info, location_names
     ):
-        options = options or self.populate_option(product_info)
-        skus = [option[2] for option in options] if options else [product_info["sku"]]
-        res2 = [
+        skus = self.product_info_to_skus(product_info)
+        res = [
             self.enable_and_activate_inventory_by_sku(sku, location_names)
             for sku in skus
         ]
-        return res2
+        return res
 
     def get_sku_stocks_map(self, product_info):
         variants_info = self.get_variants_level_info(product_info)
@@ -204,15 +203,8 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             return res
 
     def product_info_to_skus(self, product_info):
-        options = self.populate_option(product_info)
-        key_length = len(options[0][0].keys())
-        if key_length == 2:
-            skus = [o2["sku"] for o1 in product_info["options"] for o2 in o1["options"]]
-        elif key_length == 1:
-            skus = [o["sku"] for o in product_info["options"]]
-        else:
-            skus = [product_info["sku"]]
-        return skus
+        options = self.populate_option_dicts(product_info)
+        return [o["sku"] for o in options]
 
     def check_sku_duplicates(self, product_info_list):
         skus = sum([self.product_info_to_skus(pi) for pi in product_info_list], [])

@@ -189,8 +189,16 @@ class GoogleSheetsApiInterface:
             raise ValueError(f"No variant {key} found in product info: {product_info}")
         return variants_info
 
-    def populate_option(self, product_info):
-        # TODO return as a dict for readability.
+    def populate_option_dicts(self, product_info):
+        """
+        Returns options in a list of dicts
+        [{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
+         {'option_values': {'カラー': 'PINK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-PK-3', 'stock': 2},
+         {'option_values': {'カラー': 'PINK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-PK-4', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-BK-2', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-BK-3', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]
+        """
         option1_key, option2_key = None, None
         if option1 := product_info.get("options"):
             option1_key = list(option1[0].keys())[0]
@@ -198,31 +206,38 @@ class GoogleSheetsApiInterface:
                 option2_key = list(option2[0].keys())[0]
         if option2_key:
             return [
-                [
-                    {
+                dict(
+                    option_values={
                         option1_key: option1[option1_key],
                         option2_key: option2[option2_key],
                     },
-                    option2.get("price")
+                    price=option2.get("price")
                     or option1.get("price")
                     or product_info["price"],
-                    option2["sku"],
-                    option2["stock"],
-                ]
+                    sku=option2["sku"],
+                    stock=option2["stock"],
+                )
                 for option1 in product_info["options"]
                 for option2 in option1["options"]
             ]
         if option1_key:
             return [
-                [
-                    {option1_key: option1[option1_key]},
-                    option1.get("price") or product_info["price"],
-                    option1["sku"],
-                    option1.get("stock", 0),
-                ]
+                dict(
+                    option_values={option1_key: option1[option1_key]},
+                    price=option1.get("price") or product_info["price"],
+                    sku=option1["sku"],
+                    stock=option1.get("stock", 0),
+                )
                 for option1 in product_info["options"]
             ]
-        return []
+        return [
+            dict(
+                option_values={},
+                price=product_info["price"],
+                sku=product_info["sku"],
+                stock=product_info["stock"],
+            )
+        ]
 
     def get_child_variants_attribute(self, variant_info, attribute_name):
         if attribute_name in variant_info:

@@ -86,7 +86,7 @@ class ProductCreate:
         status="DRAFT",
         template_suffix=None,
         metafields=None,
-        option_lists=None,
+        option_dicts=None,
     ):
         query = """
         mutation productSet($input: ProductSetInput!) {
@@ -129,21 +129,21 @@ class ProductCreate:
             variables["input"]["templateSuffix"] = template_suffix
         if metafields:
             variables["input"]["metafields"] = metafields
-        if option_lists:
+        if option_dicts:
             variables["input"]["productOptions"] = self.populate_product_options(
-                option_lists
+                option_dicts
             )
-            variables["input"]["variants"] = self.populate_variant_inputs(option_lists)
+            variables["input"]["variants"] = self.populate_variant_inputs(option_dicts)
 
         res = self.run_query(query, variables)
         if errors := res["productSet"]["userErrors"]:
             raise RuntimeError(f"Product creation failed: {errors}")
         return res["productSet"]["product"]
 
-    def populate_product_options(self, option_lists):
+    def populate_product_options(self, option_dicts):
         product_options = {}
-        for option in option_lists:
-            option_dict = option[0]
+        for option in option_dicts:
+            option_dict = option["option_values"]
             for k, v in option_dict.items():
                 if v not in product_options.get(k, []):
                     product_options.setdefault(k, []).append(v)
@@ -152,29 +152,30 @@ class ProductCreate:
             for i, (k, v) in enumerate(product_options.items())
         ]
 
-    def populate_variant_inputs(self, option_lists):
+    def populate_variant_inputs(self, option_dicts):
         """
-        option_lists shape:
-        [[{'カラー': 'Black', 'サイズ': 'S'}, 23100, 'OVBAX25107BLK-S'],
-         [{'カラー': 'Black', 'サイズ': 'M'}, 23100, 'OVBAX25107BLK-M'],
-         [{'カラー': 'Beige', 'サイズ': 'S'}, 23100, 'OVBAX25107BEE-S'],
-         [{'カラー': 'Beige', 'サイズ': 'M'}, 23100, 'OVBAX25107BEE-M']]
-
-        [[{'カラー': 'Black'}, 23100, 'OVBAX25107BLK'],
-         [{'カラー': 'Beige'}, 23100, 'OVBAX25107BEE']]
+        options_dicts shape:
+        [{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
+         {'option_values': {'カラー': 'PINK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-PK-3', 'stock': 2},
+         {'option_values': {'カラー': 'PINK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-PK-4', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-BK-2', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-BK-3', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]
         """
         return [
             {
-                "price": price,
-                "sku": sku,
+                "price": option_dict["price"],
+                "sku": option_dict["sku"],
                 "taxable": True,
                 "position": i + 1,
                 "optionValues": [
                     {"optionName": option_name, "name": option_value}
-                    for option_name, option_value in options_dict.items()
+                    for option_name, option_value in option_dict[
+                        "option_values"
+                    ].items()
                 ],
             }
-            for i, (options_dict, price, sku, stock) in enumerate(option_lists)
+            for i, option_dict in enumerate(option_dicts)
         ]
 
     def escape_html(self, text):

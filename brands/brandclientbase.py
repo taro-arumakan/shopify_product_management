@@ -67,31 +67,34 @@ class BrandClientBase(Client):
         )
         return self.post_create_product_from_product_info(res, product_info)
 
-    def segment_options_list_by_key_option(self, options):
+    def segment_options_list_by_key_option(self, option_dicts):
         """
         group the flat options list to list of lists by the same first option i.e. color
 
-        [[{'カラー': 'KHAKI BROWN', 'サイズ': 'S'}, 18260, 'APB3PT030KBS', 3],
-         [{'カラー': 'KHAKI BROWN', 'サイズ': 'M'}, 18260, 'APB3PT030KBM', 3],
-         [{'カラー': 'BLACK', 'サイズ': 'S'}, 18260, 'APB3PT030BKS', 3],
-         [{'カラー': 'BLACK', 'サイズ': 'M'}, 18260, 'APB3PT030BKM', 3]]
-
+        [{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
+         {'option_values': {'カラー': 'PINK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-PK-3', 'stock': 2},
+         {'option_values': {'カラー': 'PINK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-PK-4', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-BK-2', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-BK-3', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]
          becomes
 
-        [[[{'カラー': 'KHAKI BROWN', 'サイズ': 'S'}, 18260, 'APB3PT030KBS', 3],
-          [{'カラー': 'KHAKI BROWN', 'サイズ': 'M'}, 18260, 'APB3PT030KBM', 3]],
-         [[{'カラー': 'BLACK', 'サイズ': 'S'}, 18260, 'APB3PT030BKS', 3],
-          [{'カラー': 'BLACK', 'サイズ': 'M'}, 18260, 'APB3PT030BKM', 3]]]
+        [[{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
+          {'option_values': {'カラー': 'PINK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-PK-3', 'stock': 2},
+          {'option_values': {'カラー': 'PINK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-PK-4', 'stock': 2}],
+         [{'option_values': {'カラー': 'INK BLACK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-BK-2', 'stock': 2},
+          {'option_values': {'カラー': 'INK BLACK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-BK-3', 'stock': 2},
+          {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]]
         """
         res = {}
-        key_attr = list(options[0][0].keys())[0]
-        for option in options:
-            res.setdefault(option[0][key_attr], []).append(option)
+        key_attr = list(option_dicts[0]["option_values"].keys())[0]
+        for option in option_dicts:
+            res.setdefault(option["option_values"][key_attr], []).append(option)
         return list(res.values())
 
     def add_variants_from_product_info(self, product_info):
         optionss = self.segment_options_list_by_key_option(
-            self.populate_option(product_info)
+            self.populate_option_dicts(product_info)
         )
         drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
         product_id = self.product_id_by_title(product_info["title"])
@@ -109,10 +112,12 @@ class BrandClientBase(Client):
                 skus=skus,
                 media_ids=[],
                 variant_media_ids=[new_media_ids[0]],
-                option_names=options[0][0].keys(),
-                variant_option_valuess=[option[0].values() for option in options],
-                prices=[option[1] for option in options],
-                stocks=[option[3] for option in options],
+                option_names=options[0]["option_values"].keys(),
+                variant_option_valuess=[
+                    option["option_values"].values() for option in options
+                ],
+                prices=[option["price"] for option in options],
+                stocks=[option["stock"] for option in options],
                 location_id=self.location_id_by_name(self.LOCATIONS[0]),
             )
         self.enable_and_activate_inventory_by_product_id(
