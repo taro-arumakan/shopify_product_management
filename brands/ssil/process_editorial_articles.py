@@ -53,13 +53,13 @@ def process_dir(client: utils.Client, dirname, publish_articles=False):
     article_image_file_names = [
         name for name in file_names if name != thumbnail_image_name
     ]
-    client.article_from_image_file_names(
-        theme_base_dir,
-        "Editorial",
-        article_title,
+    client.article_from_image_file_names_and_product_titles(
+        theme_dir=theme_base_dir,
+        theme_name="ssil_dev",
+        blog_title="Editorial",
+        article_title=article_title,
         thumbnail_image_file_name=thumbnail_image_name,
         article_image_file_names=article_image_file_names,
-        theme_name="ssil_dev",
         publish_article=publish_articles,
     )
 

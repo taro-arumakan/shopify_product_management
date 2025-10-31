@@ -87,13 +87,13 @@ def process_dir(client: utils.Client, dirname, publish_articles=False):
     else:
         article_image_file_names = file_names
 
-    client.article_from_image_file_names(
-        theme_base_dir,
-        "Lookbook",
-        article_title,
+    client.article_from_image_file_names_and_product_titles(
+        theme_dir=theme_base_dir,
+        theme_name="ssil_dev",
+        blog_title="Lookbook",
+        article_title=article_title,
         thumbnail_image_file_name=thumbnail_image_name,
         article_image_file_names=article_image_file_names,
-        theme_name="ssil_dev",
         publish_article=publish_articles,
     )
 
