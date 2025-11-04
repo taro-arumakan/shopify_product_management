@@ -76,7 +76,7 @@ class BlossomClient(BrandClientBase):
             "${MATERIAL}", product_info["material"]
         )
         description_html = description_html.replace(
-            "${MADEIN}", product_info["made_in"]
+            "${MADEIN}", product_info.get("made_in", "")
         )
         return description_html
 
@@ -98,8 +98,10 @@ class BlossomClient(BrandClientBase):
 
     def update_metafields(self, product_id, product_info):
         logger.info(f'updating metafields for {product_info["title"]}')
-        if size_text := self.get_size_field(product_info):
-            self.update_product_metafield(product_id, "custom", "size_text", size_text)
+        if size_table_html := self.get_size_field(product_info):
+            self.update_product_metafield(
+                product_id, "custom", "size_table_html", size_table_html
+            )
         if product_care := product_info.get("product_care", "").strip():
             self.update_product_care_metafield(
                 product_id, self.text_to_simple_richtext(product_care)
