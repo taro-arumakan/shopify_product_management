@@ -81,7 +81,7 @@ class BlossomClient(BrandClientBase):
         return description_html
 
     def get_tags(self, product_info, additional_tags=None):
-        return product_info["tags"] + (additional_tags or [])
+        return ",".join([product_info["tags"]] + (additional_tags or []))
 
     def get_size_field(self, product_info):
         if size_text := product_info.get("size_text"):
