@@ -165,9 +165,8 @@ class BrandClientBase(Client):
             for i, pi in enumerate(product_info_list):
                 if pi["title"] == restart_at_product_name:
                     break
-
-        for product_info in product_info_list[i:]:
-            self.create_product_from_product_info(product_info, additional_tags)
-            self.process_product_images(product_info)
-        self.update_stocks(product_info_list)
-        self.publish_products(product_info_list, scheduled_time=scheduled_time)
+        self.process_product_info_list_to_products(
+            product_info_list[i:],
+            additionanl_tags=additional_tags,
+            scheduled_time=scheduled_time,
+        )
