@@ -247,9 +247,9 @@ class Metafields:
             ],
         }
         res = self.run_query(query, variables)
-        if res["productVariantsBulkUpdate"]["userErrors"]:
+        if error := res["productVariantsBulkUpdate"]["userErrors"]:
             raise RuntimeError(
-                f"Error updating {metafield_namespace}.{metafield_key}: {res['productUpdate']['userErrors']}"
+                f"Error updating {metafield_namespace}.{metafield_key}: {error}"
             )
         return res
 
