@@ -76,7 +76,7 @@ class BlossomClient(BrandClientBase):
             "${MATERIAL}", product_info["material"]
         )
         description_html = description_html.replace(
-            "${MADEIN}", product_info.get("made_in", "")
+            "${MADEIN}", product_info.get("made_in", "KOREA")
         )
         return description_html
 
