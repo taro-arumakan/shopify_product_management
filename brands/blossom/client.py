@@ -102,6 +102,7 @@ class BlossomClient(BrandClientBase):
             self.update_product_metafield(
                 product_id, "custom", "size_table_html", size_table_html
             )
+        self.update_badges_metafield(product_id, ["NEW"])
         if product_care := product_info.get("product_care", "").strip():
             self.update_product_care_metafield(
                 product_id, self.text_to_simple_richtext(product_care)
@@ -165,6 +166,35 @@ class BlossomClientBags(BlossomClient):
 
     def option2_attr_column_map(self):
         return {}
+
+    def remove_new_badge_from_existing_products(self):
+        logger.info("Removing 'NEW' badge from existing products")
+        products = self.products_by_metafield("custom", "badges", "NEW")
+        for product in products:
+            logger.info(f"Removing 'NEW' badge from {product['title']} (id: {product['id']})")
+            self.update_badges_metafield(product["id"], [])
+
+    def process_sheet_to_products(
+        self,
+        sheet_name,
+        additional_tags=None,
+        handle_suffix=None,
+        restart_at_product_name=None,
+        scheduled_time=None,
+        remove_new_badge=True,
+    ):
+        # remove'NEW'badge
+        if remove_new_badge:
+            self.remove_new_badge_from_existing_products()
+
+        super().process_sheet_to_products(
+            sheet_name,
+            additional_tags=additional_tags,
+            handle_suffix=handle_suffix,
+            restart_at_product_name=restart_at_product_name,
+            scheduled_time=scheduled_time,
+        )
+
 
 
 def main():
