@@ -100,14 +100,13 @@ class LememeClient(BrandClientBase):
     ):
         product_id = create_product_from_product_info_res[0]["id"]
         self.update_metafields(product_id, product_info)
-        # 新商品に'NEW'バッジを付与
-        self.update_badges_metafield(product_id, ["NEW"])
         return product_id
 
     def update_metafields(self, product_id, product_info):
         logger.info(f'updating metafields for {product_info["title"]}')
         size_text = product_info.get("size_text", "").strip()
         size_table_html = self.get_size_table_html(size_text)
+        self.update_badges_metafield(product_id, ["NEW"])
         self.update_size_table_html_metafield(product_id, size_table_html)
         product_care_page_title = (
             "Product Care - " + product_info.get("product_care_option", "").strip()
@@ -136,9 +135,11 @@ class LememeClient(BrandClientBase):
         handle_suffix=None,
         restart_at_product_name=None,
         scheduled_time=None,
+        remove_new_badge=True,
     ):
         # remove'NEW'badge
-        self.remove_new_badge_from_existing_products()
+        if remove_new_badge:
+            self.remove_new_badge_from_existing_products()
         
         super().process_sheet_to_products(
             sheet_name,
