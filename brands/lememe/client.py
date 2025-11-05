@@ -106,11 +106,11 @@ class LememeClient(BrandClientBase):
         logger.info(f'updating metafields for {product_info["title"]}')
         size_text = product_info.get("size_text", "").strip()
         size_table_html = self.get_size_table_html(size_text)
-        self.update_badges_metafield(product_id, ["NEW"])
         self.update_size_table_html_metafield(product_id, size_table_html)
         product_care_page_title = (
             "Product Care - " + product_info.get("product_care_option", "").strip()
         )
+        self.update_badges_metafield(product_id, ["NEW"])
         self.update_product_care_page_metafield(product_id, product_care_page_title)
         for option in product_info["options"]:
             sku = option["sku"]
