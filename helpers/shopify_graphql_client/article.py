@@ -283,9 +283,8 @@ class Article:
     ):
         image_file_names = self.update_image_file_extensions(image_file_names)
         sections = self.to_template_sections(image_file_names, product_titles)
-        theme_file_path = os.path.join(
-            theme_dir,
-            self.article_template_path(theme_dir, blog_title, article_title),
+        theme_file_path = self.article_template_path(
+            theme_dir, blog_title, article_title
         )
         self.write_to_json(
             theme_file_path=theme_file_path,
