@@ -11,7 +11,7 @@ class LememeClient(BrandClientBase):
     SHOPNAME = "lememek"
     VENDOR = "lememe"
     LOCATIONS = ["Shop location"]
-    PRODUCT_SHEET_START_ROW = 946
+    PRODUCT_SHEET_START_ROW = 1
 
     def product_attr_column_map(self):
         return dict(
@@ -104,8 +104,7 @@ class LememeClient(BrandClientBase):
 
     def update_metafields(self, product_id, product_info):
         logger.info(f'updating metafields for {product_info["title"]}')
-        size_text = product_info.get("size_text", "").strip()
-        size_table_html = self.get_size_table_html(size_text)
+        size_table_html = self.get_size_field(product_info)
         self.update_size_table_html_metafield(product_id, size_table_html)
         product_care_page_title = (
             "Product Care - " + product_info.get("product_care_option", "").strip()
@@ -125,7 +124,9 @@ class LememeClient(BrandClientBase):
         logger.info("Removing 'NEW' badge from existing products")
         products = self.products_by_metafield("custom", "badges", "NEW")
         for product in products:
-            logger.info(f"Removing 'NEW' badge from {product['title']} (id: {product['id']})")
+            logger.info(
+                f"Removing 'NEW' badge from {product['title']} (id: {product['id']})"
+            )
             self.update_badges_metafield(product["id"], [])
 
     def process_sheet_to_products(
@@ -140,7 +141,7 @@ class LememeClient(BrandClientBase):
         # remove'NEW'badge
         if remove_new_badge:
             self.remove_new_badge_from_existing_products()
-        
+
         super().process_sheet_to_products(
             sheet_name,
             additional_tags=additional_tags,

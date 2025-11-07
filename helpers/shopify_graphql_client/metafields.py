@@ -10,7 +10,7 @@ class Metafields:
     """
 
     @staticmethod
-    def text_to_simple_richtext(text):
+    def text_to_simple_richtext(text, additional_children_dicts=None):
         res = {
             "type": "root",
             "children": [
@@ -25,6 +25,8 @@ class Metafields:
                 },
             ],
         }
+        if additional_children_dicts:
+            res["children"].append(additional_children_dicts)
         return res
 
     def clear_metafield_value_by_metafield_id(
