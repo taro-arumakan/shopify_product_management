@@ -248,17 +248,12 @@ class Article:
             product_titles,
         )
         if publish_article:
-            theme_file_name = theme_file_path.rsplit("templates/", 1)[-1]
-            while not self.theme_file_by_theme_name_and_file_name(
-                theme_name, theme_file_name
-            ):
-                logger.info(f"awaiting upload of {theme_file_name}")
-                time.sleep(0.5)  # wait for the new json file upload
-
             self.add_article(
                 blog_title,
                 article_title,
                 thumbnail_image_name=thumbnail_image_file_name,
+                theme_name=theme_name,
+                theme_file_name=theme_file_path.rsplit("/", 1)[-1].split(".")[0],
             )
 
     def update_image_file_extensions(self, image_file_names):
@@ -392,10 +387,16 @@ class Article:
         with open(theme_file_path, "w") as of:
             of.write(json.dumps(output_dict, indent=2))
 
-    def add_article(self, blog_title, article_title, thumbnail_image_name):
+    def add_article(self, blog_title, article_title, thumbnail_image_name, theme_name):
         template_name = self.article_template_name(blog_title, article_title)
+        article_template_file_name = f"article.{template_name}.json"
         media = self.file_by_file_name(thumbnail_image_name)
         media_url = media["image"]["url"]
+        while not self.theme_file_by_theme_name_and_file_name(
+            theme_name, article_template_file_name
+        ):
+            logger.info(f"awaiting upload of {article_template_file_name}")
+            time.sleep(0.5)  # wait for the new json file upload
         self.article_create(
             blog_title=blog_title,
             title=article_title,
