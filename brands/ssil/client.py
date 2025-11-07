@@ -69,9 +69,29 @@ class SsilClient(BrandClientBase):
     def get_tags(self, product_info, additional_tags=None):
         return ",".join([product_info["tags"]] + (additional_tags or []))
 
+    def append_ring_size_guide_link(self, size_richtext):
+        additional_children_dicts = {
+            "children": [
+                {"type": "text", "value": ""},
+                {
+                    "children": [{"type": "text", "value": "Ring Size Guide"}],
+                    "title": "Ring Size Guide",
+                    "type": "link",
+                    "url": "https://s-sil.jp/pages/ring-size-guide",
+                },
+                {"type": "text", "value": ""},
+            ],
+            "type": "paragraph",
+        }
+        size_richtext["children"].append(additional_children_dicts)
+        return size_richtext
+
     def get_size_field(self, product_info):
         if size_text := product_info.get("size_text"):
-            return self.text_to_simple_richtext(size_text)
+            res = self.text_to_simple_richtext(size_text)
+            if "ring" in list(map(str.strip, product_info["tags"].split(","))):
+                res = self.append_ring_size_guide_link(res)
+            return res
         else:
             logger.warning(f"no size_text for {product_info['title']}")
 
