@@ -253,7 +253,6 @@ class Article:
                 article_title,
                 thumbnail_image_name=thumbnail_image_file_name,
                 theme_name=theme_name,
-                theme_file_name=theme_file_path.rsplit("/", 1)[-1].split(".")[0],
             )
 
     def update_image_file_extensions(self, image_file_names):
