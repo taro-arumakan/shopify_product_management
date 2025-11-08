@@ -396,7 +396,7 @@ class Article:
         ):
             logger.info(f"awaiting upload of {article_template_file_name}")
             time.sleep(0.5)  # wait for the new json file upload
-        self.article_create(
+        return self.article_create(
             blog_title=blog_title,
             title=article_title,
             template_suffix=template_name,
