@@ -127,9 +127,18 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             for sku, stock in sku_stock_map.items()
         ]
 
+    def product_id_by_product_info(self, product_info):
+        if "handle" in product_info:
+            func = self.product_id_by_handle
+            param = product_info["handle"]
+        else:
+            func = self.product_id_by_title
+            param = product_info["title"]
+        return func(param)
+
     def publish_products(self, product_info_list, scheduled_time=None):
         for pi in product_info_list:
-            product_id = self.product_id_by_title(pi["title"])
+            product_id = self.product_id_by_product_info(pi)
             self.activate_and_publish_by_product_id(
                 product_id, scheduled_time=scheduled_time
             )
