@@ -34,7 +34,7 @@ def credentials(shop_name):
 
 
 def client(shop_name: str) -> BrandClientBase:
-    if shop_name.lower() in ["archive-epke", "archivepke"]:
+    if shop_name.lower() in ["archive-epke", "archivepke", "archivépke"]:
         from brands.archivepke.client import ArchivepkeClient
 
         res = ArchivepkeClient()
