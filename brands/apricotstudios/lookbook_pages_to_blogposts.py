@@ -46,6 +46,12 @@ def find_thumbnail_image_name(page_info):
                     return block["settings"]["image"]
 
 
+def create_redirect(client: ApricotStudiosClient, page_info, handle=""):
+    client.create_url_redirect(
+        f"/pages/{page_info['handle']}", f"/blogs/lookbook/{handle}"
+    )
+
+
 def process_page(client: ApricotStudiosClient, page_info):
     if page_info["templateSuffix"] != COVER_PAGE_TEMPLATE_NAME:
         copy_template(client, page_info)
@@ -53,15 +59,17 @@ def process_page(client: ApricotStudiosClient, page_info):
         thumbnail_image_file_name = find_thumbnail_image_name(page_info).rsplit("/", 1)[
             -1
         ]
-        theme_file_path = client.article_template_path(
-            THEME_BASE_DIR, "Lookbook", article_title
-        )
-        client.add_article(
+        res = client.add_article(
             "Lookbook",
             article_title,
             thumbnail_image_name=thumbnail_image_file_name,
             theme_name=THEME_NAME,
         )
+    else:
+        res = None
+    create_redirect(
+        client=client, page_info=page_info, handle=res["handle"] if res else ""
+    )
 
 
 def page_sort_key(item):
@@ -86,8 +94,16 @@ def main():
     client = ApricotStudiosClient()
     pages = client.pages_by_title("LOOKBOOK*", sort_key="TITLE")
     pages = sorted(pages, key=page_sort_key)
+    # for page in pages:
+    #     process_page(client, page)
     for page in pages:
-        process_page(client, page)
+        if page["title"] == "LOOKBOOK":
+            handle = ""
+        else:
+            article = client.articles_by_title(page["title"])
+            handle = article[0]["handle"]
+        logging.info(f'creating redirect for {page["title"]}')
+        create_redirect(client, page, handle)
 
 
 if __name__ == "__main__":
