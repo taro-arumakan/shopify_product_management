@@ -1,3 +1,4 @@
+import collections
 import logging
 import string
 from helpers.exceptions import (
@@ -285,3 +286,12 @@ class ProductQueries:
             len(res) < 100
         ), f"Too many products found for {collection_handle}: {len(res)}"
         return res
+
+    def product_titles_with_multiple_products(self):
+        """
+        Product titles with multiple products i.e. merge candidates.
+        Titles are returned in lower.
+        """
+        products = self.products_by_query("status:'ACTIVE'")
+        counts_by_title = collections.Counter(p["title"].lower() for p in products)
+        return [title for title, count in counts_by_title.items() if count > 1]
