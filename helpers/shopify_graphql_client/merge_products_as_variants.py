@@ -63,6 +63,11 @@ class MergeProductsAsVariants:
             location_id,
         )
 
+    def archive_product_handle(self, product):
+        self.update_product_attribute(
+            product["id"], "handle", f"archived--{product['handle']}"
+        )
+
     def archive_product(self, product, new_product_handle=None):
         self.update_product_status(product["id"], "ARCHIVED")
         for variant in product["variants"]["nodes"]:
@@ -74,6 +79,7 @@ class MergeProductsAsVariants:
                 sku=f"archived-{variant['sku']}",
             )
             self.disable_inventory_tracking_by_sku(f"archived-{variant['sku']}")
+            self.archive_product_handle(product)
         if new_product_handle:
             logger.info(f"Redirecting {product['handle']} to {new_product_handle}")
             self.create_url_redirect(
