@@ -69,7 +69,7 @@ def client(shop_name: str) -> BrandClientBase:
 
         res = LememeClient()
 
-    elif shop_name.lower() == "rohseoul":
+    elif shop_name.lower() in ["roh", "rohseoul"]:
         from brands.rohseoul.client import RohseoulClient
 
         res = RohseoulClient()
