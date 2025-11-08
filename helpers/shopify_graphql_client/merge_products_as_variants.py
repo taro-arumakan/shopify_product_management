@@ -91,8 +91,10 @@ class MergeProductsAsVariants:
         Total selling stock quantity gets added to the first in the list of location_names.
         Pass the primary location first e.g. ["Archivépke Warehouse", "Envycube Warehouse"].
         """
-        products = self.products_by_title(product_title, sort_key="CREATED_AT")
-        products = [p for p in reversed(products) if p["status"] == "ACTIVE"]
+        products = self.products_by_query(
+            f"title:'{product_title}' AND status:'ACTIVE'", sort_key="CREATED_AT"
+        )
+        products = list(reversed(products))
         logger.info(f"Merging {len(products)} products")
         merged = self.duplicate_product(
             products[0]["id"],
