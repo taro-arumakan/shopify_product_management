@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import re
-import utils
 from brands.apricotstudios.client import ApricotStudiosClient
 
 logging.basicConfig(level=logging.INFO)
