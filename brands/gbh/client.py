@@ -133,9 +133,27 @@ class GbhClient(BrandClientBase):
         return self.formatted_size_text_to_html_table(product_info["size_text"])
 
 
+class GbhClientColorOptionOnly(GbhClient):
+
+    def option1_attr_column_map(self):
+        option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
+        option1_attrs.update(
+            drive_link=string.ascii_lowercase.index("m"),
+            sku=string.ascii_lowercase.index("n"),
+            stock=string.ascii_lowercase.index("o"),
+        )
+        return option1_attrs
+
+    def option2_attr_column_map(self):
+        return {}
+
+
 def main():
     client = GbhClient()
-    client.sanity_check_sheet("APPAREL 25FW (WINTER 1次)")
+    client.sanity_check_sheet("APPAREL 25FW 2次")
+
+    client = GbhClientColorOptionOnly()
+    client.sanity_check_sheet("APPAREL 25FW 2次 (COLOR ONLY)")
 
 
 if __name__ == "__main__":
