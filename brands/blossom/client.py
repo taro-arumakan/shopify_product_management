@@ -112,6 +112,9 @@ class BlossomClient(BrandClientBase):
                 product_id, self.text_to_simple_richtext(product_care)
             )
 
+    def remove_existing_new_badges(self):
+        self._remove_existing_new_badges()
+
 
 class BlossomClientClothes(BlossomClient):
     pass

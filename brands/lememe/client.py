@@ -124,35 +124,8 @@ class LememeClient(BrandClientBase):
                 product_id, variant_id, "custom", "filter_color", filter_color
             )
 
-    def remove_new_badge_from_existing_products(self):
-        logger.info("Removing 'NEW' badge from existing products")
-        products = self.products_by_metafield("custom", "badges", "NEW")
-        for product in products:
-            logger.info(
-                f"Removing 'NEW' badge from {product['title']} (id: {product['id']})"
-            )
-            self.update_badges_metafield(product["id"], [])
-
-    def process_sheet_to_products(
-        self,
-        sheet_name,
-        additional_tags=None,
-        handle_suffix=None,
-        restart_at_product_name=None,
-        scheduled_time=None,
-        remove_new_badge=True,
-    ):
-        # remove'NEW'badge
-        if remove_new_badge:
-            self.remove_new_badge_from_existing_products()
-
-        super().process_sheet_to_products(
-            sheet_name,
-            additional_tags=additional_tags,
-            handle_suffix=handle_suffix,
-            restart_at_product_name=restart_at_product_name,
-            scheduled_time=scheduled_time,
-        )
+    def remove_existing_new_badges(self):
+        self._remove_existing_new_badges()
 
 
 def main():

@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import pathlib
 from helpers.client import Client
@@ -163,10 +164,20 @@ class BrandClientBase(Client):
             tags = [t for t in product["tags"] if t != self.NEW_PRODUCT_TAG]
             self.update_product_tags(product_id=product["id"], tags=",".join(tags))
 
+    def _remove_existing_new_badges(self):
+        """called by SSIL and Blossom clients"""
+        products = self.products_by_metafield("custom", "badges", "NEW")
+        for product in products:
+            logger.info(
+                f"Removing 'NEW' badge from {product['title']} (id: {product['id']})"
+            )
+            badges = [
+                m for m in product["metafields"]["nodes"] if m["key"] == "badges"
+            ][0]["value"]
+            badges = [b for b in json.loads(badges) if b != "NEW"]
+            self.update_badges_metafield(product["id"], badges)
+
     def remove_existing_new_badges(self):
-        """
-        hook for a subclass to remove existing NEW badges - blossom and lememe
-        """
         pass
 
     def pre_process_product_info_list_to_products(self, product_info_list):
