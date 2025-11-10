@@ -165,7 +165,7 @@ class BrandClientBase(Client):
             self.update_product_tags(product_id=product["id"], tags=",".join(tags))
 
     def _remove_existing_new_badges(self):
-        """called by SSIL and Blossom clients"""
+        """called by LEMEME and Blossom clients"""
         products = self.products_by_metafield("custom", "badges", "NEW")
         for product in products:
             logger.info(
