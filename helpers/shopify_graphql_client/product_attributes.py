@@ -70,6 +70,8 @@ class ProductAttributes:
         return self.update_product_attribute(product_id, "title", title)
 
     def update_product_tags(self, product_id, tags):
+        if isinstance(tags, list):
+            tags = ",".join(tags)
         return self.update_product_attribute(product_id, "tags", tags)
 
     def update_product_description(self, product_id, desc):
