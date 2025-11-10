@@ -92,3 +92,6 @@ class RohseoulClient(BrandClientBase):
             res += f"<td>{value}</td>"
         res += "</tr></tbody></table>"
         return res
+
+    def pre_process_product_info_list_to_products(self, product_info_list):
+        self.merge_existing_products_as_variants()

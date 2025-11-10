@@ -148,6 +148,19 @@ class BrandClientBase(Client):
             or self.formatted_size_text_to_html_table,
         )
 
+    def merge_existing_products_as_variants(self):
+        product_titles = self.product_titles_with_multiple_products()
+        for product_title in product_titles:
+            logger.info(f"merging products with title {product_title} as variants")
+            self.merge_products_as_variants(product_title)
+
+    def pre_process_product_info_list_to_products(self, product_info_list):
+        """
+        hook for a subclass to process existing products before creating new products
+        """
+        # TODO remove New Arrival tag from existing products. This will apply to all brands
+        pass
+
     def process_sheet_to_products(
         self,
         sheet_name,
@@ -165,6 +178,7 @@ class BrandClientBase(Client):
             for i, pi in enumerate(product_info_list):
                 if pi["title"] == restart_at_product_name:
                     break
+        self.pre_process_product_info_list_to_products(product_info_list)
         self.process_product_info_list_to_products(
             product_info_list[i:],
             additionanl_tags=additional_tags,

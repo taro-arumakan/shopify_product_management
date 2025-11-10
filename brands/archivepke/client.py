@@ -81,6 +81,9 @@ class ArchivepkeClient(BrandClientBase):
         else:
             logger.warning(f"no size_text for {product_info['title']}")
 
+    def pre_process_product_info_list_to_products(self, product_info_list):
+        self.merge_existing_products_as_variants()
+
 
 def main():
     client = ArchivepkeClient()
