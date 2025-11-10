@@ -63,7 +63,7 @@ class Article:
         blogs = self.blogs_by_query(f"title:'{blog_title.replace("'", "\\'")}'")
         if len(blogs) != 1:
             raise RuntimeError(
-                f"{'Multiple' if blogs else 'No'} products found for {blog_title}: {blogs}"
+                f"{'Multiple' if blogs else 'No'} blog articles found for {blog_title}: {blogs}"
             )
         return blogs[0]
 
