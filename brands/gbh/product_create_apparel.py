@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 def main():
 
     client = GbhClient()
-    sheet_name = "APPAREL 25FW (WINTER 1次)"
+    sheet_name = "APPAREL 25FW 2次"
 
     """
     From 25 Winter onward, only keep the products released in recent one year.
@@ -18,10 +18,15 @@ def main():
     """
 
     client.sanity_check_sheet(sheet_name)
+
     scheduled_time = datetime.datetime(
-        2025, 10, 27, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2025, 11, 14, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
-    client.process_sheet_to_products(sheet_name, scheduled_time=scheduled_time)
+
+    client.process_sheet_to_products(
+        sheet_name,
+        additional_tags=["New Arrival"],
+        scheduled_time=scheduled_time)
 
 
 if __name__ == "__main__":

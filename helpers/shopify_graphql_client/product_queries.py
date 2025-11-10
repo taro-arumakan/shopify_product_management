@@ -30,7 +30,7 @@ class ProductQueries:
 
     def product_title_to_handle(self, title, handle_suffix=None):
         if handle_suffix:
-            title += f" handle_suffix"
+            title += f" {handle_suffix}"
         return self.remove_punctuations(title)
 
     def products_by_query(
