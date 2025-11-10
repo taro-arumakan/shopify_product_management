@@ -1,4 +1,5 @@
 import logging
+import re
 import string
 import textwrap
 from brands.brandclientbase import BrandClientBase
@@ -40,26 +41,6 @@ class GbhClient(BrandClientBase):
             stock=string.ascii_lowercase.index("p"),
         )
         return option2_attrs
-
-    def merge_size_texts(self, product_info):
-        if product_info["title"] in ["WRAP SKIRT & PANTS"]:
-            size_text = product_info["options"][0]["options"][0]["size_text"]
-        else:
-            # uniquify size and size texts, keeping the order
-            sizes, size_texts = map(
-                dict.fromkeys,
-                zip(
-                    *[
-                        (o2["サイズ"], o2["size_text"])
-                        for o1 in product_info["options"]
-                        for o2 in o1["options"]
-                    ]
-                ),
-            )
-            size_text = "\n".join(
-                f"[{size}] {st}" for size, st in zip(sizes, size_texts)
-            )
-        return size_text
 
     @staticmethod
     def product_description_template():
@@ -133,6 +114,35 @@ class GbhClient(BrandClientBase):
             + (additional_tags or [])
         )
 
+    @staticmethod
+    def formatted_size_text_to_html_table(size_text):
+        """
+        [FREE]  LENGTH 69.7 / SHOULDER RAGLAN / CHEST 69.8 / SLEEVE 83.5 / HEM 64
+
+        [S] : LENGTH 104 / WAIST 37 / HIP 52 / HEM 28 / FRONT RISE 26
+        [M] : LENGTH 105 / WAIST 39 / HIP 54 / HEM 29 / FRONT RISE 27
+        """
+        size_expression = re.compile(r"\[(.+?)\][\s\:]+(.*)")
+        header_value_expression = re.compile(r"([^\d]+)\s*([\d\.]+)")
+
+        rows = []
+        headers = ["Size"]
+
+        for line in size_text.strip().split("\n"):
+            match = size_expression.match(line.strip())
+            if not match:
+                raise RuntimeError(f"Invalid size text format: {line}")
+            row_values = [match.group(1)]
+            header_value_pairs = [p.strip() for p in match.group(2).split("/")]
+
+            for header_value_pair in header_value_pairs:
+                header, value = header_value_pair.rsplit(" ", 1)
+                if header.strip() not in headers:
+                    headers.append(header.strip())
+                row_values.append(value.strip())
+            rows.append(row_values)
+        return BrandClientBase.generate_table_html(headers, rows)
+
     def get_size_field(self, product_info):
         return self.formatted_size_text_to_html_table(product_info["size_text"])
 
@@ -155,12 +165,14 @@ class GbhClientColorOptionOnly(GbhClient):
 def main():
     client = GbhClient()
     for pi in client.product_info_list_from_sheet("APPAREL 25FW 2次"):
-        print(client.get_tags(pi))
+        print(pi["title"])
+        print(client.get_size_field(pi))
 
     client = GbhClientColorOptionOnly()
     client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
     for pi in client.product_info_list_from_sheet("APPAREL 25FW 2次 (COLOR ONLY)"):
-        print(client.get_tags(pi))
+        print(pi["title"])
+        print(client.get_size_field(pi))
 
 
 if __name__ == "__main__":
