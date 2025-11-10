@@ -1,5 +1,6 @@
 import logging
 import string
+import textwrap
 from brands.brandclientbase import BrandClientBase
 
 
@@ -41,8 +42,34 @@ class AlvanaClient(BrandClientBase):
         )
         return option2_attrs
 
+    @staticmethod
+    def product_description_template():
+        res = r"""
+            <!DOCTYPE html>
+            <html><body>
+            <div id="alvanaProduct">
+                <p>${DESCRIPTION}</p>
+                <br>
+                <table width="100%">
+                <tbody>
+                    <tr>
+                    <th>素材</th>
+                    <td>${MATERIAL}</td>
+                    </tr>
+                    <tr>
+                    <th>原産国</th>
+                    <td>${MADEIN}</td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+            </body>
+            </html>
+            """
+        return textwrap.dedent(res)
+
     def get_description_html(self, product_info):
-        description_html = product_description_template()
+        description_html = self.product_description_template()
         description_html = description_html.replace(
             "${DESCRIPTION}", product_info["description"].replace("\n", "<br>")
         )
@@ -55,7 +82,11 @@ class AlvanaClient(BrandClientBase):
         return description_html
 
     def get_tags(self, product_info, additional_tags=None):
-        return ",".join([product_info["tags"]] + (additional_tags or []))
+        return ",".join(
+            [product_info["tags"]]
+            + super().get_tags(product_info, additional_tags)
+            + (additional_tags or [])
+        )
 
     def get_size_field(self, product_info):
         return self.formatted_size_text_to_html_table(product_info["size_text"])
@@ -74,7 +105,6 @@ class AlvanaClient(BrandClientBase):
 
     def update_metafields(self, product_id, product_info):
         logger.info(f'updating metafields for {product_info["title"]}')
-        size_text = product_info["size_text"]
         size_table_html = self.get_size_field(product_info)
         if self.to_add_disclaimer_html(product_info["title"]):
             size_table_html += "<br>"
@@ -96,24 +126,11 @@ class AlvanaClient(BrandClientBase):
                 self.update_inventory_item_weight_by_sku(sku, weight, unit="KILOGRAMS")
 
 
-def product_description_template():
-    return r"""<!DOCTYPE html>
-<html><body>
-  <div id="alvanaProduct">
-    <p>${DESCRIPTION}</p>
-    <br>
-    <table width="100%">
-      <tbody>
-        <tr>
-          <th>素材</th>
-          <td>${MATERIAL}</td>
-        </tr>
-        <tr>
-          <th>原産国</th>
-          <td>${MADEIN}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</body>
-</html>"""
+def main():
+    client = AlvanaClient()
+    for pi in client.product_info_list_from_sheet("5G  LAMS WOOL CREW KNIT"):
+        print(client.get_tags(pi))
+
+
+if __name__ == "__main__":
+    main()
