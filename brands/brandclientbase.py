@@ -181,6 +181,6 @@ class BrandClientBase(Client):
         self.pre_process_product_info_list_to_products(product_info_list)
         self.process_product_info_list_to_products(
             product_info_list[i:],
-            additionanl_tags=additional_tags,
+            additional_tags=additional_tags,
             scheduled_time=scheduled_time,
         )
