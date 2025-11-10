@@ -76,8 +76,12 @@ class LememeClient(BrandClientBase):
         )
         return description_html
 
-    def get_tags(self, product_info, additional_tags):
-        return ",".join([product_info["tags"]] + (additional_tags or []))
+    def get_tags(self, product_info, additional_tags=None):
+        return ",".join(
+            [product_info["tags"]]
+            + super().get_tags(product_info, additional_tags)
+            + (additional_tags or [])
+        )
 
     def get_size_field(self, product_info):
         if size_text := product_info.get("size_text"):
@@ -153,7 +157,8 @@ class LememeClient(BrandClientBase):
 
 def main():
     client = LememeClient()
-    client.sanity_check_sheet("Small Goods")
+    for pi in client.product_info_list_from_sheet("1114_Small Goods"):
+        print(client.get_tags(pi))
 
 
 if __name__ == "__main__":

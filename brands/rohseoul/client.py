@@ -73,6 +73,7 @@ class RohseoulClient(BrandClientBase):
                 product_info["category"],
                 product_info["bag_category"],
             ]
+            + super().get_tags(product_info, additional_tags)
             + (additional_tags or [])
         )
 
@@ -95,3 +96,13 @@ class RohseoulClient(BrandClientBase):
 
     def pre_process_product_info_list_to_products(self, product_info_list):
         self.merge_existing_products_as_variants()
+
+
+def main():
+    client = RohseoulClient()
+    for pi in client.product_info_list_from_sheet("25FW 2ST 민하가방"):
+        print(client.get_tags(pi))
+
+
+if __name__ == "__main__":
+    main()

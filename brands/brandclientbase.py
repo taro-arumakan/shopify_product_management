@@ -11,6 +11,8 @@ class BrandClientBase(Client):
     VENDOR = ""
     LOCATIONS = []
     PRODUCT_SHEET_START_ROW = 1
+    NEW_PRODUCT_TAG = "New Arrival"
+    REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = True
 
     def __init__(self):
         assert self.SHOPNAME, "SHOPNAME must be set in subclass"
@@ -47,7 +49,7 @@ class BrandClientBase(Client):
         )
 
     def get_tags(self, product_info, additional_tags):
-        raise NotImplementedError
+        return [self.NEW_PRODUCT_TAG]
 
     def get_size_field(self, product_info):
         raise NotImplementedError
@@ -154,12 +156,23 @@ class BrandClientBase(Client):
             logger.info(f"merging products with title {product_title} as variants")
             self.merge_products_as_variants(product_title)
 
-    def pre_process_product_info_list_to_products(self, product_info_list):
+    def remove_existing_new_proudct_tags(self):
+        products = self.products_by_tag(self.NEW_PRODUCT_TAG)
+        for product in products:
+            logger.info(f"removing {self.NEW_PRODUCT_TAG} tag from {product['title']}")
+            tags = [t for t in product["tags"] if t != self.NEW_PRODUCT_TAG]
+            self.update_product_tags(product_id=product["id"], tags=",".join(tags))
+
+    def remove_existing_new_badges(self):
         """
-        hook for a subclass to process existing products before creating new products
+        hook for a subclass to remove existing NEW badges - blossom and lememe
         """
-        # TODO remove New Arrival tag from existing products. This will apply to all brands
         pass
+
+    def pre_process_product_info_list_to_products(self, product_info_list):
+        if self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS:
+            self.remove_existing_new_proudct_tags()
+            self.remove_existing_new_badges()
 
     def process_sheet_to_products(
         self,

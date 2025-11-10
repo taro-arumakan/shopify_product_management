@@ -99,6 +99,7 @@ class ApricotStudiosClient(BrandClientBase):
                 product_info["category"],
                 product_info["release_date"],
             ]
+            + super().get_tags(product_info, additional_tags)
             + (additional_tags or [])
         )
 
@@ -342,7 +343,8 @@ def main():
     client = ApricotStudiosClient(
         "gid://shopify/Product/9181957095680", "1jOg_no7MS8tGwMLKvOpodPg58nWKXSgX"
     )
-    client.sanity_check_sheet("9.25 25Autumn(2nd)")
+    for pi in client.product_info_list_from_sheet("9.25 25Autumn(2nd)"):
+        print(client.get_tags(pi))
 
 
 if __name__ == "__main__":

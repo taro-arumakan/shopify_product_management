@@ -110,7 +110,10 @@ class KumeClient(BrandClientBase):
     def get_tags(self, product_info, additional_tags=None):
         category_tags = list(map(str.strip, product_info["category"].split(" AND ")))
         return ",".join(
-            category_tags + [product_info["collection"]] + (additional_tags or [])
+            category_tags
+            + [product_info["collection"]]
+            + super().get_tags(product_info, additional_tags)
+            + (additional_tags or [])
         )
 
     def get_size_field(self, product_info):
@@ -123,7 +126,8 @@ class KumeClient(BrandClientBase):
 
 def main():
     client = KumeClient()
-    client.sanity_check_sheet("25FW")
+    for pi in client.product_info_list_from_sheet("25FW"):
+        print(client.get_tags(pi))
 
 
 if __name__ == "__main__":

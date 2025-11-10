@@ -127,7 +127,11 @@ class GbhClient(BrandClientBase):
         return description_html
 
     def get_tags(self, product_info, additional_tags=None):
-        return ",".join([product_info["tags"]] + (additional_tags or []))
+        return ",".join(
+            [product_info["tags"]]
+            + super().get_tags(product_info, additional_tags)
+            + (additional_tags or [])
+        )
 
     def get_size_field(self, product_info):
         return self.formatted_size_text_to_html_table(product_info["size_text"])
@@ -150,10 +154,13 @@ class GbhClientColorOptionOnly(GbhClient):
 
 def main():
     client = GbhClient()
-    client.sanity_check_sheet("APPAREL 25FW 2次")
+    for pi in client.product_info_list_from_sheet("APPAREL 25FW 2次"):
+        print(client.get_tags(pi))
 
     client = GbhClientColorOptionOnly()
-    client.sanity_check_sheet("APPAREL 25FW 2次 (COLOR ONLY)")
+    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    for pi in client.product_info_list_from_sheet("APPAREL 25FW 2次 (COLOR ONLY)"):
+        print(client.get_tags(pi))
 
 
 if __name__ == "__main__":

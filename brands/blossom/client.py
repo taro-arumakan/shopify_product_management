@@ -81,7 +81,11 @@ class BlossomClient(BrandClientBase):
         return description_html
 
     def get_tags(self, product_info, additional_tags=None):
-        return ",".join([product_info["tags"]] + (additional_tags or []))
+        return ",".join(
+            [product_info["tags"]]
+            + super().get_tags(product_info, additional_tags)
+            + (additional_tags or [])
+        )
 
     def get_size_field(self, product_info):
         if size_text := product_info.get("size_text"):
@@ -171,7 +175,9 @@ class BlossomClientBags(BlossomClient):
         logger.info("Removing 'NEW' badge from existing products")
         products = self.products_by_metafield("custom", "badges", "NEW")
         for product in products:
-            logger.info(f"Removing 'NEW' badge from {product['title']} (id: {product['id']})")
+            logger.info(
+                f"Removing 'NEW' badge from {product['title']} (id: {product['id']})"
+            )
             self.update_badges_metafield(product["id"], [])
 
     def process_sheet_to_products(
@@ -196,10 +202,10 @@ class BlossomClientBags(BlossomClient):
         )
 
 
-
 def main():
     client = BlossomClient()
-    client.sanity_check_sheet("clothes(drop4)")
+    for pi in client.product_info_list_from_sheet("clothes(drop5)"):
+        print(client.get_tags(pi))
 
 
 if __name__ == "__main__":

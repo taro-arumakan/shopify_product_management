@@ -71,6 +71,7 @@ class ArchivepkeClient(BrandClientBase):
 
         return ",".join(
             [product_info["release_date"], collection, category]
+            + super().get_tags(product_info, additional_tags)
             + (additional_tags or [])
         )
 
@@ -109,7 +110,11 @@ class ArchivepkeClient(BrandClientBase):
         )
 
     def process_product_info_list_to_products(
-        self, product_info_list, additional_tags, scheduled_time=None, handle_suffix=None
+        self,
+        product_info_list,
+        additional_tags,
+        scheduled_time=None,
+        handle_suffix=None,
     ):
         for product_info in product_info_list:
             self.create_product_from_product_info(product_info, additional_tags)
@@ -117,9 +122,11 @@ class ArchivepkeClient(BrandClientBase):
         self.update_stocks(product_info_list)
         self.publish_products(product_info_list, scheduled_time=scheduled_time)
 
+
 def main():
     client = ArchivepkeClient()
-    client.sanity_check_sheet("2025.09.18(25FW Collection 2nd)")
+    for pi in client.product_info_list_from_sheet("2025.09.18(25FW Collection 2nd)"):
+        print(client.get_tags(pi))
 
 
 if __name__ == "__main__":

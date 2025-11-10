@@ -67,7 +67,11 @@ class SsilClient(BrandClientBase):
         return description_html
 
     def get_tags(self, product_info, additional_tags=None):
-        return ",".join([product_info["tags"]] + (additional_tags or []))
+        return ",".join(
+            [product_info["tags"]]
+            + super().get_tags(product_info, additional_tags)
+            + (additional_tags or [])
+        )
 
     def append_ring_size_guide_link(self, size_richtext):
         additional_children_dicts = {
@@ -177,8 +181,11 @@ class SsilClientMaterialOptionOnly(SsilClient):
 
 
 def main():
-    client = SsilClientMaterialOptionOnly()
-    client.sanity_check_sheet("material options only")
+    client = SsilClient()
+    for pi in client.product_info_list_from_sheet(
+        "material & size options (rings etc)"
+    ):
+        print(client.get_tags(pi))
 
 
 if __name__ == "__main__":
