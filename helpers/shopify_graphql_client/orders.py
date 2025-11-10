@@ -34,7 +34,12 @@ class Orders:
         res = self.run_query(query, variables)
         return res["orders"]["nodes"]
 
-    def orders_by_sku(self, sku, created_after_date: datetime.datetime = None):
+    def orders_by_sku(
+        self,
+        sku,
+        created_after_date: datetime.datetime = None,
+        unfulfilled_only: bool = False,
+    ):
         query_string = f"sku:'{sku}'"
         if created_after_date:
             if isinstance(created_after_date, datetime.date):
@@ -46,4 +51,6 @@ class Orders:
                     zoneinfo.ZonInfo("Asia/Tokyo")
                 ).astimezone(zoneinfo.ZoneInfo("UTC"))
             query_string += f" AND created_at:>={created_after_date:%Y-%m-%d}"
+        if unfulfilled_only:
+            query_string += " AND fulfillment_status:'unfulfilled'"
         return self.orders_by_query(query_string)
