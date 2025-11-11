@@ -63,6 +63,7 @@ class ProductQueries:
                         nodes {
                             id
                             title
+                            displayName
                             sku
                             price
                             compareAtPrice
@@ -74,6 +75,14 @@ class ProductQueries:
                             image {
                                 id
                                 url
+                            }
+                            metafields (first:10) {
+                                nodes {
+                                    id
+                                    namespace
+                                    key
+                                    value
+                                }
                             }
                         }
                     }
