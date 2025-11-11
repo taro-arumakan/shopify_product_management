@@ -51,6 +51,10 @@ class CollectionQueries:
                         title
                         sortOrder
                         templateSuffix
+                        image {
+                            id
+                            url
+                        }
                         products(first:200) {
                             nodes {
                                 id
