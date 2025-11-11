@@ -84,6 +84,9 @@ class ArchivepkeClient(BrandClientBase):
 
     def pre_process_product_info_list_to_products(self, product_info_list):
         self.merge_existing_products_as_variants()
+        super().pre_process_product_info_list_to_products(
+            product_info_list=product_info_list
+        )
 
     def process_sheet_to_products(
         self,
