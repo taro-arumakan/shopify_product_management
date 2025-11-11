@@ -194,14 +194,16 @@ class BrandClientBase(Client):
         scheduled_time=None,
     ):
         product_info_list = self.product_info_list_from_sheet(sheet_name, handle_suffix)
-        if restart_at_product_name == "DO NOT CREATE":
-            i = len(product_info_list)
-        elif not restart_at_product_name:
+        if not restart_at_product_name:
             i = 0
         else:
-            for i, pi in enumerate(product_info_list):
-                if pi["title"] == restart_at_product_name:
-                    break
+            self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+            if restart_at_product_name == "DO NOT CREATE":
+                i = len(product_info_list)
+            else:
+                for i, pi in enumerate(product_info_list):
+                    if pi["title"] == restart_at_product_name:
+                        break
         self.pre_process_product_info_list_to_products(product_info_list)
         self.process_product_info_list_to_products(
             product_info_list[i:],
