@@ -301,7 +301,7 @@ class ApricotStudiosClient(BrandClientBase):
             else:
                 parts = re.split(r"[\s/:]+", line)
                 if self.is_header(parts):
-                    headers.append(map(str.strip, parts))
+                    headers.append([""] + list(map(str.strip, parts)))
                     rowss.append([])
                 else:
                     rowss[-1].append(map(str.strip, parts))

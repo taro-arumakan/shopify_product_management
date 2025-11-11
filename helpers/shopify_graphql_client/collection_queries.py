@@ -41,34 +41,44 @@ class CollectionQueries:
         res = self.run_query(query, variables)
         return res["collection"]["products"]["nodes"]
 
-    def collection_by_title(self, title):
-        query = (
-            """
-        query collections {
-            collections(first: 50, query: "title:'%s'") {
-                nodes {
-                    id
-                    handle
-                    title
-                    sortOrder
-                    templateSuffix
-                    products(first:100) {
-                        nodes {
+    def collections_by_query(self, query_string):
+        query = """
+            query collections($query_string: String!) {
+                collections(first: 200, query: $query_string) {
+                    nodes {
+                        id
+                        handle
+                        title
+                        sortOrder
+                        templateSuffix
+                        image {
                             id
-                            title
+                            url
+                        }
+                        products(first:200) {
+                            nodes {
+                                id
+                                title
+                            }
                         }
                     }
                 }
             }
-        }"""
-            % title
-        )
-        res = self.run_query(query)
-        if len(res["collections"]["nodes"]) != 1:
+            """
+        variables = {"query_string": query_string}
+        res = self.run_query(query, variables)
+        return res["collections"]["nodes"]
+
+    def collection_by_title(self, title):
+        res = self.collections_by_query(f"title:'{title}'")
+        if len(res) != 1:
             raise RuntimeError(
-                f"{'Multiple' if res['nodes'] else 'No'} collections found for {title}: {res['nodes']}"
+                f"{'Multiple' if res else 'No'} collections found for {title}: {res}"
             )
-        return res["collections"]["nodes"][0]
+        return res[0]
+
+    def collections_by_title_prefix(self, title_prefix):
+        return self.collections_by_query(f"title:{title_prefix}*")
 
     def collection_id_by_title(self, title):
         collection = self.collection_by_title(title)

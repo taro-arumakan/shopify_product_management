@@ -54,6 +54,7 @@ class ProductCreate:
                 "variants": [
                     {
                         "price": price,
+                        "compareAtPrice": price,
                         "sku": sku,
                         "taxable": True,
                         "position": 1,
@@ -165,6 +166,7 @@ class ProductCreate:
         return [
             {
                 "price": option_dict["price"],
+                "compareAtPrice": option_dict["price"],
                 "sku": option_dict["sku"],
                 "taxable": True,
                 "position": i + 1,
