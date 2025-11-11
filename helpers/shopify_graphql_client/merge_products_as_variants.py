@@ -94,6 +94,9 @@ class MergeProductsAsVariants:
         products = self.products_by_query(
             f"title:'{product_title}' AND status:'ACTIVE'", sort_key="CREATED_AT"
         )
+        assert (
+            len(products) >= 2
+        ), f"need at least 2 products to merge for title {product_title}"
         products = list(reversed(products))
         logger.info(f"Merging {len(products)} products")
         merged = self.duplicate_product(
