@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import pathlib
+import pandas as pd
 from helpers.client import Client
 
 logger = logging.getLogger(__name__)
@@ -208,3 +209,65 @@ class BrandClientBase(Client):
             additional_tags=additional_tags,
             scheduled_time=scheduled_time,
         )
+
+    def get_skus_from_excel(
+        self,
+        file_path,
+        sku_column=1,
+        start_row=4,
+        discount_column=None,
+        header_row=None,
+    ):
+        """
+        ExcelファイルからSKUを取得する（オプションで割引率も取得可能）
+        
+        Args:
+            file_path: Excelファイルのパス（文字列またはpathlib.Path）
+            sku_column: SKUが含まれる列のインデックス（0ベース、デフォルト: 1 = B列）
+            start_row: データが始まる行のインデックス（0ベース、デフォルト: 4 = 5行目）
+            discount_column: 割引率が含まれる列のインデックス（0ベース、Noneの場合は取得しない）
+            header_row: ヘッダー行のインデックス（0ベース、Noneの場合はheader=Noneで読み込む）
+        
+        Returns:
+            discount_columnがNoneの場合: SKUのリスト
+            discount_columnが指定されている場合: (SKU, 割引%)のタプルのリスト
+        """
+        # pathlib.Pathオブジェクトの場合は文字列に変換
+        if isinstance(file_path, pathlib.Path):
+            file_path = str(file_path)
+        
+        # ヘッダー行の指定に応じて読み込み
+        if header_row is not None:
+            df = pd.read_excel(file_path, header=header_row)
+            # ヘッダー行がある場合、start_rowはヘッダー行からの相対位置
+            data_start_row = header_row + 1 + start_row if start_row > 0 else header_row + 1
+        else:
+            df = pd.read_excel(file_path, header=None)
+            data_start_row = start_row
+        
+        # 必要な列を取得
+        columns_to_get = [sku_column]
+        if discount_column is not None:
+            columns_to_get.append(discount_column)
+        
+        # データ行から取得
+        data = df.iloc[data_start_row:, columns_to_get]
+        
+        if discount_column is None:
+            # SKUのみ取得
+            result = []
+            for _, row in data.iterrows():
+                sku = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
+                if sku and sku != "":
+                    result.append(sku)
+            return result
+        else:
+            # SKUと割引%を取得
+            result = []
+            for _, row in data.iterrows():
+                sku = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
+                discount = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
+                
+                if sku and sku != "":
+                    result.append((sku, discount))
+            return result
