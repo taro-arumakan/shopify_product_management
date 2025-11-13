@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import pathlib
+import pandas as pd
 from helpers.client import Client
 
 logger = logging.getLogger(__name__)
@@ -223,3 +224,66 @@ class BrandClientBase(Client):
             additional_tags=additional_tags,
             scheduled_time=scheduled_time,
         )
+
+    def get_skus_from_excel(
+        self,
+        file_path,
+        header_row=None,
+        sku_column=1,
+        discount_column=None,
+    ):
+        """
+        ExcelファイルからSKUを取得する（オプションで割引率も取得可能）
+
+        Args:
+            file_path: Excelファイルのパス（文字列またはpathlib.Path）
+            sku_column: SKUが含まれる列のインデックス（0ベース、デフォルト: 1 = B列）
+            discount_column: 割引率が含まれる列のインデックス（0ベース、Noneの場合は取得しない）
+            header_row: ヘッダー行のインデックス（0ベース、Noneの場合はheader=Noneで読み込む）
+
+        Returns:
+            discount_columnがNoneの場合: SKUのリスト
+            discount_columnが指定されている場合: (SKU, 割引%)のタプルのリスト
+        """
+        # pathlib.Pathオブジェクトの場合は文字列に変換
+        if isinstance(file_path, pathlib.Path):
+            file_path = str(file_path)
+
+        df = pd.read_excel(file_path, header=header_row)
+
+        # 必要な列を取得
+        columns_to_get = [sku_column]
+        if discount_column is not None:
+            columns_to_get.append(discount_column)
+        column_names = [df.columns[i] for i in columns_to_get]
+        df = df[column_names]
+        df = df[df[column_names[0]].notna()]  # SKU列がNaNでない行のみ
+        if len(column_names) == 1:
+            return df[column_names[0]].tolist()
+        return df.values.tolist()
+
+
+def main():
+    from brands.kume.client import KumeClient
+
+    client = KumeClient()
+    pairs = client.get_skus_from_excel(
+        "/Users/taro/Downloads/(KUME) Japan Shopify Sale List_Outer Sale (1118-1123)_251107.xlsx",
+        header_row=3,
+        sku_column=1,
+        discount_column=6,
+    )
+    for sku, discount in pairs:
+        print(sku, discount)
+
+    for sku in client.get_skus_from_excel(
+        "/Users/taro/Downloads/(KUME) Japan Shopify Sale List_Outer Sale (1118-1123)_251107.xlsx",
+        header_row=3,
+        sku_column=1,
+        discount_column=None,
+    ):
+        print(sku)
+
+
+if __name__ == "__main__":
+    main()
