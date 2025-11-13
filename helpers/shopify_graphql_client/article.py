@@ -239,13 +239,15 @@ class Article:
         article_image_file_names,
         product_titles=None,
         publish_article=True,
+        template_json=None,
     ):
-        theme_file_path = self.write_json_from_image_file_names_and_product_titles(
+        self.write_json_from_image_file_names_and_product_titles(
             theme_dir,
             blog_title,
             article_title,
             article_image_file_names,
-            product_titles,
+            product_titles=product_titles,
+            template_json=template_json,
         )
         if publish_article:
             self.add_article(
@@ -274,6 +276,7 @@ class Article:
         article_title,
         image_file_names,
         product_titles=None,
+        template_json=None,
     ):
         image_file_names = self.update_image_file_extensions(image_file_names)
         sections = self.to_template_sections(image_file_names, product_titles)
@@ -283,6 +286,7 @@ class Article:
         self.write_to_json(
             theme_file_path=theme_file_path,
             sections_dict=sections,
+            template_json=template_json,
         )
         return theme_file_path
 
@@ -379,12 +383,12 @@ class Article:
             sections.update(section)
         return sections
 
-    def write_to_json(self, theme_file_path, sections_dict):
-        output_dict = json.loads(article_json_template())
+    def write_to_json(self, theme_file_path, sections_dict, template_json=None):
+        output_dict = json.loads(template_json or article_json_template())
         output_dict["sections"].update(sections_dict)
         output_dict["order"] += sections_dict.keys()
         with open(theme_file_path, "w") as of:
-            of.write(json.dumps(output_dict, indent=2))
+            of.write(json.dumps(output_dict, indent=2, ensure_ascii=False))
 
     def add_article_with_media_url(
         self, blog_title, article_title, thumbnail_media_url, theme_name
