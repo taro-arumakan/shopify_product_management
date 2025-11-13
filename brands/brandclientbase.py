@@ -213,21 +213,19 @@ class BrandClientBase(Client):
     def get_skus_from_excel(
         self,
         file_path,
-        sku_column=1,
-        start_row=4,
-        discount_column=None,
         header_row=None,
+        sku_column=1,
+        discount_column=None,
     ):
         """
         ExcelファイルからSKUを取得する（オプションで割引率も取得可能）
-        
+
         Args:
             file_path: Excelファイルのパス（文字列またはpathlib.Path）
             sku_column: SKUが含まれる列のインデックス（0ベース、デフォルト: 1 = B列）
-            start_row: データが始まる行のインデックス（0ベース、デフォルト: 4 = 5行目）
             discount_column: 割引率が含まれる列のインデックス（0ベース、Noneの場合は取得しない）
             header_row: ヘッダー行のインデックス（0ベース、Noneの場合はheader=Noneで読み込む）
-        
+
         Returns:
             discount_columnがNoneの場合: SKUのリスト
             discount_columnが指定されている場合: (SKU, 割引%)のタプルのリスト
@@ -235,39 +233,42 @@ class BrandClientBase(Client):
         # pathlib.Pathオブジェクトの場合は文字列に変換
         if isinstance(file_path, pathlib.Path):
             file_path = str(file_path)
-        
-        # ヘッダー行の指定に応じて読み込み
-        if header_row is not None:
-            df = pd.read_excel(file_path, header=header_row)
-            # ヘッダー行がある場合、start_rowはヘッダー行からの相対位置
-            data_start_row = header_row + 1 + start_row if start_row > 0 else header_row + 1
-        else:
-            df = pd.read_excel(file_path, header=None)
-            data_start_row = start_row
-        
+
+        df = pd.read_excel(file_path, header=header_row)
+
         # 必要な列を取得
         columns_to_get = [sku_column]
         if discount_column is not None:
             columns_to_get.append(discount_column)
-        
-        # データ行から取得
-        data = df.iloc[data_start_row:, columns_to_get]
-        
-        if discount_column is None:
-            # SKUのみ取得
-            result = []
-            for _, row in data.iterrows():
-                sku = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
-                if sku and sku != "":
-                    result.append(sku)
-            return result
-        else:
-            # SKUと割引%を取得
-            result = []
-            for _, row in data.iterrows():
-                sku = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
-                discount = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
-                
-                if sku and sku != "":
-                    result.append((sku, discount))
-            return result
+        column_names = [df.columns[i] for i in columns_to_get]
+        df = df[column_names]
+        df = df[df[column_names[0]].notna()]  # SKU列がNaNでない行のみ
+        if len(column_names) == 1:
+            return df[column_names[0]].tolist()
+        return df.values.tolist()
+
+
+def main():
+    from brands.kume.client import KumeClient
+
+    client = KumeClient()
+    pairs = client.get_skus_from_excel(
+        "/Users/taro/Downloads/(KUME) Japan Shopify Sale List_Outer Sale (1118-1123)_251107.xlsx",
+        header_row=3,
+        sku_column=1,
+        discount_column=6,
+    )
+    for sku, discount in pairs:
+        print(sku, discount)
+
+    for sku in client.get_skus_from_excel(
+        "/Users/taro/Downloads/(KUME) Japan Shopify Sale List_Outer Sale (1118-1123)_251107.xlsx",
+        header_row=3,
+        sku_column=1,
+        discount_column=None,
+    ):
+        print(sku)
+
+
+if __name__ == "__main__":
+    main()
