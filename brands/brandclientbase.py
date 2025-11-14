@@ -199,6 +199,26 @@ class BrandClientBase(Client):
             self.remove_existing_new_proudct_tags()
             self.remove_existing_new_badges()
 
+    def colors_from_product_info_list(self, product_info_list):
+        for option in ["カラー", "Color"]:
+            if option in product_info_list[0]["options"][0].keys():
+                break
+        else:
+            return False
+        return set([o[option] for pi in product_info_list for o in pi["options"]])
+
+    def post_process_product_info_list_to_products(self, product_info_list):
+        if colors := self.colors_from_product_info_list(product_info_list):
+            current_color_swatch_config = self.current_color_swatch_config()
+            configured_colors = [
+                l.split(": ")[0] for l in current_color_swatch_config.split("\n")
+            ]
+            missings = [color for color in colors if color not in configured_colors]
+            if missings:
+                logger.warning(f"add these colors to color swatch config:")
+                for color in missings:
+                    print(color)
+
     def process_sheet_to_products(
         self,
         sheet_name,
@@ -229,6 +249,7 @@ class BrandClientBase(Client):
             additional_tags=additional_tags,
             scheduled_time=scheduled_time,
         )
+        self.post_process_product_info_list_to_products(product_info_list)
 
     def get_skus_from_excel(
         self,
