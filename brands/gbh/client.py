@@ -17,28 +17,32 @@ class GbhClient(BrandClientBase):
 
     def product_attr_column_map(self):
         return dict(
-            title=string.ascii_lowercase.index("a"),
-            tags=string.ascii_lowercase.index("b"),
-            price=string.ascii_lowercase.index("d"),
-            description=string.ascii_lowercase.index("f"),
-            product_care=string.ascii_lowercase.index("h"),
-            material=string.ascii_lowercase.index("i"),
-            size_text=string.ascii_lowercase.index("j"),
-            made_in=string.ascii_lowercase.index("k"),
+            title=string.ascii_lowercase.index("f"),
+            collection=string.ascii_lowercase.index("c"),
+            category=string.ascii_lowercase.index("d"),
+            category2=string.ascii_lowercase.index("e"),
+            release_date=string.ascii_lowercase.index("b"),
+            description=string.ascii_lowercase.index("q"),
+            product_care=string.ascii_lowercase.index("s"),
+            size_text=string.ascii_lowercase.index("t"),
+            material=string.ascii_lowercase.index("u"),
+            made_in=string.ascii_lowercase.index("v"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
+        option1_attrs = {"カラー": string.ascii_lowercase.index("g")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("m"),
+            drive_link=string.ascii_lowercase.index("o"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"サイズ": string.ascii_lowercase.index("n")}
+        option2_attrs = {"サイズ": string.ascii_lowercase.index("h")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("o"),
-            stock=string.ascii_lowercase.index("p"),
+            price=string.ascii_lowercase.index("l"),
+            sku=string.ascii_lowercase.index("i"),
+            stock=string.ascii_lowercase.index("m"),
+            size_text=string.ascii_lowercase.index("t"),
         )
         return option2_attrs
 
@@ -109,7 +113,11 @@ class GbhClient(BrandClientBase):
 
     def get_tags(self, product_info, additional_tags=None):
         return ",".join(
-            [product_info["tags"]]
+            [
+                product_info["category"],
+                product_info["category2"],
+                product_info["release_date"],
+            ]
             + super().get_tags(product_info, additional_tags)
             + (additional_tags or [])
         )
@@ -144,7 +152,15 @@ class GbhClient(BrandClientBase):
         return BrandClientBase.generate_table_html(headers, rows)
 
     def get_size_field(self, product_info):
-        return self.formatted_size_text_to_html_table(product_info["size_text"])
+        size_text = product_info["size_text"]
+        try:
+            res = self.formatted_size_text_to_html_table(size_text)
+        except RuntimeError as e:
+            logger.warning(
+                f"Failed to parse size text for product {product_info['title']}: {e}"
+            )
+            res = f"<p>{size_text}</p>"
+        return res
 
 
 class GbhClientColorOptionOnly(GbhClient):
