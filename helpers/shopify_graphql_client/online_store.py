@@ -1,3 +1,7 @@
+import json
+import re
+
+
 class OnlineStore:
 
     def themes_by_names(self, names):
@@ -17,11 +21,25 @@ class OnlineStore:
         res = self.run_query(query, variables)
         return res["themes"]["nodes"]
 
-    def published_theme(self):
+    def theme_json_to_dict(self, content):
+        # Remove C-style comments
+        content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+        return json.loads(content)
+
+    def current_theme(self):
         themes = self.themes_by_names("*")
         for theme in themes:
             if theme["role"] == "MAIN":
                 return theme
+
+    def current_color_swatch_config(self):
+        theme = self.current_theme()
+        setting_file = self.theme_file_by_theme_name_and_file_name(
+            theme["name"], "config/settings_data.json"
+        )
+        return self.theme_json_to_dict(setting_file[0]["body"]["content"])["current"][
+            "color_swatch_config"
+        ]
 
     def theme_file_by_theme_name_and_file_name(self, theme_name, file_name):
         query = """
@@ -31,6 +49,11 @@ class OnlineStore:
                         files(filenames:"*%s*" first:50) {
                             nodes {
                                 filename
+                                body {
+                                    ... on OnlineStoreThemeFileBodyText {
+                                        content
+                                    }
+                                }
                             }
                         }
                     }
