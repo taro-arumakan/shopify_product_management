@@ -1,25 +1,36 @@
-import logging
+class OnlineStore:
 
-logger = logging.getLogger(__name__)
-
-
-class Contents:
-
-    def page_id_by_title(self, page_title):
+    def pages_by_query(self, query_string, sort_key):
         query = """
-        query pageList($query_string: String!) {
-            pages(first: 10, query: $query_string) {
+        query pagesByQuery($query_string: String!, $sort_key: PageSortKeys!) {
+            pages(first: 50, query: $query_string, sortKey: $sort_key) {
                 nodes {
                     id
+                    handle
+                    title
+                    createdAt
+                    publishedAt
+                    templateSuffix
                 }
             }
         }
         """
-        variables = {"query_string": f"title:{page_title}"}
+        variables = {"query_string": query_string, "sort_key": sort_key}
         res = self.run_query(query, variables)
-        if len(res["pages"]["nodes"]) != 1:
+        return res["pages"]["nodes"]
+
+    def pages_by_title(self, title, sort_key="PUBLISHED_AT"):
+        if "*" in title:
+            query_string = f"title:{title}"
+        else:
+            query_string = f"title:'{title.replace("'", "\\'")}'"
+        return self.pages_by_query(query_string, sort_key)
+
+    def page_id_by_title(self, page_title):
+        res = self.pages_by_title(page_title)
+        if len(res) != 1:
             raise RuntimeError(f"Error getting page id for {page_title}: {res}")
-        return res["pages"]["nodes"][0]["id"]
+        return res[0]["id"]
 
     def create_url_redirect(self, from_path, to_path):
         for p in from_path, to_path:

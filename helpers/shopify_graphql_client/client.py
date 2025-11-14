@@ -4,7 +4,6 @@ from helpers.shopify_graphql_client.archive_and_remove_variant import (
     ArchiveAndRemoveVariant,
 )
 from helpers.shopify_graphql_client.article import Article
-from helpers.shopify_graphql_client.contents import Contents
 from helpers.shopify_graphql_client.collection_queries import CollectionQueries
 from helpers.shopify_graphql_client.inventory import Inventory
 from helpers.shopify_graphql_client.medias import Medias
@@ -13,7 +12,7 @@ from helpers.shopify_graphql_client.merge_products_as_variants import (
 )
 from helpers.shopify_graphql_client.metafields import Metafields
 from helpers.shopify_graphql_client.orders import Orders
-from helpers.shopify_graphql_client.pages import Pages
+from helpers.shopify_graphql_client.online_store import OnlineStore
 from helpers.shopify_graphql_client.product_attributes import (
     ProductAttributes,
 )
@@ -31,12 +30,11 @@ logger = logging.getLogger(__name__)
 class ShopifyGraphqlClient(
     ArchiveAndRemoveVariant,
     Article,
-    Contents,
     CollectionQueries,
     Inventory,
     Medias,
     Orders,
-    Pages,
+    OnlineStore,
     ProductAttributes,
     ProductCreate,
     ProductQueries,
