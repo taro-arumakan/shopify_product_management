@@ -218,9 +218,14 @@ class BrandClientBase(Client):
                 for i, pi in enumerate(product_info_list):
                     if pi["title"] == restart_at_product_name:
                         break
+                else:
+                    raise RuntimeError(
+                        f"Product with name {restart_at_product_name} not found in sheet {sheet_name}"
+                    )
+        product_info_list = product_info_list[i:]
         self.pre_process_product_info_list_to_products(product_info_list)
         self.process_product_info_list_to_products(
-            product_info_list[i:],
+            product_info_list,
             additional_tags=additional_tags,
             scheduled_time=scheduled_time,
         )
