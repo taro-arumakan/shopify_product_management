@@ -1,5 +1,48 @@
 class OnlineStore:
 
+    def themes_by_names(self, names):
+        query = """
+        query themesByQuery($names: [String!]) {
+            themes(first: 30, names: $names) {
+                nodes {
+                    name
+                    id
+                    role
+                    prefix
+                }
+            }
+        }
+        """
+        variables = {"names": names}
+        res = self.run_query(query, variables)
+        return res["themes"]["nodes"]
+
+    def published_theme(self):
+        themes = self.themes_by_names("*")
+        for theme in themes:
+            if theme["role"] == "MAIN":
+                return theme
+
+    def theme_file_by_theme_name_and_file_name(self, theme_name, file_name):
+        query = """
+            query {
+                themes(names:"%s" first:1) {
+                    nodes {
+                        files(filenames:"*%s*" first:50) {
+                            nodes {
+                                filename
+                            }
+                        }
+                    }
+                }
+            }
+            """ % (
+            theme_name,
+            file_name,
+        )
+        res = self.run_query(query)
+        return res["themes"]["nodes"][0]["files"]["nodes"]
+
     def pages_by_query(self, query_string, sort_key):
         query = """
         query pagesByQuery($query_string: String!, $sort_key: PageSortKeys!) {

@@ -209,26 +209,6 @@ class Article:
             blog_title, [article["title"] for article in articles]
         )
 
-    def theme_file_by_theme_name_and_file_name(self, theme_name, file_name):
-        query = """
-            query {
-                themes(names:"%s" first:1) {
-                    nodes {
-                        files(filenames:"*%s*" first:50) {
-                            nodes {
-                                filename
-                            }
-                        }
-                    }
-                }
-            }
-            """ % (
-            theme_name,
-            file_name,
-        )
-        res = self.run_query(query)
-        return res["themes"]["nodes"][0]["files"]["nodes"]
-
     def article_from_image_file_names_and_product_titles(
         self,
         theme_name,
