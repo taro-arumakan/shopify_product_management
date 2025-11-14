@@ -97,10 +97,17 @@ class Medias:
                 return media
 
     def file_by_file_name(self, file_name):
+        """20251113 FIXME
+        I don't understand why but querying for a single file name did not work for only these two files,
+        out of all 31 files prefixed with the same string.
+        25_Winter_CP_2.jpg
+        25_Winter_CP_25.jpg
+        Relates to how Shopify indexes the files? For now query with relaxed criteria, then filter locally.
+        """
         query = (
             """
         query {
-            files(first:10 query:"filename:'%s'") {
+            files(first:50 query:"filename:%s*") {
             nodes {
                 id
                 ... on MediaImage {
