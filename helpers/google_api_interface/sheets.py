@@ -25,13 +25,18 @@ class GoogleSheetsApiInterface:
     ):
         def update_list(target_list, column_map, row, row_num):
             for i, (k, ci) in enumerate((column_map or {}).items()):
-                if value := self.get_cell_value(
-                    row, ci, k, row_num, sheet_id, sheet_title
-                ):
+                if (
+                    value := self.get_cell_value(
+                        row, ci, k, row_num, sheet_id, sheet_title
+                    )
+                ) not in [
+                    None,
+                    "",
+                ]:  # allow int zero as such.
                     if i == 0:
                         if not target_list or target_list[-1].get(k) != value:
                             target_list.append({k: value})
-                    elif value:
+                    else:
                         target_list[-1][k] = value
 
         rows = self.worksheet_rows(sheet_id, sheet_title)
