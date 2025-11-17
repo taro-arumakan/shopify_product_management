@@ -13,6 +13,7 @@ class AlvanaClient(BrandClientBase):
     VENDOR = "alvana"
     LOCATIONS = ["Jingumae"]
     PRODUCT_SHEET_START_ROW = 1
+    REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
 
     def product_attr_column_map(self):
         return dict(
@@ -30,15 +31,16 @@ class AlvanaClient(BrandClientBase):
     def option1_attr_column_map(self):
         option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("m"),
+            filter_color=string.ascii_lowercase.index("m"),
+            drive_link=string.ascii_lowercase.index("n"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"サイズ": string.ascii_lowercase.index("n")}
+        option2_attrs = {"サイズ": string.ascii_lowercase.index("o")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("o"),
-            stock=string.ascii_lowercase.index("p"),
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
 
@@ -95,11 +97,11 @@ class AlvanaClient(BrandClientBase):
         self, create_product_from_product_info_res, product_info
     ):
         product_id = create_product_from_product_info_res[0]["id"]
+        self.update_metafields(product_id, product_info)
         skus = [
             v["sku"]
             for v in create_product_from_product_info_res[0]["variants"]["nodes"]
         ]
-        self.update_metafields(product_id, product_info)
         self.update_weight(skus, product_info)
         return product_id
 
@@ -112,6 +114,7 @@ class AlvanaClient(BrandClientBase):
         self.update_size_table_html_metafield(product_id, size_table_html)
         product_care = self.text_to_simple_richtext(product_info["product_care"])
         self.update_product_care_metafield(product_id, product_care)
+        self.update_filter_color(product_id, product_info)
 
     def to_add_disclaimer_html(self, title):
         return title.startswith("NATURAL TWILL") or title in [
@@ -124,6 +127,16 @@ class AlvanaClient(BrandClientBase):
         if weight:
             for sku in skus:
                 self.update_inventory_item_weight_by_sku(sku, weight, unit="KILOGRAMS")
+
+    def update_filter_color(self, product_id, product_info):
+        for color_option in product_info["options"]:
+            filter_color = color_option["filter_color"]
+            for size_option in color_option["options"]:
+                sku = size_option["sku"]
+                variant_id = self.variant_id_by_sku(sku)
+                self.update_variant_metafield(
+                    product_id, variant_id, "custom", "filter_color", filter_color
+                )
 
 
 def main():
