@@ -299,7 +299,7 @@ class ApricotStudiosClient(BrandClientBase):
             if self.is_title(line):
                 titles.append(line)
             else:
-                parts = re.split(r"[\s/:]+", line)
+                parts = re.split(r"[\s/:：]+", line)
                 if self.is_header(parts):
                     headers.append([""] + list(map(str.strip, parts)))
                     rowss.append([])
