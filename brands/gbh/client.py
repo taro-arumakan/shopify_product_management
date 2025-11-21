@@ -22,9 +22,9 @@ class GbhClient(BrandClientBase):
             price=string.ascii_lowercase.index("d"),
             description=string.ascii_lowercase.index("f"),
             product_care=string.ascii_lowercase.index("h"),
-            material=string.ascii_lowercase.index("i"),
-            size_text=string.ascii_lowercase.index("j"),
-            made_in=string.ascii_lowercase.index("k"),
+            material=string.ascii_lowercase.index("j"),
+            size_text=string.ascii_lowercase.index("l"),
+            made_in=string.ascii_lowercase.index("m"),
         )
 
     def option1_attr_column_map(self):
@@ -58,8 +58,6 @@ class GbhClient(BrandClientBase):
                 </div>
                 <h3>商品説明</h3>
                 <p>${DESCRIPTION}</p>
-                <h3>手入れ方法</h3>
-                <p>${PRODUCTCARE}</p>
                 <h3>サイズ・素材</h3>
                 ${SIZE_TABLE}
                 <br>
@@ -93,14 +91,12 @@ class GbhClient(BrandClientBase):
     def get_description_html(self, product_info):
 
         description = self.escape_html(product_info["description"])
-        product_care = self.escape_html(product_info["product_care"])
         material = self.escape_html(product_info["material"])
         made_in = self.escape_html(product_info["made_in"])
         size_table_html = self.get_size_field(product_info)
 
         description_html = self.product_description_template()
         description_html = description_html.replace("${DESCRIPTION}", description)
-        description_html = description_html.replace("${PRODUCTCARE}", product_care)
         description_html = description_html.replace("${SIZE_TABLE}", size_table_html)
         description_html = description_html.replace("${MATERIAL}", material)
         description_html = description_html.replace("${MADEIN}", made_in)
@@ -150,16 +146,49 @@ class GbhClient(BrandClientBase):
 class GbhClientColorOptionOnly(GbhClient):
 
     def option1_attr_column_map(self):
-        option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
+        option1_attrs = {"カラー": string.ascii_lowercase.index("n")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("m"),
-            sku=string.ascii_lowercase.index("n"),
-            stock=string.ascii_lowercase.index("o"),
+            drive_link=string.ascii_lowercase.index("o"),
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
         return {}
+
+
+class GbhClientSizeOptionOnly(GbhClient):
+
+    def product_attr_column_map(self):
+        return dict(
+            title=string.ascii_lowercase.index("a"),
+            tags=string.ascii_lowercase.index("b"),
+            price=string.ascii_lowercase.index("d"),
+            description=string.ascii_lowercase.index("f"),
+            product_care=string.ascii_lowercase.index("h"),
+            material=string.ascii_lowercase.index("i"),
+            size_text=string.ascii_lowercase.index("j"),
+            made_in=string.ascii_lowercase.index("k"),
+        )
+
+    def option1_attr_column_map(self):
+        option1_attrs = {"サイズ": string.ascii_lowercase.index("n")}
+        option1_attrs.update(
+            drive_link=string.ascii_lowercase.index("m"),
+            sku=string.ascii_lowercase.index("o"),
+            stock=string.ascii_lowercase.index("p"),
+        )
+        return option1_attrs
+
+    def option2_attr_column_map(self):
+        return {}
+
+    def get_size_field(self, product_info):
+        return product_info["size_text"]
+
+    def get_tags(self, product_info, additional_tags=None):
+        return []
 
 
 def main():
