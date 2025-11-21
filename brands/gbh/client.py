@@ -58,6 +58,8 @@ class GbhClient(BrandClientBase):
                 </div>
                 <h3>商品説明</h3>
                 <p>${DESCRIPTION}</p>
+                <h3>手入れ方法</h3>
+                <p>${PRODUCTCARE}</p>
                 <h3>サイズ・素材</h3>
                 ${SIZE_TABLE}
                 <br>
