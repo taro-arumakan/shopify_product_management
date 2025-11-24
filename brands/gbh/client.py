@@ -159,6 +159,9 @@ class GbhClientColorOptionOnly(GbhClient):
     def option2_attr_column_map(self):
         return {}
 
+    def get_size_field(self, product_info):
+        return product_info["size_text"]
+
 
 class GbhClientSizeOptionOnly(GbhClient):
 
