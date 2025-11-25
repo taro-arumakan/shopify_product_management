@@ -11,6 +11,7 @@ class Variants:
         assert len(attribute_names) == len(
             attribute_values
         ), "attribute_names and attribute_values must have the same length"
+
         query = """
         mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
             productVariantsBulkUpdate(productId: $productId, variants: $variants) {

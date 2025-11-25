@@ -167,6 +167,10 @@ class ProductAttributes:
     def update_variant_price_by_variant_id(
         self, product_id, variant_ids, prices, compare_at_prices
     ):
+        assert (
+            len(variant_ids) == len(prices) == len(compare_at_prices)
+        ), "target variants and prices must have the same length"
+
         variables = {
             "productId": product_id,
             "variants": [
