@@ -187,7 +187,7 @@ class ProductCreate:
             ">": "&gt;",
             '"': "&quot;",
             "'": "&#039;",
-            "\n": "<br>",
+            "\n": "<br>\n",
         }
         for k, v in replace_map.items():
             text = text.replace(k, v)
