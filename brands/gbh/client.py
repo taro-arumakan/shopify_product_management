@@ -93,12 +93,14 @@ class GbhClient(BrandClientBase):
     def get_description_html(self, product_info):
 
         description = self.escape_html(product_info["description"])
+        product_care = self.escape_html(product_info["product_care"])
         material = self.escape_html(product_info["material"])
         made_in = self.escape_html(product_info["made_in"])
         size_table_html = self.get_size_field(product_info)
 
         description_html = self.product_description_template()
         description_html = description_html.replace("${DESCRIPTION}", description)
+        description_html = description_html.replace("${PRODUCTCARE}", product_care)
         description_html = description_html.replace("${SIZE_TABLE}", size_table_html)
         description_html = description_html.replace("${MATERIAL}", material)
         description_html = description_html.replace("${MADEIN}", made_in)
