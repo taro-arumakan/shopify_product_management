@@ -69,6 +69,7 @@ class MergeProductsAsVariants:
         )
 
     def archive_product(self, product, new_product_handle=None):
+        logger.info(f"archiving {product['title']}")
         self.update_product_status(product["id"], "ARCHIVED")
         for variant in product["variants"]["nodes"]:
             self.update_variant_attributes(

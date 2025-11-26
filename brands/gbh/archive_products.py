@@ -6,10 +6,11 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     client = utils.client("gbh")
-    for tag in ["24fall", "24 winter"]:
-        products = client.products_by_tag(tag)
-        products = [p for p in products if not any("25" in t for t in p["tags"])]
-        for product in products:
+    products = client.products_by_query(
+        f"tag:*24* AND tag:'APPAREL' AND status:'ACTIVE'"
+    )
+    for product in products:
+        if "25FW" not in product["tags"]:
             client.archive_product(product)
 
 
