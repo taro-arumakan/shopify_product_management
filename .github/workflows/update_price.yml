@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
           cache: "pip"
 
       - name: Install dependencies
@@ -45,6 +45,7 @@ jobs:
 
       - name: Run update_price script
         run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
           python brands/gbh/update_price.py
 
       - name: Cleanup
