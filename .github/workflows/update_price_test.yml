@@ -2,7 +2,7 @@ name: Test workflow
 
 on:
   schedule:
-    # 11月30日 日本時間 22:00 (UTC 13:00) に実行
+    # 11月30日 日本時間 16:30 (UTC 07:30) に実行
     - cron: "30 7 26 11 *"
   workflow_dispatch:
 
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
           cache: "pip"
 
       - name: Install dependencies
@@ -45,6 +45,7 @@ jobs:
 
       - name: Run check_price script
         run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
           python brands/gbh/check_price.py
 
       - name: Cleanup

@@ -8,8 +8,8 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     client = BlossomClientClothes()
-    sheet_name = "clothes(drop5)"
-   
+    sheet_name = "clothes(drop6)"
+
     client.sanity_check_sheet(sheet_name)
 
     # import zoneinfo
