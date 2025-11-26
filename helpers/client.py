@@ -222,9 +222,11 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             sku: count for sku, count in counts_by_sku.items() if count > 1
         }
         if counts_by_sku:
-            raise RuntimeError(
-                f"Duplicate SKUs found:\n{'\n'.join(": ".join(map(str, [sku, count])) for sku, count in counts_by_sku.items())}"
+            m = "\n".join(
+                ": ".join(map(str, [sku, count]))
+                for sku, count in counts_by_sku.items()
             )
+            raise RuntimeError(f"Duplicate SKUs found:\n{m}")
 
     def check_existing_skus(self, product_info_list):
         res = []
