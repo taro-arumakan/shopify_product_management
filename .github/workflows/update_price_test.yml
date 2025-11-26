@@ -1,4 +1,4 @@
-name: Update Price
+name: Test workflow
 
 on:
   schedule:
