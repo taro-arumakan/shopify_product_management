@@ -4,12 +4,12 @@ import utils
 
 logging.basicConfig(level=logging.INFO)
 
-sheet_id = "1s6xkJhU4wfKnR2kqSzAutdtzV6axqvSYPCD1YIa0z08"
+sheet_id = "1SzaDFzw513CA-vaGeAoRyd6N9eA_IwOg_JjdYSsSa9g"
 
 
 def main():
     client = utils.client("gbhjapan")
-    rows = client.worksheet_rows(sheet_id, "AP&HM 가격변경_3차_이세탄&2509적용")
+    rows = client.worksheet_rows(sheet_id, "시트1")
 
     for row in rows[2:]:
         sku = row[string.ascii_uppercase.index("F")]
