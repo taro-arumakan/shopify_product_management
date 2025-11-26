@@ -1,17 +1,16 @@
 import logging
 import pprint
 import utils
-from product_create import product_info_list_from_sheet_color_and_size
 
 logging.basicConfig(level=logging.INFO)
 
 
 def main():
     client = utils.client("apricot-studios")
-    products = client.products_by_tag("Daughter")
-    for product in products:
-        tags = ",".join(product["tags"] + ["APRICOT", "DAUGHTER"])
-        print(product["title"], tags)
+    product_info_list = client.product_info_list_from_sheet("11.20 25Winter_clone")
+    for pi in product_info_list:
+        product = client.product_by_title(pi["title"])
+        tags = product["tags"] + ["25 Winter"]
         pprint.pprint(client.update_product_tags(product["id"], tags))
 
 
