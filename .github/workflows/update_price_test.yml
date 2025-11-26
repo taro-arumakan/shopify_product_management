@@ -1,0 +1,53 @@
+name: Test workflow
+
+on:
+  schedule:
+    # 11月30日 日本時間 22:00 (UTC 13:00) に実行
+    - cron: "30 7 26 11 *"
+  workflow_dispatch:
+
+jobs:
+  update-price:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        env:
+          GBHJAPAN_ACCESS_TOKEN: ${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          GBHJAPAN_GSPREAD_ID: ${{ secrets.GBHJAPAN_GSPREAD_ID }}
+        run: |
+          cat > .env << EOF
+          gbhjapan-ACCESS_TOKEN=$GBHJAPAN_ACCESS_TOKEN
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          GBHJAPAN-GSPREAD_ID=$GBHJAPAN_GSPREAD_ID
+          EOF
+
+      - name: Run check_price script
+        run: |
+          python brands/gbh/check_price.py
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
