@@ -12,7 +12,7 @@ class SsilClient(BrandClientBase):
 
     SHOPNAME = "ssilkr"
     VENDOR = "ssil"
-    LOCATIONS = ["Shop location"]
+    LOCATIONS = ["SSIL Warehouse"]
     PRODUCT_SHEET_START_ROW = 1
 
     def product_attr_column_map(self):
@@ -38,7 +38,8 @@ class SsilClient(BrandClientBase):
         option2_attrs = {"Size": string.ascii_lowercase.index("m")}
         option2_attrs.update(
             sku=string.ascii_lowercase.index("n"),
-            stock=string.ascii_lowercase.index("o"),
+            hs_code=string.ascii_lowercase.index("o"),
+            stock=string.ascii_lowercase.index("p"),
         )
         return option2_attrs
 
@@ -165,6 +166,9 @@ class SsilClient(BrandClientBase):
             product_info_list, text_to_html_func=text_to_html_func
         )
 
+    def post_process_product_info_list_to_products(self, product_info_list):
+        pass
+
 
 class SsilClientMaterialOptionOnly(SsilClient):
     def option1_attr_column_map(self):
@@ -172,7 +176,8 @@ class SsilClientMaterialOptionOnly(SsilClient):
         option1_attrs.update(
             drive_link=string.ascii_lowercase.index("l"),
             sku=string.ascii_lowercase.index("m"),
-            stock=string.ascii_lowercase.index("n"),
+            hs_code=string.ascii_lowercase.index("n"),
+            stock=string.ascii_lowercase.index("o"),
         )
         return option1_attrs
 

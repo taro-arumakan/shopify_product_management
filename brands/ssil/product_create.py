@@ -1,23 +1,20 @@
+import datetime
 import logging
+import zoneinfo
 from brands.ssil.client import SsilClient, SsilClientMaterialOptionOnly
 
 logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    client = SsilClient()
-    sheet_name = "material & size options (rings etc)"
-    client.sanity_check_sheet(sheet_name)
-    client.process_sheet_to_products(
-        sheet_name,
-        restart_at_product_name="X LOCK OVAL PEARL N",
-        additinal_tags=["New Arrival"],
-    )
-
+    sheet_name = "HOLIDAY - correct URL"
     client = SsilClientMaterialOptionOnly()
-    sheet_name = "material options only"
+    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
     client.sanity_check_sheet(sheet_name)
-    client.process_sheet_to_products(sheet_name, additinal_tags=["New Arrival"])
+    scheduled_time = datetime.datetime(
+        2025, 12, 4, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    )
+    client.process_sheet_to_products(sheet_name, scheduled_time=scheduled_time)
 
 
 if __name__ == "__main__":
