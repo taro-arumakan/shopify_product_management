@@ -248,6 +248,7 @@ class BrandClientBase(Client):
             product_info_list,
             additional_tags=additional_tags,
             scheduled_time=scheduled_time,
+            handle_suffix=handle_suffix,
         )
         self.post_process_product_info_list_to_products(product_info_list)
 

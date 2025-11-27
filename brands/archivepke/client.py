@@ -88,43 +88,6 @@ class ArchivepkeClient(BrandClientBase):
             product_info_list=product_info_list
         )
 
-    def process_sheet_to_products(
-        self,
-        sheet_name,
-        additional_tags=None,
-        handle_suffix=None,
-        restart_at_product_name=None,
-        scheduled_time=None,
-    ):
-        product_info_list = self.product_info_list_from_sheet(sheet_name, handle_suffix)
-        if restart_at_product_name == "DO NOT CREATE":
-            i = len(product_info_list)
-        elif not restart_at_product_name:
-            i = 0
-        else:
-            for i, pi in enumerate(product_info_list):
-                if pi["title"] == restart_at_product_name:
-                    break
-        self.process_product_info_list_to_products(
-            product_info_list[i:],
-            additional_tags,
-            scheduled_time=scheduled_time,
-            handle_suffix=handle_suffix,
-        )
-
-    def process_product_info_list_to_products(
-        self,
-        product_info_list,
-        additional_tags,
-        scheduled_time=None,
-        handle_suffix=None,
-    ):
-        for product_info in product_info_list:
-            self.create_product_from_product_info(product_info, additional_tags)
-            self.process_product_images(product_info, handle_suffix=handle_suffix)
-        self.update_stocks(product_info_list)
-        self.publish_products(product_info_list, scheduled_time=scheduled_time)
-
 
 def main():
     client = ArchivepkeClient()

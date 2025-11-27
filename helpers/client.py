@@ -276,10 +276,14 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             raise RuntimeError("Failed sanity check")
 
     def process_product_info_list_to_products(
-        self, product_info_list, additional_tags, scheduled_time=None
+        self,
+        product_info_list,
+        additional_tags,
+        scheduled_time=None,
+        handle_suffix=None,
     ):
         for product_info in product_info_list:
             self.create_product_from_product_info(product_info, additional_tags)
-            self.process_product_images(product_info)
+            self.process_product_images(product_info, handle_suffix)
         self.update_stocks(product_info_list)
         self.publish_products(product_info_list, scheduled_time=scheduled_time)
