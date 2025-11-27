@@ -12,7 +12,7 @@ def main():
             print(
                 f"going to update price of {variant['displayName']} from {original_price} to {discount_price}"
             )
-            client.update_variant_price_by_variant_id(
+            client.update_variant_prices_by_variant_ids(
                 product_id=product["id"],
                 variant_ids=[variant["id"]],
                 prices=[discount_price],

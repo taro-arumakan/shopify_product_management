@@ -15,7 +15,7 @@ def main():
                 compare_at_prices.append(compare_at_price)
                 prices.append(int(int(compare_at_price) * 0.9))
                 skus.append(o2["sku"])
-        client.update_variant_price_by_skus(
+        client.update_variant_prices_by_skus(
             product["id"], skus=skus, prices=prices, compare_at_prices=compare_at_prices
         )
 

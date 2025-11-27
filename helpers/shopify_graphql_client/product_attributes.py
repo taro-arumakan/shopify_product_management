@@ -164,7 +164,7 @@ class ProductAttributes:
             raise RuntimeError(f"Failed to update prices: f{user_errors}")
         return res["productVariantsBulkUpdate"]
 
-    def update_variant_price_by_variant_id(
+    def update_variant_prices_by_variant_ids(
         self, product_id, variant_ids, prices, compare_at_prices
     ):
         assert (
@@ -182,9 +182,11 @@ class ProductAttributes:
         }
         return self.variants_bulk_update(variables)
 
-    def update_variant_price_by_skus(self, product_id, skus, prices, compare_at_prices):
+    def update_variant_prices_by_skus(
+        self, product_id, skus, prices, compare_at_prices
+    ):
         variant_ids = [self.variant_id_by_sku(sku) for sku in skus]
-        return self.update_variant_price_by_variant_id(
+        return self.update_variant_prices_by_variant_ids(
             product_id=product_id,
             variant_ids=variant_ids,
             prices=prices,

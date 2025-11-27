@@ -10,7 +10,7 @@ def main():
     for product in products:
         for variant in product["variants"]["nodes"]:
             if variant["price"] != variant["compareAtPrice"]:
-                client.update_variant_price_by_variant_id(
+                client.update_variant_prices_by_variant_ids(
                     product_id=product["id"],
                     variant_ids=[variant["id"]],
                     prices=[variant["compareAtPrice"]],
