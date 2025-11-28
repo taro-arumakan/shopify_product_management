@@ -66,7 +66,7 @@ class OnlineStore:
         res = self.run_query(query)
         return res["themes"]["nodes"][0]["files"]["nodes"]
 
-    def pages_by_query(self, query_string, sort_key):
+    def pages_by_query(self, query_string, sort_key="PUBLISHED_AT"):
         query = """
         query pagesByQuery($query_string: String!, $sort_key: PageSortKeys!) {
             pages(first: 50, query: $query_string, sortKey: $sort_key) {
