@@ -35,84 +35,107 @@ class ProductQueries:
 
     def products_by_query(
         self,
-        query_string,
+        query_string="",
         additional_fields=None,
         sort_key="TITLE",
         reverse=False,
-        raise_if_too_many=True,
     ):
-        reverse = "true" if reverse else "false"
-        query = """
-        query productsByQuery($query_string: String!) {
-            products(first: 200, query: $query_string, sortKey: %s, reverse: %s) {
-                nodes {
-                    id
-                    title
-                    handle
-                    status
-                    tags%s
-                    metafields (first:10) {
-                        nodes {
-                            id
-                            namespace
-                            key
-                            value
-                        }
-                    }
-                    variants (first:30) {
-                        nodes {
-                            id
-                            title
-                            displayName
-                            sku
-                            price
-                            compareAtPrice
-                            inventoryQuantity
-                            selectedOptions {
-                                name
-                                value
-                            }
-                            image {
-                                id
-                                url
-                            }
-                            metafields (first:10) {
-                                nodes {
-                                    id
-                                    namespace
-                                    key
-                                    value
-                                }
-                            }
-                        }
-                    }
-                    media (first:100) {
-                        nodes {
-                            ... on MediaImage {
-                                id
-                                image {
-                                    id
-                                    url
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        """ % (
-            sort_key,
-            reverse,
-            f"\n{'\n'.join(additional_fields)}" if additional_fields else "",
+        PAGE_SIZE = 200
+        reverse_str = "true" if reverse else "false"
+        additional_fields_str = (
+            f"\n{'\n'.join(additional_fields)}" if additional_fields else ""
         )
-        variables = {"query_string": query_string}
-        res = self.run_query(query, variables)
-        res = res["products"]["nodes"]
-        if raise_if_too_many:
-            assert (
-                len(res) < 200
-            ), f"Too many products found for {query_string}: {len(res)}"
-        return res
+
+        query = """
+        query productsByQueryPaginated($query_string: String!, $after: String) {
+          products(first: %d, query: $query_string, sortKey: %s, reverse: %s, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              title
+              handle
+              status
+              tags%s
+              metafields(first: 10) {
+                nodes {
+                  id
+                  namespace
+                  key
+                  value
+                }
+              }
+              variants(first: 30) {
+                nodes {
+                  id
+                  title
+                  displayName
+                  sku
+                  price
+                  compareAtPrice
+                  inventoryQuantity
+                  selectedOptions {
+                    name
+                    value
+                  }
+                  image {
+                    id
+                    url
+                  }
+                  metafields(first: 10) {
+                    nodes {
+                      id
+                      namespace
+                      key
+                      value
+                    }
+                  }
+                }
+              }
+              media(first: 100) {
+                nodes {
+                  ... on MediaImage {
+                    id
+                    image {
+                      id
+                      url
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """ % (PAGE_SIZE, sort_key, reverse_str, additional_fields_str)
+
+        logger.info(
+            f"商品情報の取得を開始。クエリ: {query_string if query_string else 'なし（全商品）'}"
+        )
+
+        all_products = []
+        cursor = None
+        has_next_page = True
+
+        while has_next_page:
+            res = self.run_query(
+                query,
+                {"query_string": query_string, "after": cursor},
+            )
+            products_data = res["products"]
+            all_products.extend(products_data["nodes"])
+
+            page_info = products_data["pageInfo"]
+            has_next_page = page_info["hasNextPage"]
+            cursor = page_info["endCursor"]
+
+            logger.debug(f"取得済み: {len(all_products)}件の商品")
+            if has_next_page:
+                logger.debug(f"次のページを取得中... (cursor: {cursor})")
+
+        logger.info(f"商品情報の取得が完了。合計: {len(all_products)}件")
+        return all_products
 
     def products_by_query_all(
         self,
@@ -213,9 +236,9 @@ class ProductQueries:
 
             logger.debug(f"取得済み: {len(all_products)}件の商品")
             if has_next_page:
-                logger.debug(f"次のページを取得します... (cursor: {cursor})")
+                logger.debug(f"次のページを取得中... (cursor: {cursor})")
 
-        logger.info(f"商品情報の取得が完了しました。合計: {len(all_products)}件")
+        logger.info(f"商品情報の取得が完了。合計: {len(all_products)}件")
         return all_products
 
     def products_by_title(self, title, *args, **kwargs):
