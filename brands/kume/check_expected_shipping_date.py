@@ -44,7 +44,9 @@ def main():
     if body:
         print(body)
         client.send_email(
-            "KUME - expected shipping date in the past", body, ["taro@sniarti.fi"]
+            "KUME - expected shipping date in the past",
+            body,
+            ["marina6529@kume-studio.co.kr", "taro@sniarti.fi"],
         )
 
 
