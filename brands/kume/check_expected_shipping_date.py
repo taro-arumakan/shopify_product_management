@@ -24,7 +24,7 @@ def main():
             if variant_expected_shipping_date := get_date_metafield_value(
                 variant["metafields"]["nodes"], "variant_expected_shipping_date"
             ):
-                if variant_expected_shipping_date < datetime.date.today():
+                if variant_expected_shipping_date <= datetime.date.today():
                     variants_outdated.append(
                         (variant_expected_shipping_date, variant["displayName"])
                     )
