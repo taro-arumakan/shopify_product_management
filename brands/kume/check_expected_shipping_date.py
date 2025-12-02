@@ -29,16 +29,23 @@ def main():
                         (variant_expected_shipping_date, variant["displayName"])
                     )
 
+    body = ""
     if products_outdated:
-        print("products with outdated expected shpping date")
+        body += "products with outdated expected shpping date\n"
         for d, t in sorted(products_outdated, key=lambda x: x[0]):
-            print(f"{d}\t{t}")
-        print()
+            body += f"{d}\t{t}\n"
+        body += "\n"
 
     if variants_outdated:
-        print("variants with outdated expected shpping date")
+        body += "variants with outdated expected shpping date\n"
         for d, t in sorted(variants_outdated, key=lambda x: x[0]):
-            print(f"{d}\t{t}")
+            body += f"{d}\t{t}\n"
+
+    if body:
+        print(body)
+        client.send_email(
+            "KUME - expected shipping date in the past", body, ["taro@sniarti.fi"]
+        )
 
 
 if __name__ == "__main__":

@@ -1,7 +1,10 @@
 import collections
 import datetime
 import logging
+import os
 import pathlib
+import smtplib
+from email.message import EmailMessage
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
 from helpers.exceptions import (
@@ -287,3 +290,21 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             self.process_product_images(product_info, handle_suffix)
         self.update_stocks(product_info_list)
         self.publish_products(product_info_list, scheduled_time=scheduled_time)
+
+    def send_email(self, subject: str, body: str, to_addrs: list[str]):
+        smtp_host = os.getenv("SMTP_HOST")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_pass = os.getenv("SMTP_PASS")
+        from_addr = os.getenv("SMTPF_ROM_ADDR")
+
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = from_addr
+        msg["To"] = ", ".join(to_addrs)
+        msg.set_content(body)
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)

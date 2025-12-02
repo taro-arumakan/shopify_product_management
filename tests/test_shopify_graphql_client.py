@@ -58,9 +58,10 @@ class TestShopifyFunctions(unittest.TestCase):
     def test_product_id_by_title(self, mock_run_query):
         mock_run_query.return_value = {
             "products": {
+                "pageInfo": {"hasNextPage": False, "endCursor": "dummy"},
                 "nodes": [
                     {"id": "gid://shopify/Product/12345", "title": "Test Product"}
-                ]
+                ],
             }
         }
 
