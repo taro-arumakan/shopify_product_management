@@ -1,4 +1,4 @@
-name: Update Price
+name: GBH - Update Price
 
 on:
   schedule:
