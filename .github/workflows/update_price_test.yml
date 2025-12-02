@@ -2,7 +2,7 @@ name: Test workflow
 
 on:
   schedule:
-    # 11月30日 日本時間 16:30 (UTC 07:30) に実行
+    # 11月26日 日本時間 16:30 (UTC 07:30) に実行
     - cron: "30 7 26 11 *"
   workflow_dispatch:
 
