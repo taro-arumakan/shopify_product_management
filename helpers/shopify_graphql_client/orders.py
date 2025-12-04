@@ -22,6 +22,10 @@ class Orders:
                     name
                     createdAt
                     processedAt%s
+                    customer {
+                        id
+                        displayName
+                    }
                 }
             }
         }
@@ -54,3 +58,11 @@ class Orders:
         if unfulfilled_only:
             query_string += " AND fulfillment_status:'unfulfilled'"
         return self.orders_by_query(query_string)
+
+    def orders_later_than(self, cutoff_datetime: datetime.datetime):
+        if not cutoff_datetime.tzinfo:
+            logger.warning("converting parameter to Asia/Tokyo")
+            cutoff_datetime = cutoff_datetime.replace(
+                tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+            )
+        return self.orders_by_query(f"created_at:>='{cutoff_datetime.isoformat()}'")
