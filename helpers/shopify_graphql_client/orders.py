@@ -25,6 +25,9 @@ class Orders:
                     customer {
                         id
                         displayName
+                        defaultEmailAddress {
+                            emailAddress
+                        }
                     }
                 }
             }
