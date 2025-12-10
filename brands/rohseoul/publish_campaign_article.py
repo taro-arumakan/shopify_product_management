@@ -5,23 +5,18 @@ from brands.rohseoul.article_templates import article_template_campaign
 theme_dir = "/Users/taro/sc/rohseoul/"
 theme_name = "trove bag"
 
-article_title = "Campaign - 25 Winter"
-campaign_title = "CAMPAIGN - WINTER 25"
+article_title = "Campaign - 25 Holiday"
+campaign_title = "CAMPAIGN - HOLIDAY 25"
 campaign_subtitle = "Silent Layer: Where Warmth Meets Still Air"
-campaign_description = r"""ROH SEOULの2025年冬コレクションは、凛とした空気にほんのりと溶け込む“静かなぬくもり”から生まれました。
-たとえば、木造の別荘で過ごす冬のひととき。
-
-窓の外では森の木々が静かに季節を重ね、その幹には時間の流れが年輪として刻まれていきます。
-ROH SEOULは、そんな穏やかな静寂の中にある微かな動きや気配に目を向け、冬という季節の温度や空気感を、かたちあるものとして表現します。
-
-光が最も低く差し込む時間帯——その一瞬の中に潜む“静けさ”と“あたたかさ”を、丁寧にすくい取ったコレクションです。""".replace(
+campaign_description = r"""世界を白く染めた雪は、音さえも静かに包み込みます。
+そんな冬の静寂に寄り添うように、ROH SEOULはあたたかな素材と洗練されたデザインを選びました。
+雪に残る足跡のように、そっと記憶に残るディテール。
+冬という季節の感情を、ひとつひとつのフォルムに落とし込んだコレクションです。""".replace(
     "\n", "<br/>"
 )
 
-thumbnail_image_file_name = "25_Winter_CP_cover.jpg"
-campaign_images_dir = (
-    "/Users/taro/Downloads/drive-download-20251113T060403Z-1-001/CAMPAIGN - WINTER 25"
-)
+thumbnail_image_file_name = "25_Holiday_CP_cover.jpg"
+campaign_images_dir = "/Users/taro/Downloads/CAMPAIGN - HOLIDAY 25"
 
 
 def main():
