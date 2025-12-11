@@ -22,9 +22,9 @@ class GbhClient(BrandClientBase):
             price=string.ascii_lowercase.index("d"),
             description=string.ascii_lowercase.index("f"),
             product_care=string.ascii_lowercase.index("h"),
-            material=string.ascii_lowercase.index("j"),
-            size_text=string.ascii_lowercase.index("l"),
-            made_in=string.ascii_lowercase.index("m"),
+            material=string.ascii_lowercase.index("i"),
+            size_text=string.ascii_lowercase.index("j"),
+            made_in=string.ascii_lowercase.index("k"),
         )
 
     def option1_attr_column_map(self):
@@ -150,11 +150,11 @@ class GbhClient(BrandClientBase):
 class GbhClientColorOptionOnly(GbhClient):
 
     def option1_attr_column_map(self):
-        option1_attrs = {"カラー": string.ascii_lowercase.index("n")}
+        option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("o"),
-            sku=string.ascii_lowercase.index("p"),
-            stock=string.ascii_lowercase.index("q"),
+            drive_link=string.ascii_lowercase.index("m"),
+            sku=string.ascii_lowercase.index("n"),
+            stock=string.ascii_lowercase.index("o"),
         )
         return option1_attrs
 
