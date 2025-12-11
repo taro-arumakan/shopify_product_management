@@ -54,10 +54,30 @@ def client(shop_name: str) -> BrandClientBase:
 
         res = BlossomClient()
 
+    elif shop_name.lower() in ["blossom-shoes"]:
+        from brands.blossom.client import BlossomClientShoes
+
+        res = BlossomClientShoes()
+
+    elif shop_name.lower() in ["blossom-bags"]:
+        from brands.blossom.client import BlossomClientBags
+
+        res = BlossomClientBags()
+
     elif shop_name.lower() in ["gbhjapan", "gbh"]:
         from brands.gbh.client import GbhClient
 
         res = GbhClient()
+
+    elif shop_name.lower() in ["gbh-size-only"]:
+        from brands.gbh.client import GbhClientSizeOptionOnly
+
+        res = GbhClientSizeOptionOnly()
+
+    elif shop_name.lower() in ["gbh-color-only"]:
+        from brands.gbh.client import GbhClientColorOptionOnly
+
+        res = GbhClientColorOptionOnly()
 
     elif shop_name.lower() in ["kumej", "kume"]:
         from brands.kume.client import KumeClient
