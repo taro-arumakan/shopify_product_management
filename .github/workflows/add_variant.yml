@@ -1,0 +1,145 @@
+name: Add Variant
+
+on:
+  workflow_dispatch:
+    inputs:
+      client:
+        description: "Client name (e.g., gbhjapan, ssilkr, rohseoul)"
+        required: true
+        type: string
+      sheet:
+        description: "Sheet name in Google Sheets"
+        required: true
+        type: string
+      scheduled_time:
+        description: "Scheduled time for publishing products (format: YYYY-MM-DD HH:MM, timezone: Asia/Tokyo). Example: 2025-12-12 00:00"
+        required: false
+        type: string
+
+jobs:
+  add-variant:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Normalize client name for secrets
+        id: normalize
+        run: |
+          CLIENT_UPPER=$(echo "${{ inputs.client }}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+          echo "client_upper=$CLIENT_UPPER" >> $GITHUB_OUTPUT
+          echo "client_lower=$(echo "${{ inputs.client }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Create .env file
+        env:
+          GBHJAPAN_ACCESS_TOKEN: ${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          GBHJAPAN_GSPREAD_ID: ${{ secrets.GBHJAPAN_GSPREAD_ID }}
+          SSILKR_ACCESS_TOKEN: ${{ secrets.SSILKR_ACCESS_TOKEN }}
+          SSILKR_GSPREAD_ID: ${{ secrets.SSILKR_GSPREAD_ID }}
+          ROHSEOUL_ACCESS_TOKEN: ${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          ROHSEOUL_GSPREAD_ID: ${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          KUMEJ_ACCESS_TOKEN: ${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          KUMEJ_GSPREAD_ID: ${{ secrets.KUMEJ_GSPREAD_ID }}
+          LEMEMEK_ACCESS_TOKEN: ${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          LEMEMEK_GSPREAD_ID: ${{ secrets.LEMEMEK_GSPREAD_ID }}
+          BLOSSOM_ACCESS_TOKEN: ${{ secrets.BLOSSOM_ACCESS_TOKEN }}
+          BLOSSOM_GSPREAD_ID: ${{ secrets.BLOSSOM_GSPREAD_ID }}
+          ALVANAS_ACCESS_TOKEN: ${{ secrets.ALVANAS_ACCESS_TOKEN }}
+          ALVANAS_GSPREAD_ID: ${{ secrets.ALVANAS_GSPREAD_ID }}
+          APRICOT_STUDIOS_ACCESS_TOKEN: ${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          APRICOT_STUDIOS_GSPREAD_ID: ${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          ARCHIVE_EPKE_ACCESS_TOKEN: ${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
+          ARCHIVE_EPKE_GSPREAD_ID: ${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+        run: |
+          CLIENT_UPPER="${{ steps.normalize.outputs.client_upper }}"
+          CLIENT_LOWER="${{ steps.normalize.outputs.client_lower }}"
+
+          case "$CLIENT_UPPER" in
+            GBHJAPAN|GBH)
+              ACCESS_TOKEN_VAR="GBHJAPAN_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="GBHJAPAN_GSPREAD_ID"
+              ;;
+            SSILKR|SSIL)
+              ACCESS_TOKEN_VAR="SSILKR_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="SSILKR_GSPREAD_ID"
+              ;;
+            ROHSEOUL|ROH)
+              ACCESS_TOKEN_VAR="ROHSEOUL_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="ROHSEOUL_GSPREAD_ID"
+              ;;
+            KUMEJ|KUME)
+              ACCESS_TOKEN_VAR="KUMEJ_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="KUMEJ_GSPREAD_ID"
+              ;;
+            LEMEMEK|LEMEME)
+              ACCESS_TOKEN_VAR="LEMEMEK_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="LEMEMEK_GSPREAD_ID"
+              ;;
+            BLOSSOM|BLOSSOMHCOMPANY)
+              ACCESS_TOKEN_VAR="BLOSSOM_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="BLOSSOM_GSPREAD_ID"
+              ;;
+            ALVANAS|ALVANA)
+              ACCESS_TOKEN_VAR="ALVANAS_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="ALVANAS_GSPREAD_ID"
+              ;;
+            APRICOT_STUDIOS|APRICOT|APRICOTSTUDIOS)
+              ACCESS_TOKEN_VAR="APRICOT_STUDIOS_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="APRICOT_STUDIOS_GSPREAD_ID"
+              ;;
+            ARCHIVE_EPKE|ARCHIVEPKE|ARCHIVÉPKE)
+              ACCESS_TOKEN_VAR="ARCHIVE_EPKE_ACCESS_TOKEN"
+              GSPREAD_ID_VAR="ARCHIVE_EPKE_GSPREAD_ID"
+              ;;
+            *)
+              echo "Unknown client: ${{ inputs.client }}"
+              exit 1
+              ;;
+          esac
+
+          ACCESS_TOKEN_VALUE=$(eval echo \$$ACCESS_TOKEN_VAR)
+          GSPREAD_ID_VALUE=$(eval echo \$$GSPREAD_ID_VAR)
+
+          cat > .env << EOF
+          ${CLIENT_LOWER}-ACCESS_TOKEN=${ACCESS_TOKEN_VALUE}
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          ${CLIENT_LOWER}-GSPREAD_ID=${GSPREAD_ID_VALUE}
+          EOF
+
+      - name: Run add_variant script
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          if [ -n "${{ inputs.scheduled_time }}" ]; then
+            python .github/actions/add_variant.py \
+              --client "${{ inputs.client }}" \
+              --sheet "${{ inputs.sheet }}" \
+              --scheduled-time "${{ inputs.scheduled_time }}"
+          else
+            python .github/actions/add_variant.py \
+              --client "${{ inputs.client }}" \
+              --sheet "${{ inputs.sheet }}"
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
