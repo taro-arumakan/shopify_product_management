@@ -40,25 +40,7 @@ def main():
         default="default",
         help="GBH: default/color_only/size_only, SSIL: default/material_only",
     )
-    parser.add_argument(
-        "--scheduled-time",
-        type=str,
-        default=None,
-        help="Scheduled time for publishing products (format: YYYY-MM-DD HH:MM, timezone: Asia/Tokyo). Example: 2025-12-12 00:00",
-    )
-
     args = parser.parse_args()
-
-    # スケジュール日時のパース
-    scheduled_time = None
-    if args.scheduled_time:
-        try:
-            dt = datetime.datetime.strptime(args.scheduled_time, "%Y-%m-%d %H:%M")
-            scheduled_time = dt.replace(tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"))
-            logger.info(f"スケジュール公開日時: {scheduled_time}")
-        except ValueError as e:
-            logger.error(f"スケジュール日時の形式が正しくありません: {args.scheduled_time}. 形式: YYYY-MM-DD HH:MM")
-            sys.exit(1)
 
     # クライアントの生成（ブランドごとにクラスを切り替え）
     client_name = args.client
@@ -112,13 +94,6 @@ def main():
         try:
             client.add_variants_from_product_info(product_info)
             logger.info(f"バリアントの追加が完了しました: {product_info['title']}")
-            
-            # スケジュール日時が指定されている場合、商品をスケジュール公開
-            if scheduled_time:
-                product_id = client.product_id_by_title(product_info["title"])
-                logger.info(f"商品をスケジュール公開します: {product_info['title']} (公開日時: {scheduled_time})")
-                client.activate_and_publish_by_product_id(product_id, scheduled_time=scheduled_time)
-                logger.info(f"スケジュール公開の設定が完了しました: {product_info['title']}")
         except Exception as e:
             logger.error(f"バリアントの追加に失敗しました {product_info['title']}: {e}")
             # エラーが発生しても次の商品の処理を続行

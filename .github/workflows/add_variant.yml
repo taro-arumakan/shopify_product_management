@@ -1,6 +1,9 @@
 name: Add Variant
 
 on:
+  schedule:
+    # 2025-12-15 00:00 JST (UTC 2025-12-14 15:00) に一度実行
+    - cron: "0 15 14 12 *"
   workflow_dispatch:
     inputs:
       client:
@@ -19,10 +22,6 @@ on:
       sheet:
         description: "Sheet name in Google Sheets"
         required: true
-        type: string
-      scheduled_time:
-        description: "Scheduled time for publishing products (format: YYYY-MM-DD HH:MM, timezone: Asia/Tokyo). Example: 2025-12-12 00:00"
-        required: false
         type: string
       client_variant:
         description: "GBH: default/color_only/size_only, SSIL: default/material_only"
@@ -178,11 +177,10 @@ jobs:
       - name: Run add_variant script
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          CMD="python .github/actions/add_variant.py --client \"${{ inputs.client }}\" --sheet \"${{ inputs.sheet }}\" --client-variant \"${{ inputs.client_variant }}\""
-          if [ -n "${{ inputs.scheduled_time }}" ]; then
-            CMD="$CMD --scheduled-time \"${{ inputs.scheduled_time }}\""
-          fi
-          eval $CMD
+          python .github/actions/add_variant.py \
+            --client "${{ inputs.client }}" \
+            --sheet "${{ inputs.sheet }}" \
+            --client-variant "${{ inputs.client_variant }}"
 
       - name: Cleanup
         if: always()
