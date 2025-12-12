@@ -191,7 +191,7 @@ class CollectionQueries:
         res = self.run_query(query, variables)
         if errors := res["collectionCreate"]["userErrors"]:
             raise RuntimeError(f"Collection creation failed: {errors}")
-        return res
+        return res["collectionCreate"]["collection"]
 
     def collection_create_by_tag(self, collection_title, tag):
         rule_set = {
