@@ -138,10 +138,41 @@ jobs:
           ACCESS_TOKEN_VALUE=$(eval echo \$$ACCESS_TOKEN_VAR)
           GSPREAD_ID_VALUE=$(eval echo \$$GSPREAD_ID_VAR)
 
+          # 実際のSHOPNAMEにマッピング（CLIENT_LOWERとSHOPNAMEが異なる場合があるため）
+          case "$CLIENT_UPPER" in
+            GBH)
+              SHOPNAME="gbhjapan"
+              ;;
+            SSIL)
+              SHOPNAME="ssilkr"
+              ;;
+            ROHSEOUL)
+              SHOPNAME="rohseoul"
+              ;;
+            KUME)
+              SHOPNAME="kumej"
+              ;;
+            LEMEME)
+              SHOPNAME="lememek"
+              ;;
+            BLOSSOM)
+              SHOPNAME="blossomhcompany"
+              ;;
+            APRICOT_STUDIOS)
+              SHOPNAME="apricot-studios"
+              ;;
+            ARCHIVEPKE)
+              SHOPNAME="archive-epke"
+              ;;
+            *)
+              SHOPNAME="$CLIENT_LOWER"
+              ;;
+          esac
+
           cat > .env << EOF
-          ${CLIENT_LOWER}-ACCESS_TOKEN=${ACCESS_TOKEN_VALUE}
+          ${SHOPNAME}-ACCESS_TOKEN=${ACCESS_TOKEN_VALUE}
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
-          ${CLIENT_LOWER}-GSPREAD_ID=${GSPREAD_ID_VALUE}
+          ${SHOPNAME}-GSPREAD_ID=${GSPREAD_ID_VALUE}
           EOF
 
       - name: Run add_variant script
