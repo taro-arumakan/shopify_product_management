@@ -110,16 +110,14 @@ def main():
     for i, product_info in enumerate(product_info_list):
         logger.info(f"[{i+1}/{len(product_info_list)}] 商品のバリアントを追加中: {product_info['title']}")
         try:
-            # TODO: 確認のため一旦コメントアウト
-            #client.add_variants_from_product_info(product_info)
+            client.add_variants_from_product_info(product_info)
             logger.info(f"バリアントの追加が完了しました: {product_info['title']}")
             
             # スケジュール日時が指定されている場合、商品をスケジュール公開
             if scheduled_time:
                 product_id = client.product_id_by_title(product_info["title"])
                 logger.info(f"商品をスケジュール公開します: {product_info['title']} (公開日時: {scheduled_time})")
-                # TODO: 確認のため一旦コメントアウト
-                #client.activate_and_publish_by_product_id(product_id, scheduled_time=scheduled_time)
+                client.activate_and_publish_by_product_id(product_id, scheduled_time=scheduled_time)
                 logger.info(f"スケジュール公開の設定が完了しました: {product_info['title']}")
         except Exception as e:
             logger.error(f"バリアントの追加に失敗しました {product_info['title']}: {e}")
