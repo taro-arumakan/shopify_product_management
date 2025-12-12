@@ -50,29 +50,37 @@ class Publications:
             )
         return publication
 
+    def publish_by_product_or_collection_id(
+        self, product_or_collection_id, scheduled_time: datetime.datetime = None
+    ):
+        logger.info(
+            f"Publishing {product_or_collection_id} {f'at {scheduled_time}' if scheduled_time else 'immediately'}"
+        )
+        publications = self.publications()
+        params = {"product_or_collection_id": product_or_collection_id}
+        for publication in publications:
+            params["publication_id"] = publication["id"]
+            if scheduled_time and publication["name"] == "Online Store":
+                self.publish_by_product_or_collection_id_and_publication_id(
+                    scheduled_time=scheduled_time, **params
+                )
+            else:
+                self.publish_by_product_or_collection_id_and_publication_id(**params)
+
     def activate_and_publish_by_product_id(
         self, product_id, scheduled_time: datetime.datetime = None
     ):
         """
         publish the product immediately or at a scheduled time, and activate it
         """
-        logger.info(
-            f"Publishing product {product_id} {f'at {scheduled_time}' if scheduled_time else 'immediately'}"
-        )
-        publications = self.publications()
-        params = {"product_id": product_id}
-        for publication in publications:
-            params["publication_id"] = publication["id"]
-            if scheduled_time and publication["name"] == "Online Store":
-                self.publish_by_product_id_and_publication_id(
-                    scheduled_time=scheduled_time, **params
-                )
-            else:
-                self.publish_by_product_id_and_publication_id(**params)
+        self.publish_by_product_or_collection_id(product_id, scheduled_time)
         self.update_product_status(product_id, "ACTIVE")
 
-    def publish_by_product_id_and_publication_id(
-        self, product_id, publication_id, scheduled_time: datetime.datetime = None
+    def publish_by_product_or_collection_id_and_publication_id(
+        self,
+        product_or_collection_id,
+        publication_id,
+        scheduled_time: datetime.datetime = None,
     ):
         query = """
         mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
@@ -94,7 +102,10 @@ class Publications:
             }
         }
         """
-        variables = {"id": product_id, "input": {"publicationId": publication_id}}
+        variables = {
+            "id": product_or_collection_id,
+            "input": {"publicationId": publication_id},
+        }
         if scheduled_time:
             assert (
                 scheduled_time.tzinfo
