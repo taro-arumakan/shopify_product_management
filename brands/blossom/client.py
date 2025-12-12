@@ -115,6 +115,32 @@ class BlossomClient(BrandClientBase):
     def remove_existing_new_badges(self):
         self._remove_existing_new_badges()
 
+    def create_series_collection(self, series_name):
+        try:
+            self.collection_by_title(series_name)
+        except RuntimeError as e:
+            if e.args[0] == "No collections found for AIL: []":
+                logger.info(f'Creating collection for series "{series_name}"')
+                return self.collection_create_by_metafield_value(
+                    collection_title=series_name,
+                    namespace="custom",
+                    key="series_name",
+                    value=series_name,
+                )
+        else:
+            logger.info(f"Collection for series '{series_name}' already exists.")
+
+    def process_series_products(self, series_name, products):
+        self.create_series_collection(series_name)
+        for product in products:
+            logger.info(f"Assigning series name {series_name} to {product['title']}")
+            self.update_product_metafield(
+                product_id=product["id"],
+                metafield_namespace="custom",
+                metafield_key="series_name",
+                value=series_name,
+            )
+
 
 class BlossomClientClothes(BlossomClient):
     pass
