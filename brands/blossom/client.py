@@ -117,18 +117,20 @@ class BlossomClient(BrandClientBase):
 
     def create_series_collection(self, series_name):
         try:
-            self.collection_by_title(series_name)
+            collection = self.collection_by_title(series_name)
+            logger.info(f"Collection for series '{series_name}' already exists.")
         except RuntimeError as e:
-            if e.args[0] == "No collections found for ":
+            if str(e).startswith("No collections found for "):
                 logger.info(f'Creating collection for series "{series_name}"')
-                return self.collection_create_by_metafield_value(
+                collection = self.collection_create_by_metafield_value(
                     collection_title=series_name,
                     namespace="custom",
                     key="series_name",
                     value=series_name,
                 )
-        else:
-            logger.info(f"Collection for series '{series_name}' already exists.")
+            else:
+                raise e
+        self.publish_by_product_or_collection_id(collection["id"])
 
     def process_series_products(self, series_name, products):
         self.create_series_collection(series_name)
