@@ -26,7 +26,7 @@ skus = [
 def main():
     client = utils.client("archive-epke")
     product_ids = {client.product_id_by_sku(sku) for sku in skus}
-    client.collection_create("2025 POP-UP 15% OFF", product_ids)
+    client.collection_create_by_product_ids("2025 POP-UP 15% OFF", product_ids)
 
 
 if __name__ == "__main__":

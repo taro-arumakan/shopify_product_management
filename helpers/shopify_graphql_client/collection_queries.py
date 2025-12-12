@@ -84,7 +84,7 @@ class CollectionQueries:
         collection = self.collection_by_title(title)
         return collection["id"]
 
-    def collection_create(self, collection_title, product_ids):
+    def collection_create_by_product_ids(self, collection_title, product_ids):
         query = """
         mutation createCollection($input: CollectionInput!) {
             collectionCreate(input: $input) {
