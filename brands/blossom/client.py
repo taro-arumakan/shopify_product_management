@@ -119,7 +119,7 @@ class BlossomClient(BrandClientBase):
         try:
             self.collection_by_title(series_name)
         except RuntimeError as e:
-            if e.args[0] == "No collections found for AIL: []":
+            if e.args[0] == "No collections found for ":
                 logger.info(f'Creating collection for series "{series_name}"')
                 return self.collection_create_by_metafield_value(
                     collection_title=series_name,
