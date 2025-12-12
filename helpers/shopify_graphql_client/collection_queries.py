@@ -1,3 +1,4 @@
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -146,3 +147,72 @@ class CollectionQueries:
         if errors := res["collectionAddProducts"]["userErrors"]:
             raise RuntimeError(f"Failed to add products to the collection: {errors}")
         return res
+
+    def collection_create_by_rule_set(self, collection_title, rule_set: dict):
+        """
+        by tag:
+        rule_set = {
+            "appliedDisjunctively": False,
+            "rules": [
+                {
+                    "column": "TAG",
+                    "relation": "EQUALS",
+                    "condition": "Summer2024"
+                }
+            ]
+
+        }
+        """
+        query = """
+        mutation createCollection($input: CollectionInput!) {
+            collectionCreate(input: $input) {
+                collection {
+                    id
+                    products(first: 30) {
+                        nodes {
+                            id
+                            title
+                        }
+                    }
+                }
+                userErrors {
+                    message
+                    field
+                }
+            }
+        }
+        """
+        variables = {
+            "input": {
+                "title": collection_title,
+                "ruleSet": rule_set,
+            }
+        }
+        res = self.run_query(query, variables)
+        if errors := res["collectionCreate"]["userErrors"]:
+            raise RuntimeError(f"Collection creation failed: {errors}")
+        return res
+
+    def collection_create_by_tag(self, collection_title, tag):
+        rule_set = {
+            "appliedDisjunctively": False,
+            "rules": [{"column": "TAG", "relation": "EQUALS", "condition": tag}],
+        }
+        return self.collection_create_by_rule_set(collection_title, rule_set)
+
+    def collection_create_by_metafield_value(
+        self, collection_title, namespace, key, value
+    ):
+        metafield_id = self.metafield_id_by_namespace_and_key(namespace, key)
+        rule_set = {
+            "appliedDisjunctively": False,
+            "rules": [
+                {
+                    "column": "PRODUCT_METAFIELD_DEFINITION",
+                    "conditionObjectId": metafield_id,
+                    "relation": "EQUALS",
+                    "condition": value,
+                }
+            ],
+        }
+        return self.collection_create_by_rule_set(collection_title, rule_set)
