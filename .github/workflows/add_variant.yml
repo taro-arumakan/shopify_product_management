@@ -4,9 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       client:
-        description: "Client name (e.g., gbhjapan, ssilkr, rohseoul)"
+        description: "Client name"
         required: true
-        type: string
+        type: choice
+        options:
+          - gbh
+          - ssil
+          - rohseoul
+          - kume
+          - lememe
+          - blossom
+          - apricot-studios
+          - archivepke
       sheet:
         description: "Sheet name in Google Sheets"
         required: true
@@ -15,6 +24,16 @@ on:
         description: "Scheduled time for publishing products (format: YYYY-MM-DD HH:MM, timezone: Asia/Tokyo). Example: 2025-12-12 00:00"
         required: false
         type: string
+      client_variant:
+        description: "GBH: default/color_only/size_only, SSIL: default/material_only"
+        required: false
+        default: "default"
+        type: choice
+        options:
+          - default
+          - color_only
+          - size_only
+          - material_only
 
 jobs:
   add-variant:
@@ -119,25 +138,51 @@ jobs:
           ACCESS_TOKEN_VALUE=$(eval echo \$$ACCESS_TOKEN_VAR)
           GSPREAD_ID_VALUE=$(eval echo \$$GSPREAD_ID_VAR)
 
+          # 実際のSHOPNAMEにマッピング（CLIENT_LOWERとSHOPNAMEが異なる場合があるため）
+          case "$CLIENT_UPPER" in
+            GBH)
+              SHOPNAME="gbhjapan"
+              ;;
+            SSIL)
+              SHOPNAME="ssilkr"
+              ;;
+            ROHSEOUL)
+              SHOPNAME="rohseoul"
+              ;;
+            KUME)
+              SHOPNAME="kumej"
+              ;;
+            LEMEME)
+              SHOPNAME="lememek"
+              ;;
+            BLOSSOM)
+              SHOPNAME="blossomhcompany"
+              ;;
+            APRICOT_STUDIOS)
+              SHOPNAME="apricot-studios"
+              ;;
+            ARCHIVEPKE)
+              SHOPNAME="archive-epke"
+              ;;
+            *)
+              SHOPNAME="$CLIENT_LOWER"
+              ;;
+          esac
+
           cat > .env << EOF
-          ${CLIENT_LOWER}-ACCESS_TOKEN=${ACCESS_TOKEN_VALUE}
+          ${SHOPNAME}-ACCESS_TOKEN=${ACCESS_TOKEN_VALUE}
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
-          ${CLIENT_LOWER}-GSPREAD_ID=${GSPREAD_ID_VALUE}
+          ${SHOPNAME}-GSPREAD_ID=${GSPREAD_ID_VALUE}
           EOF
 
       - name: Run add_variant script
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
+          CMD="python .github/actions/add_variant.py --client \"${{ inputs.client }}\" --sheet \"${{ inputs.sheet }}\" --client-variant \"${{ inputs.client_variant }}\""
           if [ -n "${{ inputs.scheduled_time }}" ]; then
-            python .github/actions/add_variant.py \
-              --client "${{ inputs.client }}" \
-              --sheet "${{ inputs.sheet }}" \
-              --scheduled-time "${{ inputs.scheduled_time }}"
-          else
-            python .github/actions/add_variant.py \
-              --client "${{ inputs.client }}" \
-              --sheet "${{ inputs.sheet }}"
+            CMD="$CMD --scheduled-time \"${{ inputs.scheduled_time }}\""
           fi
+          eval $CMD
 
       - name: Cleanup
         if: always()
