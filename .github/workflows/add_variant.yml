@@ -174,7 +174,18 @@ jobs:
           ${SHOPNAME}-GSPREAD_ID=${GSPREAD_ID_VALUE}
           EOF
 
-      - name: Run add_variant script
+      #スケジュール実行の場合は固定の引数で実行
+      - name: Run add_variant script (scheduled, fixed args)
+        if: github.event_name == 'schedule'
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          python .github/actions/add_variant.py \
+            --client "gbh" \
+            --sheet "バックカラー追加(가방컬러추가)" \
+            --client-variant "color_only"
+
+      - name: Run add_variant script (manual inputs)
+        if: github.event_name == 'workflow_dispatch'
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           python .github/actions/add_variant.py \
