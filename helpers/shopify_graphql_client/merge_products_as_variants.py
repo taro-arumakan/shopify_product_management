@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 
@@ -65,21 +66,22 @@ class MergeProductsAsVariants:
 
     def archive_product_handle(self, product):
         self.update_product_attribute(
-            product["id"], "handle", f"archived--{product['handle']}"
+            product["id"], "handle", f"archived-{datetime.date.today():%Y%m%d}-{product['handle']}"
         )
 
     def archive_product(self, product, new_product_handle=None):
         logger.info(f"archiving {product['title']}")
         self.update_product_status(product["id"], "ARCHIVED")
         for variant in product["variants"]["nodes"]:
+            archived_sku = f"archived-{datetime.date.today():%Y%m%d}-{variant['sku']}"
             self.update_variant_attributes(
                 product_id=product["id"],
                 variant_id=variant["id"],
                 attribute_names=[],
                 attribute_values=[],
-                sku=f"archived-{variant['sku']}",
+                sku=archived_sku,
             )
-            self.disable_inventory_tracking_by_sku(f"archived-{variant['sku']}")
+            self.disable_inventory_tracking_by_sku(archived_sku)
             self.archive_product_handle(product)
         if new_product_handle:
             logger.info(f"Redirecting {product['handle']} to {new_product_handle}")
