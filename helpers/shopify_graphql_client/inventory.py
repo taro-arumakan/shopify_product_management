@@ -46,6 +46,10 @@ class Inventory:
             )
         return ress
 
+    def disable_inventory_tracking_by_variant_id(self, variant_id):
+        inventory_item_id = self.inventory_item_by_variant_id(variant_id)
+        return self.update_inventory_tracking(inventory_item_id, False)
+
     def disable_inventory_tracking_by_sku(self, sku):
         inventory_item_id = self.inventory_item_id_by_sku(sku)
         return self.update_inventory_tracking(inventory_item_id, False)
@@ -132,13 +136,13 @@ class Inventory:
         res = self.inventory_item_by_sku(sku)
         return res["id"]
 
-    def inventory_item_by_sku(self, sku):
-        query = (
-            """
-        {
-            inventoryItems(query:"sku:%s", first:5) {
+    def inventory_items_by_query(self, query_string):
+        query = """
+        query inventoryItemsByQuery($query_string: String!) {
+            inventoryItems(query:$query_string, first:5) {
                 nodes{
                     id
+                    tracked
                     inventoryLevels(first:5) {
                         nodes {
                             id
@@ -151,14 +155,20 @@ class Inventory:
                 }
             }
         }"""
-            % sku
-        )
-        res = self.run_query(query)
-        res = res["inventoryItems"]["nodes"]
+        variables = {"query_string": query_string}
+        res = self.run_query(query, variables)
+        return res["inventoryItems"]["nodes"]
+
+    def inventory_item_by_sku(self, sku):
+        res = self.inventory_items_by_query(f"sku:'{sku}'")
         assert (
             len(res) == 1
         ), f'{"Multiple" if res else "No"} inventoryItems found for {sku}: {res}'
         return res[0]
+
+    def inventory_item_by_variant_id(self, variant_id):
+        variant = self.variant_by_variant_id(variant_id)
+        return self.inventory_item_by_sku(variant["sku"])
 
     def set_inventory_quantity_by_sku_and_location_id(self, sku, location_id, quantity):
         inventory_item_id = self.inventory_item_id_by_sku(sku)
