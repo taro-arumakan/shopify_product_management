@@ -14,11 +14,6 @@ class RohseoulClient(BrandClientBase):
     LOCATIONS = ["Shop location"]
     PRODUCT_SHEET_START_ROW = 2
 
-    def sanity_check_product_info_list(self, product_info_list):
-        return super().sanity_check_product_info_list(
-            product_info_list, text_to_html_func=self.get_size_table_html
-        )
-
     def product_attr_column_map(self):
         return dict(
             title=string.ascii_lowercase.index("e"),
@@ -77,8 +72,8 @@ class RohseoulClient(BrandClientBase):
             + (additional_tags or [])
         )
 
-    def get_size_field(self, product_info):
-        size_text = product_info["size_text"]
+    @staticmethod
+    def get_size_table_html(size_text):
         lines = list(filter(None, map(str.strip, size_text.split("\n"))))
         kv_pairs = [line.rsplit(" ", 1) for line in lines]
         kv_pairs = [
@@ -93,6 +88,9 @@ class RohseoulClient(BrandClientBase):
             res += f"<td>{value}</td>"
         res += "</tr></tbody></table>"
         return res
+
+    def get_size_field(self, product_info):
+        return self.get_size_table_html(product_info["size_text"])
 
     def pre_process_product_info_list_to_products(self, product_info_list):
         self.merge_existing_products_as_variants()
