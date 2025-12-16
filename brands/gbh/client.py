@@ -1,4 +1,6 @@
+import datetime
 import logging
+import pathlib
 import re
 import string
 import textwrap
@@ -163,6 +165,65 @@ class GbhClientColorOptionOnly(GbhClient):
 
     def get_size_field(self, product_info):
         return product_info["size_text"]
+
+    def add_variants_from_product_info(self, product_info):
+        product_id = self.product_id_by_title(product_info["title"])
+        existing_product = self.product_by_id(product_id)
+        existing_variants = existing_product.get("variants", {}).get("nodes", [])
+        
+        # 既存バリアントのselectedOptionsからオプション名を取得
+        existing_option_names = set()
+        if existing_variants:
+            for variant in existing_variants:
+                for so in variant.get("selectedOptions", []):
+                    existing_option_names.add(so.get("name"))
+        
+        logger.info(f"既存商品のオプション名: {sorted(existing_option_names)}")
+        has_size_option = "サイズ" in existing_option_names
+        logger.info(f"「サイズ」オプションの存在: {has_size_option}")
+        
+        optionss = self.segment_options_list_by_key_option(
+            self.populate_option_dicts(product_info)
+        )
+        drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
+        
+        for drive_link, skus, options in zip(drive_links, skuss, optionss):
+            logger.info(f"  processing sku: {skus} - {drive_link}")
+            res = self.add_product_images(
+                product_id,
+                drive_link,
+                f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
+                f"upload_{datetime.date.today():%Y%m%d}_{skus[0]}_",
+            )
+            new_media_ids = [m["id"] for m in res[-1]["productCreateMedia"]["media"]]
+            
+            option_names = list(options[0]["option_values"].keys())
+            variant_option_valuess = [list(option["option_values"].values()) for option in options]
+            logger.info(f"追加前のoption_names: {option_names}")
+            logger.info(f"追加前のvariant_option_valuess: {variant_option_valuess}")
+            
+            if has_size_option:
+                option_names.append("サイズ")
+                variant_option_valuess = [ov + ["FREE"] for ov in variant_option_valuess]
+                logger.info(f"「サイズ」=\"FREE\"を追加しました")
+            
+            logger.info(f"追加後のoption_names: {option_names}")
+            logger.info(f"追加後のvariant_option_valuess: {variant_option_valuess}")
+            
+            self.variants_add(
+                product_id=product_id,
+                skus=skus,
+                media_ids=[],
+                variant_media_ids=[new_media_ids[0]],
+                option_names=option_names,
+                variant_option_valuess=variant_option_valuess,
+                prices=[option["price"] for option in options],
+                stocks=[option["stock"] for option in options],
+                location_id=self.location_id_by_name(self.LOCATIONS[0]),
+            )
+        self.enable_and_activate_inventory_by_product_id(
+            product_id, location_names=self.LOCATIONS
+        )
 
 
 class GbhClientSizeOptionOnly(GbhClient):
