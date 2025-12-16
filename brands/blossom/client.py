@@ -19,26 +19,27 @@ class BlossomClient(BrandClientBase):
         return dict(
             title=string.ascii_lowercase.index("a"),
             tags=string.ascii_lowercase.index("b"),
-            price=string.ascii_lowercase.index("d"),
-            description=string.ascii_lowercase.index("f"),
-            product_care=string.ascii_lowercase.index("g"),
-            material=string.ascii_lowercase.index("h"),
-            size_text=string.ascii_lowercase.index("i"),
-            made_in=string.ascii_lowercase.index("j"),
+            series_name=string.ascii_lowercase.index("c"),
+            price=string.ascii_lowercase.index("e"),
+            description=string.ascii_lowercase.index("g"),
+            product_care=string.ascii_lowercase.index("i"),
+            material=string.ascii_lowercase.index("j"),
+            size_text=string.ascii_lowercase.index("k"),
+            made_in=string.ascii_lowercase.index("l"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("k")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("l"),
+            drive_link=string.ascii_lowercase.index("n"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("m")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("o")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("n"),
-            stock=string.ascii_lowercase.index("o"),
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
 
@@ -111,9 +112,24 @@ class BlossomClient(BrandClientBase):
             self.update_product_care_metafield(
                 product_id, self.text_to_simple_richtext(product_care)
             )
+        if series_name := product_info.get("series_name", "").strip():
+            self.update_product_metafield(
+                product_id,
+                "custom",
+                "series_name",
+                series_name,
+            )
 
     def remove_existing_new_badges(self):
         self._remove_existing_new_badges()
+
+    def post_process_product_info_list_to_products(self, product_info_list):
+        series_names = set(
+            p["series_name"] for p in product_info_list if p.get("series_name")
+        )
+        for series_name in series_names:
+            self.create_series_collection(series_name)
+        super().post_process_product_info_list_to_products(product_info_list)
 
     def create_series_collection(self, series_name):
         try:
