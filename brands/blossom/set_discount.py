@@ -3,14 +3,15 @@ import utils
 
 def main():
     client = utils.client("blossomhcompany")
-    products = client.products_by_query("status:'ACTIVE'")
+    products = client.products_by_query("tag_not:'25_drop7' AND status:'ACTIVE'")
+    print(len(products))
     for p in products:
         for variant in p["variants"]["nodes"]:
             if not variant["compareAtPrice"] or (
                 variant["compareAtPrice"] == variant["price"]
             ):
                 compare_at_price = variant["compareAtPrice"] or variant["price"]
-                price = int(int(compare_at_price) * 0.9)
+                price = int(int(compare_at_price) * 0.8)
                 print(
                     f"Updating price of {p['title']} - {variant['selectedOptions']} from {compare_at_price} to {price}"
                 )

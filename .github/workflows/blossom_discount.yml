@@ -1,0 +1,88 @@
+name: Blossom - Set/End Discount
+
+on:
+  schedule:
+    # 12月18日 日本時間 11:00 (UTC 02:00) に set_discount.py を実行
+    - cron: "0 2 18 12 *"
+    # 1月5日 日本時間 23:59 (UTC 14:59) に end_discount.py を実行
+    - cron: "59 14 5 1 *"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "実行するアクション"
+        required: true
+        type: choice
+        options:
+          - set_discount
+          - end_discount
+
+jobs:
+  discount:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        env:
+          BLOSSOMHCOMPANY_ACCESS_TOKEN: ${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          BLOSSOMHCOMPANY_GSPREAD_ID: ${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+        run: |
+          cat > .env << EOF
+          blossomhcompany-ACCESS_TOKEN=$BLOSSOMHCOMPANY_ACCESS_TOKEN
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          blossomhcompany-GSPREAD_ID=$BLOSSOMHCOMPANY_GSPREAD_ID
+          EOF
+
+      - name: Determine script to run
+        id: script
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ github.event.inputs.action }}" = "set_discount" ]; then
+              echo "script=set_discount.py" >> $GITHUB_OUTPUT
+            else
+              echo "script=end_discount.py" >> $GITHUB_OUTPUT
+            fi
+          else
+            # スケジュール実行の場合、日付と時刻で判定（UTC）
+            MONTH=$(date -u +%m)
+            DAY=$(date -u +%d)
+            HOUR=$(date -u +%H)
+            if [ "$MONTH" = "12" ] && [ "$DAY" = "18" ] && [ "$HOUR" = "02" ]; then
+              echo "script=set_discount.py" >> $GITHUB_OUTPUT
+            elif [ "$MONTH" = "01" ] && [ "$DAY" = "05" ] && [ "$HOUR" = "14" ]; then
+              echo "script=end_discount.py" >> $GITHUB_OUTPUT
+            else
+              # デフォルトでset_discount
+              echo "script=set_discount.py" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Run discount script
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          python brands/blossom/${{ steps.script.outputs.script }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
