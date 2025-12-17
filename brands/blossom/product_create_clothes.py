@@ -8,18 +8,18 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     client = BlossomClientClothes()
-    sheet_name = "clothes(drop6)"
+    sheet_name = "clothes(drop7)"
 
     client.sanity_check_sheet(sheet_name)
 
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2025, 12, 1, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2025, 12, 19, 11, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
     client.process_sheet_to_products(
         sheet_name=sheet_name,
-        additional_tags=["25_drop6", "New Arrival"],
+        additional_tags=["25_drop7", "New Arrival"],
         scheduled_time=scheduled_time,
     )
 
