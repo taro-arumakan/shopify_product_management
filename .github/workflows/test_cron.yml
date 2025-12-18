@@ -1,11 +1,20 @@
-name: Blossom - Set/End Discount
+name: Test Cron Timing
 
 on:
   schedule:
-    # 12月18日 日本時間 12:52 (UTC 03:52) に実行
-    - cron: "52 3 18 12 *"
-    # 12月18日 日本時間 13:08 (UTC 04:08) に再実行
-    - cron: "8 4 5 1 *"
+    # 12月19日 日本時間 10:52 (UTC 01:52) に実行
+    - cron: "52 1 19 12 *"
+    # 12月19日 日本時間 11:08 (UTC 02:08) に再実行
+    - cron: "8 2 19 12 *"
+  workflow_dispatch:
+      inputs:
+        action:
+          description: "実行するアクション"
+          required: true
+          type: choice
+          options:
+            - set_discount
+            - end_discount
 jobs:
   discount:
     runs-on: ubuntu-latest
@@ -53,11 +62,8 @@ jobs:
               echo "script=end_discount.py" >> $GITHUB_OUTPUT
             fi
           else
-            # スケジュール実行の場合、日付と時刻で判定（UTC）
-            MONTH=$(date -u +%m)
-            DAY=$(date -u +%d)
-            HOUR=$(date -u +%H)
-            if [ "${{github.event.schedule}}" = "52 3 18 12 *" ]; then
+            # スケジュール実行の場合、deterimned by cron time
+            if [ "${{github.event.schedule}}" = "52 1 19 12 *" ]; then
               echo "script=set_discount.py" >> $GITHUB_OUTPUT
             else
               echo "script=end_discount.py" >> $GITHUB_OUTPUT
@@ -67,7 +73,7 @@ jobs:
       - name: just echo the script name
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          echo "${{ steps.script.outputs.script }}""
+          echo "${{ steps.script.outputs.script }}"
 
       - name: Cleanup
         if: always()
