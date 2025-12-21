@@ -24,7 +24,6 @@ def credentials(shop_name):
     access_token = os.environ[f"{shop_name}-ACCESS_TOKEN"]
     google_credential_path = os.environ["GOOGLE_CREDENTIAL_PATH"]
     google_sheet_id = os.environ.get(f"{shop_name}-GSPREAD_ID")
-    google_credential_path = os.environ["GOOGLE_CREDENTIAL_PATH"]
     res = {
         "shop_name": shop_name,
         "access_token": access_token,
