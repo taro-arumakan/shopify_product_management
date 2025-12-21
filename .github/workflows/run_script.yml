@@ -1,0 +1,51 @@
+name: Run a script
+
+on:
+  workflow_dispatch:
+    inputs:
+      script_path:
+        description: "relative path to the script to run e.g. brands/gbh/check_price.py"
+        required: true
+        type: string
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          EOF
+
+      - name: Run a script
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          python "${{ inputs.script_path }}"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
