@@ -34,29 +34,28 @@ jobs:
           echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
           chmod 600 /tmp/google-credentials.json
 
-      - name: setup env variables and create a .env file for google api
-        env:
-          gbhjapan-ACCESS_TOKEN: ${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
-          gbhjapan-GSPREAD_ID: ${{ secrets.GBHJAPAN_GSPREAD_ID }}
-          ssilkr-ACCESS_TOKEN: ${{ secrets.SSILKR_ACCESS_TOKEN }}
-          ssilkr-GSPREAD_ID: ${{ secrets.SSILKR_GSPREAD_ID }}
-          rohseoul-ACCESS_TOKEN: ${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
-          rohseoul-GSPREAD_ID: ${{ secrets.ROHSEOUL_GSPREAD_ID }}
-          kumej-ACCESS_TOKEN: ${{ secrets.KUMEJ_ACCESS_TOKEN }}
-          kumej-GSPREAD_ID: ${{ secrets.KUMEJ_GSPREAD_ID }}
-          lememek-ACCESS_TOKEN: ${{ secrets.LEMEMEK_ACCESS_TOKEN }}
-          lememek-GSPREAD_ID: ${{ secrets.LEMEMEK_GSPREAD_ID }}
-          blossomhcompany-ACCESS_TOKEN: ${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
-          blossomhcompany-GSPREAD_ID: ${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
-          alvanas-ACCESS_TOKEN: ${{ secrets.ALVANAS_ACCESS_TOKEN }}
-          alvanas-GSPREAD_ID: ${{ secrets.ALVANAS_GSPREAD_ID }}
-          apricot-studios-ACCESS_TOKEN: ${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
-          apricot-studios-GSPREAD_ID: ${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
-          archive-epke-ACCESS_TOKEN: ${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
-          archive-epke-GSPREAD_ID: ${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+      - name: create a .env file
         run: |
           cat > .env << EOF
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          gbhjapan-ACCESS_TOKEN=${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          gbhjapan-GSPREAD_ID=${{ secrets.GBHJAPAN_GSPREAD_ID }}
+          ssilkr-ACCESS_TOKEN=${{ secrets.SSILKR_ACCESS_TOKEN }}
+          ssilkr-GSPREAD_ID=${{ secrets.SSILKR_GSPREAD_ID }}
+          rohseoul-ACCESS_TOKEN=${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          rohseoul-GSPREAD_ID=${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
+          lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+          alvanas-ACCESS_TOKEN=${{ secrets.ALVANAS_ACCESS_TOKEN }}
+          alvanas-GSPREAD_ID=${{ secrets.ALVANAS_GSPREAD_ID }}
+          apricot-studios-ACCESS_TOKEN=${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
+          archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
           EOF
 
       - name: Run a script
