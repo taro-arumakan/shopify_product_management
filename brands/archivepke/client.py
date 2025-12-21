@@ -91,9 +91,6 @@ class ArchivepkeClient(BrandClientBase):
 
 def main():
     client = ArchivepkeClient()
-    print(client.SHOPNAME)
-    print(client.sheet_id)
-    print(client.credentials.service_account_email)
     for pi in client.product_info_list_from_sheet("2025.09.18(25FW Collection 2nd)"):
         print(client.get_tags(pi))
 
