@@ -21,9 +21,9 @@ def credentials(shop_name):
         google_sheet_id: str
 
     assert load_dotenv(override=True)
-    access_token = os.environ[f"{shop_name.replacer('-','_')}_ACCESS_TOKEN"]
+    access_token = os.environ.get(f"{shop_name.replace('-','_')}_ACCESS_TOKEN")
     google_credential_path = os.environ["GOOGLE_CREDENTIAL_PATH"]
-    google_sheet_id = os.environ.get(f"{shop_name.replacer('-','_')}_GSPREAD_ID")
+    google_sheet_id = os.environ.get(f"{shop_name.replace('-','_')}_GSPREAD_ID")
     res = {
         "shop_name": shop_name,
         "access_token": access_token,
