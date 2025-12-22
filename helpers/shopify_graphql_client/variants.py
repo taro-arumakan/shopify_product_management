@@ -151,6 +151,10 @@ class Variants:
         self, products, new_prices_by_variant_id, testrun=True
     ):
         # TODO: optimize bulk update - merge with update_variant_prices_by_variant_ids in product_attributes.py
+
+        if testrun:
+            logger.info("Test run mode - no prices will be updated")
+
         for p in products:
             logger.info(f"Processing product {p['id']} - {p['title']}")
             for variant in p["variants"]["nodes"]:
