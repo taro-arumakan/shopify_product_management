@@ -4,29 +4,24 @@ import utils
 logging.basicConfig(level=logging.INFO)
 
 skus = [
-    "OVBAX25002MCB",
-    "OVBAX25002BLK",
+    "OVBAX26008PDB",
+    "OVBAX26007SDB",
+    "OVBAX26007SAL",
+    "OVBAX25210SCR",
+    "OVBAX25004BLK",
     "OVBAX25001BLK",
-    "OVBAX25201GBG",
-    "OVBAX25201GCB",
-    "OVBAX25201GCM",
-    "OVBAX25213GBG",
-    "OVBAX25213GCB",
-    "OVBAX25212BLK",
-    "OVBAX25212SCM",
-    "OVBAX25211BLK",
-    "OVBAX25211MCB",
-    "OVBAX25228BLK",
-    "OVBAX25228OLG",
-    "OVBTX25202BLK",
-    "OVBTX25202DKB",
+    "OVBAX25002BLK",
+    "OVBAX25010BLK",
+    "OVBAX25102BLK",
+    "OVBAX25005BLK",
+    "OVBAX25012SDB",
 ]
 
 
 def main():
     client = utils.client("archive-epke")
     product_ids = {client.product_id_by_sku(sku) for sku in skus}
-    client.collection_create_by_product_ids("2025 POP-UP 15% OFF", product_ids)
+    client.collection_create_by_product_ids("25 Christmas promotion", product_ids)
 
 
 if __name__ == "__main__":

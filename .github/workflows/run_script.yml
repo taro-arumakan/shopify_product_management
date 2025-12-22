@@ -34,7 +34,7 @@ jobs:
           echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
           chmod 600 /tmp/google-credentials.json
 
-      - name: setup env variables and create a .env file for google api
+      - name: create a .env file
         run: |
           cat > .env << EOF
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
