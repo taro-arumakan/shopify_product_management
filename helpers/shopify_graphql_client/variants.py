@@ -146,3 +146,34 @@ class Variants:
                 f"Failed to remove variants: {res['productVariantsBulkDelete']['userErrors']}"
             )
         return res
+
+    def update_variant_prices_by_dict(
+        self, products, new_prices_by_variant_id, testrun=True
+    ):
+        # TODO: optimize bulk update - merge with update_variant_prices_by_variant_ids in product_attributes.py
+        for p in products:
+            logger.info(f"Processing product {p['id']} - {p['title']}")
+            for variant in p["variants"]["nodes"]:
+                current_price = int(variant["price"])
+                new_price = new_prices_by_variant_id[variant["id"]]
+                compare_at_price = variant["compareAtPrice"] or variant["price"]
+                logger.info(
+                    f"Updating price of {variant['id']} from {current_price} to {new_price}"
+                )
+                if not testrun:
+                    self.update_variant_attributes(
+                        product_id=p["id"],
+                        variant_id=variant["id"],
+                        attribute_names=["price", "compareAtPrice"],
+                        attribute_values=[str(new_price), str(compare_at_price)],
+                    )
+
+    def revert_variant_prices(self, products, testrun=True):
+        new_prices_by_variant_id = {
+            v["id"]: int(v["compareAtPrice"])
+            for p in products
+            for v in p["variants"]["nodes"]
+        }
+        return self.update_variant_prices_by_dict(
+            products, new_prices_by_variant_id, testrun
+        )
