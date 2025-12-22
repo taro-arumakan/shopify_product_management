@@ -1,4 +1,4 @@
-name: Run a script
+name: Run a func
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       params:
-        description: 'JSON string of args/kwargs e.g. {"testrun": false, "start_or_end": "start"}'
+        description: 'JSON string of args/kwargs e.g. "{\"testrun\": true, \"start_or_end\": \"start\"}"'
         required: false
         default: '{}'
 jobs:
