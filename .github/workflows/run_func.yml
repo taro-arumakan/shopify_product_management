@@ -1,0 +1,76 @@
+name: Run a script
+
+on:
+  workflow_dispatch:
+    inputs:
+      script_path:
+        description: "relative path to the script to run e.g. brands/lememe/start_end_discounts.py"
+        required: true
+        type: string
+      func_name:
+        description: "function name to call in the script e.g. start_end_discounts_2025_new_year"
+        required: true
+        type: string
+      params:
+        description: 'JSON string of args/kwargs e.g. {"testrun": false, "start_or_end": "start"}'
+        required: false
+        default: '{}'
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: create a .env file
+        run: |
+          cat > .env << EOF
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          gbhjapan-ACCESS_TOKEN=${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          gbhjapan-GSPREAD_ID=${{ secrets.GBHJAPAN_GSPREAD_ID }}
+          ssilkr-ACCESS_TOKEN=${{ secrets.SSILKR_ACCESS_TOKEN }}
+          ssilkr-GSPREAD_ID=${{ secrets.SSILKR_GSPREAD_ID }}
+          rohseoul-ACCESS_TOKEN=${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          rohseoul-GSPREAD_ID=${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
+          lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+          alvanas-ACCESS_TOKEN=${{ secrets.ALVANAS_ACCESS_TOKEN }}
+          alvanas-GSPREAD_ID=${{ secrets.ALVANAS_GSPREAD_ID }}
+          apricot-studios-ACCESS_TOKEN=${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
+          archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+          EOF
+
+      - name: Run a script
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          python .github/actions/run_func.py ${{ github.event.inputs.script_path }} ${{ github.event.inputs.func_name }} '${{ github.event.inputs.params }}'
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
