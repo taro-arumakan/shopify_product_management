@@ -1,3 +1,7 @@
+"""
+Scheduled for 2025-01-01 00:00 JST
+"""
+
 import logging
 import utils
 
@@ -17,7 +21,7 @@ def main():
         v["id"]: get_new_price(v) for p in products for v in p["variants"]["nodes"]
     }
     client.update_variant_prices_by_dict(
-        products, new_prices_by_variant_id=new_prices_by_variant_id, testrun=True
+        products, new_prices_by_variant_id=new_prices_by_variant_id, testrun=False
     )
 
 
