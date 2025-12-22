@@ -259,6 +259,101 @@ class GbhClientSizeOptionOnly(GbhClient):
         return []
 
 
+class GbhCosmeticClient(GbhClient):
+
+    def product_attr_column_map(self):
+        return dict(
+            title=string.ascii_lowercase.index("b"),
+            tags=string.ascii_lowercase.index("c"),
+            price=string.ascii_lowercase.index("e"),
+            description=string.ascii_lowercase.index("g"),
+            product_care=string.ascii_lowercase.index("i"),
+            material=string.ascii_lowercase.index("k"),
+            size_text=string.ascii_lowercase.index("l"),
+            made_in=string.ascii_lowercase.index("m"),
+        )
+
+    def option1_attr_column_map(self):
+        option1_attrs = {"Scent": string.ascii_lowercase.index("n")}
+        option1_attrs.update(
+            drive_link=string.ascii_lowercase.index("o"),
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
+        )
+        return option1_attrs
+
+    def option2_attr_column_map(self):
+        return {}
+
+    @staticmethod
+    def product_description_template():
+        res = """
+            <!DOCTYPE html>
+            <html>
+            <body>
+            <div id="cataldesignProduct">
+                <div class="shipping">
+                <p><span style="color: #ff2a00;"><strong>商品の到着は、支払い完了後10営業日以内が目安となります。</strong></span><br></p>
+                <p>※生産上の都合によりお届け予定日が前後する場合もございます。発送時期はあくまでも目安としてご確認ください。</p>
+                <p>※商品のご用意ができない場合を除き、ご注文のキャンセルは一切お受けできません。</p>
+                <p>※合わせ買いの場合、すべての商品のご用意が出来次第発送とさせて頂きます。予めご了承お願い致します。</p>
+                <p>※こちらの商品は指定日配送を承ることが出来かねます。</p>
+                </div>
+                <h3>商品説明</h3>
+                <p>${DESCRIPTION}</p>
+                <h3>手入れ方法</h3>
+                <p>${PRODUCTCARE}</p>
+                <h3>サイズ・素材</h3>
+                <table width="100%">
+                  <tbody>
+                    <tr>
+                      <th>容量</th>
+                      <td>${SIZE_TEXT}</td>
+                    </tr>
+                    <tr>
+                      <th>素材</th>
+                      <td>${MATERIAL}</td>
+                    </tr>
+                    <tr>
+                      <th>原産国</th>
+                      <td>${MADEIN}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <h3>その他注意事項</h3>
+                <ul>
+                <li>お使いのPC・携帯等端末の環境により、実際の製品と画像の色味が若干異なる場合がございます。予めご了承ください。</li>
+                <li>独自の計測法で採寸しております。多少の誤差はご了承下さい。</li>
+                <li>注文が殺到した場合、決済システムの都合上、在庫切れ後に決済確定され、ご注文をキャンセルさせていただくことがございます。キャンセルする場合はメールにてご連絡致します。予めご了承ください。</li>
+                <li>住所不定と長期不在などによって返送された場合はキャンセル扱いとなります。</li>
+                <li>配送に関する注意事項をご確認下さい。</li>
+                </ul>
+            </div>
+            </body>
+            </html>
+        """
+        return textwrap.dedent(res)
+
+    def get_description_html(self, product_info):
+        description = self.escape_html(product_info["description"])
+        product_care = self.escape_html(product_info["product_care"])
+        material = self.escape_html(product_info["material"])
+        made_in = self.escape_html(product_info["made_in"])
+        size_text = self.escape_html(product_info.get("size_text", ""))
+
+        description_html = self.product_description_template()
+        description_html = description_html.replace("${DESCRIPTION}", description)
+        description_html = description_html.replace("${PRODUCTCARE}", product_care)
+        description_html = description_html.replace("${SIZE_TEXT}", size_text)
+        description_html = description_html.replace("${MATERIAL}", material)
+        description_html = description_html.replace("${MADEIN}", made_in)
+
+        return description_html
+
+    def get_size_field(self, product_info):
+        return product_info.get("size_text", "")
+
+
 def main():
     client = GbhClient()
     for pi in client.product_info_list_from_sheet("APPAREL 25FW 2次"):
