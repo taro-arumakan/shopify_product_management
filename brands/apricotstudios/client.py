@@ -343,8 +343,8 @@ def main():
     client = ApricotStudiosClient(
         "gid://shopify/Product/9181957095680", "1jOg_no7MS8tGwMLKvOpodPg58nWKXSgX"
     )
-    for pi in client.product_info_list_from_sheet("9.25 25Autumn(2nd)"):
-        print(client.get_tags(pi))
+    for pi in client.product_info_list_from_sheet("11.20 25Winter_clone"):
+        print(pi['title'], client.get_tags(pi))
 
 
 if __name__ == "__main__":
