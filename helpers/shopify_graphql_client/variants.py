@@ -148,36 +148,42 @@ class Variants:
         return res
 
     def update_variant_prices_by_dict(
-        self, products, new_prices_by_variant_id, testrun=True
+        self, variants, new_prices_by_variant_id, testrun=True
     ):
         # TODO: optimize bulk update - merge with update_variant_prices_by_variant_ids in product_attributes.py
-
         if testrun:
             logger.info("Test run mode - no prices will be updated")
-
-        for p in products:
-            logger.info(f"Processing product {p['id']} - {p['title']}")
-            for variant in p["variants"]["nodes"]:
-                current_price = int(variant["price"])
-                new_price = new_prices_by_variant_id[variant["id"]]
-                compare_at_price = variant["compareAtPrice"] or variant["price"]
-                logger.info(
-                    f"Updating price of {variant['id']} from {current_price} to {new_price}"
+        for v in variants:
+            current_price = int(v["price"])
+            new_price = new_prices_by_variant_id[v["id"]]
+            compare_at_price = v["compareAtPrice"] or v["price"]
+            logger.info(
+                f"Updating price of {v['displayName']} from {current_price} to {new_price}"
+            )
+            if not testrun:
+                self.update_variant_attributes(
+                    product_id=v["product"]["id"],
+                    variant_id=v["id"],
+                    attribute_names=["price", "compareAtPrice"],
+                    attribute_values=[str(new_price), str(compare_at_price)],
                 )
-                if not testrun:
-                    self.update_variant_attributes(
-                        product_id=p["id"],
-                        variant_id=variant["id"],
-                        attribute_names=["price", "compareAtPrice"],
-                        attribute_values=[str(new_price), str(compare_at_price)],
-                    )
 
-    def revert_variant_prices(self, products, testrun=True):
-        new_prices_by_variant_id = {
-            v["id"]: int(v["compareAtPrice"])
-            for p in products
-            for v in p["variants"]["nodes"]
-        }
+    def update_product_prices_by_dict(
+        self, products, new_prices_by_variant_id, testrun=True
+    ):
+        variants = sum([p["variants"]["nodes"] for p in products], [])
         return self.update_variant_prices_by_dict(
-            products, new_prices_by_variant_id, testrun
+            variants=variants,
+            new_prices_by_variant_id=new_prices_by_variant_id,
+            testrun=testrun,
         )
+
+    def revert_variant_prices(self, variants, testrun=True):
+        new_prices_by_variant_id = {v["id"]: int(v["compareAtPrice"]) for v in variants}
+        return self.update_variant_prices_by_dict(
+            variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
+        )
+
+    def revert_product_prices(self, products, testrun=True):
+        variants = sum([p["variants"]["nodes"] for p in products], [])
+        return self.revert_variant_prices(variants, testrun=testrun)
