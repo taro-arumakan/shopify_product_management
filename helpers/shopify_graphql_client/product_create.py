@@ -196,6 +196,11 @@ class ProductCreate:
     @staticmethod
     def formatted_size_text_to_html_table(size_text):
         """
+        [FREE]  LENGTH 69.7 / SHOULDER RAGLAN / CHEST 69.8 / SLEEVE 83.5 / HEM 64
+
+        [S] : LENGTH 104 / WAIST 37 / HIP 52 / HEM 28 / FRONT RISE 26
+        [M] : LENGTH 105 / WAIST 39 / HIP 54 / HEM 29 / FRONT RISE 27
+
         [0] 着丈 84 / 肩幅 xxx / 袖丈 yyy
         [1] 着丈 90 / 肩幅 xxx / 袖丈 yyy
         [2] 着丈 90 / 肩幅 xxx / 袖丈 yyy
@@ -203,7 +208,6 @@ class ProductCreate:
         [4] 着丈 90 / 肩幅 xxx / 袖丈 yyy
         """
         size_expression = re.compile(r"\[(.+?)\][\s\:]+(.*)")
-        header_value_expression = re.compile(r"([^\d]+)\s*([\d\.]+)")
 
         rows = []
         headers = ["Size"]
@@ -213,12 +217,10 @@ class ProductCreate:
             if not match:
                 raise RuntimeError(f"Invalid size text format: {line}")
             row_values = [match.group(1)]
-            header_value_pairs = [p.strip() for p in match.group(2).split("/")]
+            header_value_pairs = [p.strip() for p in match.group(2).split(" / ")]
 
             for header_value_pair in header_value_pairs:
-                header, value = header_value_expression.match(
-                    header_value_pair.strip()
-                ).groups()
+                header, value = header_value_pair.rsplit(" ", 1)
                 if header.strip() not in headers:
                     headers.append(header.strip())
                 row_values.append(value.strip())
