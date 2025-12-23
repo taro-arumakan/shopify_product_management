@@ -131,7 +131,7 @@ class GoogleSheetsApiInterface:
 
     def populate_drive_link_cache(self, sheet_title, column_index):
         # Use the Google Sheets API directly for rich text data. Cache range to avoid API call quota.
-        range_notation = f"{sheet_title}!{string.ascii_uppercase[column_index]}1:{string.ascii_uppercase[column_index]}9999"
+        range_notation = f"{sheet_title}!{string.ascii_uppercase[column_index]}1:{string.ascii_uppercase[column_index]}"
         response = (
             self.sheets_service.spreadsheets()
             .get(
@@ -142,7 +142,6 @@ class GoogleSheetsApiInterface:
             .execute()
         )
         row_data = response["sheets"][0]["data"][0]["rowData"]
-        self.drive_link_cache = {}
         for row_index, row in enumerate(row_data):
             if values := row.get("values"):
                 values = values[0]
@@ -154,6 +153,10 @@ class GoogleSheetsApiInterface:
                     hyperlink = values.get("hyperlink")
                 if hyperlink:
                     self.drive_link_cache[row_index + 1] = hyperlink
+        if not self.drive_link_cache:
+            raise RuntimeError(
+                f"No drive links populated parsing range {range_notation}. Check if the column index is correct."
+            )
 
     def get_richtext_link(self, sheet_title, row_num, column_index):
         if not self.drive_link_cache:
