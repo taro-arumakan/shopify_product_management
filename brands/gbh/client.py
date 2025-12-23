@@ -116,35 +116,6 @@ class GbhClient(BrandClientBase):
             + (additional_tags or [])
         )
 
-    @staticmethod
-    def formatted_size_text_to_html_table(size_text):
-        """
-        [FREE]  LENGTH 69.7 / SHOULDER RAGLAN / CHEST 69.8 / SLEEVE 83.5 / HEM 64
-
-        [S] : LENGTH 104 / WAIST 37 / HIP 52 / HEM 28 / FRONT RISE 26
-        [M] : LENGTH 105 / WAIST 39 / HIP 54 / HEM 29 / FRONT RISE 27
-        """
-        size_expression = re.compile(r"\[(.+?)\][\s\:]+(.*)")
-        header_value_expression = re.compile(r"([^\d]+)\s*([\d\.]+)")
-
-        rows = []
-        headers = ["Size"]
-
-        for line in size_text.strip().split("\n"):
-            match = size_expression.match(line.strip())
-            if not match:
-                raise RuntimeError(f"Invalid size text format: {line}")
-            row_values = [match.group(1)]
-            header_value_pairs = [p.strip() for p in match.group(2).split("/")]
-
-            for header_value_pair in header_value_pairs:
-                header, value = header_value_pair.rsplit(" ", 1)
-                if header.strip() not in headers:
-                    headers.append(header.strip())
-                row_values.append(value.strip())
-            rows.append(row_values)
-        return BrandClientBase.generate_table_html(headers, rows)
-
     def get_size_field(self, product_info):
         return self.formatted_size_text_to_html_table(product_info["size_text"])
 
@@ -170,23 +141,23 @@ class GbhClientColorOptionOnly(GbhClient):
         product_id = self.product_id_by_title(product_info["title"])
         existing_product = self.product_by_id(product_id)
         existing_variants = existing_product.get("variants", {}).get("nodes", [])
-        
+
         # 既存バリアントのselectedOptionsからオプション名を取得
         existing_option_names = set()
         if existing_variants:
             for variant in existing_variants:
                 for so in variant.get("selectedOptions", []):
                     existing_option_names.add(so.get("name"))
-        
+
         logger.info(f"既存商品のオプション名: {sorted(existing_option_names)}")
         has_size_option = "サイズ" in existing_option_names
         logger.info(f"「サイズ」オプションの存在: {has_size_option}")
-        
+
         optionss = self.segment_options_list_by_key_option(
             self.populate_option_dicts(product_info)
         )
         drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
-        
+
         for drive_link, skus, options in zip(drive_links, skuss, optionss):
             logger.info(f"  processing sku: {skus} - {drive_link}")
             res = self.add_product_images(
@@ -196,20 +167,24 @@ class GbhClientColorOptionOnly(GbhClient):
                 f"upload_{datetime.date.today():%Y%m%d}_{skus[0]}_",
             )
             new_media_ids = [m["id"] for m in res[-1]["productCreateMedia"]["media"]]
-            
+
             option_names = list(options[0]["option_values"].keys())
-            variant_option_valuess = [list(option["option_values"].values()) for option in options]
+            variant_option_valuess = [
+                list(option["option_values"].values()) for option in options
+            ]
             logger.info(f"追加前のoption_names: {option_names}")
             logger.info(f"追加前のvariant_option_valuess: {variant_option_valuess}")
-            
+
             if has_size_option:
                 option_names.append("サイズ")
-                variant_option_valuess = [ov + ["FREE"] for ov in variant_option_valuess]
-                logger.info(f"「サイズ」=\"FREE\"を追加しました")
-            
+                variant_option_valuess = [
+                    ov + ["FREE"] for ov in variant_option_valuess
+                ]
+                logger.info(f'「サイズ」="FREE"を追加しました')
+
             logger.info(f"追加後のoption_names: {option_names}")
             logger.info(f"追加後のvariant_option_valuess: {variant_option_valuess}")
-            
+
             self.variants_add(
                 product_id=product_id,
                 skus=skus,
