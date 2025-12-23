@@ -20,7 +20,7 @@ def main():
     new_prices_by_variant_id = {
         v["id"]: get_new_price(v) for p in products for v in p["variants"]["nodes"]
     }
-    client.update_variant_prices_by_dict(
+    client.update_product_prices_by_dict(
         products, new_prices_by_variant_id=new_prices_by_variant_id, testrun=False
     )
 
