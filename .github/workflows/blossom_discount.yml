@@ -1,11 +1,6 @@
 name: Blossom - Set/End Discount
 
 on:
-  schedule:
-    # 12月18日 日本時間 11:00 (UTC 02:00) に set_discount.py を実行
-    - cron: "0 2 18 12 *"
-    # 1月5日 日本時間 23:59 (UTC 14:59) に end_discount.py を実行
-    - cron: "59 14 5 1 *"
   workflow_dispatch:
     inputs:
       action:
