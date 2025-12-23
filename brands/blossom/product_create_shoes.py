@@ -6,18 +6,21 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    client = BlossomClientShoes
+    client = BlossomClientShoes()
     sheet_name = "shoes(drop7)"
     client.sanity_check_sheet(sheet_name)
 
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2025, 12, 19, 11, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2025, 12, 25, 11, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
+
+    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+
     client.process_sheet_to_products(
-        sheet_name, 
-        additional_tags=["25_drop7", "New Arrival"],
+        sheet_name,
+        additional_tags=["25_drop8", "New Arrival"],
         scheduled_time=scheduled_time,
     )
 
