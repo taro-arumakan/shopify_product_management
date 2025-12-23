@@ -152,7 +152,7 @@ class Variants:
     ):
         # TODO: optimize bulk update - merge with update_variant_prices_by_variant_ids in product_attributes.py
         if testrun:
-            logger.info("Test run mode - no prices will be updated")
+            logger.info("\n\nTest run mode - no prices will be updated\n\n")
         for v in variants:
             current_price = int(v["price"])
             new_price = new_prices_by_variant_id[v["id"]]
