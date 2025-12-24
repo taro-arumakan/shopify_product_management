@@ -41,6 +41,7 @@ def add_tag(title: str, tag: str, dry_run: bool = True):
 
 
 def create_collection_by_tag(tag: str):
+    # FIXME: should have handled existing collections.
     collection = client.collection_create_by_tag(collection_title=tag, tag=tag)
     client.publish_by_product_or_collection_id(collection["id"])
 
