@@ -78,7 +78,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
     ):
         logger.info(f'creating {product_info["title"]}')
         options = self.populate_option_dicts(product_info)
-        if options:
+        if any(o["option_values"] for o in options):
             res = self.product_create(
                 title=product_info["title"],
                 handle=product_info.get("handle"),
