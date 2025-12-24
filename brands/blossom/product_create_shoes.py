@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import logging
 from brands.blossom.client import BlossomClientShoes
 
