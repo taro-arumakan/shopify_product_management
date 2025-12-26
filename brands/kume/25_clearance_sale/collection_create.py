@@ -93,10 +93,13 @@ def main():
     
     discount_groups = group_skus_by_discount(sku_discount_pairs)
     print(discount_groups)
-    # 全ての商品に「FINAL SALE」タグを付与
+    # 全ての商品に「FINAL SALE」タグと％ごとのタグを付与
     for discount_rate, skus in discount_groups.items():
         product_ids = get_product_ids_from_skus(client, skus)
         add_tag_to_products(client, product_ids, "FINAL SALE")
+        # ％ごとのタグ付け: 2025_fs_30%, 2025_fs_20%, 2025_fs_15%
+        discount_tag = f"2025_fs_{discount_rate}"
+        add_tag_to_products(client, product_ids, discount_tag)
     
     add_50_percent_off_tag()
     
