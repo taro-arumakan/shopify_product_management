@@ -171,26 +171,38 @@ class BlossomClientShoes(BlossomClient):
             tags=string.ascii_lowercase.index("c"),
             price=string.ascii_lowercase.index("e"),
             description=string.ascii_lowercase.index("g"),
-            product_care=string.ascii_lowercase.index("i"),
-            material=string.ascii_lowercase.index("j"),
-            size_text=string.ascii_lowercase.index("k"),
-            made_in=string.ascii_lowercase.index("l"),
+            product_care=string.ascii_lowercase.index("j"),
+            material=string.ascii_lowercase.index("k"),
+            size_text=string.ascii_lowercase.index("l"),
+            made_in=string.ascii_lowercase.index("m"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("n")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("n"),
+            drive_link=string.ascii_lowercase.index("o"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("o")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("p")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("p"),
-            stock=string.ascii_lowercase.index("q"),
+            sku=string.ascii_lowercase.index("q"),
+            stock=string.ascii_lowercase.index("r"),
         )
         return option2_attrs
+
+    def get_size_field(self, product_info):
+        """
+        FRONT HEEL 0.3 / BACK HEEL 7
+        """
+        size_text = product_info["size_text"].strip()
+        assert (
+            len(size_text.strip().split("\n")) == 1
+        ), f"expecting single line size text: {size_text}"
+        header_value_pairs = [p.strip() for p in size_text.split(" / ")]
+        headers, values = zip(*(p.rsplit(" ", 1) for p in header_value_pairs))
+        return BlossomClientShoes.generate_table_html(headers, [values])
 
 
 class BlossomClientBags(BlossomClient):

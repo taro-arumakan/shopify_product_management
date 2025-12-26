@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def main():
     client = utils.client("lememe")
     products = client.products_by_query()
-    client.revert_variant_prices(products, testrun=False)
+    client.revert_product_prices(products, testrun=False)
 
 
 if __name__ == "__main__":

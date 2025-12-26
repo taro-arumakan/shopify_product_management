@@ -1,19 +1,15 @@
+import logging
 import utils
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main():
     client = utils.client("blossomhcompany")
-    products = client.products_by_query("tag_not:'25_drop7' AND status:'ACTIVE'")
-    print(len(products))
-    for p in products:
-        for variant in p["variants"]["nodes"]:
-            if variant["price"] != variant["compareAtPrice"]:
-                client.update_variant_prices_by_variant_ids(
-                    product_id=p["id"],
-                    variant_ids=[variant["id"]],
-                    prices=[variant["compareAtPrice"]],
-                    compare_at_prices=[variant["compareAtPrice"]],
-                )
+    products = client.products_by_query(
+        "tag_not:'25_drop7' AND tag_not:'25_drop8' AND status:'ACTIVE'"
+    )
+    client.revert_product_prices(products, testrun=False)
 
 
 if __name__ == "__main__":
