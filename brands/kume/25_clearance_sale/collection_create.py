@@ -94,14 +94,14 @@ def main():
     discount_groups = group_skus_by_discount(sku_discount_pairs)
     print(discount_groups)
     # 全ての商品に「FINAL SALE」タグを付与
-    # for discount_rate, skus in discount_groups.items():
-    #     product_ids = get_product_ids_from_skus(client, skus)
-    #     add_tag_to_products(client, product_ids, "FINAL SALE")
+    for discount_rate, skus in discount_groups.items():
+        product_ids = get_product_ids_from_skus(client, skus)
+        add_tag_to_products(client, product_ids, "FINAL SALE")
     
-    # add_50_percent_off_tag()
+    add_50_percent_off_tag()
     
-    # client.collection_create_by_tag("FINAL SALE", "FINAL SALE")
-    # client.collection_create_by_tag("50% OFF", "50% OFF")
+    client.collection_create_by_tag("FINAL SALE", "FINAL SALE")
+    client.collection_create_by_tag("50% OFF", "50% OFF")
 
 
 if __name__ == "__main__":
