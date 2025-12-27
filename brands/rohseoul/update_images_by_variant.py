@@ -13,26 +13,20 @@ IMAGES_LOCAL_DIR = f"{pathlib.Path.home()}/Downloads/{datetime.date.today():%Y%m
 
 def main():
     client = utils.client("rohseoul")
-    rows = client.worksheet_rows(client.sheet_id, "25FW 1ST")
-    sku_column_index = string.ascii_lowercase.index("g")
-    state_column_index = string.ascii_lowercase.index("b")
-    drive_link_column_index = string.ascii_lowercase.index("q")
-    restart_from_sku = "JCL00C0BMMG"  # "JLL00CC8SBK"
-    started = False
+    rows = client.worksheet_rows(client.sheet_id, "12/12_CO")[6:]
+    sku_column_index = string.ascii_lowercase.index("f")
+    drive_link_column_index = string.ascii_lowercase.index("p")
     for row in rows:
         sku = row[sku_column_index]
-        if (not restart_from_sku) or (sku == restart_from_sku):
-            started = True
-        if started and row[state_column_index] == "CO":
-            drive_id = client.drive_link_to_id(row[drive_link_column_index])
-            if drive_id:
-                logger.info(f"going to process: {sku} - {drive_id}")
-                client.replace_images_by_skus(
-                    [sku],
-                    drive_id,
-                    IMAGES_LOCAL_DIR,
-                    filename_prefix=f"{UPLOAD_IMAGE_PREFIX}_{sku}_",
-                )
+        drive_id = client.drive_link_to_id(row[drive_link_column_index])
+        if drive_id:
+            logger.info(f"going to process: {sku} - {drive_id}")
+            client.replace_images_by_skus(
+                [sku],
+                drive_id,
+                IMAGES_LOCAL_DIR,
+                filename_prefix=f"{UPLOAD_IMAGE_PREFIX}_{sku}_",
+            )
 
 
 if __name__ == "__main__":
