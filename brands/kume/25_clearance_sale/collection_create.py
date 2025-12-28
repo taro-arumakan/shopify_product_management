@@ -54,7 +54,7 @@ def add_50_percent_off_tag():
         "KM-24FW-SK05-BK-M", "KM-24FW-SK05-BK-S", "KM-24FW-OP03-BK-M", "KM-24FW-OP03-BK-S",
         "KM-24FW-OP02-BK-M", "KM-24FW-OP02-BK-S", "KM-24FW-BL05-BR-M", "KM-24FW-BL05-DBR-S",
     ]
-    tag = "50% OFF"
+    tag = "2025_fs_50%"
     
     product_ids = set()
     for sku in target_skus:
