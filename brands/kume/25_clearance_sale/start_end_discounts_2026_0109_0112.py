@@ -2,7 +2,7 @@ from brands.kume.client import KumeClient
 
 def start_end_discounts_2026_0109_0112(testrun=True, start_or_end="end"):
     client = KumeClient()
-    tag = "50% OFF"
+    tag = "2025_fs_50%"
     rate = 0.5
 
     products = client.products_by_tag(tag)

@@ -3,7 +3,7 @@ from brands.kume.client import KumeClient
 
 def start_end_discounts_2026_0109_0125(testrun=True, start_or_end="end"):
     client = KumeClient()
-    tag_rate_map = {"30%": 0.7, "20%": 0.8, "15%": 0.85}
+    tag_rate_map = {"2025_fs_30%": 0.7, "2025_fs_20%": 0.8, "2025_fs_15%": 0.85}
 
     for tag, rate in tag_rate_map.items():
         products = client.products_by_tag(tag)
