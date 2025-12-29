@@ -11,10 +11,7 @@ def group_skus_by_discount(sku_discount_pairs):
     discount_groups = defaultdict(list)
     
     for sku, discount in sku_discount_pairs:
-        if isinstance(discount, (int, float)):
-            discount_str = f"{int(discount * 100)}%"
-        else:
-            discount_str = str(discount).replace("％", "%").strip()
+        discount_str = str(discount).replace("％", "%").strip()
         
         if discount_str in ["30%", "20%", "15%"]:
             discount_groups[discount_str].append(sku)
