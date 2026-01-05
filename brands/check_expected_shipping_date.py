@@ -7,8 +7,8 @@ def get_date_metafield_value(metafields, key):
         return datetime.datetime.fromisoformat(metafield[0]["value"]).date()
 
 
-def main():
-    client = utils.client("kume")
+def check(brand, email_recipients):
+    client = utils.client(brand.lower())
     products = client.products_by_query("status:'ACTIVE'")
 
     products_outdated = []
@@ -44,10 +44,20 @@ def main():
     if body:
         print(body)
         client.send_email(
-            "KUME - expected shipping date in the past",
+            f"{brand} - expected shipping date in the past",
             body,
-            ["marina6529@kume-studio.co.kr", "taro@sniarti.fi"],
+            email_recipients,
         )
+
+
+def main():
+    brands = ["KUME", "GBH"]
+    recipients_by_brand = {
+        "KUME": ["marina6529@kume-studio.co.kr", "taro@sniarti.fi"],
+        "GBH": ["gbh338@jaebum.com", "taro@sniarti.fi"],
+    }
+    for brand in brands:
+        check(brand, recipients_by_brand[brand])
 
 
 if __name__ == "__main__":

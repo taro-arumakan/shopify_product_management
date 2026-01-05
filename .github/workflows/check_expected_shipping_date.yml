@@ -33,31 +33,24 @@ jobs:
           chmod 600 /tmp/google-credentials.json
 
       - name: Create .env file
-        env:
-          KUME_ACCESS_TOKEN: ${{ secrets.KUME_ACCESS_TOKEN }}
-          KUME_GSPREAD_ID: ${{ secrets.KUME_GSPREAD_ID }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          SMTP_FROM_ADDR: ${{ secrets.SMTP_FROM_ADDR }}
-
         run: |
           cat > .env << EOF
-          kumej-ACCESS_TOKEN=$KUME_ACCESS_TOKEN
+          gbhjapan-ACCESS_TOKEN=${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          gbhjapan-GSPREAD_ID=${{ secrets.GBHJAPAN_GSPREAD_ID }}
+          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
-          kumej-GSPREAD_ID=$KUME_GSPREAD_ID
-          SMTP_HOST=$SMTP_HOST
-          SMTP_PORT=$SMTP_PORT
-          SMTP_USER=$SMTP_USER
-          SMTP_PASS=$SMTP_PASS
-          SMTP_FROM_ADDR=$SMTP_FROM_ADDR
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
           EOF
 
       - name: Run check_expected_shipping_date script
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          python brands/kume/check_expected_shipping_date.py
+          python brands/check_expected_shipping_date.py
 
       - name: Cleanup
         if: always()
