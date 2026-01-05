@@ -296,7 +296,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         smtp_port = int(os.getenv("SMTP_PORT", "587"))
         smtp_user = os.getenv("SMTP_USER")
         smtp_pass = os.getenv("SMTP_PASS")
-        from_addr = os.getenv("SMTPF_ROM_ADDR")
+        from_addr = os.getenv("SMTP_FROM_ADDR")
 
         msg = EmailMessage()
         msg["Subject"] = subject
