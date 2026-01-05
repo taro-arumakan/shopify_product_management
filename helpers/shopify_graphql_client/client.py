@@ -4,7 +4,7 @@ from helpers.shopify_graphql_client.archive_and_remove_variant import (
     ArchiveAndRemoveVariant,
 )
 from helpers.shopify_graphql_client.article import Article
-from helpers.shopify_graphql_client.collection_queries import CollectionQueries
+from helpers.shopify_graphql_client.collections import CollectionQueries
 from helpers.shopify_graphql_client.inventory import Inventory
 from helpers.shopify_graphql_client.medias import Medias
 from helpers.shopify_graphql_client.merge_products_as_variants import (

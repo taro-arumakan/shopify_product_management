@@ -85,6 +85,14 @@ class CollectionQueries:
         collection = self.collection_by_title(title)
         return collection["id"]
 
+    def collection_create_by_query_and_publish(self, query, variables):
+        res = self.run_query(query, variables)
+        if errors := res["collectionCreate"]["userErrors"]:
+            raise RuntimeError(f"Collection creation failed: {errors}")
+        res = res["collectionCreate"]["collection"]
+        self.publish_by_product_or_collection_id(res["id"])
+        return res
+
     def collection_create_by_product_ids(self, collection_title, product_ids):
         query = """
         mutation createCollection($input: CollectionInput!) {
@@ -113,10 +121,7 @@ class CollectionQueries:
                 ],
             }
         }
-        res = self.run_query(query, variables)
-        if errors := res["collectionCreate"]["userErrors"]:
-            raise RuntimeError(f"Collection creation failed: {errors}")
-        return res
+        return self.collection_create_by_query_and_publish(query, variables)
 
     def collection_add_products(self, collection_id, product_ids):
         query = """
@@ -188,10 +193,7 @@ class CollectionQueries:
                 "ruleSet": rule_set,
             }
         }
-        res = self.run_query(query, variables)
-        if errors := res["collectionCreate"]["userErrors"]:
-            raise RuntimeError(f"Collection creation failed: {errors}")
-        return res["collectionCreate"]["collection"]
+        return self.collection_create_by_query_and_publish(query, variables)
 
     def collection_create_by_tag(self, collection_title, tag):
         rule_set = {
