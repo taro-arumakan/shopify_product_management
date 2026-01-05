@@ -1,5 +1,6 @@
 import logging
 import re
+import textwrap
 
 logger = logging.getLogger(__name__)
 
@@ -279,6 +280,33 @@ class ProductCreate:
 
         return html
 
+    @staticmethod
+    def product_description_template():
+        res = """
+            <div id="cataldesignProduct">
+                <h3>商品説明</h3>
+                <p>${DESCRIPTION}</p>
+                <h3>手入れ方法</h3>
+                <p>${PRODUCTCARE}</p>
+                <h3>サイズ・素材</h3>
+                ${SIZE_TABLE}
+                <br>
+                <table width="100%">
+                <tbody>
+                    <tr>
+                    <th>素材</th>
+                    <td>${MATERIAL}</td>
+                    </tr>
+                    <tr>
+                    <th>原産国</th>
+                    <td>${MADEIN}</td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+            """
+        return textwrap.dedent(res)
+
     def get_description_html(
         self,
         description,
@@ -294,7 +322,7 @@ class ProductCreate:
         made_in = self.escape_html(made_in)
         size_table = (get_size_table_html_func or self.get_size_table_html)(size_text)
 
-        description_html = product_description_template()
+        description_html = self.product_description_template()
         description_html = description_html.replace("${DESCRIPTION}", description)
         description_html = description_html.replace("${PRODUCTCARE}", product_care)
         description_html = description_html.replace("${SIZE_TABLE}", size_table)
@@ -302,33 +330,3 @@ class ProductCreate:
         description_html = description_html.replace("${MADEIN}", made_in)
 
         return description_html
-
-
-def product_description_template():
-    return """<!DOCTYPE html>
-<html>
-<body>
-  <div id="cataldesignProduct">
-    <h3>商品説明</h3>
-    <p>${DESCRIPTION}</p>
-    <h3>手入れ方法</h3>
-    <p>${PRODUCTCARE}</p>
-    <h3>サイズ・素材</h3>
-    ${SIZE_TABLE}
-    <br>
-    <table width="100%">
-      <tbody>
-        <tr>
-          <th>素材</th>
-          <td>${MATERIAL}</td>
-        </tr>
-        <tr>
-          <th>原産国</th>
-          <td>${MADEIN}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</body>
-
-</html>"""

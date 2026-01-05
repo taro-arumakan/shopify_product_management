@@ -47,8 +47,6 @@ class AlvanaClient(BrandClientBase):
     @staticmethod
     def product_description_template():
         res = r"""
-            <!DOCTYPE html>
-            <html><body>
             <div id="alvanaProduct">
                 <p>${DESCRIPTION}</p>
                 <br>
@@ -65,8 +63,6 @@ class AlvanaClient(BrandClientBase):
                 </tbody>
                 </table>
             </div>
-            </body>
-            </html>
             """
         return textwrap.dedent(res)
 

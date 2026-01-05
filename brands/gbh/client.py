@@ -47,9 +47,6 @@ class GbhClient(BrandClientBase):
     @staticmethod
     def product_description_template():
         res = """
-            <!DOCTYPE html>
-            <html>
-            <body>
             <div id="cataldesignProduct">
                 <h3>商品説明</h3>
                 <p>${DESCRIPTION}</p>
@@ -71,9 +68,6 @@ class GbhClient(BrandClientBase):
                 </tbody>
                 </table>
             </div>
-            </body>
-
-            </html>
         """
         return textwrap.dedent(res)
 
@@ -248,9 +242,6 @@ class GbhCosmeticClient(GbhClient):
     @staticmethod
     def product_description_template():
         res = """
-            <!DOCTYPE html>
-            <html>
-            <body>
             <div id="cataldesignProduct">
                 <h3>商品説明</h3>
                 <p>${DESCRIPTION}</p>
@@ -274,8 +265,6 @@ class GbhCosmeticClient(GbhClient):
                   </tbody>
                 </table>
             </div>
-            </body>
-            </html>
         """
         return textwrap.dedent(res)
 
@@ -324,9 +313,6 @@ class GbhClientNoOptions(GbhClient):
     @staticmethod
     def product_description_template():
         res = """
-            <!DOCTYPE html>
-            <html>
-            <body>
             <div id="cataldesignProduct">
                 <h3>商品説明</h3>
                 <p>${DESCRIPTION}</p>
@@ -342,8 +328,6 @@ class GbhClientNoOptions(GbhClient):
                   </tbody>
                 </table>
             </div>
-            </body>
-            </html>
         """
         return textwrap.dedent(res)
 

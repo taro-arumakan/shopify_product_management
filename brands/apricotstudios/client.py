@@ -60,31 +60,6 @@ class ApricotStudiosClient(BrandClientBase):
         )
         return option2_attrs
 
-    @staticmethod
-    def product_description_template():
-        res = r"""
-            <!DOCTYPE html>
-            <html><body>
-            <div id="alvanaProduct">
-                <p>${DESCRIPTION}</p>
-                <br>
-                <table width="100%">
-                <tbody>
-                    <tr>
-                    <td>素材</td>
-                    <td>${MATERIAL}</td>
-                    </tr>
-                    <tr>
-                    <td>原産国</td>
-                    <td>${MADEIN}</td>
-                    </tr>
-                </tbody>
-                </table>
-            </div>
-            </body>
-            </html>"""
-        return textwrap.dedent(res)
-
     def get_description_html(self, product_info):
         """
         Apricot Studios holds medias in the description field.
@@ -344,7 +319,7 @@ def main():
         "gid://shopify/Product/9181957095680", "1jOg_no7MS8tGwMLKvOpodPg58nWKXSgX"
     )
     for pi in client.product_info_list_from_sheet("11.20 25Winter_clone"):
-        print(pi['title'], client.get_tags(pi))
+        print(pi["title"], client.get_tags(pi))
 
 
 if __name__ == "__main__":

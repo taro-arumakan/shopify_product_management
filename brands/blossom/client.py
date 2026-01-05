@@ -46,9 +46,7 @@ class BlossomClient(BrandClientBase):
     @staticmethod
     def product_description_template():
         res = r"""
-            <!DOCTYPE html>
-            <html><body>
-            <div id="alvanaProduct">
+            <div id="cataldesignProduct">
                 <p>${DESCRIPTION}</p>
                 <br>
                 <table width="100%">
@@ -64,8 +62,7 @@ class BlossomClient(BrandClientBase):
                 </tbody>
                 </table>
             </div>
-            </body>
-            </html>"""
+            """
         return textwrap.dedent(res)
 
     def get_description_html(self, product_info):

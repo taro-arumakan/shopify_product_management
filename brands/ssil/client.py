@@ -46,15 +46,12 @@ class SsilClient(BrandClientBase):
     @staticmethod
     def product_description_template():
         res = r"""
-        <!DOCTYPE html>
-        <html><body>
             <div id="ssilProduct">
                 <p>${DESCRIPTION}</p>
                 <br>
                 <p>原産国: ${MADEIN}</p>
             </div>
-        </body>
-        </html>"""
+            """
         return textwrap.dedent(res)
 
     def get_description_html(self, product_info):

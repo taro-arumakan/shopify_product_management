@@ -2,9 +2,8 @@ import string
 import utils
 
 
-def get_description(product_description, material, made_in):
-    description_html = product_description_template()
-    description_html = description_html.replace(
+def get_description(template_html, product_description, material, made_in):
+    description_html = template_html.replace(
         "${DESCRIPTION}", product_description.replace("\n", "<br>")
     )
     description_html = description_html.replace("${MATERIAL}", material)
@@ -14,6 +13,7 @@ def get_description(product_description, material, made_in):
 
 def main():
     client = utils.client("blossomhcompany")
+    template_html = client.product_description_template()
     rows = client.worksheet_rows(client.sheet_id, "clothes")
 
     for row in rows[7:]:
@@ -26,7 +26,8 @@ def main():
             made_in = row[string.ascii_uppercase.index("K")].strip()
             material = row[string.ascii_uppercase.index("I")].strip()
             res = client.update_product_description(
-                product_id, get_description(product_description, material, made_in)
+                product_id,
+                get_description(template_html, product_description, material, made_in),
             )
             print(res)
         if product_care := row[string.ascii_uppercase.index("H")].strip():
@@ -39,29 +40,6 @@ def main():
             res = client.update_size_table_html_metafield(product_id, size_table_html)
             print(res)
     print("done updating")
-
-
-def product_description_template():
-    return r"""<!DOCTYPE html>
-<html><body>
-  <div id="alvanaProduct">
-    <p>${DESCRIPTION}</p>
-    <br>
-    <table width="100%">
-      <tbody>
-        <tr>
-          <td>素材</td>
-          <td>${MATERIAL}</td>
-        </tr>
-        <tr>
-          <td>原産国</td>
-          <td>${MADEIN}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</body>
-</html>"""
 
 
 if __name__ == "__main__":

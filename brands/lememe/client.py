@@ -41,8 +41,6 @@ class LememeClient(BrandClientBase):
     @staticmethod
     def product_description_template():
         res = r"""
-        <!DOCTYPE html>
-        <html><body>
             <div id="alvanaProduct">
                 <p>${DESCRIPTION}</p>
                 <br>
@@ -59,8 +57,7 @@ class LememeClient(BrandClientBase):
                 </tbody>
                 </table>
             </div>
-        </body>
-        </html>"""
+            """
         return textwrap.dedent(res)
 
     def get_description_html(self, product_info):
