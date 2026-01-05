@@ -1,4 +1,4 @@
-name: KUME - check expected shipping date
+name: Check expected shipping date
 
 on:
   schedule:
