@@ -65,7 +65,7 @@ jobs:
           archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
           EOF
 
-      - name: Run a script
+      - name: Run a func
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           python .github/actions/run_func.py ${{ github.event.inputs.script_path }} ${{ github.event.inputs.func_name }} '${{ github.event.inputs.params }}'
