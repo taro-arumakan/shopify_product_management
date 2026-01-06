@@ -1,4 +1,4 @@
-from brands.rohseoul.client import BlossomClient
+from brands.blossom.client import BlossomClient
 import utils
 import pandas as pd
 
