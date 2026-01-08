@@ -1,5 +1,5 @@
+import copy
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -168,10 +168,16 @@ class Variants:
                     attribute_values=[str(new_price), str(compare_at_price)],
                 )
 
+    def _product_to_variants(self, product):
+        variants = copy.deepcopy(product["variants"]["nodes"])
+        for v in variants:
+            v.setdefault("product", {})["id"] = product["id"]
+        return variants
+
     def update_product_prices_by_dict(
         self, products, new_prices_by_variant_id, testrun=True
     ):
-        variants = sum([p["variants"]["nodes"] for p in products], [])
+        variants = sum([self._product_to_variants(p) for p in products], [])
         return self.update_variant_prices_by_dict(
             variants=variants,
             new_prices_by_variant_id=new_prices_by_variant_id,
@@ -185,5 +191,5 @@ class Variants:
         )
 
     def revert_product_prices(self, products, testrun=True):
-        variants = sum([p["variants"]["nodes"] for p in products], [])
+        variants = sum([self._product_to_variants(p) for p in products], [])
         return self.revert_variant_prices(variants, testrun=testrun)
