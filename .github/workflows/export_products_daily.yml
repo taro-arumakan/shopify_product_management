@@ -1,0 +1,72 @@
+name: Export Products to CSV Daily
+
+on:
+  schedule:
+    # 毎日午前3時（JST）に実行（UTC 18:00）
+    - cron: '0 18 * * *'
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  export-products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        env:
+          PRODUCT_EXPORT_DRIVE_FOLDER_ID: ${{ secrets.PRODUCT_EXPORT_DRIVE_FOLDER_ID }}
+        run: |
+          cat > .env << EOF
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          PRODUCT_EXPORT_DRIVE_FOLDER_ID=$PRODUCT_EXPORT_DRIVE_FOLDER_ID
+          gbhjapan-ACCESS_TOKEN=${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          gbhjapan-GSPREAD_ID=${{ secrets.GBHJAPAN_GSPREAD_ID }}
+          ssilkr-ACCESS_TOKEN=${{ secrets.SSILKR_ACCESS_TOKEN }}
+          ssilkr-GSPREAD_ID=${{ secrets.SSILKR_GSPREAD_ID }}
+          rohseoul-ACCESS_TOKEN=${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          rohseoul-GSPREAD_ID=${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
+          lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+          alvanas-ACCESS_TOKEN=${{ secrets.ALVANAS_ACCESS_TOKEN }}
+          alvanas-GSPREAD_ID=${{ secrets.ALVANAS_GSPREAD_ID }}
+          apricot-studios-ACCESS_TOKEN=${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
+          archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+          EOF
+
+      - name: Export products to CSV
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          python export_products_to_csv.py
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
+
