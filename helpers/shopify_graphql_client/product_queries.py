@@ -108,9 +108,14 @@ class ProductQueries:
             }
           }
         }
-        """ % (PAGE_SIZE, sort_key, reverse_str, additional_fields_str)
+        """ % (
+            PAGE_SIZE,
+            sort_key,
+            reverse_str,
+            additional_fields_str,
+        )
 
-        logger.info(
+        logger.debug(
             f"商品情報の取得を開始。クエリ: {query_string if query_string else 'なし（全商品）'}"
         )
 
@@ -134,7 +139,7 @@ class ProductQueries:
             if has_next_page:
                 logger.debug(f"次のページを取得中... (cursor: {cursor})")
 
-        logger.info(f"商品情報の取得が完了。合計: {len(all_products)}件")
+        logger.debug(f"商品情報の取得が完了。合計: {len(all_products)}件")
         return all_products
 
     def products_by_query_all(
@@ -212,7 +217,12 @@ class ProductQueries:
             }
           }
         }
-        """ % (PAGE_SIZE, sort_key, reverse_str, additional_fields_str)
+        """ % (
+            PAGE_SIZE,
+            sort_key,
+            reverse_str,
+            additional_fields_str,
+        )
 
         logger.info(
             f"商品情報の取得を開始。クエリ: {query_string if query_string else 'なし（全商品）'}"
