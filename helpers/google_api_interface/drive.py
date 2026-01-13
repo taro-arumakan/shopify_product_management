@@ -2,7 +2,7 @@ import io
 import os
 import re
 import logging
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -141,3 +141,19 @@ class GoogleDriveApiInterface:
             .execute()
         )
         return results["files"]
+
+    def upload_to_drive(self, filepath, folder_id):
+        """upload a local file to Google Drive folder"""
+        media = MediaIoBaseUpload(
+            open(filepath, "rb"), mimetype="text/csv", resumable=True
+        )
+        f = (
+            self.drive_service.files()
+            .create(
+                body={"name": os.path.basename(filepath), "parents": [folder_id]},
+                media_body=media,
+                fields="id",
+            )
+            .execute()
+        )
+        logger.info(f"Uploaded: {f.get('id')}")
