@@ -20,26 +20,26 @@ class BlossomClient(BrandClientBase):
             title=string.ascii_lowercase.index("a"),
             tags=string.ascii_lowercase.index("b"),
             series_name=string.ascii_lowercase.index("c"),
-            price=string.ascii_lowercase.index("e"),
-            description=string.ascii_lowercase.index("g"),
-            product_care=string.ascii_lowercase.index("h"),
-            material=string.ascii_lowercase.index("i"),
-            size_text=string.ascii_lowercase.index("j"),
-            made_in=string.ascii_lowercase.index("k"),
+            price=string.ascii_lowercase.index("f"),
+            description=string.ascii_lowercase.index("h"),
+            product_care=string.ascii_lowercase.index("j"),
+            material=string.ascii_lowercase.index("k"),
+            size_text=string.ascii_lowercase.index("l"),
+            made_in=string.ascii_lowercase.index("m"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("l")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("n")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("m"),
+            drive_link=string.ascii_lowercase.index("o"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("n")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("p")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("o"),
-            stock=string.ascii_lowercase.index("p"),
+            sku=string.ascii_lowercase.index("q"),
+            stock=string.ascii_lowercase.index("r"),
         )
         return option2_attrs
 
@@ -130,12 +130,14 @@ class BlossomClient(BrandClientBase):
 
     def create_series_collection(self, series_name):
         try:
-            collection = self.collection_by_title(series_name)
+            self.collection_by_title(series_name)
             logger.info(f"Collection for series '{series_name}' already exists.")
         except RuntimeError as e:
             if str(e).startswith("No collections found for "):
-                logger.info(f'Creating collection for series "{series_name}"')
-                collection = self.collection_create_by_metafield_value(
+                logger.info(
+                    f'Creating and publishing collection for series "{series_name}"'
+                )
+                self.collection_create_by_metafield_value(
                     collection_title=series_name,
                     namespace="custom",
                     key="series_name",
@@ -143,7 +145,6 @@ class BlossomClient(BrandClientBase):
                 )
             else:
                 raise e
-        self.publish_by_product_or_collection_id(collection["id"])
 
     def process_series_products(self, series_name, products):
         self.create_series_collection(series_name)
@@ -165,27 +166,28 @@ class BlossomClientShoes(BlossomClient):
     def product_attr_column_map(self):
         return dict(
             title=string.ascii_lowercase.index("b"),
-            tags=string.ascii_lowercase.index("c"),
-            price=string.ascii_lowercase.index("e"),
-            description=string.ascii_lowercase.index("g"),
+            series=string.ascii_lowercase.index("c"),
+            tags=string.ascii_lowercase.index("d"),
+            price=string.ascii_lowercase.index("f"),
+            description=string.ascii_lowercase.index("h"),
             product_care=string.ascii_lowercase.index("j"),
-            material=string.ascii_lowercase.index("k"),
-            size_text=string.ascii_lowercase.index("l"),
-            made_in=string.ascii_lowercase.index("m"),
+            material=string.ascii_lowercase.index("l"),
+            size_text=string.ascii_lowercase.index("m"),
+            made_in=string.ascii_lowercase.index("n"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("n")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("o")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("o"),
+            drive_link=string.ascii_lowercase.index("p"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("p")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("q")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("q"),
-            stock=string.ascii_lowercase.index("r"),
+            sku=string.ascii_lowercase.index("r"),
+            stock=string.ascii_lowercase.index("s"),
         )
         return option2_attrs
 
