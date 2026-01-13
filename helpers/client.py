@@ -121,10 +121,8 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         logger.info("updating inventory")
         location_id = self.location_id_by_name(location_name)
         sku_stock_map = {}
-        [
+        for product_info in product_info_list:
             sku_stock_map.update(self.get_sku_stocks_map(product_info))
-            for product_info in product_info_list
-        ]
         return [
             self.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
             for sku, stock in sku_stock_map.items()
