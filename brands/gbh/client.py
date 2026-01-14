@@ -101,7 +101,7 @@ class GbhClient(BrandClientBase):
 
     def get_size_field(self, product_info):
         if self.use_simple_size_format:
-            return self.escape_html(product_info['size_text'])
+            return self.escape_html(product_info["size_text"])
         else:
             return self.formatted_size_text_to_html_table(product_info["size_text"])
 
@@ -218,6 +218,18 @@ class GbhClientSizeOptionOnly(GbhClient):
 
     def get_tags(self, product_info, additional_tags=None):
         return []
+
+
+class GbhHomeClient(GbhClient):
+    def product_attr_column_map(self):
+        res = super().product_attr_column_map()
+        res.pop("price")
+        return res
+
+    def option2_attr_column_map(self):
+        res = super().option2_attr_column_map()
+        res.update(price=string.ascii_lowercase.index("d"))
+        return res
 
 
 class GbhCosmeticClient(GbhClient):
