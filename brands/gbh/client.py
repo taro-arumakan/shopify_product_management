@@ -17,6 +17,10 @@ class GbhClient(BrandClientBase):
     LOCATIONS = ["Shop location"]
     PRODUCT_SHEET_START_ROW = 1
 
+    def __init__(self, use_simple_size_format=False):
+        super().__init__()
+        self.use_simple_size_format = use_simple_size_format
+
     def product_attr_column_map(self):
         return dict(
             title=string.ascii_lowercase.index("a"),
@@ -96,7 +100,10 @@ class GbhClient(BrandClientBase):
         )
 
     def get_size_field(self, product_info):
-        return self.formatted_size_text_to_html_table(product_info["size_text"])
+        if self.use_simple_size_format:
+            return self.escape_html(product_info['size_text'])
+        else:
+            return self.formatted_size_text_to_html_table(product_info["size_text"])
 
 
 class GbhClientColorOptionOnly(GbhClient):
