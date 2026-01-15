@@ -191,7 +191,7 @@ def get_product_rows(product, brand_name):
 def process(brand, folder_id):
     logger.info(f"Processing {brand}...")
     client = utils.client(brand)
-    products = client.products_by_query_all(additional_fields=["descriptionHtml"])
+    products = client.products_by_query(additional_fields=["descriptionHtml"])
 
     filepath = os.path.join(
         "/tmp/exports", f"{brand}_products_{datetime.now():%Y%m%d}.csv"
