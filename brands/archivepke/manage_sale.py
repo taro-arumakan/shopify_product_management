@@ -15,20 +15,17 @@ def start_end_discounts(testrun=True, start_or_end="end"):
         "OVBRX25102BLK",
     ]
 
-    product_ids = {client.product_id_by_sku(sku) for sku in skus}
-    products = [client.product_by_id(pid) for pid in product_ids]
+    variants = [client.variant_by_sku(sku) for sku in skus]
 
     if start_or_end == "end":
-        client.revert_product_prices(products, testrun=testrun)
+        client.revert_variant_prices(variants, testrun=testrun)
     else:
         new_prices_by_variant_id = {
             v["id"]: int(int(v["compareAtPrice"] or v["price"]) * 0.85)
-            for p in products
-            for v in p["variants"]["nodes"]
-            if v["sku"] in skus
+            for v in variants
         }
-        client.update_product_prices_by_dict(
-            products, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
+        client.update_variant_prices_by_dict(
+            variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
         )
 
 
