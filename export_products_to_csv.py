@@ -188,38 +188,36 @@ def get_product_rows(product, brand_name):
     return rows
 
 
-def process_brands(folder_id=None):
-    os.makedirs("exports", exist_ok=True)
-    results = {}
+def process(brand, folder_id):
+    logger.info(f"Processing {brand}...")
+    client = utils.client(brand)
+    products = client.products_by_query_all(additional_fields=["descriptionHtml"])
 
+    filepath = os.path.join(
+        "/tmp/exports", f"{brand}_products_{datetime.now():%Y%m%d}.csv"
+    )
+
+    with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=SHOPIFY_COLS, extrasaction="ignore")
+        writer.writeheader()
+        for p in products:
+            writer.writerows(get_product_rows(p, brand))
+
+    logger.info(f"Saved: {filepath}")
+    if folder_id:
+        client.upload_to_drive(filepath, folder_id)
+
+
+def process_brands(folder_id=None):
+    os.makedirs("/tmp/exports", exist_ok=True)
+    results = {}
     for brand in ALL_BRANDS:
         try:
-            logger.info(f"Processing {brand}...")
-            client = utils.client(brand)
-            products = client.products_by_query_all(
-                additional_fields=["descriptionHtml"]
-            )
-
-            filepath = os.path.join(
-                "exports", f"{brand}_products_{datetime.now():%Y%m%d}.csv"
-            )
-
-            with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
-                writer = csv.DictWriter(
-                    f, fieldnames=SHOPIFY_COLS, extrasaction="ignore"
-                )
-                writer.writeheader()
-                for p in products:
-                    writer.writerows(get_product_rows(p, brand))
-
-            logger.info(f"Saved: {filepath}")
-            if folder_id:
-                client.upload_to_drive(client, filepath, folder_id)
+            process(brand, folder_id)
             results[brand] = "Success"
         except Exception as e:
             logger.error(f"Error {brand}: {e}")
             results[brand] = str(e)
-
     return results
 
 
