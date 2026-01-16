@@ -92,6 +92,9 @@ class ProductQueries:
                       value
                     }
                   }
+                  product {
+                    id
+                  }
                 }
               }
               media(first: 100) {

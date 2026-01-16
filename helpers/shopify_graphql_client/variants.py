@@ -1,4 +1,3 @@
-import copy
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,7 +26,7 @@ class Variants:
         )
         res = self.run_query(query, variables)
         if errors := res["productVariantsBulkUpdate"]["userErrors"]:
-            raise RuntimeError(f"Product variants creation failed: {errors}")
+            raise RuntimeError(f"Product variants update failed: {errors}")
         return res["productVariantsBulkUpdate"]
 
     def update_variant_attributes(
@@ -58,13 +57,55 @@ class Variants:
             variables=variables, fields=attribute_names
         )
 
+    def update_variant_sku_by_variant_id(self, product_id, variant_ids, skus):
+        assert len(variant_ids) == len(
+            skus
+        ), "variant_ids and skus must have the same length"
+        variables = {
+            "productId": product_id,
+            "variants": [
+                {
+                    "id": variant_id,
+                    "inventoryItem": {
+                        "sku": sku,
+                    },
+                }
+                for variant_id, sku in zip(variant_ids, skus)
+            ],
+        }
+        return self.run_variants_bulk_update(
+            variables=variables, return_fields=["inventoryItem { sku }"]
+        )
+
+    def update_variant_inventory_track_by_variant_id(
+        self, product_id, variant_ids, inventory_track_tfs
+    ):
+        assert len(variant_ids) == len(
+            inventory_track_tfs
+        ), "variant_ids and inventory_track_tfs must have the same length"
+        variables = {
+            "productId": product_id,
+            "variants": [
+                {
+                    "id": variant_id,
+                    "inventoryItem": {
+                        "tracked": tf,
+                    },
+                }
+                for variant_id, tf in zip(variant_ids, inventory_track_tfs)
+            ],
+        }
+        return self.run_variants_bulk_update(
+            variables=variables, return_fields=["inventoryItem { tracked }"]
+        )
+
     def update_variant_barcode_by_sku(self, sku, barcode):
         variant = self.variant_by_sku(sku)
         return self.update_variant_attributes(
             variant["product"]["id"], variant["id"], ["barcode"], [barcode]
         )
 
-    def update_variant_hs_code(self, product_id, hs_code, korean_hs_code):
+    def update_variants_hs_code(self, product_id, hs_code, korean_hs_code):
         variants = self.product_variants_by_product_id(product_id)
         variables = {
             "productId": self.sanitize_id(product_id),
@@ -193,50 +234,3 @@ class Variants:
                 f"Failed to remove variants: {res['productVariantsBulkDelete']['userErrors']}"
             )
         return res
-
-    def update_variant_prices_by_dict(
-        self, variants, new_prices_by_variant_id, testrun=True
-    ):
-        # TODO: optimize bulk update - merge with update_variant_prices_by_variant_ids in product_attributes.py
-        if testrun:
-            logger.info("\n\nTest run mode - no prices will be updated\n\n")
-        for v in variants:
-            current_price = int(v["price"])
-            new_price = new_prices_by_variant_id[v["id"]]
-            compare_at_price = v["compareAtPrice"] or v["price"]
-            logger.info(
-                f"Updating price of {v['displayName']} from {current_price} to {new_price}"
-            )
-            if not testrun:
-                self.update_variant_attributes(
-                    product_id=v["product"]["id"],
-                    variant_id=v["id"],
-                    attribute_names=["price", "compareAtPrice"],
-                    attribute_values=[str(new_price), str(compare_at_price)],
-                )
-
-    def _product_to_variants(self, product):
-        variants = copy.deepcopy(product["variants"]["nodes"])
-        for v in variants:
-            v.setdefault("product", {})["id"] = product["id"]
-        return variants
-
-    def update_product_prices_by_dict(
-        self, products, new_prices_by_variant_id, testrun=True
-    ):
-        variants = sum([self._product_to_variants(p) for p in products], [])
-        return self.update_variant_prices_by_dict(
-            variants=variants,
-            new_prices_by_variant_id=new_prices_by_variant_id,
-            testrun=testrun,
-        )
-
-    def revert_variant_prices(self, variants, testrun=True):
-        new_prices_by_variant_id = {v["id"]: int(v["compareAtPrice"]) for v in variants}
-        return self.update_variant_prices_by_dict(
-            variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
-        )
-
-    def revert_product_prices(self, products, testrun=True):
-        variants = sum([self._product_to_variants(p) for p in products], [])
-        return self.revert_variant_prices(variants, testrun=testrun)
