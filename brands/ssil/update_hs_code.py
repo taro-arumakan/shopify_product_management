@@ -157,4 +157,4 @@ for sku, korean_hs_code in sku_code_map.items():
         hs_code = korean_hs_code.split("-")[0].replace(".", "")
         korean_hs_code = korean_hs_code.replace("-", "").replace(".", "")
         print(f"Updating HS code for SKU {sku}: {hs_code} / {korean_hs_code}")
-        client.update_variant_hs_code(product_id, hs_code, korean_hs_code)
+        client.update_variants_hs_code(product_id, hs_code, korean_hs_code)
