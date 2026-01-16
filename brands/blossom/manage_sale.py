@@ -18,3 +18,12 @@ def start_end_discounts(testrun=True, start_or_end="end"):
         client.update_product_prices_by_dict(
             products, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
         )
+
+
+def main():
+    start_end_discounts(testrun=False, start_or_end="start")
+    # start_end_discounts(testrun=False, start_or_end="end")
+
+
+if __name__ == "__main__":
+    main()
