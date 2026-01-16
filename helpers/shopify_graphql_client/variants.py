@@ -1,3 +1,4 @@
+import code
 import copy
 import logging
 
@@ -5,13 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class Variants:
-    def update_variant_attributes(
-        self, product_id, variant_id, attribute_names, attribute_values, sku=None
-    ):
-        assert len(attribute_names) == len(
-            attribute_values
-        ), "attribute_names and attribute_values must have the same length"
-
+    def run_variants_bulk_update(self, variables, return_fields: list[str]):
         query = """
         mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
             productVariantsBulkUpdate(productId: $productId, variants: $variants) {
@@ -29,8 +24,21 @@ class Variants:
             }
         }
         """ % "\n".join(
-            attribute_names
+            return_fields
         )
+        res = self.run_query(query, variables)
+        if errors := res["productVariantsBulkUpdate"]["userErrors"]:
+            raise RuntimeError(f"Product variants creation failed: {errors}")
+        return res["productVariantsBulkUpdate"]
+
+    def update_variant_attributes(
+        self, product_id, variant_id, attribute_names, attribute_values, sku=None
+    ):
+        assert len(attribute_names) == len(
+            attribute_values
+        ), "attribute_names and attribute_values must have the same length"
+
+        attribute_names
         variables = {
             "productId": self.sanitize_id(product_id),
             "variants": [
@@ -47,13 +55,53 @@ class Variants:
         }
         if sku:
             variables["variants"][0].setdefault("inventoryItem", {})["sku"] = sku
-        res = self.run_query(query, variables)
-        return res["productVariantsBulkUpdate"]
+        return self.run_variants_bulk_update(
+            variables=variables, fields=attribute_names
+        )
 
     def update_variant_barcode_by_sku(self, sku, barcode):
         variant = self.variant_by_sku(sku)
         return self.update_variant_attributes(
             variant["product"]["id"], variant["id"], ["barcode"], [barcode]
+        )
+
+    def update_variant_hs_code(self, product_id, hs_code, korean_hs_code):
+        variants = self.product_variants_by_product_id(product_id)
+        variables = {
+            "productId": self.sanitize_id(product_id),
+            "variants": [
+                {
+                    "id": v["id"],
+                    "inventoryItem": {
+                        "harmonizedSystemCode": hs_code,
+                        "countryHarmonizedSystemCodes": [
+                            {
+                                "countryCode": "KR",
+                                "harmonizedSystemCode": korean_hs_code,
+                            }
+                        ],
+                    },
+                }
+                for v in variants
+            ],
+        }
+        return_fields = [
+            """
+            inventoryItem {
+                harmonizedSystemCode
+                countryHarmonizedSystemCodes(first: 5) {
+                    edges {
+                        node {
+                            countryCode
+                            harmonizedSystemCode
+                        }
+                    }
+                }
+            }
+            """
+        ]
+        return self.run_variants_bulk_update(
+            variables=variables, return_fields=return_fields
         )
 
     def product_variants_bulk_create(self, product_id, variants):
