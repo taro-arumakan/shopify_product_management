@@ -108,6 +108,11 @@ class GbhClient(BrandClientBase):
 
 class GbhClientColorOptionOnly(GbhClient):
 
+    def product_attr_column_map(self):
+        res = super().product_attr_column_map()
+        res.update(product_remarks=string.ascii_lowercase.index("p"))
+        return res
+
     def option1_attr_column_map(self):
         option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
         option1_attrs.update(
@@ -224,6 +229,7 @@ class GbhHomeClient(GbhClient):
     def product_attr_column_map(self):
         res = super().product_attr_column_map()
         res.pop("price")
+        res.update(product_remarks=string.ascii_lowercase.index("q"))
         return res
 
     def option2_attr_column_map(self):
