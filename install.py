@@ -10,7 +10,6 @@ import dotenv
 # --- CONFIGURATION ---
 # Use the 'Client ID' and 'Client Secret' from Settings -> Credentials
 dotenv.load_dotenv(override=True)
-SHOP_NAME = "quickstart-6f3c9e4c.myshopify.com"
 CLIENT_ID = os.environ["APP_CLIENT_ID"]
 API_SECRET = os.environ["APP_SECRET"]
 
