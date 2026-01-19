@@ -11,7 +11,7 @@ class CollectionQueries:
         query ProductsByCollection ($id: ID!) {
             collection(id: $id) {
                 handle
-                products(first: 50) {
+                products(first: 100) {
                     nodes {
                         title,
                         id,
