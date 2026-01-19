@@ -104,16 +104,23 @@ class GoogleSheetsApiInterface:
                 assert isinstance(
                     v, str
                 ), f"expected str for {column_name}, got {type(v)}: {v}"
-                if self.should_remove_empty_charactoers(column_name):
+                if self.should_remove_empty_characters(column_name):
                     v = " ".join(v.strip().split())
                 else:
                     v = v.strip()
         return v
 
-    def should_remove_empty_charactoers(self, column_name):
+    def should_remove_empty_characters(self, column_name):
         return all(
             s not in column_name
-            for s in ["description", "material", "product_care", "size_text", "image"]
+            for s in [
+                "description",
+                "material",
+                "product_care",
+                "size_text",
+                "image",
+                "product_remarks",
+            ]
         )
 
     def get_sheet_index_by_title(self, sheet_id, sheet_title):
