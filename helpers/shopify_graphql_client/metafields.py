@@ -127,6 +127,11 @@ class Metafields:
             product_id, "custom", "product_care", json.dumps(product_care)
         )
 
+    def update_product_remarks_metafield(self, product_id, remarks):
+        return self.update_product_metafield(
+            product_id, "custom", "product_remarks", json.dumps(remarks)
+        )
+
     def update_size_table_html_metafield(self, product_id, html_text):
         return self.update_product_metafield(
             product_id, "custom", "size_table_html", html_text
