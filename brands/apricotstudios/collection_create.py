@@ -29,10 +29,7 @@ def get_product_ids_from_skus(client, skus):
     product_ids = set()
     
     for sku in skus:
-        try:
-            product_ids.add(client.product_id_by_sku(sku))
-        except NoVariantsFoundException:
-            logging.warning(f"SKU not found: {sku}")
+        product_ids.add(client.product_id_by_sku(sku))
     
     return product_ids
 
@@ -40,15 +37,12 @@ def get_product_ids_from_skus(client, skus):
 def add_tag_to_products(client, product_ids, tag):
     """商品にタグを追加"""
     for product_id in product_ids:
-        try:
-            product = client.product_by_id(product_id)
-            tags = product["tags"]
-            if tag not in tags:
-                tags = tags + [tag]
-                client.update_product_tags(product_id, ",".join(tags))
-                logging.info(f"Added tag '{tag}' to product {product_id}")
-        except Exception as e:
-            logging.error(f"Error adding tag to product {product_id}: {e}")
+        product = client.product_by_id(product_id)
+        tags = product["tags"]
+        if tag not in tags:
+            tags = tags + [tag]
+            client.update_product_tags(product_id, ",".join(tags))
+            logging.info(f"Added tag '{tag}' to product {product_id}")
 
 
 def main():
@@ -69,7 +63,6 @@ def main():
     all_product_ids = set()
     for discount_rate, skus in discount_groups.items():
         product_ids = get_product_ids_from_skus(client, skus)
-        print(product_ids)
         all_product_ids.update(product_ids)
         
         add_tag_to_products(client, product_ids, "2026 Season Off Sale")
