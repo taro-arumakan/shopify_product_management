@@ -189,16 +189,11 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         )
         self.assign_image_to_skus(product_id, uploaded_variant_media["id"], skus)
 
-    def check_size_texts(
-        self, product_info_list, text_to_html_func=None, raise_on_error=True
-    ):
+    def check_size_texts(self, product_info_list, raise_on_error=True):
         res = []
         for product_info in product_info_list:
             try:
-                if hasattr(self, "get_size_field"):
-                    size_text = self.get_size_field(product_info)
-                else:
-                    text_to_html_func(product_info["size_text"])
+                size_text = self.get_size_field(product_info)
             except Exception as e:
                 m = f"Error formatting size text for {product_info['title']}: {e}"
                 if raise_on_error:
@@ -258,7 +253,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 res.append(f"Existing product found by {checking}: {param}")
         return res
 
-    def sanity_check_product_info_list(self, product_info_list, text_to_html_func=None):
+    def sanity_check_product_info_list(self, product_info_list):
         res = []
         try:
             self.check_sku_duplicates(product_info_list)
@@ -267,9 +262,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             res.append(e1)
         res = self.check_existing_skus(product_info_list)
         res += self.check_existing_products(product_info_list)
-        res += self.check_size_texts(
-            product_info_list, text_to_html_func, raise_on_error=False
-        )
+        res += self.check_size_texts(product_info_list, raise_on_error=False)
         for r in res:
             logger.error(r)
 

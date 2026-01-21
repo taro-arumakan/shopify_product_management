@@ -151,7 +151,7 @@ class SsilClient(BrandClientBase):
             rows.append(row_values)
         return super().generate_table_html(headers, rows)
 
-    def sanity_check_product_info_list(self, product_info_list, text_to_html_func):
+    def sanity_check_product_info_list(self, product_info_list):
         for pi in product_info_list:
             try:
                 self.formatted_material_text_to_html_table(pi["material"])
@@ -159,9 +159,7 @@ class SsilClient(BrandClientBase):
                 print(
                     f"failed parsing material text of {pi['title']}: {pi['material']}\n{e}"
                 )
-        return super().sanity_check_product_info_list(
-            product_info_list, text_to_html_func=text_to_html_func
-        )
+        return super().sanity_check_product_info_list(product_info_list)
 
     def post_process_product_info_list_to_products(self, product_info_list):
         pass

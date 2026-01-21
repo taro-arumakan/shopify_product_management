@@ -137,20 +137,14 @@ class BrandClientBase(Client):
             product_title, location_names=self.LOCATIONS
         )
 
-    def sanity_check_sheet(
-        self, sheet_name, handle_suffix=None, text_to_html_func=None
-    ):
+    def sanity_check_sheet(self, sheet_name, handle_suffix=None):
         product_info_list = self.product_info_list_from_sheet(
             sheet_name, handle_suffix=handle_suffix
         )
         logger.info(
             f"Sanity checking {len(product_info_list)} products from sheet {sheet_name}"
         )
-        return self.sanity_check_product_info_list(
-            product_info_list,
-            text_to_html_func=text_to_html_func
-            or self.formatted_size_text_to_html_table,
-        )
+        return self.sanity_check_product_info_list(product_info_list)
 
     def has_existing_unfulfilled_orders(self, product_title):
         products = self.products_by_title(product_title)

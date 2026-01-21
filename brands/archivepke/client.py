@@ -53,9 +53,8 @@ class ArchivepkeClient(BrandClientBase):
             description=product_info["description"],
             product_care=product_care,
             material=product_info["material"],
-            size_text=product_info["size_text"],
+            size_html=self.get_size_field(product_info),
             made_in=product_info["made_in"],
-            get_size_table_html_func=self.get_size_table_html,
         )
 
     def get_tags(self, product_info, additional_tags=None):
