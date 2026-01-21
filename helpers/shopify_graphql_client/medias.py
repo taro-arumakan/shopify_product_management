@@ -51,20 +51,48 @@ class Medias:
         res = self.run_query(query, variables)
         return res["product"]["media"]["nodes"]
 
+    def check_media_spacing(self, product_id):
+        all_variants = self.product_variants_by_product_id(product_id)
+        all_medias = self.medias_by_product_id(product_id)  # sorted by position
+        for v in all_variants:
+            logger.info(
+                f"media url for {v['displayName']}: {v['media']['nodes'][0]['image']['url']}"
+            )
+        all_media_ids = [m["id"] for m in all_medias]
+        all_media_start_positions = sorted(
+            set(
+                [
+                    all_media_ids.index(variant["media"]["nodes"][0]["id"])
+                    for variant in all_variants
+                ]
+                + [len(all_medias)]
+            )
+        )
+        logger.info("All media URLs:")
+        for idx, media in enumerate(all_medias):
+            logger.info(
+                f"{media['image']['url']}{' *' if idx in all_media_start_positions else ''}"
+            )
+
+        if not is_evenly_spaced_stdev(all_media_start_positions):
+            error_message = f"media start positions are not evenly spaced: {all_media_start_positions}"
+            error_message += "\nAll media URLs:"
+            for media in all_medias:
+                error_message += f"\n{media['image']['url']}"
+            for v in all_variants:
+                error_message += f"\nmedia url for {v['displayName']}: {v['media']['nodes'][0]['image']['url']}"
+            raise RuntimeError(error_message)
+
     def medias_by_variant_id(self, variant_id):
         product_id = self.product_id_by_variant_id(variant_id)
         all_medias = self.medias_by_product_id(product_id)  # sorted by position
         all_media_ids = [m["id"] for m in all_medias]
         all_variants = self.product_variants_by_product_id(product_id)
-        # assert all(check_rohseoul_media(variant['sku'], variant['media']['nodes']) for variant in all_variants), f'suspicious media found in variants of {product_id}: {all_variants}'
         target_variant = [v for v in all_variants if v["id"] == variant_id]
         assert (
             len(target_variant) == 1
         ), f"{'No' if not target_variant else 'Multiple'} target variants: target_variants"
         target_variant = target_variant[0]
-        # if not target_variant['media']['nodes']:
-        #     variant = self.variant_by_variant_id(variant_id)
-        #     return [media for media in all_medias if variant['sku'] in media['image']['url']]
         target_media_start_position = all_media_ids.index(
             target_variant["media"]["nodes"][0]["id"]
         )
