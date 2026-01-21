@@ -129,9 +129,7 @@ def main():
     #         break
     # product_info_list = product_info_list[index:]
     # product_info_list = [pi for pi in product_info_list if pi['title'] == 'DESTINATION UNKNOWN L/S TEE']
-    c.sanity_check_product_info_list(
-        product_info_list, c.formatted_size_text_to_html_table
-    )
+    c.sanity_check_product_info_list(product_info_list)
     for product_info in product_info_list:
         create_a_product(
             c, product_info_list, vendor="liberaiders", locations=[location]

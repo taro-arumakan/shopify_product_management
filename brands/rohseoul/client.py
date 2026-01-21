@@ -56,8 +56,8 @@ class RohseoulClient(BrandClientBase):
             product_info["description"],
             product_care,
             product_info["material"],
-            product_info["size_text"],
-            product_info["made_in"],
+            size_html=self.get_size_field(product_info),
+            made_in=product_info["made_in"],
         )
 
     def get_tags(self, product_info, additional_tags=None):
