@@ -50,10 +50,10 @@ class ArchiveAndRemoveVariant:
         self.remove_product_variants(archiving_product_id, variant_ids_to_remove)
 
     def archive_and_remove_variants(self, variant_ids, option_name="カラー"):
-        variants = [
+        variants_to_remove = [
             self.variant_by_variant_id(variant_id) for variant_id in variant_ids
         ]
-        product_ids = set([variant["product"]["id"] for variant in variants])
+        product_ids = set([variant["product"]["id"] for variant in variants_to_remove])
         assert len(product_ids) == 1, "All variants must belong to the same product"
         product_id = list(product_ids)[0]
 
@@ -79,7 +79,8 @@ class ArchiveAndRemoveVariant:
             self.update_product_status(product_id, "ARCHIVED")
 
         else:
-            for variant in variants:
+            self.check_media_spacing(product_id)
+            for variant in variants_to_remove:
                 logger.info(
                     f"Archiving variant ID: {variant['id']} to a new archive product"
                 )
@@ -92,7 +93,7 @@ class ArchiveAndRemoveVariant:
                 product_id, variant_ids_to_keep
             )
             self.remove_product_variants(product_id, variant_ids_to_remove)
-        for variant in variants:
+        for variant in variants_to_remove:
             self.disable_inventory_tracking_by_sku(variant["sku"])
 
     def archive_and_remove_variant_by_skus(self, skus, option_name="カラー"):
