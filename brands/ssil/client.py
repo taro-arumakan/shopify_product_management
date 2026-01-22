@@ -110,14 +110,16 @@ class SsilClient(BrandClientBase):
             self.update_product_metafield(
                 product_id, "custom", "size_text", json.dumps(size_text)
             )
-        product_care = self.text_to_simple_richtext(product_info["product_care"])
-        self.update_product_care_metafield(product_id, product_care)
-        material_text = self.material_text_to_htmll(product_info["material"])
-        self.update_product_metafield(
-            product_id, "custom", "material_html", material_text
-        )
+        if product_care := product_info.get("product_care"):
+            product_care = self.text_to_simple_richtext(product_care)
+            self.update_product_care_metafield(product_id, product_care)
+        if material_text := product_info.get("material"):
+            material_html = self.material_text_to_html(material_text)
+            self.update_product_metafield(
+                product_id, "custom", "material_html", material_html
+            )
 
-    def material_text_to_htmll(self, material_text):
+    def material_text_to_html(self, material_text):
         try:
             return self.formatted_material_text_to_html_table(material_text)
         except RuntimeError as e:
