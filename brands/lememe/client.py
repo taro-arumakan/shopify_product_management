@@ -121,9 +121,6 @@ class LememeClient(BrandClientBase):
                 product_id, variant_id, "custom", "filter_color", filter_color
             )
 
-    def remove_existing_new_badges(self):
-        self._remove_existing_new_badges()
-
 
 def main():
     client = LememeClient()

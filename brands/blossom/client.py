@@ -20,26 +20,26 @@ class BlossomClient(BrandClientBase):
             title=string.ascii_lowercase.index("a"),
             tags=string.ascii_lowercase.index("b"),
             series_name=string.ascii_lowercase.index("c"),
-            price=string.ascii_lowercase.index("f"),
-            description=string.ascii_lowercase.index("h"),
-            product_care=string.ascii_lowercase.index("j"),
-            material=string.ascii_lowercase.index("k"),
-            size_text=string.ascii_lowercase.index("l"),
-            made_in=string.ascii_lowercase.index("m"),
+            price=string.ascii_lowercase.index("e"),
+            description=string.ascii_lowercase.index("g"),
+            product_care=string.ascii_lowercase.index("i"),
+            material=string.ascii_lowercase.index("j"),
+            size_text=string.ascii_lowercase.index("k"),
+            made_in=string.ascii_lowercase.index("l"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("n")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("o"),
+            drive_link=string.ascii_lowercase.index("n"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("p")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("o")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("q"),
-            stock=string.ascii_lowercase.index("r"),
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
 
@@ -116,9 +116,6 @@ class BlossomClient(BrandClientBase):
                 "series_name",
                 series_name,
             )
-
-    def remove_existing_new_badges(self):
-        self._remove_existing_new_badges()
 
     def post_process_product_info_list_to_products(self, product_info_list):
         series_names = set(
@@ -237,36 +234,6 @@ class BlossomClientBags(BlossomClient):
 
     def option2_attr_column_map(self):
         return {}
-
-    def remove_new_badge_from_existing_products(self):
-        logger.info("Removing 'NEW' badge from existing products")
-        products = self.products_by_metafield("custom", "badges", "NEW")
-        for product in products:
-            logger.info(
-                f"Removing 'NEW' badge from {product['title']} (id: {product['id']})"
-            )
-            self.update_badges_metafield(product["id"], [])
-
-    def process_sheet_to_products(
-        self,
-        sheet_name,
-        additional_tags=None,
-        handle_suffix=None,
-        restart_at_product_name=None,
-        scheduled_time=None,
-        remove_new_badge=True,
-    ):
-        # remove'NEW'badge
-        if remove_new_badge:
-            self.remove_new_badge_from_existing_products()
-
-        super().process_sheet_to_products(
-            sheet_name,
-            additional_tags=additional_tags,
-            handle_suffix=handle_suffix,
-            restart_at_product_name=restart_at_product_name,
-            scheduled_time=scheduled_time,
-        )
 
 
 def main():
