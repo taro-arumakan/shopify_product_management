@@ -54,7 +54,7 @@ class Variants:
         if sku:
             variables["variants"][0].setdefault("inventoryItem", {})["sku"] = sku
         return self.run_variants_bulk_update(
-            variables=variables, fields=attribute_names
+            variables=variables, return_fields=attribute_names
         )
 
     def update_variant_sku_by_variant_id(self, product_id, variant_ids, skus):
