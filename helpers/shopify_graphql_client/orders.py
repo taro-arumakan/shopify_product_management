@@ -20,6 +20,7 @@ class Orders:
                 nodes {
                     id
                     name
+                    displayFinancialStatus
                     createdAt
                     processedAt%s
                     customer {
@@ -60,7 +61,10 @@ class Orders:
             query_string += f" AND created_at:>={created_after_date:%Y-%m-%d}"
         if open_only:
             query_string += " AND status:'open'"
-        return self.orders_by_query(query_string)
+        res = self.orders_by_query(query_string)
+        if open_only:
+            res = [o for o in res if o["displayFinancialStatus"] not in ["EXPIRED"]]
+        return res
 
     def orders_later_than(self, cutoff_datetime: datetime.datetime):
         if not cutoff_datetime.tzinfo:
