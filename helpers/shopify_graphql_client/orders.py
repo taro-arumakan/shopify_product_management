@@ -45,7 +45,7 @@ class Orders:
         self,
         sku,
         created_after_date: datetime.datetime = None,
-        unfulfilled_only: bool = False,
+        open_only: bool = False,
     ):
         query_string = f"sku:'{sku}'"
         if created_after_date:
@@ -58,8 +58,8 @@ class Orders:
                     zoneinfo.ZonInfo("Asia/Tokyo")
                 ).astimezone(zoneinfo.ZoneInfo("UTC"))
             query_string += f" AND created_at:>={created_after_date:%Y-%m-%d}"
-        if unfulfilled_only:
-            query_string += " AND fulfillment_status:'unfulfilled'"
+        if open_only:
+            query_string += " AND status:'open'"
         return self.orders_by_query(query_string)
 
     def orders_later_than(self, cutoff_datetime: datetime.datetime):

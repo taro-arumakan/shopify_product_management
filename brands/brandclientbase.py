@@ -152,7 +152,7 @@ class BrandClientBase(Client, SanityChecks):
         products = self.products_by_title(product_title)
         for product in products:
             for variant in product["variants"]["nodes"]:
-                orders = self.orders_by_sku(sku=variant["sku"], unfulfilled_only=True)
+                orders = self.orders_by_sku(sku=variant["sku"], open_only=True)
                 if orders:
                     return True
 
