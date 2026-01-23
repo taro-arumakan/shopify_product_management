@@ -10,6 +10,7 @@ def main():
         "Ridge shoulder bag",
     ]
     for title in titles:
+        assert not client.has_open_orders(title), f"Outstanding orders for {title}"
         client.merge_products_as_variants(title)
 
 

@@ -148,7 +148,7 @@ class BrandClientBase(Client, SanityChecks):
         )
         return self.sanity_check_product_info_list(product_info_list)
 
-    def has_existing_unfulfilled_orders(self, product_title):
+    def has_open_orders(self, product_title):
         products = self.products_by_title(product_title)
         for product in products:
             for variant in product["variants"]["nodes"]:
@@ -159,9 +159,9 @@ class BrandClientBase(Client, SanityChecks):
     def merge_existing_products_as_variants(self):
         product_titles = self.product_titles_with_multiple_products()
         for product_title in product_titles:
-            if self.has_existing_unfulfilled_orders(product_title):
+            if self.has_open_orders(product_title):
                 logger.info(
-                    f"skipping merging products with title {product_title} having unfulfilled orders"
+                    f"skipping merging products with title {product_title} having open orders"
                 )
             else:
                 logger.info(f"merging products with title {product_title} as variants")

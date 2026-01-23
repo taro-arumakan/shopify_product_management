@@ -73,6 +73,7 @@ class Publications:
         """
         publish the product immediately or at a scheduled time, and activate it
         """
+        product_id = self.sanitize_id(product_id)
         self.publish_by_product_or_collection_id(product_id, scheduled_time)
         self.update_product_status(product_id, "ACTIVE")
 
