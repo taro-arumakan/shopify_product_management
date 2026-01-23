@@ -1,6 +1,4 @@
-import json
 import logging
-import re
 import string
 import textwrap
 from brands.brandclientbase import BrandClientBase
@@ -22,24 +20,24 @@ class BlossomClient(BrandClientBase):
             series_name=string.ascii_lowercase.index("c"),
             price=string.ascii_lowercase.index("e"),
             description=string.ascii_lowercase.index("g"),
-            product_care=string.ascii_lowercase.index("i"),
-            material=string.ascii_lowercase.index("j"),
-            size_text=string.ascii_lowercase.index("k"),
-            made_in=string.ascii_lowercase.index("l"),
+            product_care=string.ascii_lowercase.index("h"),
+            material=string.ascii_lowercase.index("i"),
+            size_text=string.ascii_lowercase.index("j"),
+            made_in=string.ascii_lowercase.index("k"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("l")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("n"),
+            drive_link=string.ascii_lowercase.index("m"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("o")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("n")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("p"),
-            stock=string.ascii_lowercase.index("q"),
+            sku=string.ascii_lowercase.index("o"),
+            stock=string.ascii_lowercase.index("p"),
         )
         return option2_attrs
 
