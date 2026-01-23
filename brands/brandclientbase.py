@@ -3,12 +3,13 @@ import json
 import logging
 import pathlib
 import pandas as pd
+from brands.sanity_checks import SanityChecks
 from helpers.client import Client
 
 logger = logging.getLogger(__name__)
 
 
-class BrandClientBase(Client):
+class BrandClientBase(Client, SanityChecks):
     SHOPNAME = ""
     VENDOR = ""
     LOCATIONS = []
@@ -40,6 +41,7 @@ class BrandClientBase(Client):
         raise NotImplementedError
 
     def product_info_list_from_sheet(self, sheet_name, handle_suffix=None):
+        self.drive_link_cache = {}  # repopulate drive link cache
         return self.to_products_list(
             self.sheet_id,
             sheet_name,
@@ -189,6 +191,19 @@ class BrandClientBase(Client):
         if self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS:
             self.remove_existing_new_proudct_tags()
             self.remove_existing_new_badges()
+
+    def process_product_info_list_to_products(
+        self,
+        product_info_list,
+        additional_tags,
+        scheduled_time=None,
+        handle_suffix=None,
+    ):
+        for product_info in product_info_list:
+            self.create_product_from_product_info(product_info, additional_tags)
+            self.process_product_images(product_info, handle_suffix)
+        self.update_stocks(product_info_list)
+        self.publish_products(product_info_list, scheduled_time=scheduled_time)
 
     def colors_from_product_info_list(self, product_info_list):
         if "options" in product_info_list[0]:
