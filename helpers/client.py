@@ -1,4 +1,3 @@
-import collections
 import datetime
 import logging
 import os
@@ -7,11 +6,6 @@ import smtplib
 from email.message import EmailMessage
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
-from helpers.exceptions import (
-    NoVariantsFoundException,
-    NoProductsFoundException,
-    MultipleProductsFoundException,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -188,99 +182,6 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             product_id, file_names[0]
         )
         self.assign_image_to_skus(product_id, uploaded_variant_media["id"], skus)
-
-    def check_size_texts(self, product_info_list, raise_on_error=True):
-        res = []
-        for product_info in product_info_list:
-            try:
-                size_text = self.get_size_field(product_info)
-            except Exception as e:
-                m = f"Error formatting size text for {product_info['title']}: {e}"
-                if raise_on_error:
-                    logger.error(m)
-                    raise
-                else:
-                    res.append(m)
-            else:
-                if raise_on_error:
-                    print(size_text)
-        if not raise_on_error:
-            return res
-
-    def product_info_to_skus(self, product_info):
-        options = self.populate_option_dicts(product_info)
-        return [o["sku"] for o in options]
-
-    def check_sku_duplicates(self, product_info_list):
-        skus = sum([self.product_info_to_skus(pi) for pi in product_info_list], [])
-        counts_by_sku = collections.Counter(skus)
-        counts_by_sku = {
-            sku: count for sku, count in counts_by_sku.items() if count > 1
-        }
-        if counts_by_sku:
-            m = "\n".join(
-                ": ".join(map(str, [sku, count]))
-                for sku, count in counts_by_sku.items()
-            )
-            raise RuntimeError(f"Duplicate SKUs found:\n{m}")
-
-    def check_existing_skus(self, product_info_list):
-        res = []
-        for pi in product_info_list:
-            skus = self.product_info_to_skus(pi)
-            for sku in skus:
-                try:
-                    self.variant_by_sku(sku)
-                except NoVariantsFoundException:
-                    pass
-                else:
-                    res.append(f"Existing SKU found: {pi['title']} - {sku}")
-        return res
-
-    def check_existing_products(self, product_info_list):
-        res = []
-        for pi in product_info_list:
-            try:
-                checking = "handle" if "handle" in pi else "title"
-                func = getattr(self, f"product_by_{checking}")
-                param = pi[checking]
-                func(param)
-            except NoProductsFoundException:
-                pass
-            except MultipleProductsFoundException:
-                res.append(f"Existing product found by {checking}: {param}")
-            else:
-                res.append(f"Existing product found by {checking}: {param}")
-        return res
-
-    def sanity_check_product_info_list(self, product_info_list):
-        res = []
-        try:
-            self.check_sku_duplicates(product_info_list)
-        except RuntimeError as e1:
-            logger.error(e1)
-            res.append(e1)
-        res = self.check_existing_skus(product_info_list)
-        res += self.check_existing_products(product_info_list)
-        res += self.check_size_texts(product_info_list, raise_on_error=False)
-        for r in res:
-            logger.error(r)
-
-        if res:
-            raise RuntimeError("Failed sanity check")
-
-    def process_product_info_list_to_products(
-        self,
-        product_info_list,
-        additional_tags,
-        scheduled_time=None,
-        handle_suffix=None,
-    ):
-        for product_info in product_info_list:
-            self.create_product_from_product_info(product_info, additional_tags)
-            self.process_product_images(product_info, handle_suffix)
-        self.update_stocks(product_info_list)
-        self.publish_products(product_info_list, scheduled_time=scheduled_time)
 
     def send_email(self, subject: str, body: str, to_addrs: list[str]):
         smtp_host = os.getenv("SMTP_HOST")
