@@ -1,7 +1,6 @@
 import collections
 import logging
 from helpers.exceptions import (
-    NoVariantsFoundException,
     NoProductsFoundException,
     MultipleProductsFoundException,
 )
