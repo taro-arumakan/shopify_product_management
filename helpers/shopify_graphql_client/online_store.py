@@ -1,5 +1,8 @@
 import json
+import logging
 import re
+
+logger = logging.getLogger(__name__)
 
 
 class OnlineStore:
@@ -98,11 +101,53 @@ class OnlineStore:
             raise RuntimeError(f"Error getting page id for {page_title}: {res}")
         return res[0]["id"]
 
+    def url_redirects_by_query(self, query_string):
+        query = """
+        query urlRedirectsByQuery($query_string: String!) {
+            urlRedirects(first: 50, query: $query_string) {
+                nodes {
+                    id
+                    path
+                    target
+                }
+            }
+        }
+        """
+        variables = {"query_string": query_string}
+        res = self.run_query(query, variables)
+        return res["urlRedirects"]["nodes"]
+
+    def delete_url_redirect(self, redirect_id):
+        query = """
+        mutation urlRedirectDelete($id: ID!) {
+            urlRedirectDelete(id: $id) {
+                deletedUrlRedirectId
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        variables = {"id": redirect_id}
+        res = self.run_query(query, variables)
+        if res["urlRedirectDelete"]["userErrors"]:
+            raise RuntimeError(
+                f"Error deleting URL redirect: {res['urlRedirectDelete']['userErrors']}"
+            )
+        return res["urlRedirectDelete"]["deletedUrlRedirectId"]
+
     def create_url_redirect(self, from_path, to_path):
         for p in from_path, to_path:
             assert p.startswith(
                 "/"
             ), "from and to paths starting with a leading slash relative to the top domain are expected"
+
+        if exists := self.url_redirects_by_query(f"path:'{to_path}'"):
+            logger.info(f"Redirect exists at target {to_path}, deleting")
+            for r in exists:
+                self.delete_url_redirect(r["id"])
+
         query = """
         mutation urlRedirectCreate($input: UrlRedirectInput!) {
             urlRedirectCreate(urlRedirect: $input) {

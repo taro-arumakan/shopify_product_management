@@ -66,11 +66,13 @@ class MergeProductsAsVariants:
 
     def archive_product_handle(self, product):
         self.update_product_attribute(
-            product["id"], "handle", f"archived-{datetime.date.today():%Y%m%d}-{product['handle']}"
+            product["id"],
+            "handle",
+            f"archived-{datetime.date.today():%Y%m%d}-{product['handle']}",
         )
 
     def archive_product(self, product, new_product_handle=None):
-        logger.info(f"archiving {product['title']}")
+        logger.info(f"archiving {product['handle']}")
         self.update_product_status(product["id"], "ARCHIVED")
         for variant in product["variants"]["nodes"]:
             archived_sku = f"archived-{datetime.date.today():%Y%m%d}-{variant['sku']}"
@@ -101,7 +103,7 @@ class MergeProductsAsVariants:
             len(products) >= 2
         ), f"need at least 2 products to merge for title {product_title}"
         products = list(reversed(products))
-        logger.info(f"Merging {len(products)} products")
+        logger.info(f"Merging products:\n{"\n".join(p['handle'] for p in products)}")
         merged = self.duplicate_product(
             products[0]["id"],
             products[0]["title"],
