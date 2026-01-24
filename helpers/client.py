@@ -97,6 +97,10 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         )
         return (res, res2)
 
+    def product_info_to_skus(self, product_info):
+        options = self.populate_option_dicts(product_info)
+        return [o["sku"] for o in options]
+
     def enable_and_activate_inventory_by_product_info(
         self, product_info, location_names
     ):
