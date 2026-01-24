@@ -47,10 +47,9 @@ class GoogleSheetsApiInterface:
             sheet_row_num = index + start_row + 1
             update_list(res, product_attr_column_map, row, sheet_row_num)
             if handle_suffix is not None and "handle" not in res[-1]:
-                parts = res[-1]["title"].lower().split(" ")
-                if handle_suffix:  # allow passing of empty string
-                    parts.append(handle_suffix)
-                res[-1]["handle"] = "-".join(parts)
+                res[-1]["handle"] = self.product_title_to_handle(
+                    title=res[-1]["title"], handle_suffix=handle_suffix
+                )
             if option1_attr_column_map:
                 update_list(
                     res[-1].setdefault("options", []),
