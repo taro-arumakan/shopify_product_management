@@ -89,10 +89,8 @@ class BlossomClient(BrandClientBase):
         else:
             logger.warning(f"no size_text for {product_info['title']}")
 
-    def post_create_product_from_product_info(
-        self, create_product_from_product_info_res, product_info
-    ):
-        product_id = create_product_from_product_info_res[0]["id"]
+    def post_product_info_to_product(self, product_info_to_product_res, product_info):
+        product_id = product_info_to_product_res[0]["id"]
         self.update_metafields(product_id, product_info)
         return product_id
 
@@ -198,13 +196,9 @@ class BlossomClientShoes(BlossomClient):
         headers, values = zip(*(p.rsplit(" ", 1) for p in header_value_pairs))
         return BlossomClientShoes.generate_table_html(headers, [values])
 
-    def post_create_product_from_product_info(
-        self, create_product_from_product_info_res, product_info
-    ):
-        super().post_create_product_from_product_info(
-            create_product_from_product_info_res, product_info
-        )
-        product_id = create_product_from_product_info_res[0]["id"]
+    def post_product_info_to_product(self, product_info_to_product_res, product_info):
+        super().post_product_info_to_product(product_info_to_product_res, product_info)
+        product_id = product_info_to_product_res[0]["id"]
         self.update_product_theme_template(product_id, "shoes")
 
 

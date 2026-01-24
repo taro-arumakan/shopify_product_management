@@ -67,7 +67,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 logger.error(f"\n\n!!! missing images: {skus} !!!\n\n")
         return ress
 
-    def create_product_from_product_info(
+    def create_product_and_activate_inventory(
         self, product_info, vendor, description_html, tags, location_names
     ):
         logger.info(f'creating {product_info["title"]}')

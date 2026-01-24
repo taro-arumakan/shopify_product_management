@@ -96,10 +96,8 @@ class LememeClient(BrandClientBase):
         else:
             logger.warning(f"no size_text for {product_info['title']}")
 
-    def post_create_product_from_product_info(
-        self, create_product_from_product_info_res, product_info
-    ):
-        product_id = create_product_from_product_info_res[0]["id"]
+    def post_product_info_to_product(self, product_info_to_product_res, product_info):
+        product_id = product_info_to_product_res[0]["id"]
         self.update_metafields(product_id, product_info)
         return product_id
 

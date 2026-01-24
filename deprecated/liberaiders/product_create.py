@@ -54,7 +54,7 @@ def create_a_product(sgc: utils.Client, product_info, vendor, locations):
         # product_info.get("made_in", ""),
     )
     tags = product_info["tags"]
-    res = sgc.create_product_from_product_info(
+    res = sgc.create_product_and_activate_inventory(
         product_info, vendor, description_html, tags, locations
     )
     product_id = res[0]["id"]
