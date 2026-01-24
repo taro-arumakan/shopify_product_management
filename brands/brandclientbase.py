@@ -198,8 +198,8 @@ class BrandClientBase(Client, SanityChecks):
         handle_suffix=None,
     ):
         for product_info in product_info_list:
-            self.product_info_to_product(product_info, additional_tags)
-            self.process_product_images(product_info, handle_suffix)
+            self.product_info_to_product(product_info, additional_tags=additional_tags)
+            self.process_product_images(product_info, handle_suffix=handle_suffix)
         self.update_stocks(product_info_list)
         self.publish_products(product_info_list, scheduled_time=scheduled_time)
 

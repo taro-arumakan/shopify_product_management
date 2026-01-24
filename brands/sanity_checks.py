@@ -61,10 +61,6 @@ class SanityChecks:
                 )
         return res
 
-    def product_info_to_skus(self, product_info):
-        options = self.populate_option_dicts(product_info)
-        return [o["sku"] for o in options]
-
     def check_sku_duplicates(self, product_info_list):
         skus = sum([self.product_info_to_skus(pi) for pi in product_info_list], [])
         counts_by_sku = collections.Counter(skus)
