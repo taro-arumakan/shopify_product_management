@@ -58,21 +58,19 @@ class BrandClientBase(Client, SanityChecks):
     def get_size_field(self, product_info):
         raise NotImplementedError
 
-    def post_create_product_from_product_info(
-        self, create_product_from_product_info_res, product_info
-    ):
+    def post_product_info_to_product(self, product_info_to_product_res, product_info):
         pass
 
-    def create_product_from_product_info(self, product_info, additional_tags=None):
+    def product_info_to_product(self, product_info, additional_tags=None):
         logger.info(f'creating {product_info["title"]}')
-        res = super().create_product_from_product_info(
+        res = self.create_product_and_activate_inventory(
             product_info,
             self.VENDOR,
             description_html=self.get_description_html(product_info),
             tags=self.get_tags(product_info, additional_tags),
             location_names=self.LOCATIONS,
         )
-        return self.post_create_product_from_product_info(res, product_info)
+        return self.post_product_info_to_product(res, product_info)
 
     def segment_options_list_by_key_option(self, option_dicts):
         """
@@ -200,7 +198,7 @@ class BrandClientBase(Client, SanityChecks):
         handle_suffix=None,
     ):
         for product_info in product_info_list:
-            self.create_product_from_product_info(product_info, additional_tags)
+            self.product_info_to_product(product_info, additional_tags)
             self.process_product_images(product_info, handle_suffix)
         self.update_stocks(product_info_list)
         self.publish_products(product_info_list, scheduled_time=scheduled_time)
