@@ -9,18 +9,16 @@ color_code_map = {
 
 import logging
 import utils
-from brands.lememe.product_create import product_info_list_from_sheet
 
 logging.basicConfig(level=logging.INFO)
 
 
 def main():
     client = utils.client("lememek")
-    product_info_list = product_info_list_from_sheet(
-        client, client.sheet_id, "bags - launch"
-    )
-    for product_info in product_info_list:
-        for option in product_info["options"]:
+    product_inputs = client.product_inputs_by_sheet_name("bags - launch")
+
+    for product_input in product_inputs:
+        for option in product_input["options"]:
             sku = option["sku"]
             filter_color = option["filter_color"]
             variant = client.variant_by_sku(sku)

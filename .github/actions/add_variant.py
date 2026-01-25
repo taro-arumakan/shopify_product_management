@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Add variants to products from Google Sheet")
+    parser = argparse.ArgumentParser(
+        description="Add variants to products from Google Sheet"
+    )
     parser.add_argument(
         "--client",
         type=lambda s: s.lower(),
@@ -61,47 +63,56 @@ def main():
         client = ClientCls()
     elif client_name == "rohseoul":
         from brands.rohseoul.client import RohseoulClient as ClientCls
+
         client = ClientCls()
     elif client_name == "kume":
         from brands.kume.client import KumeClient as ClientCls
+
         client = ClientCls()
     elif client_name == "lememe":
         from brands.lememe.client import LememeClient as ClientCls
+
         client = ClientCls()
     elif client_name == "blossom":
         from brands.blossom.client import BlossomClient as ClientCls
+
         client = ClientCls()
     elif client_name == "apricot-studios":
         from brands.apricotstudios.client import ApricotStudiosClient as ClientCls
+
         client = ClientCls(None, None)
     elif client_name == "archivepke":
         from brands.archivepke.client import ArchivepkeClient as ClientCls
+
         client = ClientCls()
     else:
         logger.error(f"Unknown client name: {args.client}")
         sys.exit(1)
     logger.info(f"シートから商品情報を読み込み中: {args.sheet}")
-    product_info_list = client.product_info_list_from_sheet(args.sheet)
-    
-    if not product_info_list:
+    product_inputs = client.product_inputs_from_sheet(args.sheet)
+
+    if not product_inputs:
         logger.error(f"シートに商品が見つかりませんでした: {args.sheet}")
         sys.exit(1)
-    
-    logger.info(f"シート内に {len(product_info_list)} 件の商品が見つかりました")
-    
-    for i, product_info in enumerate(product_info_list):
-        logger.info(f"[{i+1}/{len(product_info_list)}] 商品のバリアントを追加中: {product_info['title']}")
+
+    logger.info(f"シート内に {len(product_inputs)} 件の商品が見つかりました")
+
+    for i, product_input in enumerate(product_inputs):
+        logger.info(
+            f"[{i+1}/{len(product_inputs)}] 商品のバリアントを追加中: {product_input['title']}"
+        )
         try:
-            client.add_variants_from_product_info(product_info)
-            logger.info(f"バリアントの追加が完了しました: {product_info['title']}")
+            client.add_variants_from_product_input(product_input)
+            logger.info(f"バリアントの追加が完了しました: {product_input['title']}")
         except Exception as e:
-            logger.error(f"バリアントの追加に失敗しました {product_info['title']}: {e}")
+            logger.error(
+                f"バリアントの追加に失敗しました {product_input['title']}: {e}"
+            )
             # エラーが発生しても次の商品の処理を続行
             continue
-    
+
     logger.info("全ての商品の処理が完了しました")
 
 
 if __name__ == "__main__":
     main()
-

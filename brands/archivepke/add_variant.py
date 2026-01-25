@@ -1,21 +1,16 @@
 import logging
 import utils
-from brands.archivepke.product_create import product_info_lists_from_sheet
 
 logging.basicConfig(level=logging.INFO)
 
 client = utils.client("archive-epke")
 
-product_info_list = product_info_lists_from_sheet(
-    client, client.sheet_id, "2025.7 SPOT Release"
-)
-product_info_list = [
-    pr for pr in product_info_list if pr["title"] == "Knotted layer bag"
-]
-product_info = product_info_list[0]
+product_inputs = client.product_inputs_by_sheet_name("2025.7 SPOT Release")
+product_inputs = [pr for pr in product_inputs if pr["title"] == "Knotted layer bag"]
+product_input = product_inputs[0]
 
-product_id = client.product_id_by_title(product_info["title"])
-drive_links, skuss = client.populate_drive_ids_and_skuss(product_info)
+product_id = client.product_id_by_title(product_input["title"])
+drive_links, skuss = client.populate_drive_ids_and_skuss(product_input)
 
 # res = client.add_product_images(
 #     product_id,
@@ -41,8 +36,8 @@ client.variants_add(
     [],
     [new_media_ids[0]],
     ["カラー", "サイズ"],
-    [[product_info["options"][0]["カラー"], "FREE"]],
-    [product_info["options"][0]["price"]],
-    [product_info["options"][0]["stock"]],
+    [[product_input["options"][0]["カラー"], "FREE"]],
+    [product_input["options"][0]["price"]],
+    [product_input["options"][0]["stock"]],
     client.location_id_by_name("Archivépke Warehouse"),
 )

@@ -1,3 +1,7 @@
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 import os
 import re
 import easyocr
@@ -5,13 +9,7 @@ import pytesseract
 from PIL import Image
 import utils
 from helpers.dropbox_utils import download_images_from_dropbox
-from brands.apricotstudios.product_create import (
-    product_info_list_from_sheet_color_and_size,
-)
 
-import logging
-
-logging.basicConfig(level=logging.INFO)
 
 LOCAL_ROOT = "/Users/taro/Downloads/apricotstudios_20250524"
 
@@ -130,15 +128,13 @@ def check_images():
 
 def download():
     client = utils.client("apricot-studios")
-    product_info_list = product_info_list_from_sheet_color_and_size(
-        client, client.sheet_id, "Products Master"
-    )
+    product_inputs = client.product_inputs_by_sheet_name("Products Master")
 
     os.makedirs(LOCAL_ROOT, exist_ok=True)
-    for product_info in product_info_list:
-        output_dir = f"{LOCAL_ROOT}/{product_info['title']}"
+    for product_input in product_inputs:
+        output_dir = f"{LOCAL_ROOT}/{product_input['title']}"
         download_images_from_dropbox(
-            product_info["product_detail_images_link"], output_dir
+            product_input["product_detail_images_link"], output_dir
         )
 
 

@@ -54,20 +54,20 @@ class SsilClient(BrandClientBase):
             """
         return textwrap.dedent(res)
 
-    def get_description_html(self, product_info):
+    def get_description_html(self, product_input):
         description_html = self.product_description_template()
         description_html = description_html.replace(
-            "${DESCRIPTION}", product_info["description"].replace("\n", "<br>")
+            "${DESCRIPTION}", product_input["description"].replace("\n", "<br>")
         )
         description_html = description_html.replace(
-            "${MADEIN}", product_info["made_in"]
+            "${MADEIN}", product_input["made_in"]
         )
         return description_html
 
-    def get_tags(self, product_info, additional_tags=None):
+    def get_tags(self, product_input, additional_tags=None):
         return ",".join(
-            [product_info["tags"]]
-            + super().get_tags(product_info, additional_tags)
+            [product_input["tags"]]
+            + super().get_tags(product_input, additional_tags)
             + (additional_tags or [])
         )
 
@@ -88,30 +88,30 @@ class SsilClient(BrandClientBase):
         size_richtext["children"].append(additional_children_dicts)
         return size_richtext
 
-    def get_size_field(self, product_info):
-        if size_text := product_info.get("size_text"):
+    def get_size_field(self, product_input):
+        if size_text := product_input.get("size_text"):
             res = self.text_to_simple_richtext(size_text)
-            if "ring" in list(map(str.strip, product_info["tags"].split(","))):
+            if "ring" in list(map(str.strip, product_input["tags"].split(","))):
                 res = self.append_ring_size_guide_link(res)
             return res
         else:
-            logger.warning(f"no size_text for {product_info['title']}")
+            logger.warning(f"no size_text for {product_input['title']}")
 
-    def post_product_info_to_product(self, product_info_to_product_res, product_info):
-        product_id = product_info_to_product_res[0]["id"]
-        self.update_metafields(product_id, product_info)
+    def post_process_product_input(self, product_input_to_product_res, product_input):
+        product_id = product_input_to_product_res[0]["id"]
+        self.update_metafields(product_id, product_input)
         return product_id
 
-    def update_metafields(self, product_id, product_info):
-        logger.info(f'updating metafields for {product_info["title"]}')
-        if size_text := self.get_size_field(product_info):
+    def update_metafields(self, product_id, product_input):
+        logger.info(f'updating metafields for {product_input["title"]}')
+        if size_text := self.get_size_field(product_input):
             self.update_product_metafield(
                 product_id, "custom", "size_text", json.dumps(size_text)
             )
-        if product_care := product_info.get("product_care"):
+        if product_care := product_input.get("product_care"):
             product_care = self.text_to_simple_richtext(product_care)
             self.update_product_care_metafield(product_id, product_care)
-        if material_text := product_info.get("material"):
+        if material_text := product_input.get("material"):
             material_html = self.material_text_to_html(material_text)
             self.update_product_metafield(
                 product_id, "custom", "material_html", material_html
@@ -151,17 +151,17 @@ class SsilClient(BrandClientBase):
             rows.append(row_values)
         return super().generate_table_html(headers, rows)
 
-    def sanity_check_product_info_list(self, product_info_list):
-        for pi in product_info_list:
+    def sanity_check_product_inputs(self, product_inputs):
+        for pi in product_inputs:
             try:
                 self.formatted_material_text_to_html_table(pi["material"])
             except Exception as e:
                 print(
                     f"failed parsing material text of {pi['title']}: {pi['material']}\n{e}"
                 )
-        return super().sanity_check_product_info_list(product_info_list)
+        return super().sanity_check_product_inputs(product_inputs)
 
-    def post_process_product_info_list_to_products(self, product_info_list):
+    def post_process_product_inputs(self, product_inputs):
         pass
 
 
@@ -182,7 +182,7 @@ class SsilClientMaterialOptionOnly(SsilClient):
 
 def main():
     client = SsilClient()
-    for pi in client.product_info_list_from_sheet(
+    for pi in client.product_inputs_by_sheet_name(
         "material & size options (rings etc)"
     ):
         print(client.get_tags(pi))

@@ -40,9 +40,9 @@ class BrandClientBase(Client, SanityChecks):
     def option2_attr_column_map(self):
         raise NotImplementedError
 
-    def product_info_list_from_sheet(self, sheet_name, handle_suffix=None):
+    def product_inputs_by_sheet_name(self, sheet_name, handle_suffix=None):
         self.drive_link_cache = {}  # repopulate drive link cache
-        return self.to_products_list(
+        return self.to_product_inputs(
             self.sheet_id,
             sheet_name,
             self.PRODUCT_SHEET_START_ROW,
@@ -52,25 +52,28 @@ class BrandClientBase(Client, SanityChecks):
             handle_suffix=handle_suffix,
         )
 
-    def get_tags(self, product_info, additional_tags):
+    def get_tags(self, product_input, additional_tags):
         return [self.NEW_PRODUCT_TAG]
 
-    def get_size_field(self, product_info):
+    def get_size_field(self, product_input):
         raise NotImplementedError
 
-    def post_product_info_to_product(self, product_info_to_product_res, product_info):
+    def get_description_html(self, product_input):
+        raise NotImplementedError
+
+    def post_process_product_input(self, process_product_input_res, product_input):
         pass
 
-    def product_info_to_product(self, product_info, additional_tags=None):
-        logger.info(f'creating {product_info["title"]}')
+    def process_product_input(self, product_input, additional_tags=None):
+        logger.info(f'creating {product_input["title"]}')
         res = self.create_product_and_activate_inventory(
-            product_info,
+            product_input,
             self.VENDOR,
-            description_html=self.get_description_html(product_info),
-            tags=self.get_tags(product_info, additional_tags),
+            description_html=self.get_description_html(product_input),
+            tags=self.get_tags(product_input, additional_tags),
             location_names=self.LOCATIONS,
         )
-        return self.post_product_info_to_product(res, product_info)
+        return self.post_process_product_input(res, product_input)
 
     def segment_options_list_by_key_option(self, option_dicts):
         """
@@ -97,12 +100,12 @@ class BrandClientBase(Client, SanityChecks):
             res.setdefault(option["option_values"][key_attr], []).append(option)
         return list(res.values())
 
-    def add_variants_from_product_info(self, product_info):
+    def add_variants_from_product_input(self, product_input):
         optionss = self.segment_options_list_by_key_option(
-            self.populate_option_dicts(product_info)
+            self.populate_option_dicts(product_input)
         )
-        drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
-        product_id = self.product_id_by_title(product_info["title"])
+        drive_links, skuss = self.populate_drive_ids_and_skuss(product_input)
+        product_id = self.product_id_by_title(product_input["title"])
         for drive_link, skus, options in zip(drive_links, skuss, optionss):
             logger.info(f"  processing sku: {skus} - {drive_link}")
             res = self.add_product_images(
@@ -129,22 +132,13 @@ class BrandClientBase(Client, SanityChecks):
             product_id, location_names=self.LOCATIONS
         )
 
-    def update_stocks(self, product_info_list):
-        super().update_stocks(product_info_list, self.LOCATIONS[0])
+    def update_stocks(self, product_inputs):
+        super().update_stocks(product_inputs, self.LOCATIONS[0])
 
     def merge_products_as_variants(self, product_title):
         return super().merge_products_as_variants(
             product_title, location_names=self.LOCATIONS
         )
-
-    def sanity_check_sheet(self, sheet_name, handle_suffix=None):
-        product_info_list = self.product_info_list_from_sheet(
-            sheet_name, handle_suffix=handle_suffix
-        )
-        logger.info(
-            f"Sanity checking {len(product_info_list)} products from sheet {sheet_name}"
-        )
-        return self.sanity_check_product_info_list(product_info_list)
 
     def has_open_orders(self, product_title):
         products = self.products_by_title(product_title)
@@ -185,35 +179,35 @@ class BrandClientBase(Client, SanityChecks):
                 badges = [b for b in json.loads(badges) if b != "NEW"]
                 self.update_badges_metafield(product["id"], badges)
 
-    def pre_process_product_info_list_to_products(self, product_info_list):
+    def pre_process_product_inputs(self, product_inputs):
         if self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS:
             self.remove_existing_new_proudct_tags()
             self.remove_existing_new_badges()
 
-    def process_product_info_list_to_products(
+    def process_product_inputs(
         self,
-        product_info_list,
+        product_inputs,
         additional_tags,
         scheduled_time=None,
         handle_suffix=None,
     ):
-        for product_info in product_info_list:
-            self.product_info_to_product(product_info, additional_tags=additional_tags)
-            self.process_product_images(product_info, handle_suffix=handle_suffix)
-        self.update_stocks(product_info_list)
-        self.publish_products(product_info_list, scheduled_time=scheduled_time)
+        for product_input in product_inputs:
+            self.process_product_input(product_input, additional_tags=additional_tags)
+            self.process_product_images(product_input, handle_suffix=handle_suffix)
+        self.update_stocks(product_inputs)
+        self.publish_products(product_inputs, scheduled_time=scheduled_time)
 
-    def colors_from_product_info_list(self, product_info_list):
-        if "options" in product_info_list[0]:
+    def colors_from_product_inputs(self, product_inputs):
+        if "options" in product_inputs[0]:
             for option in ["カラー", "Color"]:
-                if option in product_info_list[0]["options"][0].keys():
+                if option in product_inputs[0]["options"][0].keys():
                     break
             else:
                 return False
-            return set([o[option] for pi in product_info_list for o in pi["options"]])
+            return set([o[option] for pi in product_inputs for o in pi["options"]])
 
-    def post_process_product_info_list_to_products(self, product_info_list):
-        if colors := self.colors_from_product_info_list(product_info_list):
+    def post_process_product_inputs(self, product_inputs):
+        if colors := self.colors_from_product_inputs(product_inputs):
             current_color_swatch_config = self.current_color_swatch_config()
             configured_colors = [
                 l.split(": ")[0] for l in current_color_swatch_config.split("\n")
@@ -233,34 +227,34 @@ class BrandClientBase(Client, SanityChecks):
         scheduled_time=None,
         ignore_product_titles=None,
     ):
-        product_info_list = self.product_info_list_from_sheet(sheet_name, handle_suffix)
+        product_inputs = self.product_inputs_by_sheet_name(sheet_name, handle_suffix)
         if not restart_at_product_title:
             i = 0
         else:
             self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
             if restart_at_product_title == "DO NOT CREATE":
-                i = len(product_info_list)
+                i = len(product_inputs)
             else:
-                for i, pi in enumerate(product_info_list):
+                for i, pi in enumerate(product_inputs):
                     if pi["title"] == restart_at_product_title:
                         break
                 else:
                     raise RuntimeError(
                         f"Product with name {restart_at_product_title} not found in sheet {sheet_name}"
                     )
-        product_info_list = [
+        product_inputs = [
             pi
-            for pi in product_info_list[i:]
+            for pi in product_inputs[i:]
             if pi["title"] not in (ignore_product_titles or [])
         ]
-        self.pre_process_product_info_list_to_products(product_info_list)
-        self.process_product_info_list_to_products(
-            product_info_list,
+        self.pre_process_product_inputs(product_inputs)
+        self.process_product_inputs(
+            product_inputs,
             additional_tags=additional_tags,
             scheduled_time=scheduled_time,
             handle_suffix=handle_suffix,
         )
-        self.post_process_product_info_list_to_products(product_info_list)
+        self.post_process_product_inputs(product_inputs)
 
     def get_skus_from_excel(
         self,

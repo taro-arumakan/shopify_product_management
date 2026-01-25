@@ -20,7 +20,7 @@ def product_info_list_from_sheet(gai: utils.Client, sheet_id, sheet_name):
         sku=string.ascii_lowercase.index("q"),
         stock=string.ascii_lowercase.index("r"),
     )
-    return gai.to_products_list(
+    return gai.to_product_inputs(
         sheet_id, sheet_name, start_row, column_product_attrs, option1_attrs
     )
 

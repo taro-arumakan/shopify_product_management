@@ -12,7 +12,7 @@ class GoogleSheetsApiInterface:
     def __init__(self):
         self.drive_link_cache = {}
 
-    def to_products_list(
+    def to_product_inputs(
         self,
         sheet_id,
         sheet_title,
@@ -188,22 +188,22 @@ class GoogleSheetsApiInterface:
             value_render_option=gspread.utils.ValueRenderOption.unformatted
         )
 
-    def get_variants_level_info(self, product_info, key="sku"):
-        if key in product_info:
-            variants_info = [product_info]
-        elif (o1 := product_info["options"]) and key in o1[0]:
-            variants_info = product_info["options"]
-        elif (o2 := product_info["options"][0]["options"]) and key in o2[0]:
+    def get_variants_level_info(self, product_input, key="sku"):
+        if key in product_input:
+            variants_info = [product_input]
+        elif (o1 := product_input["options"]) and key in o1[0]:
+            variants_info = product_input["options"]
+        elif (o2 := product_input["options"][0]["options"]) and key in o2[0]:
             variants_info = [
                 options2
-                for options1 in product_info["options"]
+                for options1 in product_input["options"]
                 for options2 in options1["options"]
             ]
         else:
-            raise ValueError(f"No variant {key} found in product info: {product_info}")
+            raise ValueError(f"No variant {key} found in product info: {product_input}")
         return variants_info
 
-    def populate_option_dicts(self, product_info):
+    def populate_option_dicts(self, product_input):
         """
         Returns options in a list of dicts
         [{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
@@ -214,7 +214,7 @@ class GoogleSheetsApiInterface:
          {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]
         """
         option1_key, option2_key = None, None
-        if option1 := product_info.get("options"):
+        if option1 := product_input.get("options"):
             option1_key = list(option1[0].keys())[0]
             if option2 := option1[0].get("options"):
                 option2_key = list(option2[0].keys())[0]
@@ -227,29 +227,29 @@ class GoogleSheetsApiInterface:
                     },
                     price=option2.get("price")
                     or option1.get("price")
-                    or product_info["price"],
+                    or product_input["price"],
                     sku=option2["sku"],
                     stock=option2["stock"],
                 )
-                for option1 in product_info["options"]
+                for option1 in product_input["options"]
                 for option2 in option1["options"]
             ]
         if option1_key:
             return [
                 dict(
                     option_values={option1_key: option1[option1_key]},
-                    price=option1.get("price") or product_info["price"],
+                    price=option1.get("price") or product_input["price"],
                     sku=option1["sku"],
                     stock=option1.get("stock", 0),
                 )
-                for option1 in product_info["options"]
+                for option1 in product_input["options"]
             ]
         return [
             dict(
                 option_values={},
-                price=product_info["price"],
-                sku=product_info["sku"],
-                stock=product_info["stock"],
+                price=product_input["price"],
+                sku=product_input["sku"],
+                stock=product_input["stock"],
             )
         ]
 
@@ -266,16 +266,16 @@ class GoogleSheetsApiInterface:
             ]
         raise ValueError(f"No sku found in variant info: {variant_info}")
 
-    def populate_drive_ids_and_skuss(self, product_info):
+    def populate_drive_ids_and_skuss(self, product_input):
         skuss = []
         drive_ids = []
         image_level_variant = self.get_variants_level_info(
-            product_info, key="drive_link"
+            product_input, key="drive_link"
         )
         for variant in image_level_variant:
             assert variant[
                 "drive_link"
-            ], f"no drive link for {product_info['title'], {variant}}"
+            ], f"no drive link for {product_input['title'], {variant}}"
             drive_ids.append(self.drive_link_to_id(variant["drive_link"]))
             skuss.append(self.get_child_variants_attribute(variant, "sku"))
         return drive_ids, skuss

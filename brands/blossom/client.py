@@ -63,49 +63,49 @@ class BlossomClient(BrandClientBase):
             """
         return textwrap.dedent(res)
 
-    def get_description_html(self, product_info):
+    def get_description_html(self, product_input):
         description_html = self.product_description_template()
         description_html = description_html.replace(
-            "${DESCRIPTION}", product_info["description"].replace("\n", "<br>")
+            "${DESCRIPTION}", product_input["description"].replace("\n", "<br>")
         )
         description_html = description_html.replace(
-            "${MATERIAL}", product_info["material"]
+            "${MATERIAL}", product_input["material"]
         )
         description_html = description_html.replace(
-            "${MADEIN}", product_info.get("made_in", "KOREA")
+            "${MADEIN}", product_input.get("made_in", "KOREA")
         )
         return description_html
 
-    def get_tags(self, product_info, additional_tags=None):
+    def get_tags(self, product_input, additional_tags=None):
         return ",".join(
-            [product_info["tags"]]
-            + super().get_tags(product_info, additional_tags)
+            [product_input["tags"]]
+            + super().get_tags(product_input, additional_tags)
             + (additional_tags or [])
         )
 
-    def get_size_field(self, product_info):
-        if size_text := product_info.get("size_text"):
+    def get_size_field(self, product_input):
+        if size_text := product_input.get("size_text"):
             return self.formatted_size_text_to_html_table(size_text)
         else:
-            logger.warning(f"no size_text for {product_info['title']}")
+            logger.warning(f"no size_text for {product_input['title']}")
 
-    def post_product_info_to_product(self, product_info_to_product_res, product_info):
-        product_id = product_info_to_product_res[0]["id"]
-        self.update_metafields(product_id, product_info)
+    def post_process_product_input(self, product_input_to_product_res, product_input):
+        product_id = product_input_to_product_res[0]["id"]
+        self.update_metafields(product_id, product_input)
         return product_id
 
-    def update_metafields(self, product_id, product_info):
-        logger.info(f'updating metafields for {product_info["title"]}')
-        if size_table_html := self.get_size_field(product_info):
+    def update_metafields(self, product_id, product_input):
+        logger.info(f'updating metafields for {product_input["title"]}')
+        if size_table_html := self.get_size_field(product_input):
             self.update_product_metafield(
                 product_id, "custom", "size_table_html", size_table_html
             )
         self.update_badges_metafield(product_id, ["NEW"])
-        if product_care := product_info.get("product_care", "").strip():
+        if product_care := product_input.get("product_care", "").strip():
             self.update_product_care_metafield(
                 product_id, self.text_to_simple_richtext(product_care)
             )
-        if series_name := product_info.get("series_name", "").strip():
+        if series_name := product_input.get("series_name", "").strip():
             self.update_product_metafield(
                 product_id,
                 "custom",
@@ -113,13 +113,13 @@ class BlossomClient(BrandClientBase):
                 series_name,
             )
 
-    def post_process_product_info_list_to_products(self, product_info_list):
+    def post_process_product_inputs(self, product_inputs):
         series_names = set(
-            p["series_name"] for p in product_info_list if p.get("series_name")
+            p["series_name"] for p in product_inputs if p.get("series_name")
         )
         for series_name in series_names:
             self.create_series_collection(series_name)
-        super().post_process_product_info_list_to_products(product_info_list)
+        super().post_process_product_inputs(product_inputs)
 
     def create_series_collection(self, series_name):
         try:
@@ -184,11 +184,11 @@ class BlossomClientShoes(BlossomClient):
         )
         return option2_attrs
 
-    def get_size_field(self, product_info):
+    def get_size_field(self, product_input):
         """
         FRONT HEEL 0.3 / BACK HEEL 7
         """
-        size_text = product_info["size_text"].strip()
+        size_text = product_input["size_text"].strip()
         assert (
             len(size_text.strip().split("\n")) == 1
         ), f"expecting single line size text: {size_text}"
@@ -196,9 +196,9 @@ class BlossomClientShoes(BlossomClient):
         headers, values = zip(*(p.rsplit(" ", 1) for p in header_value_pairs))
         return BlossomClientShoes.generate_table_html(headers, [values])
 
-    def post_product_info_to_product(self, product_info_to_product_res, product_info):
-        super().post_product_info_to_product(product_info_to_product_res, product_info)
-        product_id = product_info_to_product_res[0]["id"]
+    def post_process_product_input(self, product_input_to_product_res, product_input):
+        super().post_process_product_input(product_input_to_product_res, product_input)
+        product_id = product_input_to_product_res[0]["id"]
         self.update_product_theme_template(product_id, "shoes")
 
 
@@ -230,7 +230,7 @@ class BlossomClientBags(BlossomClient):
 
 def main():
     client = BlossomClient()
-    for pi in client.product_info_list_from_sheet("clothes(drop5)"):
+    for pi in client.product_inputs_by_sheet_name("clothes(drop5)"):
         print(client.get_tags(pi))
 
 

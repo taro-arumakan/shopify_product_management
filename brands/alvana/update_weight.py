@@ -1,18 +1,16 @@
 import logging
 import utils
-from brands.alvana.product_create import product_info_list_from_sheet
 
 logging.basicConfig(level=logging.INFO)
 
 
 def main():
     client = utils.client("alvanas")
-    product_info_list = product_info_list_from_sheet(
-        client, client.sheet_id, "Product Master"
-    )
-    for product_info in product_info_list:
-        title = product_info["title"]
-        weight = product_info.get("weight")
+    product_inputs = client.product_inputs_by_sheet_name("Product Master")
+
+    for product_input in product_inputs:
+        title = product_input["title"]
+        weight = product_input.get("weight")
         if weight:
             product = client.product_by_title(title)
             skus = [v["sku"] for v in product["variants"]["nodes"]]

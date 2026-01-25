@@ -4,7 +4,7 @@ import utils
 def main():
     client = utils.client("apricot")
 
-    pil = client.product_info_list_from_sheet("11.20 25Winter_clone")
+    pil = client.product_inputs_by_sheet_name("11.20 25Winter_clone")
 
     for pi in pil:
         product = client.product_by_title(pi["title"])

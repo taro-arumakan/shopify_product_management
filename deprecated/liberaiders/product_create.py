@@ -35,7 +35,7 @@ def product_info_list_from_sheet(
         barcode=string.ascii_lowercase.index("r"),
         stock=string.ascii_lowercase.index("s"),
     )
-    return gai.to_products_list(
+    return gai.to_product_inputs(
         sheet_id,
         sheet_name,
         start_row,
@@ -129,7 +129,7 @@ def main():
     #         break
     # product_info_list = product_info_list[index:]
     # product_info_list = [pi for pi in product_info_list if pi['title'] == 'DESTINATION UNKNOWN L/S TEE']
-    c.sanity_check_product_info_list(product_info_list)
+    c.sanity_check_product_inputs(product_info_list)
     for product_info in product_info_list:
         create_a_product(
             c, product_info_list, vendor="liberaiders", locations=[location]

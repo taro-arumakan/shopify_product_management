@@ -8,12 +8,10 @@ logging.basicConfig(level=logging.INFO)
 
 def fix_price():
     client = GbhHomeClient(use_simple_size_format=True)
-    product_info_list = client.product_info_list_from_sheet(
-        "bedding / ROBE (SIZE+COLOR)"
-    )
+    product_inputs = client.product_inputs_by_sheet_name("bedding / ROBE (SIZE+COLOR)")
     price_by_sku = {
         v2["sku"]: v2["price"]
-        for p in product_info_list
+        for p in product_inputs
         for v1 in p["options"]
         for v2 in v1["options"]
     }
