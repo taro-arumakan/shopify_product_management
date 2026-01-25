@@ -31,14 +31,14 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         return res
 
     def process_product_images(
-        self, product_info, local_dir=None, filename_prefix=None, handle_suffix=None
+        self, product_input, local_dir=None, filename_prefix=None, handle_suffix=None
     ):
         if handle_suffix:
             product_id = self.product_id_by_handle(
-                self.product_title_to_handle(product_info["title"], handle_suffix)
+                self.product_title_to_handle(product_input["title"], handle_suffix)
             )
         else:
-            product_id = self.product_id_by_title(product_info["title"])
+            product_id = self.product_id_by_title(product_input["title"])
 
         local_dir = (
             local_dir
@@ -46,7 +46,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         )
         filename_prefix = filename_prefix or f"upload_{datetime.date.today():%Y%m%d}"
 
-        drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
+        drive_links, skuss = self.populate_drive_ids_and_skuss(product_input)
         ress = []
         for index, (drive_id, skus) in enumerate(zip(drive_links, skuss)):
             res = self.add_product_images(
@@ -68,14 +68,14 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         return ress
 
     def create_product_and_activate_inventory(
-        self, product_info, vendor, description_html, tags, location_names
+        self, product_input, vendor, description_html, tags, location_names
     ):
-        logger.info(f'creating {product_info["title"]}')
-        options = self.populate_option_dicts(product_info)
+        logger.info(f'creating {product_input["title"]}')
+        options = self.populate_option_dicts(product_input)
         if any(o["option_values"] for o in options):
             res = self.product_create(
-                title=product_info["title"],
-                handle=product_info.get("handle"),
+                title=product_input["title"],
+                handle=product_input.get("handle"),
                 description_html=description_html,
                 vendor=vendor,
                 tags=tags,
@@ -83,61 +83,61 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             )
         else:
             res = self.product_create_default_variant(
-                title=product_info["title"],
+                title=product_input["title"],
                 description_html=description_html,
-                handle=product_info.get("handle"),
+                handle=product_input.get("handle"),
                 vendor=vendor,
                 tags=tags,
-                price=product_info["price"],
-                sku=product_info["sku"],
+                price=product_input["price"],
+                sku=product_input["sku"],
             )
         logger.info(f"activating inventory")
-        res2 = self.enable_and_activate_inventory_by_product_info(
-            product_info, location_names
+        res2 = self.enable_and_activate_inventory_by_product_input(
+            product_input, location_names
         )
         return (res, res2)
 
-    def product_info_to_skus(self, product_info):
-        options = self.populate_option_dicts(product_info)
+    def product_input_to_skus(self, product_input):
+        options = self.populate_option_dicts(product_input)
         return [o["sku"] for o in options]
 
-    def enable_and_activate_inventory_by_product_info(
-        self, product_info, location_names
+    def enable_and_activate_inventory_by_product_input(
+        self, product_input, location_names
     ):
-        skus = self.product_info_to_skus(product_info)
+        skus = self.product_input_to_skus(product_input)
         res = [
             self.enable_and_activate_inventory_by_sku(sku, location_names)
             for sku in skus
         ]
         return res
 
-    def get_sku_stocks_map(self, product_info):
-        variants_info = self.get_variants_level_info(product_info)
+    def get_sku_stocks_map(self, product_input):
+        variants_info = self.get_variants_level_info(product_input)
         return {variant["sku"]: variant.get("stock", 0) for variant in variants_info}
 
-    def update_stocks(self, product_info_list, location_name):
+    def update_stocks(self, product_inputs, location_name):
         logger.info("updating inventory")
         location_id = self.location_id_by_name(location_name)
         sku_stock_map = {}
-        for product_info in product_info_list:
-            sku_stock_map.update(self.get_sku_stocks_map(product_info))
+        for product_input in product_inputs:
+            sku_stock_map.update(self.get_sku_stocks_map(product_input))
         return [
             self.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
             for sku, stock in sku_stock_map.items()
         ]
 
-    def product_id_by_product_info(self, product_info):
-        if "handle" in product_info:
+    def product_id_by_product_input(self, product_input):
+        if "handle" in product_input:
             func = self.product_id_by_handle
-            param = product_info["handle"]
+            param = product_input["handle"]
         else:
             func = self.product_id_by_title
-            param = product_info["title"]
+            param = product_input["title"]
         return func(param)
 
-    def publish_products(self, product_info_list, scheduled_time=None):
-        for pi in product_info_list:
-            product_id = self.product_id_by_product_info(pi)
+    def publish_products(self, product_inputs, scheduled_time=None):
+        for pi in product_inputs:
+            product_id = self.product_id_by_product_input(pi)
             self.activate_and_publish_by_product_id(
                 product_id, scheduled_time=scheduled_time
             )

@@ -66,46 +66,46 @@ class AlvanaClient(BrandClientBase):
             """
         return textwrap.dedent(res)
 
-    def get_description_html(self, product_info):
+    def get_description_html(self, product_input):
         description_html = self.product_description_template()
         description_html = description_html.replace(
-            "${DESCRIPTION}", product_info["description"].replace("\n", "<br>")
+            "${DESCRIPTION}", product_input["description"].replace("\n", "<br>")
         )
         description_html = description_html.replace(
-            "${MATERIAL}", product_info["material"]
+            "${MATERIAL}", product_input["material"]
         )
         description_html = description_html.replace(
-            "${MADEIN}", product_info["made_in"]
+            "${MADEIN}", product_input["made_in"]
         )
         return description_html
 
-    def get_tags(self, product_info, additional_tags=None):
+    def get_tags(self, product_input, additional_tags=None):
         return ",".join(
-            [product_info["tags"]]
-            + super().get_tags(product_info, additional_tags)
+            [product_input["tags"]]
+            + super().get_tags(product_input, additional_tags)
             + (additional_tags or [])
         )
 
-    def get_size_field(self, product_info):
-        return self.formatted_size_text_to_html_table(product_info["size_text"])
+    def get_size_field(self, product_input):
+        return self.formatted_size_text_to_html_table(product_input["size_text"])
 
-    def post_product_info_to_product(self, product_info_to_product_res, product_info):
-        product_id = product_info_to_product_res[0]["id"]
-        self.update_metafields(product_id, product_info)
-        skus = [v["sku"] for v in product_info_to_product_res[0]["variants"]["nodes"]]
-        self.update_weight(skus, product_info)
+    def post_process_product_input(self, process_product_input_res, product_input):
+        product_id = process_product_input_res[0]["id"]
+        self.update_metafields(product_id, product_input)
+        skus = [v["sku"] for v in process_product_input_res[0]["variants"]["nodes"]]
+        self.update_weight(skus, product_input)
         return product_id
 
-    def update_metafields(self, product_id, product_info):
-        logger.info(f'updating metafields for {product_info["title"]}')
-        size_table_html = self.get_size_field(product_info)
-        if self.to_add_disclaimer_html(product_info["title"]):
+    def update_metafields(self, product_id, product_input):
+        logger.info(f'updating metafields for {product_input["title"]}')
+        size_table_html = self.get_size_field(product_input)
+        if self.to_add_disclaimer_html(product_input["title"]):
             size_table_html += "<br>"
             size_table_html += "<p>注: 製造後に洗い加工を施しているため、記載されているサイズに若干の誤差が生じる場合がございます。</p>"
         self.update_size_table_html_metafield(product_id, size_table_html)
-        product_care = self.text_to_simple_richtext(product_info["product_care"])
+        product_care = self.text_to_simple_richtext(product_input["product_care"])
         self.update_product_care_metafield(product_id, product_care)
-        self.update_filter_color(product_id, product_info)
+        self.update_filter_color(product_id, product_input)
 
     def to_add_disclaimer_html(self, title):
         return title.startswith("NATURAL TWILL") or title in [
@@ -113,14 +113,14 @@ class AlvanaClient(BrandClientBase):
             "BHARAT DENIM JACKET",
         ]
 
-    def update_weight(self, skus, product_info):
-        weight = product_info.get("weight")
+    def update_weight(self, skus, product_input):
+        weight = product_input.get("weight")
         if weight:
             for sku in skus:
                 self.update_inventory_item_weight_by_sku(sku, weight, unit="KILOGRAMS")
 
-    def update_filter_color(self, product_id, product_info):
-        for color_option in product_info["options"]:
+    def update_filter_color(self, product_id, product_input):
+        for color_option in product_input["options"]:
             filter_color = color_option["filter_color"]
             for size_option in color_option["options"]:
                 sku = size_option["sku"]
@@ -132,7 +132,7 @@ class AlvanaClient(BrandClientBase):
 
 def main():
     client = AlvanaClient()
-    for pi in client.product_info_list_from_sheet("5G  LAMS WOOL CREW KNIT"):
+    for pi in client.product_inputs_by_sheet_name("5G  LAMS WOOL CREW KNIT"):
         print(client.get_tags(pi))
 
 

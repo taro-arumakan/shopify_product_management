@@ -15,9 +15,9 @@ client.process_sheet_to_products(
     sheet_name="PILLOWCASE 修正",
 )
 
-product_info_list = client.product_info_list_from_sheet("PILLOWCASE 修正")
+product_inputs = client.product_inputs_by_sheet_name("PILLOWCASE 修正")
 skus = [
-    v2["sku"] for p in product_info_list for v1 in p["options"] for v2 in v1["options"]
+    v2["sku"] for p in product_inputs for v1 in p["options"] for v2 in v1["options"]
 ]
 variants = [client.variant_by_sku(sku) for sku in skus]
 new_prices_by_variant_id = {

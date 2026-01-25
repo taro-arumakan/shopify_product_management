@@ -60,30 +60,30 @@ class ApricotStudiosClient(BrandClientBase):
         )
         return option2_attrs
 
-    def get_description_html(self, product_info):
+    def get_description_html(self, product_input):
         """
         Apricot Studios holds medias in the description field.
         Description texts are in the metafields.
         """
         return ""
 
-    def get_tags(self, product_info, additional_tags=None):
+    def get_tags(self, product_input, additional_tags=None):
         return ",".join(
             [
-                product_info["collection"],
-                product_info["category"],
-                product_info["release_date"],
+                product_input["collection"],
+                product_input["category"],
+                product_input["release_date"],
             ]
-            + super().get_tags(product_info, additional_tags)
+            + super().get_tags(product_input, additional_tags)
             + (additional_tags or [])
         )
 
-    def get_size_field(self, product_info):
-        size_text = product_info.get("size_text")
+    def get_size_field(self, product_input):
+        size_text = product_input.get("size_text")
         if size_text:
             return self.text_to_html_tables_and_paragraphs(size_text)
         else:
-            logging.warning(f"No size information found for {product_info['title']}")
+            logging.warning(f"No size information found for {product_input['title']}")
 
     def download_images(self, dirpath: str, images_link, prefix, tempdir):
         if os.path.exists(dirpath):
@@ -100,7 +100,7 @@ class ApricotStudiosClient(BrandClientBase):
             tempdir=tempdir,
         )
 
-    def process_product_images(self, product_info):
+    def process_product_images(self, product_input):
         """
         As Apricot Studios has their images in Dropbox and also its images structure differs from other brands,
         keeping this customized processing logic.
@@ -111,22 +111,22 @@ class ApricotStudiosClient(BrandClientBase):
         image_pathss = [
             self.download_images(
                 os.path.join(
-                    images_local_dir, product_info["title"], "product_main_images"
+                    images_local_dir, product_input["title"], "product_main_images"
                 ),
-                product_info["product_main_images_link"],
-                prefix=f"{self.shopify_compatible_name(product_info['title'])}_product_main",
+                product_input["product_main_images_link"],
+                prefix=f"{self.shopify_compatible_name(product_input['title'])}_product_main",
                 tempdir=os.path.join(images_local_dir, "temp"),
             )
         ]
         skuss = []
-        for variant in product_info["options"]:
+        for variant in product_input["options"]:
             skus = [o2["sku"] for o2 in variant["options"]]
             logging.info(f"downloading product variant images for skus {skus}")
             image_pathss += [
                 self.download_images(
                     os.path.join(
                         images_local_dir,
-                        product_info["title"],
+                        product_input["title"],
                         "variant_images",
                         skus[0],
                     ),
@@ -137,7 +137,7 @@ class ApricotStudiosClient(BrandClientBase):
             ]
             skuss.append(skus)
 
-        product_id = self.product_id_by_title(product_info["title"])
+        product_id = self.product_id_by_title(product_input["title"])
         image_position = len(image_pathss[0])
         self.upload_and_assign_images_to_product(product_id, sum(image_pathss, []))
         for variant_image_paths, skus in zip(image_pathss[1:], skuss):
@@ -146,21 +146,21 @@ class ApricotStudiosClient(BrandClientBase):
                 self.assign_image_to_skus_by_position(product_id, image_position, skus)
             else:
                 print(
-                    f"!!! {product_info['title']} - {skus} no image position to assign, skipping"
+                    f"!!! {product_input['title']} - {skus} no image position to assign, skipping"
                 )
             image_position += len(variant_image_paths)
 
         logger.info(f"downloading product detail images")
-        folder_name = product_info["title"]
+        folder_name = product_input["title"]
         folder_id = self.find_folder_id_by_name(
             self.product_detail_images_folder_id, folder_name
         )
         detail_image_paths = self.drive_images_to_local(
             folder_id,
             os.path.join(
-                images_local_dir, product_info["title"], "product_detail_images"
+                images_local_dir, product_input["title"], "product_detail_images"
             ),
-            filename_prefix=f"{self.shopify_compatible_name(product_info['title'])}_product_detail",
+            filename_prefix=f"{self.shopify_compatible_name(product_input['title'])}_product_detail",
         )
         self.upload_and_assign_description_images_to_shopify(
             product_id,
@@ -169,16 +169,16 @@ class ApricotStudiosClient(BrandClientBase):
             "https://cdn.shopify.com/s/files/1/0745/9435/3408",
         )
 
-    def post_product_info_to_product(self, product_info_to_product_res, product_info):
-        product_id = product_info_to_product_res[0]["id"]
-        self.update_metafields(product_id, product_info)
+    def post_process_product_input(self, product_input_to_product_res, product_input):
+        product_id = product_input_to_product_res[0]["id"]
+        self.update_metafields(product_id, product_input)
         return product_id
 
-    def update_metafields(self, product_id, product_info):
-        logger.info(f'updating metafields for {product_info["title"]}')
-        desc = product_info["description"]
-        material = product_info["material"]
-        origin = product_info["made_in"]
+    def update_metafields(self, product_id, product_input):
+        logger.info(f'updating metafields for {product_input["title"]}')
+        desc = product_input["description"]
+        material = product_input["material"]
+        origin = product_input["made_in"]
         product_description = {
             "type": "root",
             "children": [
@@ -208,7 +208,7 @@ class ApricotStudiosClient(BrandClientBase):
             ],
         }
         self.update_product_description_metafield(product_id, product_description)
-        if size_table_html := self.get_size_field(product_info):
+        if size_table_html := self.get_size_field(product_input):
             self.update_size_table_html_metafield(
                 product_id, "custom", "size_text", size_table_html
             )
@@ -316,7 +316,7 @@ def main():
     client = ApricotStudiosClient(
         "gid://shopify/Product/9181957095680", "1jOg_no7MS8tGwMLKvOpodPg58nWKXSgX"
     )
-    for pi in client.product_info_list_from_sheet("11.20 25Winter_clone"):
+    for pi in client.product_inputs_by_sheet_name("11.20 25Winter_clone"):
         print(pi["title"], client.get_tags(pi))
 
 

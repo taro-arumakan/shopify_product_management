@@ -2,8 +2,8 @@ import utils
 
 client = utils.client("alvana")
 
-product_master = client.product_info_list_from_sheet("Product Master")
-pm25aw = client.product_info_list_from_sheet("25AW Product Master")
+product_master = client.product_inputs_by_sheet_name("Product Master")
+pm25aw = client.product_inputs_by_sheet_name("25AW Product Master")
 
 pm_titles = [pi["title"] for pi in product_master]
 pm25aw_titles = [pi["title"] for pi in pm25aw]

@@ -41,7 +41,7 @@ class RohseoulClient(BrandClientBase):
     def option2_attr_column_map(self):
         return {}
 
-    def get_description_html(self, product_info):
+    def get_description_html(self, product_input):
         product_care = textwrap.dedent(
             """
             革表面に跡や汚れなどが残る場合がありますが、天然皮革の特徴である不良ではございませんのでご了承ください。また、時間経過により金属の装飾や革の色が変化する場合がございますが、製品の欠陥ではありません。あらかじめご了承ください。
@@ -53,22 +53,22 @@ class RohseoulClient(BrandClientBase):
             """
         ).strip()
         return super().get_description_html(
-            product_info["description"],
+            product_input["description"],
             product_care,
-            product_info["material"],
-            size_html=self.get_size_field(product_info),
-            made_in=product_info["made_in"],
+            product_input["material"],
+            size_html=self.get_size_field(product_input),
+            made_in=product_input["made_in"],
         )
 
-    def get_tags(self, product_info, additional_tags=None):
+    def get_tags(self, product_input, additional_tags=None):
         return ",".join(
             [
-                product_info["release_date"],
-                product_info["collection"],
-                product_info["category"],
-                product_info["bag_category"],
+                product_input["release_date"],
+                product_input["collection"],
+                product_input["category"],
+                product_input["bag_category"],
             ]
-            + super().get_tags(product_info, additional_tags)
+            + super().get_tags(product_input, additional_tags)
             + (additional_tags or [])
         )
 
@@ -89,19 +89,17 @@ class RohseoulClient(BrandClientBase):
         res += "</tr></tbody></table>"
         return res
 
-    def get_size_field(self, product_info):
-        return self.get_size_table_html(product_info["size_text"])
+    def get_size_field(self, product_input):
+        return self.get_size_table_html(product_input["size_text"])
 
-    def pre_process_product_info_list_to_products(self, product_info_list):
+    def pre_process_product_inputs(self, product_inputs):
         self.merge_existing_products_as_variants()
-        super().pre_process_product_info_list_to_products(
-            product_info_list=product_info_list
-        )
+        super().pre_process_product_inputs(product_inputs=product_inputs)
 
 
 def main():
     client = RohseoulClient()
-    for pi in client.product_info_list_from_sheet("25FW 2ST 민하가방"):
+    for pi in client.product_inputs_by_sheet_name("25FW 2ST 민하가방"):
         print(client.get_tags(pi))
 
 

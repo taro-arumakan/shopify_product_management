@@ -75,13 +75,13 @@ class GbhClient(BrandClientBase):
         """
         return textwrap.dedent(res)
 
-    def get_description_html(self, product_info):
+    def get_description_html(self, product_input):
 
-        description = self.escape_html(product_info["description"])
-        product_care = self.escape_html(product_info["product_care"])
-        material = self.escape_html(product_info["material"])
-        made_in = self.escape_html(product_info["made_in"])
-        size_table_html = self.get_size_field(product_info)
+        description = self.escape_html(product_input["description"])
+        product_care = self.escape_html(product_input["product_care"])
+        material = self.escape_html(product_input["material"])
+        made_in = self.escape_html(product_input["made_in"])
+        size_table_html = self.get_size_field(product_input)
 
         description_html = self.product_description_template()
         description_html = description_html.replace("${DESCRIPTION}", description)
@@ -92,18 +92,18 @@ class GbhClient(BrandClientBase):
 
         return description_html
 
-    def get_tags(self, product_info, additional_tags=None):
+    def get_tags(self, product_input, additional_tags=None):
         return ",".join(
-            [product_info["tags"]]
-            + super().get_tags(product_info, additional_tags)
+            [product_input["tags"]]
+            + super().get_tags(product_input, additional_tags)
             + (additional_tags or [])
         )
 
-    def get_size_field(self, product_info):
+    def get_size_field(self, product_input):
         if self.use_simple_size_format:
-            return self.escape_html(product_info["size_text"])
+            return self.escape_html(product_input["size_text"])
         else:
-            return self.formatted_size_text_to_html_table(product_info["size_text"])
+            return self.formatted_size_text_to_html_table(product_input["size_text"])
 
 
 class GbhClientColorOptionOnly(GbhClient):
@@ -125,11 +125,11 @@ class GbhClientColorOptionOnly(GbhClient):
     def option2_attr_column_map(self):
         return {}
 
-    def get_size_field(self, product_info):
-        return product_info["size_text"]
+    def get_size_field(self, product_input):
+        return product_input["size_text"]
 
-    def add_variants_from_product_info(self, product_info):
-        product_id = self.product_id_by_title(product_info["title"])
+    def add_variants_from_product_input(self, product_input):
+        product_id = self.product_id_by_title(product_input["title"])
         existing_product = self.product_by_id(product_id)
         existing_variants = existing_product.get("variants", {}).get("nodes", [])
 
@@ -145,9 +145,9 @@ class GbhClientColorOptionOnly(GbhClient):
         logger.info(f"「サイズ」オプションの存在: {has_size_option}")
 
         optionss = self.segment_options_list_by_key_option(
-            self.populate_option_dicts(product_info)
+            self.populate_option_dicts(product_input)
         )
-        drive_links, skuss = self.populate_drive_ids_and_skuss(product_info)
+        drive_links, skuss = self.populate_drive_ids_and_skuss(product_input)
 
         for drive_link, skus, options in zip(drive_links, skuss, optionss):
             logger.info(f"  processing sku: {skus} - {drive_link}")
@@ -218,10 +218,10 @@ class GbhClientSizeOptionOnly(GbhClient):
     def option2_attr_column_map(self):
         return {}
 
-    def get_size_field(self, product_info):
-        return product_info["size_text"]
+    def get_size_field(self, product_input):
+        return product_input["size_text"]
 
-    def get_tags(self, product_info, additional_tags=None):
+    def get_tags(self, product_input, additional_tags=None):
         return []
 
 
@@ -293,12 +293,12 @@ class GbhCosmeticClient(GbhClient):
         """
         return textwrap.dedent(res)
 
-    def get_description_html(self, product_info):
-        description = self.escape_html(product_info["description"])
-        product_care = self.escape_html(product_info["product_care"])
-        material = self.escape_html(product_info["material"])
-        made_in = self.escape_html(product_info["made_in"])
-        size_text = self.escape_html(product_info.get("size_text", ""))
+    def get_description_html(self, product_input):
+        description = self.escape_html(product_input["description"])
+        product_care = self.escape_html(product_input["product_care"])
+        material = self.escape_html(product_input["material"])
+        made_in = self.escape_html(product_input["made_in"])
+        size_text = self.escape_html(product_input.get("size_text", ""))
 
         description_html = self.product_description_template()
         description_html = description_html.replace("${DESCRIPTION}", description)
@@ -309,8 +309,8 @@ class GbhCosmeticClient(GbhClient):
 
         return description_html
 
-    def get_size_field(self, product_info):
-        return product_info.get("size_text", "")
+    def get_size_field(self, product_input):
+        return product_input.get("size_text", "")
 
 
 class GbhClientNoOptions(GbhClient):
@@ -356,10 +356,10 @@ class GbhClientNoOptions(GbhClient):
         """
         return textwrap.dedent(res)
 
-    def get_description_html(self, product_info):
-        description = self.escape_html(product_info["description"])
-        made_in = self.escape_html(product_info["made_in"])
-        size_html = self.get_size_field(product_info)
+    def get_description_html(self, product_input):
+        description = self.escape_html(product_input["description"])
+        made_in = self.escape_html(product_input["made_in"])
+        size_html = self.get_size_field(product_input)
 
         description_html = self.product_description_template()
         description_html = description_html.replace("${DESCRIPTION}", description)
@@ -381,8 +381,8 @@ class GbhClientNoOptions(GbhClient):
         except RuntimeError:
             return self.box_size_text_to_html_table(table_text)
 
-    def get_size_field(self, product_info):
-        size_text = product_info["size_text"]
+    def get_size_field(self, product_input):
+        size_text = product_input["size_text"]
         lines = map(str.strip, filter(None, size_text.split("\n")))
         titles = []
         tables = []
@@ -398,13 +398,13 @@ class GbhClientNoOptions(GbhClient):
 
 def main():
     client = GbhClient()
-    for pi in client.product_info_list_from_sheet("APPAREL 25FW 2次"):
+    for pi in client.product_inputs_by_sheet_name("APPAREL 25FW 2次"):
         print(pi["title"])
         print(client.get_size_field(pi))
 
     client = GbhClientColorOptionOnly()
     client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
-    for pi in client.product_info_list_from_sheet("APPAREL 25FW 2次 (COLOR ONLY)"):
+    for pi in client.product_inputs_by_sheet_name("APPAREL 25FW 2次 (COLOR ONLY)"):
         print(pi["title"])
         print(client.get_size_field(pi))
 

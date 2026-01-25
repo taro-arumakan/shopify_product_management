@@ -7,9 +7,9 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     client = AlvanaClient()
-    product_info_list = client.product_info_list_from_sheet("Product Master")
-    for product_info in product_info_list:
-        for option in product_info["options"]:
+    product_inputs = client.product_inputs_by_sheet_name("Product Master")
+    for product_input in product_inputs:
+        for option in product_input["options"]:
             filter_color = option["filter_color"]
             for o2 in option["options"]:
                 sku = o2["sku"]
@@ -21,7 +21,7 @@ def main():
                         product_id, variant_id, "custom", "filter_color", filter_color
                     )
                 except helpers.exceptions.NoVariantsFoundException as e:
-                    print(f"{product_info['title']}: {sku}")
+                    print(f"{product_input['title']}: {sku}")
 
     products = client.products_by_query("status:'ACTIVE'")
     for product in products:

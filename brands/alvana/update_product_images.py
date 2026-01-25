@@ -1,4 +1,3 @@
-from alvana.product_create import product_info_list_from_sheet
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -10,12 +9,12 @@ def main():
     import pprint
 
     c = client("alvanas")
-    product_info_list = product_info_list_from_sheet(c, c.sheet_id, "Product Master")
+    product_inputs = c.product_inputs_by_sheet_name("Product Master")
     ress = []
-    for product_info in product_info_list:
-        if product_info["title"] in titles:
-            print(f'processing {product_info["title"]}')
-            ress.append(c.process_product_images(product_info))
+    for product_input in product_inputs:
+        if product_input["title"] in titles:
+            print(f'processing {product_input["title"]}')
+            ress.append(c.process_product_images(product_input))
     pprint.pprint(ress)
 
 

@@ -97,35 +97,35 @@ class KumeClient(BrandClientBase):
         else:
             return self.parse_headings_and_table_text_to_html(size_text)
 
-    def get_description_html(self, product_info):
+    def get_description_html(self, product_input):
         return super().get_description_html(
-            description=product_info["description"],
-            product_care=product_info["product_care"],
-            material=product_info["material"],
-            size_html=self.get_size_field(product_info),
-            made_in=product_info["made_in"],
+            description=product_input["description"],
+            product_care=product_input["product_care"],
+            material=product_input["material"],
+            size_html=self.get_size_field(product_input),
+            made_in=product_input["made_in"],
         )
 
-    def get_tags(self, product_info, additional_tags=None):
-        category_tags = list(map(str.strip, product_info["category"].split(" AND ")))
+    def get_tags(self, product_input, additional_tags=None):
+        category_tags = list(map(str.strip, product_input["category"].split(" AND ")))
         return ",".join(
             category_tags
-            + [product_info["collection"]]
-            + super().get_tags(product_info, additional_tags)
+            + [product_input["collection"]]
+            + super().get_tags(product_input, additional_tags)
             + (additional_tags or [])
         )
 
-    def get_size_field(self, product_info):
-        size_text = product_info.get("size_text")
+    def get_size_field(self, product_input):
+        size_text = product_input.get("size_text")
         if size_text:
             return self.parse_size_text_to_html(size_text)
         else:
-            logger.warning(f"no size_text for {product_info['title']}")
+            logger.warning(f"no size_text for {product_input['title']}")
 
 
 def main():
     client = KumeClient()
-    for pi in client.product_info_list_from_sheet("25FW"):
+    for pi in client.product_inputs_by_sheet_name("25FW"):
         print(client.get_tags(pi))
 
 
