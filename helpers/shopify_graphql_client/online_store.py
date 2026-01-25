@@ -40,9 +40,8 @@ class OnlineStore:
         setting_file = self.theme_file_by_theme_name_and_file_name(
             theme["name"], "config/settings_data.json"
         )
-        return self.theme_json_to_dict(setting_file[0]["body"]["content"])["current"][
-            "color_swatch_config"
-        ]
+        res = self.theme_json_to_dict(setting_file[0]["body"]["content"])
+        return res["current"].get("color_swatch_config")
 
     def theme_file_by_theme_name_and_file_name(self, theme_name, file_name):
         query = """
