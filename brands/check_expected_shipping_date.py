@@ -1,5 +1,8 @@
 import datetime
 import utils
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 def get_date_metafield_value(metafields, key):
@@ -51,12 +54,14 @@ def check(brand, email_recipients):
 
 
 def main():
-    brands = ["KUME", "GBH"]
+    brands = ["KUME", "GBH", "BLOSSOM"]
     recipients_by_brand = {
         "KUME": ["marina6529@kume-studio.co.kr", "taro@sniarti.fi"],
         "GBH": ["gbh338@jaebum.com", "taro@sniarti.fi"],
+        "BLOSSOM": ["taro@sniarti.fi"],
     }
     for brand in brands:
+        logging.info(f"Checking {brand}...")
         check(brand, recipients_by_brand[brand])
 
 
