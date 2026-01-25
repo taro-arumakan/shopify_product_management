@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 import pathlib
@@ -61,9 +60,6 @@ class BrandClientBase(Client, SanityChecks):
     def get_description_html(self, product_input):
         raise NotImplementedError
 
-    def post_process_product_input(self, process_product_input_res, product_input):
-        pass
-
     def process_product_input(self, product_input, additional_tags=None):
         logger.info(f'creating {product_input["title"]}')
         res = self.create_product_and_activate_inventory(
@@ -75,65 +71,16 @@ class BrandClientBase(Client, SanityChecks):
         )
         return self.post_process_product_input(res, product_input)
 
-    def segment_options_list_by_key_option(self, option_dicts):
-        """
-        group the flat options list to list of lists by the same first option i.e. color
-
-        [{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
-         {'option_values': {'カラー': 'PINK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-PK-3', 'stock': 2},
-         {'option_values': {'カラー': 'PINK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-PK-4', 'stock': 2},
-         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-BK-2', 'stock': 2},
-         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-BK-3', 'stock': 2},
-         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]
-         becomes
-
-        [[{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
-          {'option_values': {'カラー': 'PINK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-PK-3', 'stock': 2},
-          {'option_values': {'カラー': 'PINK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-PK-4', 'stock': 2}],
-         [{'option_values': {'カラー': 'INK BLACK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-BK-2', 'stock': 2},
-          {'option_values': {'カラー': 'INK BLACK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-BK-3', 'stock': 2},
-          {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]]
-        """
-        res = {}
-        key_attr = list(option_dicts[0]["option_values"].keys())[0]
-        for option in option_dicts:
-            res.setdefault(option["option_values"][key_attr], []).append(option)
-        return list(res.values())
+    def post_process_product_input(self, process_product_input_res, product_input):
+        pass
 
     def add_variants_from_product_input(self, product_input):
-        optionss = self.segment_options_list_by_key_option(
-            self.populate_option_dicts(product_input)
-        )
-        drive_links, skuss = self.populate_drive_ids_and_skuss(product_input)
-        product_id = self.product_id_by_title(product_input["title"])
-        for drive_link, skus, options in zip(drive_links, skuss, optionss):
-            logger.info(f"  processing sku: {skus} - {drive_link}")
-            res = self.add_product_images(
-                product_id,
-                drive_link,
-                f"{pathlib.Path.home()}/Downloads/gbh{datetime.date.today():%Y%m%d}/",
-                f"upload_{datetime.date.today():%Y%m%d}_{skus[0]}_",
-            )
-            new_media_ids = [m["id"] for m in res[-1]["productCreateMedia"]["media"]]
-            self.variants_add(
-                product_id=product_id,
-                skus=skus,
-                media_ids=[],
-                variant_media_ids=[new_media_ids[0]],
-                option_names=options[0]["option_values"].keys(),
-                variant_option_valuess=[
-                    option["option_values"].values() for option in options
-                ],
-                prices=[option["price"] for option in options],
-                stocks=[option["stock"] for option in options],
-                location_id=self.location_id_by_name(self.LOCATIONS[0]),
-            )
-        self.enable_and_activate_inventory_by_product_id(
-            product_id, location_names=self.LOCATIONS
+        return super().add_variants_from_product_input(
+            product_input, location_names=self.LOCATIONS
         )
 
     def update_stocks(self, product_inputs):
-        super().update_stocks(product_inputs, self.LOCATIONS[0])
+        return super().update_stocks(product_inputs, self.LOCATIONS[0])
 
     def merge_products_as_variants(self, product_title):
         return super().merge_products_as_variants(
@@ -208,15 +155,17 @@ class BrandClientBase(Client, SanityChecks):
 
     def post_process_product_inputs(self, product_inputs):
         if colors := self.colors_from_product_inputs(product_inputs):
-            current_color_swatch_config = self.current_color_swatch_config()
-            configured_colors = [
-                l.split(": ")[0] for l in current_color_swatch_config.split("\n")
-            ]
-            missings = [color for color in colors if color not in configured_colors]
-            if missings:
-                logger.warning(f"add these colors to color swatch config:")
-                for color in missings:
-                    print(color)
+            if current_color_swatch_config := self.current_color_swatch_config():
+                configured_colors = [
+                    l.split(": ")[0] for l in current_color_swatch_config.split("\n")
+                ]
+                missings = [color for color in colors if color not in configured_colors]
+                if missings:
+                    logger.warning(f"add these colors to color swatch config:")
+                    for color in missings:
+                        print(color)
+            else:
+                logger.warning("no color swatch config found")
 
     def process_sheet_to_products(
         self,

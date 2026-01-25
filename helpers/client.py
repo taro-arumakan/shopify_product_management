@@ -187,6 +187,63 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         )
         self.assign_image_to_skus(product_id, uploaded_variant_media["id"], skus)
 
+    def segment_options_list_by_key_option(self, option_dicts):
+        """
+        group the flat options list to list of lists by the same first option i.e. color
+
+        [{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
+         {'option_values': {'カラー': 'PINK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-PK-3', 'stock': 2},
+         {'option_values': {'カラー': 'PINK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-PK-4', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-BK-2', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-BK-3', 'stock': 2},
+         {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]
+         becomes
+
+        [[{'option_values': {'カラー': 'PINK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-PK-2', 'stock': 2},
+          {'option_values': {'カラー': 'PINK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-PK-3', 'stock': 2},
+          {'option_values': {'カラー': 'PINK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-PK-4', 'stock': 2}],
+         [{'option_values': {'カラー': 'INK BLACK', 'サイズ': '2'}, 'price': 35200, 'sku': 'ALV-90154-BK-2', 'stock': 2},
+          {'option_values': {'カラー': 'INK BLACK', 'サイズ': '3'}, 'price': 35200, 'sku': 'ALV-90154-BK-3', 'stock': 2},
+          {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]]
+        """
+        res = {}
+        key_attr = list(option_dicts[0]["option_values"].keys())[0]
+        for option in option_dicts:
+            res.setdefault(option["option_values"][key_attr], []).append(option)
+        return list(res.values())
+
+    def add_variants_from_product_input(self, product_input, location_names):
+        optionss = self.segment_options_list_by_key_option(
+            self.populate_option_dicts(product_input)
+        )
+        drive_links, skuss = self.populate_drive_ids_and_skuss(product_input)
+        product_id = self.product_id_by_title(product_input["title"])
+        for drive_link, skus, options in zip(drive_links, skuss, optionss):
+            logger.info(f"  processing sku: {skus} - {drive_link}")
+            res = self.add_product_images(
+                product_id,
+                drive_link,
+                f"{pathlib.Path.home()}/Downloads/{self.shop_name}_{datetime.date.today():%Y%m%d}/",
+                f"upload_{datetime.date.today():%Y%m%d}_{skus[0]}_",
+            )
+            new_media_ids = [m["id"] for m in res[-1]["productCreateMedia"]["media"]]
+            self.variants_add(
+                product_id=product_id,
+                skus=skus,
+                media_ids=[],
+                variant_media_ids=[new_media_ids[0]],
+                option_names=options[0]["option_values"].keys(),
+                variant_option_valuess=[
+                    option["option_values"].values() for option in options
+                ],
+                prices=[option["price"] for option in options],
+                stocks=[option["stock"] for option in options],
+                location_id=self.location_id_by_name(location_names[0]),
+            )
+        self.enable_and_activate_inventory_by_product_id(
+            product_id, location_names=location_names
+        )
+
     def send_email(self, subject: str, body: str, to_addrs: list[str]):
         smtp_host = os.getenv("SMTP_HOST")
         smtp_port = int(os.getenv("SMTP_PORT", "587"))
