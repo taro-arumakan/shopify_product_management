@@ -35,6 +35,8 @@ jobs:
       - name: Create .env file
         run: |
           cat > .env << EOF
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
           gbhjapan-ACCESS_TOKEN=${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
           gbhjapan-GSPREAD_ID=${{ secrets.GBHJAPAN_GSPREAD_ID }}
           kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
