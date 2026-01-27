@@ -9,9 +9,9 @@ import utils
 
 
 def check(brand, email_recipients):
-    asof = (datetime.datetime.today() - datetime.timedelta(days=14)).astimezone(
-        zoneinfo.ZoneInfo("Asia/Tokyo")
-    )
+    asof = datetime.datetime.combine(datetime.date.today(), datetime.time())
+    asof = asof - datetime.timedelta(days=14)
+    asof = asof.astimezone(zoneinfo.ZoneInfo("Asia/Tokyo"))
 
     client = utils.client(brand.lower())
     orders = client.orders_expired(asof=asof)
