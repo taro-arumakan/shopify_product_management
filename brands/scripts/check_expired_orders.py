@@ -19,10 +19,13 @@ def check(brand, email_recipients):
     body = ""
     if orders:
         body += "orders expired\n"
-        for o in sorted(
-            orders, key=lambda o: datetime.datetime.fromisoformat(o["processedAt"])
-        ):
-            body += f"{datetime.datetime.fromisoformat(o["processedAt"]).astimezone(zoneinfo.ZoneInfo("Asia/Tokyo")).date()}\t{o["name"]}\n"
+        tz = zoneinfo.ZoneInfo("Asia/Tokyo")
+        for order in orders:
+            order["processedAt"] = datetime.datetime.fromisoformat(
+                order["processedAt"]
+            ).astimezone(tz)
+        for o in sorted(orders, key=lambda o: o["processedAt"]):
+            body += f"{o["processedAt"].date()}\t{o["name"]}\n"
         body += "\n"
 
     if body:
