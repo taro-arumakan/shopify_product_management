@@ -60,11 +60,8 @@ class Orders:
                 ).astimezone(zoneinfo.ZoneInfo("UTC"))
             query_string += f" AND created_at:>={created_after_date:%Y-%m-%d}"
         if open_only:
-            query_string += " AND status:'open'"
-        res = self.orders_by_query(query_string)
-        if open_only:
-            res = [o for o in res if o["displayFinancialStatus"] not in ["EXPIRED"]]
-        return res
+            query_string += " AND status:'open' AND NOT financial_status:'expired'"
+        return self.orders_by_query(query_string)
 
     def orders_later_than(self, cutoff_datetime: datetime.datetime):
         if not cutoff_datetime.tzinfo:
