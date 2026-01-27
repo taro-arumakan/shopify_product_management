@@ -9,8 +9,6 @@ class TestUtils(unittest.TestCase):
     @patch('utils.credentials')
     @patch('brands.kume.client.KumeClient.__init__', return_value=None)
     def test_client_kume(self, mock_init, mock_cred):
-        # We need to mock ArchivepkeClient too if it's imported in the same block, 
-        # but in utils.py they are imported inside elif blocks.
         client = utils.client("kume")
         self.assertIsInstance(client, KumeClient)
         
