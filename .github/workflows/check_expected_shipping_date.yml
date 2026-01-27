@@ -55,7 +55,7 @@ jobs:
       - name: Run check_expected_shipping_date script
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          python brands/check_expected_shipping_date.py
+          python brands/scripts/check_expected_shipping_date.py
 
       - name: Cleanup
         if: always()

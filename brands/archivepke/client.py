@@ -1,7 +1,7 @@
 import logging
 import re
 import string
-from brands.brandclientbase import BrandClientBase
+from brands.client.brandclientbase import BrandClientBase
 
 logger = logging.getLogger(__name__)
 
