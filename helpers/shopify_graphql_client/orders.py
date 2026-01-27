@@ -52,19 +52,16 @@ class Orders:
         if created_after_date:
             if isinstance(created_after_date, datetime.date):
                 logger.warning(
-                    "Querying without timezone in consideration. 'created_at' stored in Shopify are in UTC"
+                    "Querying without timezone in consideration. 'processed_at' stored in Shopify are in UTC"
                 )
             elif not created_after_date.tzinfo:
                 created_after_date = created_after_date.astimezone(
-                    zoneinfo.ZonInfo("Asia/Tokyo")
+                    zoneinfo.ZoneInfo("Asia/Tokyo")
                 ).astimezone(zoneinfo.ZoneInfo("UTC"))
-            query_string += f" AND created_at:>={created_after_date:%Y-%m-%d}"
+            query_string += f" AND processed_at:>={created_after_date:%Y-%m-%d}"
         if open_only:
-            query_string += " AND status:'open'"
-        res = self.orders_by_query(query_string)
-        if open_only:
-            res = [o for o in res if o["displayFinancialStatus"] not in ["EXPIRED"]]
-        return res
+            query_string += " AND status:'open' AND NOT financial_status:'expired'"
+        return self.orders_by_query(query_string)
 
     def orders_later_than(self, cutoff_datetime: datetime.datetime):
         if not cutoff_datetime.tzinfo:
@@ -72,4 +69,10 @@ class Orders:
             cutoff_datetime = cutoff_datetime.replace(
                 tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
             )
-        return self.orders_by_query(f"created_at:>='{cutoff_datetime.isoformat()}'")
+        return self.orders_by_query(f"processed_at:>='{cutoff_datetime.isoformat()}'")
+
+    def orders_expired(self, asof: datetime.datetime = None):
+        query = "financial_status:'expired'"
+        if asof:
+            query += f" AND processed_at:<='{asof.isoformat()}'"
+        return self.orders_by_query(query)

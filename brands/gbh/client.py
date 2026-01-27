@@ -1,10 +1,9 @@
 import datetime
 import logging
 import pathlib
-import re
 import string
 import textwrap
-from brands.brandclientbase import BrandClientBase
+from brands.client.brandclientbase import BrandClientBase
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

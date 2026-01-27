@@ -3,7 +3,7 @@ import logging
 import re
 import string
 import textwrap
-from brands.brandclientbase import BrandClientBase
+from brands.client.brandclientbase import BrandClientBase
 
 logger = logging.getLogger(__name__)
 

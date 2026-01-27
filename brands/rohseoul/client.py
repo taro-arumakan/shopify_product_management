@@ -1,6 +1,6 @@
 import logging
 import string
-from brands.brandclientbase import BrandClientBase
+from brands.client.brandclientbase import BrandClientBase
 import textwrap
 
 

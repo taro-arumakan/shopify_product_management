@@ -2,7 +2,7 @@ import json
 import logging
 import pathlib
 import pandas as pd
-from brands.sanity_checks import SanityChecks
+from brands.client.sanity_checks import SanityChecks
 from helpers.client import Client
 
 logger = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ import re
 import pathlib
 import string
 import textwrap
-from brands.brandclientbase import BrandClientBase
+from brands.client.brandclientbase import BrandClientBase
 from helpers.dropbox_utils import download_and_rename_images_from_dropbox
 
 logger = logging.getLogger(__name__)

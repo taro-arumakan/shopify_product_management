@@ -1,5 +1,5 @@
 from helpers.client import Client
-from brands.brandclientbase import BrandClientBase
+from brands.client.brandclientbase import BrandClientBase
 from helpers.exceptions import (
     MultipleProductsFoundException,
     NoProductsFoundException,
