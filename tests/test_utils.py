@@ -6,15 +6,24 @@ from brands.archivepke.client import ArchivepkeClient
 
 class TestUtils(unittest.TestCase):
     
-    @patch('utils.credentials')
-    @patch('brands.kume.client.KumeClient.__init__', return_value=None)
-    def test_client_kume(self, mock_init, mock_cred):
+    @patch.dict('os.environ', {
+        'kumej-ACCESS_TOKEN': 'dummy_token',
+        'GOOGLE_CREDENTIAL_PATH': '/dummy/path',
+        'kumej-GSPREAD_ID': 'dummy_sheet_id'
+    })
+    @patch('helpers.client.Client.__init__', return_value=None)
+    def test_client_kume(self, mock_client_init):
+        # Using os.environ instead of mocking credentials/init directly
         client = utils.client("kume")
         self.assertIsInstance(client, KumeClient)
         
-    @patch('utils.credentials')
-    @patch('brands.archivepke.client.ArchivepkeClient.__init__', return_value=None)
-    def test_client_archivepke_aliases(self, mock_init, mock_cred):
+    @patch.dict('os.environ', {
+        'archive-epke-ACCESS_TOKEN': 'dummy_token',
+        'GOOGLE_CREDENTIAL_PATH': '/dummy/path',
+        'archive-epke-GSPREAD_ID': 'dummy_sheet_id'
+    })
+    @patch('helpers.client.Client.__init__', return_value=None)
+    def test_client_archivepke_aliases(self, mock_client_init):
         aliases = ["archive-epke", "archivepke", "archivépke", "archive"]
         for alias in aliases:
             client = utils.client(alias)
