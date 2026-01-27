@@ -14,15 +14,12 @@ repos:
     hooks:
       - id: pytest
         name: Run pytest
-        language: python
+        language: system
         types: [python]
-        entry: pytest
+        entry: uv run pytest
         pass_filenames: false
         args:
           - "--strict-config"
           - "--rootdir=."
           - "-c=pytest.ini"
           - "tests"
-        additional_dependencies:
-          - pytest
-          - requests
