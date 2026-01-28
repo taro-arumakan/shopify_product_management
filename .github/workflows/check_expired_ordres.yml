@@ -14,16 +14,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.13"
-          cache: "pip"
+          version: "0.5.21"
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          uv sync --frozen
 
       - name: Create Google credentials file
         env:
@@ -66,7 +64,7 @@ jobs:
       - name: Run check_expired_orders script
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          python brands/scripts/check_expired_orders.py
+          uv run python brands/scripts/check_expired_orders.py
 
       - name: Cleanup
         if: always()
