@@ -53,7 +53,7 @@ jobs:
           apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
           archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
           archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
-          a-and-stored-ACCESS_TOKEN=${{ secrets.A_AND_STORES_ACCESS_TOKEN }}
+          a-and-stores-ACCESS_TOKEN=${{ secrets.A_AND_STORES_ACCESS_TOKEN }}
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
           SMTP_HOST=${{ secrets.SMTP_HOST }}
           SMTP_PORT=${{ secrets.SMTP_PORT }}
