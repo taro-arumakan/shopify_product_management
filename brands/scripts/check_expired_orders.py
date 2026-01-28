@@ -18,7 +18,7 @@ def check(brand, email_recipients):
 
     body = ""
     if orders:
-        body += "orders expired\n"
+        body += "orders in expired status and 14 days past\n"
         tz = zoneinfo.ZoneInfo("Asia/Tokyo")
         for order in orders:
             order["processedAt"] = datetime.datetime.fromisoformat(
