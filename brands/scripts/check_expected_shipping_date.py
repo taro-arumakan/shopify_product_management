@@ -1,10 +1,10 @@
 import datetime
 import logging
 import os
+import dotenv
+import utils
 
 logging.basicConfig(level=logging.INFO)
-
-import utils
 
 
 def get_date_metafield_value(metafields, key):
@@ -56,15 +56,11 @@ def check(brand, email_recipients):
 
 
 def main():
+    assert dotenv.load_dotenv(override=True)
     brands = ["KUME", "GBH", "BLOSSOM"]
-    recipients_by_brand = {
-        "KUME": os.environ["KUME_NOTIFICATION_EMAILS"].split(","),
-        "GBH": os.environ["GBH_NOTIFICATION_EMAILS"].split(","),
-        "BLOSSOM": os.environ["BLOSSOM_NOTIFICATION_EMAILS"].split(","),
-    }
     for brand in brands:
         logging.info(f"Checking {brand}...")
-        check(brand, recipients_by_brand[brand])
+        check(brand, email_recipients=os.environ[f"NOTIFYEES_{brand}"].split(","))
 
 
 if __name__ == "__main__":

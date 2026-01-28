@@ -1,4 +1,4 @@
-name: Check expected shipping date
+name: Check expired orders
 
 on:
   schedule:
@@ -60,7 +60,7 @@ jobs:
           SMTP_USER=${{ secrets.SMTP_USER }}
           SMTP_PASS=${{ secrets.SMTP_PASS }}
           SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
-          EXPIRED_ORDERS_NOTIFYEES=${{ secrets.EXPIRED_ORDERS_NOTIFYEES }}
+          NOTIFYEES_EXPIRED_ORDERS=${{ secrets.NOTIFYEES_EXPIRED_ORDERS }}
           EOF
 
       - name: Run check_expired_orders script
