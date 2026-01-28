@@ -47,9 +47,9 @@ jobs:
           SMTP_USER=${{ secrets.SMTP_USER }}
           SMTP_PASS=${{ secrets.SMTP_PASS }}
           SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
-          BLOSSOM_NOTIFICATION_EMAILS=${{ secrets.BLOSSOM_NOTIFICATION_EMAILS }}
-          GBH_NOTIFICATION_EMAILS=${{ secrets.GBH_NOTIFICATION_EMAILS }}
-          KUME_NOTIFICATION_EMAILS=${{ secrets.KUME_NOTIFICATION_EMAILS }}
+          NOTIFYEES_BLOSSOM=${{ secrets.NOTIFYEES_BLOSSOM }}
+          NOTIFYEES_GBH=${{ secrets.NOTIFYEES_GBH }}
+          NOTIFYEES_KUME=${{ secrets.NOTIFYEES_KUME }}
           EOF
 
       - name: Run check_expected_shipping_date script

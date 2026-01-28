@@ -2,10 +2,10 @@ import datetime
 import logging
 import os
 import zoneinfo
+import dotenv
+import utils
 
 logging.basicConfig(level=logging.INFO)
-
-import utils
 
 
 def check(brand, email_recipients):
@@ -38,6 +38,7 @@ def check(brand, email_recipients):
 
 
 def main():
+    assert dotenv.load_dotenv(override=True)
     brands = [
         "a-and-stores",
         "apricot-studios",
@@ -51,7 +52,7 @@ def main():
     ]
     for brand in brands:
         logging.info(f"Checking {brand}...")
-        check(brand, os.environ["EXPIRED_ORDERS_NOTIFYEES"].split(","))
+        check(brand, os.environ["NOTIFYEES_EXPIRED_ORDERS"].split(","))
 
 
 if __name__ == "__main__":
