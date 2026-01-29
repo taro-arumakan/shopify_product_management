@@ -60,7 +60,7 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
-          uv run python "${{ inputs.script_path }}"
+          uv run "${{ inputs.script_path }}"
 
       - name: Cleanup
         if: always()
