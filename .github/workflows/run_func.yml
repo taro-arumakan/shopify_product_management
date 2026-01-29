@@ -64,9 +64,10 @@ jobs:
           EOF
 
       - name: Run a func
+        env:
+          PYTHONPATH: .
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          uv run python .github/actions/run_func.py ${{ github.event.inputs.script_path }} ${{ github.event.inputs.func_name }} '${{ github.event.inputs.params }}'
+          uv run .github/actions/run_func.py ${{ github.event.inputs.script_path }} ${{ github.event.inputs.func_name }} '${{ github.event.inputs.params }}'
 
       - name: Cleanup
         if: always()

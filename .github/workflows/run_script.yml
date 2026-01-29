@@ -57,9 +57,10 @@ jobs:
           EOF
 
       - name: Run a script
+        env:
+          PYTHONPATH: .
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          uv run python "${{ inputs.script_path }}"
+          uv run "${{ inputs.script_path }}"
 
       - name: Cleanup
         if: always()

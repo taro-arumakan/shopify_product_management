@@ -59,9 +59,10 @@ jobs:
           EOF
 
       - name: Export products to CSV
+        env:
+          PYTHONPATH: .
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          uv run python export_products_to_csv.py
+          uv run export_products_to_csv.py
 
       - name: Cleanup
         if: always()
