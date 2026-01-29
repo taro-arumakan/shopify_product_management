@@ -63,8 +63,7 @@ jobs:
 
       - name: Run check_expired_orders script
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          uv run python brands/scripts/check_expired_orders.py
+          uv run brands/scripts/check_expired_orders.py
 
       - name: Cleanup
         if: always()
