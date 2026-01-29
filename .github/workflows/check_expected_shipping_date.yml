@@ -51,6 +51,8 @@ jobs:
           EOF
 
       - name: Run check_expected_shipping_date script
+        env:
+          PYTHONPATH: .
         run: |
           uv run brands/scripts/check_expected_shipping_date.py
 
