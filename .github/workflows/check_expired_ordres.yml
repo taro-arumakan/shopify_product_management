@@ -62,6 +62,8 @@ jobs:
           EOF
 
       - name: Run check_expired_orders script
+        env:
+          PYTHONPATH: .
         run: |
           uv run brands/scripts/check_expired_orders.py
 
