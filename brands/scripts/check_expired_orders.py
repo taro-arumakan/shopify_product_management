@@ -33,6 +33,7 @@ def process(brand, email_recipients, dryrun=True):
             email_recipients,
         )
     for order in orders:
+        print(f"Closing {order['name']}")
         if not dryrun:
             client.order_cancel_and_close(
                 order, staff_note="Auto-cancelled: Payment expired"
