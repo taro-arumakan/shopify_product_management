@@ -8,17 +8,14 @@ import utils
 logging.basicConfig(level=logging.INFO)
 
 
-def check(brand, email_recipients):
-    asof = datetime.datetime.combine(datetime.date.today(), datetime.time())
-    asof = asof - datetime.timedelta(days=14)
-    asof = asof.astimezone(zoneinfo.ZoneInfo("Asia/Tokyo"))
+def process(brand, email_recipients, dryrun=True):
 
     client = utils.client(brand.lower())
-    orders = client.orders_expired(asof=asof)
+    orders = client.get_expired_orders_for_cancellation()
 
     body = ""
     if orders:
-        body += "orders in expired status and 14 days past\n"
+        body += "Going to cancel these orders in expired status and 14 days past:\n"
         tz = zoneinfo.ZoneInfo("Asia/Tokyo")
         for order in orders:
             order["processedAt"] = datetime.datetime.fromisoformat(
@@ -31,10 +28,15 @@ def check(brand, email_recipients):
     if body:
         print(body)
         client.send_email(
-            f"{brand} - expired orders ",
+            f"{brand} - expired orders",
             body,
             email_recipients,
         )
+    for order in orders:
+        if not dryrun:
+            client.order_cancel_and_close(
+                order, staff_note="Auto-cancelled: Payment expired"
+            )
 
 
 def main():
@@ -52,7 +54,7 @@ def main():
     ]
     for brand in brands:
         logging.info(f"Checking {brand}...")
-        check(brand, os.environ["NOTIFYEES_EXPIRED_ORDERS"].split(","))
+        process(brand, os.environ["NOTIFYEES_EXPIRED_ORDERS"].split(","))
 
 
 if __name__ == "__main__":
