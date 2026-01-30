@@ -1,4 +1,4 @@
-name: Check expired orders
+name: Close expired orders
 
 on:
   schedule:
@@ -63,10 +63,11 @@ jobs:
           NOTIFYEES_EXPIRED_ORDERS=${{ secrets.NOTIFYEES_EXPIRED_ORDERS }}
           EOF
 
-      - name: Run check_expired_orders script
+      - name: Run close_expired_orders script
+        env:
+          PYTHONPATH: .
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          python brands/scripts/check_expired_orders.py
+          uv run brands/scripts/close_expired_orders.py
 
       - name: Cleanup
         if: always()
