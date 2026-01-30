@@ -133,9 +133,10 @@ class Orders:
             staffNote=staff_note,
         )
         res = self.run_query(query, variables)
-        if errors := res["orderCancel"]["orderCancelUserErrors"]:
-            raise RuntimeError(f"Order cancel fails: {errors}")
-        if errors := res["orderCancel"]["userErrors"]:
+        if errors := (
+            res["orderCancel"]["orderCancelUserErrors"]
+            or res["orderCancel"]["userErrors"]
+        ):
             raise RuntimeError(f"Order cancel fails: {errors}")
         res = res["orderCancel"]
         job_id = res["job"]["id"]
@@ -157,16 +158,21 @@ class Orders:
             }
         }
         """
-
         res = self.run_query(query, {"input": {"id": order_id}})
         if errors := res["orderClose"]["userErrors"]:
             raise RuntimeError(f"Order close fails: {errors}")
         return res["orderClose"]
 
-    def order_cancel_and_close(self, order, staff_note="Auto-cancelled"):
+    def order_cancel_and_close(
+        self, order, notify_customer=False, staff_note="Auto-cancelled"
+    ):
         order_id = order["id"]
         if not order["cancelledAt"]:
-            self.order_cancel(order_id=order_id, staff_note=staff_note)
+            self.order_cancel(
+                order_id=order_id,
+                notify_cusotomer=notify_customer,
+                staff_note=staff_note,
+            )
         if not order["closed"]:
             self.order_close(order_id=order_id)
 
