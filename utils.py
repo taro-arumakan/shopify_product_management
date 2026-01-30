@@ -100,6 +100,8 @@ def client(shop_name: str) -> BrandClientBase:
         res = SsilClient()
 
     else:
+        if shop_name.lower() in ["dev"]:
+            shop_name = "quickstart-6f3c9e4c"
         cred = credentials(shop_name)
         res = Client(
             shop_name=cred.shop_name,
