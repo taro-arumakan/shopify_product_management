@@ -36,7 +36,9 @@ def process(brand, email_recipients, dryrun=True):
         print(f"Closing {order['name']}")
         if not dryrun:
             client.order_cancel_and_close(
-                order, staff_note="Auto-cancelled: Payment expired"
+                order,
+                notify_customer=True,
+                staff_note="Auto-cancelled: Payment expired",
             )
 
 
