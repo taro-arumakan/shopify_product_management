@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
 import string
 from brands.rohseoul.client import RohseoulClient
 from brands.rohseoul.article_templates import article_template_lookbook
@@ -48,7 +47,7 @@ def populate_lookbook_products_dicts(client: RohseoulClient):
         ]
         df = pd.DataFrame(rows, columns=["look", "number", "item", "link"])
         fill_columns = ["look", "number"]
-        df[fill_columns] = df[fill_columns].replace("", np.nan)
+        df[fill_columns] = df[fill_columns].replace("", pd.NA)
         df[fill_columns] = df[fill_columns].ffill()
         df["number"] = df["number"].astype(int)
         res = {}
