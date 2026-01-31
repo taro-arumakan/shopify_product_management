@@ -168,12 +168,16 @@ class Orders:
     ):
         order_id = order["id"]
         if not order["cancelledAt"]:
+            logger.info(
+                f"Cancelling order {order['name']}. Customer will {'' if notify_customer else 'not '}be notified."
+            )
             self.order_cancel(
                 order_id=order_id,
                 notify_cusotomer=notify_customer,
                 staff_note=staff_note,
             )
         if not order["closed"]:
+            logger.info(f"Cancelling order {order['name']}")
             self.order_close(order_id=order_id)
 
     def get_expired_orders_for_cancellation(

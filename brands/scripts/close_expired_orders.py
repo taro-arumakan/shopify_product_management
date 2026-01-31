@@ -9,13 +9,12 @@ logging.basicConfig(level=logging.INFO)
 
 
 def process(brand, email_recipients, dryrun=True):
-
     client = utils.client(brand.lower())
     orders = client.get_expired_orders_for_cancellation()
 
     body = ""
     if orders:
-        body += "Going to cancel these orders in expired status and 14 days past:\n"
+        body += "Closing orders in expired status and 14 days past:\n"
         tz = zoneinfo.ZoneInfo("Asia/Tokyo")
         for order in orders:
             order["processedAt"] = datetime.datetime.fromisoformat(
@@ -28,7 +27,7 @@ def process(brand, email_recipients, dryrun=True):
     if body:
         print(body)
         client.send_email(
-            f"{brand} - expired orders",
+            f"{brand} - {"to be " if dryrun else ""}closed expired orders",
             body,
             email_recipients,
         )
@@ -57,7 +56,7 @@ def main():
     ]
     for brand in brands:
         logging.info(f"Checking {brand}...")
-        process(brand, os.environ["NOTIFYEES_EXPIRED_ORDERS"].split(","))
+        process(brand, os.environ["NOTIFYEES_EXPIRED_ORDERS"].split(","), dryrun=False)
 
 
 if __name__ == "__main__":
