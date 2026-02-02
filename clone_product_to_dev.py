@@ -19,7 +19,16 @@ def variants_to_options_dict(variants):
     ]
 
 
-def main():
+def test_duplicate():
+    client = utils.client("dev")
+    product = client.product_by_handle("ridge-shoulder-bag")
+    client.duplicate_product(
+        product_id=product["id"],
+        new_title=product["title"],
+    )
+
+
+def clone():
     clientfrom = utils.client("archive")
     clientto = utils.client("dev")
     location_name = "Shop location"
@@ -71,4 +80,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    test_duplicate()
