@@ -11,7 +11,7 @@ def variants_to_options_dict(variants):
             option_values={
                 so["name"]: so["value"] for so in variant["selectedOptions"]
             },
-            price=variant["price"],
+            price=variant["compareAtPrice"],
             sku=variant["sku"],
             stock=variant["inventoryQuantity"],
         )
@@ -22,6 +22,7 @@ def variants_to_options_dict(variants):
 def main():
     clientfrom = utils.client("archive")
     clientto = utils.client("dev")
+    location_name = "Shop location"
 
     product = clientfrom.product_by_handle(
         "archived-20260123-ridge-shoulder-bag-1",
@@ -38,11 +39,25 @@ def main():
         option_dicts=variants_to_options_dict(product["variants"]["nodes"]),
     )
     pprint.pprint(res)
-
+    product_id = res["id"]
+    skus, prices, compare_at_prices = zip(
+        *[
+            (v["sku"], v["price"], v["compareAtPrice"])
+            for v in product["variants"]["nodes"]
+        ]
+    )
+    clientto.update_variant_prices_by_skus(
+        product_id=product_id,
+        skus=skus,
+        prices=prices,
+        compare_at_prices=compare_at_prices,
+    )
+    for sku in skus:
+        clientto.enable_and_activate_inventory_by_sku(sku, [location_name])
     """ #TODO clone images client.product_product_images """
 
     """ client.update_stocks """
-    location_id = clientto.location_id_by_name("Shop location")
+    location_id = clientto.location_id_by_name(location_name)
     sku_stock_map = {
         v["sku"]: v["inventoryQuantity"] for v in product["variants"]["nodes"]
     }
@@ -51,7 +66,7 @@ def main():
 
     """ client.publish_products """
     clientto.activate_and_publish_by_product_id(
-        product_id=res["id"], scheduled_time=None
+        product_id=product_id, scheduled_time=None
     )
 
 
