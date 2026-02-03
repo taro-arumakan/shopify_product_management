@@ -4,14 +4,14 @@ import os
 import re
 import pathlib
 import string
-import textwrap
+from brands.apricotstudios.sanity_checks import ApricotStudiosSanityChecks
 from brands.client.brandclientbase import BrandClientBase
 from helpers.dropbox_utils import download_and_rename_images_from_dropbox
 
 logger = logging.getLogger(__name__)
 
 
-class ApricotStudiosClient(BrandClientBase):
+class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
 
     SHOPNAME = "apricot-studios"
     VENDOR = "Apricot Studios"
@@ -174,12 +174,11 @@ class ApricotStudiosClient(BrandClientBase):
         self.update_metafields(product_id, product_input)
         return product_id
 
-    def update_metafields(self, product_id, product_input):
-        logger.info(f'updating metafields for {product_input["title"]}')
+    def get_product_description_richtext(self, product_input):
         desc = product_input["description"]
         material = product_input["material"]
         origin = product_input["made_in"]
-        product_description = {
+        product_description_richtext = {
             "type": "root",
             "children": [
                 {
@@ -207,7 +206,16 @@ class ApricotStudiosClient(BrandClientBase):
                 },
             ],
         }
-        self.update_product_description_metafield(product_id, product_description)
+        return product_description_richtext
+
+    def update_metafields(self, product_id, product_input):
+        logger.info(f'updating metafields for {product_input["title"]}')
+        product_description_richtext = self.get_product_description_richtext(
+            product_input
+        )
+        self.update_product_description_metafield(
+            product_id, product_description_richtext
+        )
         if size_table_html := self.get_size_field(product_input):
             self.update_size_table_html_metafield(
                 product_id, "custom", "size_text", size_table_html

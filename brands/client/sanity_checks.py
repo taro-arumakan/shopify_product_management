@@ -44,7 +44,7 @@ class SanityChecks:
                     print(description_html)
         return res
 
-    def check_drive_image(self, product_inputs):
+    def check_images_link(self, product_inputs):
         res = []
         for product_input in product_inputs:
             try:
@@ -115,7 +115,7 @@ class SanityChecks:
         res += self.check_existing_products(product_inputs)
         res += self.check_size_field(product_inputs, raise_on_error=False)
         res += self.check_description(product_inputs, raise_on_error=False)
-        res += self.check_drive_image(product_inputs)
+        res += self.check_images_link(product_inputs)
         for r in res:
             logger.error(r)
 
