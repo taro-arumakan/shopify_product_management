@@ -4,10 +4,13 @@ import zipfile
 from helpers.google_api_interface.drive import GoogleDriveApiInterface
 
 
+def format_download_link(shared_link):
+    return shared_link.replace("&dl=0", "") + "&dl=1"
+
+
 def download_images_from_dropbox(shared_link, output_path):
 
-    shared_link = shared_link.replace("&dl=0", "") + "&dl=1"
-    res = requests.get(shared_link)
+    res = requests.get(format_download_link(shared_link))
     with open(f"{output_path}.zip", "wb") as of:
         of.write(res.content)
     os.makedirs(output_path, exist_ok=True)
