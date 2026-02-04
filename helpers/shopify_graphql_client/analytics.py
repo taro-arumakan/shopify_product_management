@@ -1,0 +1,108 @@
+import calendar
+import datetime
+import logging
+import shutil
+
+logger = logging.getLogger(__name__)
+
+import pandas as pd
+
+
+class Analytics:
+    def run_shopifyql(self, shpoifyql_query, to_dataframe=True):
+        query = (
+            """
+        query {
+            shopifyqlQuery(query: "%s") {
+                tableData {
+                    columns {
+                        name
+                        dataType
+                        displayName
+                    }
+                    rows
+                }
+                parseErrors
+            }
+        }
+        """
+            % shpoifyql_query
+        )
+        res = self.run_query(query)
+        if error := res["shopifyqlQuery"]["parseErrors"]:
+            raise RuntimeError(f"Failed to run ShpifyQL query: {error}")
+        res = res["shopifyqlQuery"]["tableData"]
+        return self.report_to_dataframe(res) if to_dataframe else res
+
+    def report_to_dataframe(self, shopifyql_res):
+        df = pd.DataFrame(shopifyql_res["rows"])
+        df = df[[c["name"] for c in shopifyql_res["columns"]]]
+        money_cols = [
+            c["name"] for c in shopifyql_res["columns"] if c["dataType"] == "MONEY"
+        ]
+        date_cols = [
+            c["name"]
+            for c in shopifyql_res["columns"]
+            if c["dataType"] == "DAY_TIMESTAMP"
+        ]
+        df[money_cols] = df[money_cols].apply(pd.to_numeric, errors="coerce")
+        df[date_cols] = df[date_cols].apply(pd.to_datetime, errors="coerce")
+        return df
+
+    def report_sales_by_sku(self, date_from, date_to, to_dataframe=True):
+        shopifyql_query = f"""
+            FROM sales
+            SHOW day, order_name, discount_code, line_type, product_title_at_time_of_sale
+                AS TITLE, product_variant_sku_at_time_of_sale AS SKU,
+                product_variant_compare_at_price AS PRICE, gross_sales, discounts, gross_returns,
+                net_sales, shipping_charges, shipping_returned
+            GROUP BY day, order_name, line_type, TITLE, SKU, PRICE, discount_code
+            TIMESERIES day
+            SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
+            ORDER BY day ASC, order_name ASC, line_type ASC, SKU ASC
+        """
+        return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+
+    def report_monthly_sales_by_sku(self, report_year, report_month, to_dataframe=True):
+        return self.report_sales_by_sku(
+            date_from=datetime.date(report_year, report_month, 1),
+            date_to=datetime.date(
+                report_year,
+                report_month,
+                calendar.monthrange(report_year, report_month)[1],
+            ),
+            to_dataframe=to_dataframe,
+        )
+
+    def generate_monthly_report(self, template_path, report_year, report_month):
+        # TODO move part of the logic to a generic function to save other reports
+        sheet_name = "monthly_sales_report"
+        output_path = f"/tmp/monthly_report_{datetime.date(report_year, report_month, 1):%Y%m}_{self.VENDOR}.xlsx"
+        shutil.copyfile(template_path, output_path)
+
+        df = self.report_monthly_sales_by_sku(report_year, report_month)
+
+        # 'overlay' mode, 'a' stands for append
+        with pd.ExcelWriter(
+            output_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
+        ) as writer:
+            df.to_excel(
+                writer,
+                sheet_name=sheet_name,
+                startrow=20,  # 0-based index
+                index=False,
+                header=False,
+            )
+
+
+def main():
+    brands = ["apricot", "blossom", "archive", "gbh", "kume", "lememe", "roh", "ssil"]
+    import utils
+
+    for brand in brands:
+        client = utils.client(brand)
+        client.generate_monthly_report(2025, 12)
+
+
+if __name__ == "__main__":
+    main()
