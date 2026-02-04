@@ -1,5 +1,6 @@
 import logging
 import requests
+from helpers.shopify_graphql_client.analytics import Analytics
 from helpers.shopify_graphql_client.archive_and_remove_variant import (
     ArchiveAndRemoveVariant,
 )
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class ShopifyGraphqlClient(
+    Analytics,
     ArchiveAndRemoveVariant,
     Article,
     CollectionQueries,
