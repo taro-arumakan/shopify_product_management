@@ -208,18 +208,20 @@ sku_price_map = {
 
 client = utils.client("ssil")
 
+
 def update_price(testrun=True):
     variants = []
     new_prices_by_variant_id = {}
 
     for sku, new_price in sku_price_map.items():
         variant = client.variant_by_sku(sku, active_only=False)
-        variants.append(variant)
-        new_prices_by_variant_id[variant["id"]] = new_price
+        client.update_variant_attributes(
+            product_id=variant["product"]["id"],
+            variant_id=variant["id"],
+            attribute_names=["price", "compareAtPrice"],
+            attribute_values=[new_price, new_price],
+        )
 
-    client.update_variant_prices_by_dict(
-        variants, new_prices_by_variant_id, testrun=testrun
-    )
 
 if __name__ == "__main__":
     update_price()
