@@ -52,11 +52,12 @@ class Analytics:
     def report_sales_by_sku(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
-            SHOW day, order_name, discount_code, line_type, product_title_at_time_of_sale
+            SHOW day, order_name, sale_id, discount_code, line_type, product_title_at_time_of_sale
                 AS TITLE, product_variant_sku_at_time_of_sale AS SKU,
-                product_variant_compare_at_price AS PRICE, gross_sales, discounts, gross_returns,
+                product_variant_compare_at_price AS ORIGINAL_PRICE, product_variant_price AS SELLING_PRICE,
+                gross_sales, net_returns, discounts,
                 net_sales, shipping_charges, shipping_returned
-            GROUP BY day, order_name, line_type, TITLE, SKU, PRICE, discount_code
+            GROUP BY day, order_name, sale_id, discount_code, line_type, TITLE, SKU, ORIGINAL_PRICE, SELLING_PRICE
             TIMESERIES day
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
             ORDER BY day ASC, order_name ASC, line_type ASC, SKU ASC
@@ -93,16 +94,3 @@ class Analytics:
                 index=False,
                 header=False,
             )
-
-
-def main():
-    brands = ["apricot", "blossom", "archive", "gbh", "kume", "lememe", "roh", "ssil"]
-    import utils
-
-    for brand in brands:
-        client = utils.client(brand)
-        client.generate_monthly_report(2025, 12)
-
-
-if __name__ == "__main__":
-    main()
