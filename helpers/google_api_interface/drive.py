@@ -142,10 +142,10 @@ class GoogleDriveApiInterface:
         )
         return results["files"]
 
-    def upload_to_drive(self, filepath, folder_id):
+    def upload_to_drive(self, filepath, mimetype, folder_id):
         """upload a local file to Google Drive folder"""
         media = MediaIoBaseUpload(
-            open(filepath, "rb"), mimetype="text/csv", resumable=True
+            open(filepath, "rb"), mimetype=mimetype, resumable=True
         )
         f = (
             self.drive_service.files()
