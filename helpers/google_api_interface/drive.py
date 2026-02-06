@@ -107,7 +107,12 @@ class GoogleDriveApiInterface:
         """
         # Query for folders with the specified name inside the parent folder
         folder_name = folder_name.replace("'", "\\'")
-        query = f"'{parent_folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and name='{folder_name}'"
+        query = (
+            f"'{parent_folder_id}' in parents and "
+            f"mimeType='application/vnd.google-apps.folder' and "
+            f"name='{folder_name}' and "
+            f"trashed=false"
+        )
         results = (
             self.drive_service.files()
             .list(
@@ -125,7 +130,29 @@ class GoogleDriveApiInterface:
             raise RuntimeError(
                 f"Multiple folders found with the name '{folder_name}' in parent folder '{parent_folder_id}'."
             )
-        return items[0]["id"]
+        elif items:
+            return items[0]["id"]
+
+    def find_or_create_folder_by_name(self, parent_folder_id, folder_name):
+        if folder_id := self.find_folder_id_by_name(
+            parent_folder_id=parent_folder_id, folder_name=folder_name
+        ):
+            res = folder_id
+        else:
+            file_metadata = {
+                "name": folder_name,
+                "mimeType": "application/vnd.google-apps.folder",
+                "parents": [parent_folder_id],
+            }
+
+            folder = (
+                self.drive_service.files()
+                .create(body=file_metadata, fields="id", supportsAllDrives=True)
+                .execute()
+            )
+
+            res = folder["id"]
+        return res
 
     def list_folders(self, parent_folder_id):
         query = f"'{parent_folder_id}' in parents and mimeType='application/vnd.google-apps.folder'"
@@ -142,10 +169,10 @@ class GoogleDriveApiInterface:
         )
         return results["files"]
 
-    def upload_to_drive(self, filepath, folder_id):
+    def upload_to_drive(self, filepath, mimetype, folder_id):
         """upload a local file to Google Drive folder"""
         media = MediaIoBaseUpload(
-            open(filepath, "rb"), mimetype="text/csv", resumable=True
+            open(filepath, "rb"), mimetype=mimetype, resumable=True
         )
         f = (
             self.drive_service.files()

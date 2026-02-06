@@ -205,7 +205,7 @@ def process(brand, folder_id):
 
     logger.info(f"Saved: {filepath}")
     if folder_id:
-        client.upload_to_drive(filepath, folder_id)
+        client.upload_to_drive(filepath, mimetype="text/csv", folder_id=folder_id)
 
 
 def process_brands(folder_id=None):
