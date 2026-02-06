@@ -1,0 +1,73 @@
+name: Close expired orders
+
+on:
+  schedule:
+    # 1st of every month at 3:00 JST (UTC 18:00 previous day)
+    - cron: "0 3 2 * *"
+  workflow_dispatch:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.21"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          gbhjapan-ACCESS_TOKEN=${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          gbhjapan-GSPREAD_ID=${{ secrets.GBHJAPAN_GSPREAD_ID }}
+          ssilkr-ACCESS_TOKEN=${{ secrets.SSILKR_ACCESS_TOKEN }}
+          ssilkr-GSPREAD_ID=${{ secrets.SSILKR_GSPREAD_ID }}
+          rohseoul-ACCESS_TOKEN=${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          rohseoul-GSPREAD_ID=${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
+          lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+          alvanas-ACCESS_TOKEN=${{ secrets.ALVANAS_ACCESS_TOKEN }}
+          alvanas-GSPREAD_ID=${{ secrets.ALVANAS_GSPREAD_ID }}
+          apricot-studios-ACCESS_TOKEN=${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
+          archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+          a-and-stores-ACCESS_TOKEN=${{ secrets.A_AND_STORES_ACCESS_TOKEN }}
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
+          NOTIFYEES_EXPIRED_ORDERS=${{ secrets.NOTIFYEES_EXPIRED_ORDERS }}
+          EOF
+
+      - name: Run close_expired_orders script
+        env:
+          PYTHONPATH: .
+        run: |
+          uv run brands/scripts/export_monthly_sales_reports.py
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
