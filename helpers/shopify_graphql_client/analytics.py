@@ -75,22 +75,39 @@ class Analytics:
             to_dataframe=to_dataframe,
         )
 
-    def generate_monthly_report(self, template_path, report_year, report_month):
-        # TODO move part of the logic to a generic function to save other reports
-        sheet_name = "monthly_sales_report"
-        output_path = f"/tmp/monthly_report_{datetime.date(report_year, report_month, 1):%Y%m}_{self.VENDOR}.xlsx"
-        shutil.copyfile(template_path, output_path)
+    def inject_dataframe_to_xlsx(
+        self, output_path, sheet_name, dataframe, startrow, header=False
+    ):
+        """
+        Inject the dataframe to an xlsx file at output_path, at the specified startrow
 
-        df = self.report_monthly_sales_by_sku(report_year, report_month)
-
+        :param output_path: where the xlsx file is
+        :param sheet_name: sheet name to insert the DataFrame to
+        :param dataframe: DataFrame being injected
+        :param startrow: 0 based row index
+        :param header: whether to include header or not
+        """
         # 'overlay' mode, 'a' stands for append
         with pd.ExcelWriter(
             output_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
         ) as writer:
-            df.to_excel(
+            dataframe.to_excel(
                 writer,
                 sheet_name=sheet_name,
-                startrow=20,  # 0-based index
+                startrow=startrow,
                 index=False,
-                header=False,
+                header=header,
             )
+
+    def generate_monthly_report(
+        self, template_path, sheet_name, output_path, report_year, report_month
+    ):
+        shutil.copyfile(template_path, output_path)
+        df = self.report_monthly_sales_by_sku(report_year, report_month)
+        self.inject_dataframe_to_xlsx(
+            output_path=output_path,
+            sheet_name=sheet_name,
+            dataframe=df,
+            startrow=20,
+            header=False,
+        )
