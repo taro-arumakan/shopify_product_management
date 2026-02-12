@@ -36,7 +36,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             title=string.ascii_lowercase.index("f"),
             collection=string.ascii_lowercase.index("c"),
             category=string.ascii_lowercase.index("d"),
-            release_date=string.ascii_lowercase.index("b"),
+            # release_date=string.ascii_lowercase.index("b"),
             description=string.ascii_lowercase.index("j"),
             material=string.ascii_lowercase.index("n"),
             size_text=string.ascii_lowercase.index("p"),
@@ -72,7 +72,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             [
                 product_input["collection"],
                 product_input["category"],
-                product_input["release_date"],
+                # product_input["release_date"],
             ]
             + super().get_tags(product_input, additional_tags)
             + (additional_tags or [])
@@ -100,7 +100,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             tempdir=tempdir,
         )
 
-    def process_product_images(self, product_input):
+    def process_product_images(self, product_input, handle_suffix=None):
         """
         As Apricot Studios has their images in Dropbox and also its images structure differs from other brands,
         keeping this customized processing logic.
@@ -217,9 +217,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             product_id, product_description_richtext
         )
         if size_table_html := self.get_size_field(product_input):
-            self.update_size_table_html_metafield(
-                product_id, "custom", "size_text", size_table_html
-            )
+            self.update_size_table_html_metafield(product_id, size_table_html)
         self.update_description_include_metafield_values(product_id)
 
     def update_description_include_metafield_values(self, product_id):
