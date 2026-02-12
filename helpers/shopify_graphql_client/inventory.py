@@ -10,25 +10,29 @@ class Inventory:
 
     """ inventory management """
 
+    location_id_by_name_cache = {}
+
     def location_id_by_name(self, name):
-        query = (
-            """
-        {
-            locations(first:10, query:"name:%s") {
-                nodes {
-                    id
+        if name not in self.location_id_by_name_cache:
+            query = (
+                """
+            {
+                locations(first:10, query:"name:%s") {
+                    nodes {
+                        id
+                    }
                 }
             }
-        }
-        """
-            % name
-        )
-        res = self.run_query(query)
-        res = res["locations"]["nodes"]
-        assert (
-            len(res) == 1
-        ), f'{"Multiple" if res else "No"} locations found for {name}: {res}'
-        return res[0]["id"]
+            """
+                % name
+            )
+            res = self.run_query(query)
+            res = res["locations"]["nodes"]
+            assert (
+                len(res) == 1
+            ), f'{"Multiple" if res else "No"} locations found for {name}: {res}'
+            self.location_id_by_name_cache[name] = res[0]["id"]
+        return self.location_id_by_name_cache[name]
 
     def enable_and_activate_inventory_by_product_id(self, product_id, location_names):
         product = self.product_by_id(product_id)
