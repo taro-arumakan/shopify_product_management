@@ -307,7 +307,7 @@ class ProductCreate:
             """
         return textwrap.dedent(res)
 
-    def get_description_html(
+    def format_description_html(
         self,
         description,
         product_care,

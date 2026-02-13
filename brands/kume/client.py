@@ -98,7 +98,7 @@ class KumeClient(BrandClientBase):
             return self.parse_headings_and_table_text_to_html(size_text)
 
     def get_description_html(self, product_input):
-        return super().get_description_html(
+        return self.format_description_html(
             description=product_input["description"],
             product_care=product_input["product_care"],
             material=product_input["material"],
