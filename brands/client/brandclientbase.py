@@ -132,15 +132,11 @@ class BrandClientBase(Client, SanityChecks):
             self.remove_existing_new_badges()
 
     def process_product_inputs(
-        self,
-        product_inputs,
-        additional_tags,
-        scheduled_time=None,
-        handle_suffix=None,
+        self, product_inputs, additional_tags, scheduled_time=None
     ):
         for product_input in product_inputs:
             self.process_product_input(product_input, additional_tags=additional_tags)
-            self.process_product_images(product_input, handle_suffix=handle_suffix)
+            self.process_product_images(product_input)
         self.update_stocks(product_inputs)
         self.publish_products(product_inputs, scheduled_time=scheduled_time)
 
@@ -201,7 +197,6 @@ class BrandClientBase(Client, SanityChecks):
             product_inputs,
             additional_tags=additional_tags,
             scheduled_time=scheduled_time,
-            handle_suffix=handle_suffix,
         )
         self.post_process_product_inputs(product_inputs)
 
