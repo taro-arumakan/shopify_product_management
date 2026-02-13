@@ -61,15 +61,22 @@ class BrandClientBase(Client, SanityChecks):
         raise NotImplementedError
 
     def process_product_input(self, product_input, additional_tags=None):
-        logger.info(f'creating {product_input["title"]}')
-        res = self.create_product_and_activate_inventory(
+        logger.info(f'processing {product_input.get("handle", product_input["title"])}')
+        res = {}
+        res["create_product"] = self.create_product_by_product_input(
             product_input,
             self.VENDOR,
             description_html=self.get_description_html(product_input),
             tags=self.get_tags(product_input, additional_tags),
-            location_names=self.LOCATIONS,
         )
-        return self.post_process_product_input(res, product_input)
+        res["enable_and_activate_inventory"] = (
+            self.enable_and_activate_inventory_by_product_input(
+                product_input, self.LOCATIONS
+            )
+        )
+        res["process_product_images"] = self.process_product_images(product_input)
+        res["update_stock"] = self.update_stock(product_input)
+        return res
 
     def post_process_product_input(self, process_product_input_res, product_input):
         pass
@@ -81,6 +88,9 @@ class BrandClientBase(Client, SanityChecks):
 
     def update_stocks(self, product_inputs):
         return super().update_stocks(product_inputs, self.LOCATIONS[0])
+
+    def update_stock(self, product_input):
+        return super().update_stock(product_input, self.LOCATIONS[0])
 
     def merge_products_as_variants(self, product_title):
         return super().merge_products_as_variants(
@@ -135,10 +145,13 @@ class BrandClientBase(Client, SanityChecks):
         self, product_inputs, additional_tags, scheduled_time=None
     ):
         for product_input in product_inputs:
-            self.process_product_input(product_input, additional_tags=additional_tags)
-            self.process_product_images(product_input)
-        self.update_stocks(product_inputs)
-        self.publish_products(product_inputs, scheduled_time=scheduled_time)
+            res = self.process_product_input(
+                product_input, additional_tags=additional_tags
+            )
+            self.post_process_product_input(res, product_input)
+            self.activate_and_publish_by_product_id(
+                product_id=res["create_product"]["id"], scheduled_time=scheduled_time
+            )
 
     def colors_from_product_inputs(self, product_inputs):
         if "options" in product_inputs[0]:

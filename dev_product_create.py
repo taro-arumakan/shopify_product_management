@@ -4,10 +4,11 @@ logging.basicConfig(level=logging.INFO)
 
 import os
 from brands.rohseoul.client import RohseoulClient
+from brands.blossom.client import BlossomClientClothes
 
 
 def main():
-    client = RohseoulClient()
+    client = BlossomClientClothes()
     client.shop_name = "quickstart-6f3c9e4c"
     client.access_token = os.environ["quickstart-6f3c9e4c-ACCESS_TOKEN"]
     client.base_url = (
@@ -15,9 +16,7 @@ def main():
     )
     client.LOCATIONS = ["Shop location", "My Custom Location"]
 
-    client.process_sheet_to_products(
-        sheet_name="25FW WINTER - copy", handle_suffix="25-fall"
-    )
+    client.process_sheet_to_products(sheet_name="clothes(drop10)", handle_suffix=None)
 
 
 if __name__ == "__main__":

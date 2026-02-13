@@ -96,8 +96,8 @@ class LememeClient(BrandClientBase):
         else:
             logger.warning(f"no size_text for {product_input['title']}")
 
-    def post_process_product_input(self, product_input_to_product_res, product_input):
-        product_id = product_input_to_product_res[0]["id"]
+    def post_process_product_input(self, process_product_input_res, product_input):
+        product_id = process_product_input_res["create_product"]["id"]
         self.update_metafields(product_id, product_input)
         return product_id
 

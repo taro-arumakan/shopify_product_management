@@ -65,8 +65,8 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 logger.error(f"\n\n!!! missing images: {skus} !!!\n\n")
         return ress
 
-    def create_product_and_activate_inventory(
-        self, product_input, vendor, description_html, tags, location_names
+    def create_product_by_product_input(
+        self, product_input, vendor, description_html, tags
     ):
         logger.info(f'creating {product_input["title"]}')
         options = self.populate_option_dicts(product_input)
@@ -89,7 +89,14 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 price=product_input["price"],
                 sku=product_input["sku"],
             )
-        logger.info(f"activating inventory")
+        return res
+
+    def create_product_and_activate_inventory(
+        self, product_input, vendor, description_html, tags, location_names
+    ):
+        res = self.create_product_by_product_input(
+            product_input, vendor, description_html, tags
+        )
         res2 = self.enable_and_activate_inventory_by_product_input(
             product_input, location_names
         )
@@ -103,10 +110,10 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         self, product_input, location_names
     ):
         skus = self.product_input_to_skus(product_input)
-        res = [
-            self.enable_and_activate_inventory_by_sku(sku, location_names)
-            for sku in skus
-        ]
+        res = []
+        for sku in skus:
+            logger.info(f"activating inventory of {sku}")
+            res.append(self.enable_and_activate_inventory_by_sku(sku, location_names))
         return res
 
     def get_sku_stocks_map(self, product_input):
@@ -123,6 +130,12 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
             self.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
             for sku, stock in sku_stock_map.items()
         ]
+
+    def update_stock(self, product_input, location_name):
+        location_id = self.location_id_by_name(location_name)
+        for sku, stock in self.get_sku_stocks_map(product_input).items():
+            logger.info(f"updating inventory of {sku} to {stock} in {location_name}")
+            self.set_inventory_quantity_by_sku_and_location_id(sku, location_id, stock)
 
     def product_id_by_product_input(self, product_input):
         if "handle" in product_input:
