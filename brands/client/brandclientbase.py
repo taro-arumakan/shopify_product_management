@@ -171,6 +171,7 @@ class BrandClientBase(Client, SanityChecks):
         restart_at_product_title=None,
         scheduled_time=None,
         ignore_product_titles=None,
+        product_inputs_filter_func=None,
     ):
         product_inputs = self.product_inputs_by_sheet_name(sheet_name, handle_suffix)
         if not restart_at_product_title:
@@ -192,6 +193,9 @@ class BrandClientBase(Client, SanityChecks):
             for pi in product_inputs[i:]
             if pi["title"] not in (ignore_product_titles or [])
         ]
+        if product_inputs_filter_func:
+            product_inputs = list(filter(product_inputs_filter_func, product_inputs))
+
         self.pre_process_product_inputs(product_inputs)
         self.process_product_inputs(
             product_inputs,

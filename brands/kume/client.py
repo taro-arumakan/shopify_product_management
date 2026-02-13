@@ -10,7 +10,7 @@ class KumeClient(BrandClientBase):
     SHOPNAME = "kumej"
     VENDOR = "KUME"
     LOCATIONS = ["KUME Warehouse", "Envycube Warehouse"]
-    PRODUCT_SHEET_START_ROW = 2
+    PRODUCT_SHEET_START_ROW = 7
 
     def product_attr_column_map(self):
         return dict(
