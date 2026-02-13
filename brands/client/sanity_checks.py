@@ -123,11 +123,18 @@ class SanityChecks:
             raise RuntimeError("Failed sanity check")
 
     def sanity_check_sheet(
-        self, sheet_name, handle_suffix=None, ignore_product_titles=None
+        self,
+        sheet_name,
+        handle_suffix=None,
+        ignore_product_titles=None,
+        product_inputs_filter_func=None,
     ):
         product_inputs = self.product_inputs_by_sheet_name(
             sheet_name, handle_suffix=handle_suffix
         )
+        if product_inputs_filter_func:
+            product_inputs = list(filter(product_inputs_filter_func, product_inputs))
+
         logger.info(
             f"Sanity checking {len(product_inputs)} products from sheet {sheet_name}"
         )
