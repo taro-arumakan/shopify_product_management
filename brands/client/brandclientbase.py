@@ -61,14 +61,22 @@ class BrandClientBase(Client, SanityChecks):
         raise NotImplementedError
 
     def process_product_input(self, product_input, additional_tags=None):
-        logger.info(f'creating {product_input["title"]}')
-        return self.create_product_and_activate_inventory(
+        logger.info(f'processing {product_input.get("handle", product_input["title"])}')
+        res = {}
+        res["create_product"] = self.create_product_by_product_input(
             product_input,
             self.VENDOR,
             description_html=self.get_description_html(product_input),
             tags=self.get_tags(product_input, additional_tags),
-            location_names=self.LOCATIONS,
         )
+        res["enable_and_activate_inventory"] = (
+            self.enable_and_activate_inventory_by_product_input(
+                product_input, self.LOCATIONS
+            )
+        )
+        res["process_product_images"] = self.process_product_images(product_input)
+        res["update_stock"] = self.update_stock(product_input)
+        return res
 
     def post_process_product_input(self, process_product_input_res, product_input):
         pass
@@ -140,11 +148,9 @@ class BrandClientBase(Client, SanityChecks):
             res = self.process_product_input(
                 product_input, additional_tags=additional_tags
             )
-            self.process_product_images(product_input)
             self.post_process_product_input(res, product_input)
-            self.update_stock(product_input)
             self.activate_and_publish_by_product_id(
-                product_id=res[0]["id"], scheduled_time=scheduled_time
+                product_id=res["create_product"]["id"], scheduled_time=scheduled_time
             )
 
     def colors_from_product_inputs(self, product_inputs):

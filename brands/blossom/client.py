@@ -90,7 +90,7 @@ class BlossomClient(BrandClientBase):
             logger.warning(f"no size_text for {product_input['title']}")
 
     def post_process_product_input(self, process_product_input_res, product_input):
-        product_id = process_product_input_res[0]["id"]
+        product_id = process_product_input_res["create_product"]["id"]
         self.update_metafields(product_id, product_input)
         return product_id
 
@@ -198,7 +198,7 @@ class BlossomClientShoes(BlossomClient):
 
     def post_process_product_input(self, process_product_input_res, product_input):
         super().post_process_product_input(process_product_input_res, product_input)
-        product_id = process_product_input_res[0]["id"]
+        product_id = process_product_input_res["create_product"]["id"]
         self.update_product_theme_template(product_id, "shoes")
 
 

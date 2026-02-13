@@ -90,9 +90,12 @@ class AlvanaClient(BrandClientBase):
         return self.formatted_size_text_to_html_table(product_input["size_text"])
 
     def post_process_product_input(self, process_product_input_res, product_input):
-        product_id = process_product_input_res[0]["id"]
+        product_id = process_product_input_res["create_product"]["id"]
         self.update_metafields(product_id, product_input)
-        skus = [v["sku"] for v in process_product_input_res[0]["variants"]["nodes"]]
+        skus = [
+            v["sku"]
+            for v in process_product_input_res["create_product"]["variants"]["nodes"]
+        ]
         self.update_weight(skus, product_input)
         return product_id
 

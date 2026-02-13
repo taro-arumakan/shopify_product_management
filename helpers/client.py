@@ -65,7 +65,9 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 logger.error(f"\n\n!!! missing images: {skus} !!!\n\n")
         return ress
 
-    def create_product(self, product_input, vendor, description_html, tags):
+    def create_product_by_product_input(
+        self, product_input, vendor, description_html, tags
+    ):
         logger.info(f'creating {product_input["title"]}')
         options = self.populate_option_dicts(product_input)
         if any(o["option_values"] for o in options):
@@ -92,8 +94,9 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
     def create_product_and_activate_inventory(
         self, product_input, vendor, description_html, tags, location_names
     ):
-        res = self.create_product(product_input, vendor, description_html, tags)
-        logger.info(f"activating inventory")
+        res = self.create_product_by_product_input(
+            product_input, vendor, description_html, tags
+        )
         res2 = self.enable_and_activate_inventory_by_product_input(
             product_input, location_names
         )
@@ -107,10 +110,10 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         self, product_input, location_names
     ):
         skus = self.product_input_to_skus(product_input)
-        res = [
-            self.enable_and_activate_inventory_by_sku(sku, location_names)
-            for sku in skus
-        ]
+        res = []
+        for sku in skus:
+            logger.info(f"activating inventory of {sku}")
+            res.append(self.enable_and_activate_inventory_by_sku(sku, location_names))
         return res
 
     def get_sku_stocks_map(self, product_input):
