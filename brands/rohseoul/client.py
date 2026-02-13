@@ -52,7 +52,7 @@ class RohseoulClient(BrandClientBase):
             5: アルコール、オイル、香水、化粧品などにより製品が損傷することがありますので、ご使用の際はご注意ください。
             """
         ).strip()
-        return super().get_description_html(
+        return self.format_description_html(
             product_input["description"],
             product_care,
             product_input["material"],

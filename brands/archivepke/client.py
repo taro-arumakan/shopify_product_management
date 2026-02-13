@@ -49,7 +49,7 @@ class ArchivepkeClient(BrandClientBase):
 
 長時間水分に触れた場合は、革が水分を吸収する前にタオルで余分な水分を取り除いてください。内側に新聞紙などを詰め、風通しの良い場所で保管してください。"""
 
-        return super().get_description_html(
+        return self.format_description_html(
             description=product_input["description"],
             product_care=product_care,
             material=product_input["material"],
