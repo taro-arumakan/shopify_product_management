@@ -105,7 +105,7 @@ class ProductAttributes:
         ]
         staged_targets = self.generate_staged_upload_targets(local_paths, mime_types)
         logger.info(f"generated staged upload targets: {len(staged_targets)}")
-        self.upload_images_to_shopify(staged_targets, local_paths, mime_types)
+        self.upload_images_to_shopify_parallel(staged_targets, local_paths, mime_types)
         description = "\n".join(
             self.image_htmlfragment_in_description(
                 local_path.rsplit("/", 1)[-1], i, shopify_url_prefix
