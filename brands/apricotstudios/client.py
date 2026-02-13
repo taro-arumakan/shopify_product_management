@@ -100,7 +100,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             tempdir=tempdir,
         )
 
-    def process_product_images(self, product_input, handle_suffix=None):
+    def process_product_images(self, product_input):
         """
         As Apricot Studios has their images in Dropbox and also its images structure differs from other brands,
         keeping this customized processing logic.

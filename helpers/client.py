@@ -31,12 +31,10 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         return res
 
     def process_product_images(
-        self, product_input, local_dir=None, filename_prefix=None, handle_suffix=None
+        self, product_input, local_dir=None, filename_prefix=None
     ):
-        if handle_suffix:
-            product_id = self.product_id_by_handle(
-                self.product_title_to_handle(product_input["title"], handle_suffix)
-            )
+        if handle := product_input.get("handle"):
+            product_id = self.product_id_by_handle(handle)
         else:
             product_id = self.product_id_by_title(product_input["title"])
 
