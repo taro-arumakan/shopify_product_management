@@ -34,74 +34,75 @@ def credentials(shop_name):
 
 
 def client(shop_name: str) -> BrandClientBase:
-    if shop_name.lower() in ["archive-epke", "archivepke", "archivépke", "archive"]:
+    shop_name = shop_name.lower()
+    if shop_name in ["archive-epke", "archivepke", "archivépke", "archive"]:
         from brands.archivepke.client import ArchivepkeClient
 
         res = ArchivepkeClient()
 
-    elif shop_name.lower() in ["alvanas", "alvana"]:
+    elif shop_name in ["alvanas", "alvana"]:
         from brands.alvana.client import AlvanaClient
 
         res = AlvanaClient()
 
-    elif shop_name.lower() in ["apricot-studios", "apricot", "apricotstudios"]:
+    elif shop_name in ["apricot-studios", "apricot", "apricotstudios"]:
         from brands.apricotstudios.client import ApricotStudiosClient
 
         res = ApricotStudiosClient(None, None)
 
-    elif shop_name.lower() in ["blossom", "blossomhcompany"]:
+    elif shop_name in ["blossom", "blossomhcompany"]:
         from brands.blossom.client import BlossomClient
 
         res = BlossomClient()
 
-    elif shop_name.lower() in ["blossom-shoes"]:
+    elif shop_name in ["blossom-shoes"]:
         from brands.blossom.client import BlossomClientShoes
 
         res = BlossomClientShoes()
 
-    elif shop_name.lower() in ["blossom-bags"]:
+    elif shop_name in ["blossom-bags"]:
         from brands.blossom.client import BlossomClientBags
 
         res = BlossomClientBags()
 
-    elif shop_name.lower() in ["gbhjapan", "gbh"]:
+    elif shop_name in ["gbhjapan", "gbh"]:
         from brands.gbh.client import GbhClient
 
         res = GbhClient()
 
-    elif shop_name.lower() in ["gbh-size-only"]:
+    elif shop_name in ["gbh-size-only"]:
         from brands.gbh.client import GbhClientSizeOptionOnly
 
         res = GbhClientSizeOptionOnly()
 
-    elif shop_name.lower() in ["gbh-color-only"]:
+    elif shop_name in ["gbh-color-only"]:
         from brands.gbh.client import GbhClientColorOptionOnly
 
         res = GbhClientColorOptionOnly()
 
-    elif shop_name.lower() in ["kumej", "kume"]:
+    elif shop_name in ["kumej", "kume"]:
         from brands.kume.client import KumeClient
 
         res = KumeClient()
 
-    elif shop_name.lower() in ["lememek", "lememe"]:
+    elif shop_name in ["lememek", "lememe"]:
         from brands.lememe.client import LememeClient
 
         res = LememeClient()
 
-    elif shop_name.lower() in ["roh", "rohseoul"]:
+    elif shop_name in ["roh", "rohseoul"]:
         from brands.rohseoul.client import RohseoulClient
 
         res = RohseoulClient()
 
-    elif shop_name.lower() in ["ssilkr", "ssil"]:
+    elif shop_name in ["ssilkr", "ssil"]:
         from brands.ssil.client import SsilClient
 
         res = SsilClient()
 
     else:
-        if shop_name.lower() in ["dev"]:
-            shop_name = "quickstart-6f3c9e4c"
+        shop_name_map = {"dev": "quickstart-6f3c9e4c", "la": "leisureallstars"}
+        shop_name = shop_name_map.get(shop_name, shop_name)
         cred = credentials(shop_name)
         res = Client(
             shop_name=cred.shop_name,
