@@ -23,7 +23,9 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
         dummy_product_id: a dummy product which holds product detail images
         product_detail_images_folder_id: Google Drive folder id where translated product detail images are stored by title
         """
-        self.dummy_product_id = self.sanitize_id(dummy_product_id)
+        self.dummy_product_id = (
+            self.sanitize_id(dummy_product_id) if dummy_product_id else None
+        )
         self.product_detail_images_folder_id = product_detail_images_folder_id
         if not all((self.dummy_product_id, self.product_detail_images_folder_id)):
             logger.warning(
