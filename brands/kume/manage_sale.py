@@ -3,7 +3,7 @@ from brands.kume.client import KumeClient
 
 def start_end_discounts(testrun=True, start_or_end="start"):
     """
-    KUME 2/23 26ss 1st drop & 10% off
+    26ss 1st drop sale (2/6~2/15) 
     """
     client = KumeClient()
     
