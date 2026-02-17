@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 from helpers.client import Client
 
 
+
 class TestClientHelpers(unittest.TestCase):
     def setUp(self):
         self.client = Client.__new__(Client)
@@ -356,15 +357,25 @@ class TestClientHelpers(unittest.TestCase):
 
     def test_enable_and_activate_inventory_by_product_input(self):
         self.client.product_input_to_skus = MagicMock(return_value=["SKU1", "SKU2"])
-        self.client.enable_and_activate_inventory_by_sku = MagicMock(
-            side_effect=["res1", "res2"]
+        self.client.inventory_items_by_query = MagicMock(
+            return_value=[
+                {"id": "dummy1", "sku": "SKU1"},
+                {"id": "dummy2", "sku": "SKU2"},
+            ]
+        )
+        dummy_res = [
+            {"id": "dummy_inventory_item", "tracked": True},
+            {"quantities": []},
+        ]
+        self.client.enable_and_activate_inventory_by_inventory_item_id = MagicMock(
+            return_value=dummy_res
         )
 
         result = self.client.enable_and_activate_inventory_by_product_input(
             {"data": "test"}, ["Loc1"]
         )
 
-        self.assertEqual(result, ["res1", "res2"])
+        self.assertEqual(result, [dummy_res, dummy_res])
         self.client.product_input_to_skus.assert_called_once()
         self.assertEqual(
             self.client.enable_and_activate_inventory_by_inventory_item_id.call_count, 2
