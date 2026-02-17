@@ -150,11 +150,12 @@ class Inventory:
     def inventory_items_by_query(self, query_string):
         query = """
         query inventoryItemsByQuery($query_string: String!) {
-            inventoryItems(query:$query_string, first:5) {
+            inventoryItems(query:$query_string, first:100) {
                 nodes{
                     id
+                    sku
                     tracked
-                    inventoryLevels(first:5) {
+                    inventoryLevels(first:100) {
                         nodes {
                             id
                             quantities(names: ["available"]) {
