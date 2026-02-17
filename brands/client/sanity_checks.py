@@ -48,13 +48,16 @@ class SanityChecks:
         res = []
         for product_input in product_inputs:
             try:
-                drive_ids, _ = self.populate_drive_ids_and_skuss(product_input)
-                for drive_id in drive_ids:
-                    image_details = self.get_drive_image_details(drive_id)
-                    if not image_details:
-                        res.append(
-                            f"Missing or inaccessible drive image for {product_input['title']}: {drive_id}"
-                        )
+                drive_ids, skuss = self.populate_drive_ids_and_skuss(product_input)
+                for drive_id, skus in zip(drive_ids, skuss):
+                    if drive_id != "no image":
+                        image_details = self.get_drive_image_details(drive_id)
+                        if not image_details:
+                            res.append(
+                                f"Missing or inaccessible drive image for {product_input['title']}: {drive_id}"
+                            )
+                    else:
+                        logger.warning(f"going to have no image: {skus}")
             except Exception as e:
                 res.append(
                     f"Error checking drive images for {product_input['title']}: {e}"
@@ -111,7 +114,7 @@ class SanityChecks:
         except RuntimeError as e1:
             logger.error(e1)
             res.append(e1)
-        res = self.check_existing_skus(product_inputs)
+        res += self.check_existing_skus(product_inputs)
         res += self.check_existing_products(product_inputs)
         res += self.check_size_field(product_inputs, raise_on_error=False)
         res += self.check_description(product_inputs, raise_on_error=False)
