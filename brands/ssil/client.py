@@ -21,25 +21,25 @@ class SsilClient(BrandClientBase):
             tags=string.ascii_lowercase.index("b"),
             price=string.ascii_lowercase.index("d"),
             description=string.ascii_lowercase.index("f"),
-            product_care=string.ascii_lowercase.index("g"),
-            material=string.ascii_lowercase.index("h"),
-            size_text=string.ascii_lowercase.index("i"),
-            made_in=string.ascii_lowercase.index("j"),
+            product_care=string.ascii_lowercase.index("h"),
+            material=string.ascii_lowercase.index("i"),
+            size_text=string.ascii_lowercase.index("j"),
+            made_in=string.ascii_lowercase.index("k"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("k")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("l")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("l"),
+            drive_link=string.ascii_lowercase.index("m"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("m")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("n")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("n"),
-            hs_code=string.ascii_lowercase.index("o"),
-            stock=string.ascii_lowercase.index("p"),
+            sku=string.ascii_lowercase.index("o"),
+            hs_code=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
 
@@ -151,7 +151,7 @@ class SsilClient(BrandClientBase):
             rows.append(row_values)
         return super().generate_table_html(headers, rows)
 
-    def sanity_check_product_inputs(self, product_inputs):
+    def sanity_check_product_inputs(self, product_inputs, ignore_product_titles=None):
         for pi in product_inputs:
             try:
                 self.formatted_material_text_to_html_table(pi["material"])
@@ -159,10 +159,35 @@ class SsilClient(BrandClientBase):
                 print(
                     f"failed parsing material text of {pi['title']}: {pi['material']}\n{e}"
                 )
-        return super().sanity_check_product_inputs(product_inputs)
+        return super().sanity_check_product_inputs(
+            product_inputs, ignore_product_titles=ignore_product_titles
+        )
 
     def post_process_product_inputs(self, product_inputs):
         pass
+
+
+class SsilClientGoldLine(SsilClient):
+
+    def product_attr_column_map(self):
+        return dict(
+            title=string.ascii_lowercase.index("a"),
+            tags=string.ascii_lowercase.index("b"),
+            price=string.ascii_lowercase.index("d"),
+            description=string.ascii_lowercase.index("f"),
+            # no product care, rather disclaimer, to be added at product template.
+            # product_care=string.ascii_lowercase.index("h"),
+            material=string.ascii_lowercase.index("i"),
+            size_text=string.ascii_lowercase.index("j"),
+            made_in=string.ascii_lowercase.index("k"),
+        )
+
+    def post_process_product_input(self, process_product_input_res, product_input):
+        product_id = super().post_process_product_input(
+            process_product_input_res, product_input
+        )
+        self.update_product_theme_template(product_id, "made-to-order")
+        return product_id
 
 
 class SsilClientMaterialOptionOnly(SsilClient):
