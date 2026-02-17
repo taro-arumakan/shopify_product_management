@@ -113,11 +113,18 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         self, product_input, location_names
     ):
         skus = self.product_input_to_skus(product_input)
+        inventory_items = self.inventory_items_by_query(
+            " OR ".join(f"sku:'{sku}'" for sku in skus)
+        )
         res = []
-        for sku in skus:
+        for inventory_item in inventory_items:
             # FIXME [CEC-250] inventory item update of each SKU is taking long time, can be parallelized?
-            logger.info(f"activating inventory of {sku}")
-            res.append(self.enable_and_activate_inventory_by_sku(sku, location_names))
+            logger.info(f"activating inventory of {inventory_item['sku']}")
+            res.append(
+                self.enable_and_activate_inventory_by_inventory_item_id(
+                    inventory_item["id"], location_names
+                )
+            )
         return res
 
     def get_sku_stocks_map(self, product_input):
