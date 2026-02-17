@@ -120,7 +120,7 @@ class SsilClient(BrandClientBase):
     def material_text_to_html(self, material_text):
         try:
             return self.formatted_material_text_to_html_table(material_text)
-        except RuntimeError as e:
+        except (RuntimeError, AttributeError) as e:
             return f"""<div class="material">{material_text}</div>"""
 
     def formatted_material_text_to_html_table(self, material_text):
