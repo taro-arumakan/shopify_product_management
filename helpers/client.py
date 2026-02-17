@@ -47,22 +47,25 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         drive_links, skuss = self.populate_drive_ids_and_skuss(product_input)
         ress = []
         for index, (drive_id, skus) in enumerate(zip(drive_links, skuss)):
-            res = self.add_product_images(
-                product_id,
-                drive_id,
-                local_dir,
-                filename_prefix=f"{filename_prefix}_{skus[0]}",
-                remove_existings=index == 0,
-            )
-            ress.append(res)
-            if res[-1]["productCreateMedia"]["media"]:
-                variant_media_id = res[-1]["productCreateMedia"]["media"][0]["id"]
-                logger.info(f"assigning media {variant_media_id} to {skus}")
-                ress.append(
-                    self.assign_image_to_skus(product_id, variant_media_id, skus)
-                )
+            if drive_id == "no image":
+                ress.append([])
             else:
-                logger.error(f"\n\n!!! missing images: {skus} !!!\n\n")
+                res = self.add_product_images(
+                    product_id,
+                    drive_id,
+                    local_dir,
+                    filename_prefix=f"{filename_prefix}_{skus[0]}",
+                    remove_existings=index == 0,
+                )
+                ress.append(res)
+                if res[-1]["productCreateMedia"]["media"]:
+                    variant_media_id = res[-1]["productCreateMedia"]["media"][0]["id"]
+                    logger.info(f"assigning media {variant_media_id} to {skus}")
+                    ress.append(
+                        self.assign_image_to_skus(product_id, variant_media_id, skus)
+                    )
+                else:
+                    logger.error(f"\n\n!!! missing images: {skus} !!!\n\n")
         return ress
 
     def create_product_by_product_input(
@@ -112,6 +115,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
         skus = self.product_input_to_skus(product_input)
         res = []
         for sku in skus:
+            # FIXME [CEC-250] inventory item update of each SKU is taking long time, can be parallelized?
             logger.info(f"activating inventory of {sku}")
             res.append(self.enable_and_activate_inventory_by_sku(sku, location_names))
         return res
