@@ -2,6 +2,12 @@ import utils
 import pandas as pd
 
 
+def end_2026_gold_line(testrun=True):
+    client = utils.client("ssil")
+    products = client.products_by_query("tag:'26_gold_line'")
+    client.revert_product_prices(products, testrun=testrun)
+
+
 def start_2026_new_year_sale(testrun=True):
     client = utils.client("ssil")
     rows = client.worksheet_rows(
