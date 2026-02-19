@@ -1,4 +1,4 @@
-name: Close expired orders
+name: Export monthly sales reports
 
 on:
   schedule:
