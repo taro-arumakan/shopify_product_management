@@ -1,8 +1,9 @@
-import unittest
-from helpers.client import Client
-from unittest.mock import MagicMock
-import pathlib
 import datetime
+import pathlib
+import textwrap
+import unittest
+from unittest.mock import MagicMock
+from helpers.client import Client
 
 
 class TestClientHelpers(unittest.TestCase):
@@ -41,6 +42,186 @@ class TestClientHelpers(unittest.TestCase):
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0][0]["sku"], "SKU1")
         self.assertEqual(result[1][0]["sku"], "SKU2")
+
+    def test_formatted_size_text_to_html_table_1(self):
+        size_text = (
+            "[FREE]  LENGTH 69.7 / SHOULDER RAGLAN / CHEST 69.8 / SLEEVE 83.5 / HEM 64"
+        )
+        expected = textwrap.dedent(
+            """
+            <table border="1" style="border-collapse: collapse;" class="size-table">
+              <thead>
+                <tr>
+                  <th>Size</th>
+                  <th>LENGTH</th>
+                  <th>SHOULDER</th>
+                  <th>CHEST</th>
+                  <th>SLEEVE</th>
+                  <th>HEM</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>FREE</td>
+                  <td>69.7</td>
+                  <td>RAGLAN</td>
+                  <td>69.8</td>
+                  <td>83.5</td>
+                  <td>64</td>
+                </tr>
+              </tbody>
+            </table>"""
+        )
+        self.assertEqual(
+            self.client.formatted_size_text_to_html_table(size_text), expected
+        )
+
+    def test_formatted_size_text_to_html_table_2(self):
+        size_text = textwrap.dedent(
+            """
+            [S] : LENGTH 104 / WAIST 37 / HIP 52 / HEM 28 / FRONT RISE 26
+            [M] : LENGTH 105 / WAIST 39 / HIP 54 / HEM 29 / FRONT RISE 27
+        """
+        )
+        expected = textwrap.dedent(
+            """
+            <table border="1" style="border-collapse: collapse;" class="size-table">
+              <thead>
+                <tr>
+                  <th>Size</th>
+                  <th>LENGTH</th>
+                  <th>WAIST</th>
+                  <th>HIP</th>
+                  <th>HEM</th>
+                  <th>FRONT RISE</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>S</td>
+                  <td>104</td>
+                  <td>37</td>
+                  <td>52</td>
+                  <td>28</td>
+                  <td>26</td>
+                </tr>
+                <tr>
+                  <td>M</td>
+                  <td>105</td>
+                  <td>39</td>
+                  <td>54</td>
+                  <td>29</td>
+                  <td>27</td>
+                </tr>
+              </tbody>
+            </table>"""
+        )
+        self.assertEqual(
+            self.client.formatted_size_text_to_html_table(size_text), expected
+        )
+
+    def test_formatted_size_text_to_html_table_3(self):
+        size_text = textwrap.dedent(
+            """
+            [0] 着丈 84 / 肩幅 xxx / 袖丈 yyy
+            [1] 着丈 90 / 肩幅 xxx / 袖丈 yyy
+            [2] 着丈 90 / 肩幅 xxx / 袖丈 yyy
+            [3] 着丈 90 / 肩幅 xxx / 袖丈 yyy
+            [4] 着丈 90 / 肩幅 xxx / 袖丈 yyy
+        """
+        )
+        expected = textwrap.dedent(
+            """
+            <table border="1" style="border-collapse: collapse;" class="size-table">
+              <thead>
+                <tr>
+                  <th>Size</th>
+                  <th>着丈</th>
+                  <th>肩幅</th>
+                  <th>袖丈</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>0</td>
+                  <td>84</td>
+                  <td>xxx</td>
+                  <td>yyy</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>90</td>
+                  <td>xxx</td>
+                  <td>yyy</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>90</td>
+                  <td>xxx</td>
+                  <td>yyy</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>90</td>
+                  <td>xxx</td>
+                  <td>yyy</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>90</td>
+                  <td>xxx</td>
+                  <td>yyy</td>
+                </tr>
+              </tbody>
+            </table>"""
+        )
+        self.assertEqual(
+            self.client.formatted_size_text_to_html_table(size_text), expected
+        )
+
+    def test_formatted_size_text_to_html_table_4(self):
+        size_text = textwrap.dedent(
+            """
+          [S] Total104 / Waist35.5 / Hips48.5 / Hem20 / Rise26
+          [M] Total105.5 / Waist35.5 / Hips48.5 / Hem20 / Rise26
+        """
+        )
+        expected = textwrap.dedent(
+            """
+            <table border="1" style="border-collapse: collapse;" class="size-table">
+              <thead>
+                <tr>
+                  <th>Size</th>
+                  <th>Total</th>
+                  <th>Waist</th>
+                  <th>Hips</th>
+                  <th>Hem</th>
+                  <th>Rise</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>S</td>
+                  <td>104</td>
+                  <td>35.5</td>
+                  <td>48.5</td>
+                  <td>20</td>
+                  <td>26</td>
+                </tr>
+                <tr>
+                  <td>M</td>
+                  <td>105.5</td>
+                  <td>35.5</td>
+                  <td>48.5</td>
+                  <td>20</td>
+                  <td>26</td>
+                </tr>
+              </tbody>
+            </table>"""
+        )
+        self.assertEqual(
+            self.client.formatted_size_text_to_html_table(size_text), expected
+        )
 
     def test_product_input_to_skus(self):
         self.client.populate_option_dicts = MagicMock(
