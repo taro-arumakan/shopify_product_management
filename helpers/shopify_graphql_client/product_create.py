@@ -194,8 +194,17 @@ class ProductCreate:
             text = text.replace(k, v)
         return text
 
-    @staticmethod
-    def formatted_size_text_to_html_table(size_text):
+    def to_header_and_value(self, header_value_pair_text):
+        header_value_expression = re.compile(r"([^\d/\-\~]+?)[\s/]*([\d\.\-\~]+)")
+        if " " in header_value_pair_text:
+            header, value = header_value_pair_text.rsplit(" ", 1)
+        else:
+            header_value_match = header_value_expression.match(header_value_pair_text)
+            header, value = header_value_match.groups()
+        return header.strip(), value.strip()
+
+    # TODO add a test case
+    def formatted_size_text_to_html_table(self, size_text):
         """
         [FREE]  LENGTH 69.7 / SHOULDER RAGLAN / CHEST 69.8 / SLEEVE 83.5 / HEM 64
 
@@ -207,6 +216,9 @@ class ProductCreate:
         [2] 着丈 90 / 肩幅 xxx / 袖丈 yyy
         [3] 着丈 90 / 肩幅 xxx / 袖丈 yyy
         [4] 着丈 90 / 肩幅 xxx / 袖丈 yyy
+
+        [S] Total104 / Waist35.5 / Hips48.5 / Hem20 / Rise26
+        [M] Total105.5 / Waist35.5 / Hips48.5 / Hem20 / Rise26
         """
         size_expression = re.compile(r"\[(.+?)\][\s\:]+(.*)")
 
@@ -221,7 +233,7 @@ class ProductCreate:
             header_value_pairs = [p.strip() for p in match.group(2).split(" / ")]
 
             for header_value_pair in header_value_pairs:
-                header, value = header_value_pair.rsplit(" ", 1)
+                header, value = self.to_header_and_value(header_value_pair)
                 if header.strip() not in headers:
                     headers.append(header.strip())
                 row_values.append(value.strip())
