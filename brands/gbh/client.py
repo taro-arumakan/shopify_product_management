@@ -234,16 +234,7 @@ class GbhClientSizeOptionOnly(GbhClient):
 
 
 class GbhHomeClient(GbhClient):
-    def product_attr_column_map(self):
-        res = super().product_attr_column_map()
-        res.pop("price")
-        res.update(product_remarks=string.ascii_lowercase.index("q"))
-        return res
-
-    def option2_attr_column_map(self):
-        res = super().option2_attr_column_map()
-        res.update(price=string.ascii_lowercase.index("d"))
-        return res
+    pass
 
 
 class GbhCosmeticClient(GbhClient):
