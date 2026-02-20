@@ -81,7 +81,7 @@ class TestClientHelpers(unittest.TestCase):
             """
             [S] : LENGTH 104 / WAIST 37 / HIP 52 / HEM 28 / FRONT RISE 26
             [M] : LENGTH 105 / WAIST 39 / HIP 54 / HEM 29 / FRONT RISE 27
-        """
+            """
         )
         expected = textwrap.dedent(
             """
@@ -128,7 +128,7 @@ class TestClientHelpers(unittest.TestCase):
             [2] 着丈 90 / 肩幅 xxx / 袖丈 yyy
             [3] 着丈 90 / 肩幅 xxx / 袖丈 yyy
             [4] 着丈 90 / 肩幅 xxx / 袖丈 yyy
-        """
+            """
         )
         expected = textwrap.dedent(
             """
@@ -182,9 +182,9 @@ class TestClientHelpers(unittest.TestCase):
     def test_formatted_size_text_to_html_table_4(self):
         size_text = textwrap.dedent(
             """
-          [S] Total104 / Waist35.5 / Hips48.5 / Hem20 / Rise26
-          [M] Total105.5 / Waist35.5 / Hips48.5 / Hem20 / Rise26
-        """
+            [S] Total104 / Waist35.5 / Hips48.5 / Hem20 / Rise26
+            [M] Total105.5 / Waist35.5 / Hips48.5 / Hem20 / Rise26
+            """
         )
         expected = textwrap.dedent(
             """
@@ -215,6 +215,41 @@ class TestClientHelpers(unittest.TestCase):
                   <td>48.5</td>
                   <td>20</td>
                   <td>26</td>
+                </tr>
+              </tbody>
+            </table>"""
+        )
+        self.assertEqual(
+            self.client.formatted_size_text_to_html_table(size_text), expected
+        )
+
+    def test_formatted_size_text_to_html_table_5(self):
+        size_text = textwrap.dedent(
+            """
+            [M] Width : 110mm / Height : 290mm
+            [L] Width : 120mm / Height : 310mm
+            """
+        )
+        expected = textwrap.dedent(
+            """
+            <table border="1" style="border-collapse: collapse;" class="size-table">
+              <thead>
+                <tr>
+                  <th>Size</th>
+                  <th>Width</th>
+                  <th>Height</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>M</td>
+                  <td>110mm</td>
+                  <td>290mm</td>
+                </tr>
+                <tr>
+                  <td>L</td>
+                  <td>120mm</td>
+                  <td>310mm</td>
                 </tr>
               </tbody>
             </table>"""

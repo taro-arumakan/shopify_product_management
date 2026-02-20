@@ -194,16 +194,25 @@ class ProductCreate:
             text = text.replace(k, v)
         return text
 
+    header_value_expression = re.compile(r"([^\d/\-\~]+?)[\s/]*([\d\.\-\~]+)")
+    trailing_colon_expression = re.compile(r"[\s\:]+$")
+
     def to_header_and_value(self, header_value_pair_text):
-        header_value_expression = re.compile(r"([^\d/\-\~]+?)[\s/]*([\d\.\-\~]+)")
+
         if " " in header_value_pair_text:
             header, value = header_value_pair_text.rsplit(" ", 1)
         else:
-            header_value_match = header_value_expression.match(header_value_pair_text)
+            header_value_match = self.header_value_expression.match(
+                header_value_pair_text
+            )
             header, value = header_value_match.groups()
-        return header.strip(), value.strip()
+        return (
+            self.trailing_colon_expression.sub(string=header.strip(), repl=""),
+            value.strip(),
+        )
 
-    # TODO add a test case
+    heading_size_expression = re.compile(r"\[(.+?)\][\s\:]+(.*)")
+
     def formatted_size_text_to_html_table(self, size_text):
         """
         [FREE]  LENGTH 69.7 / SHOULDER RAGLAN / CHEST 69.8 / SLEEVE 83.5 / HEM 64
@@ -220,13 +229,11 @@ class ProductCreate:
         [S] Total104 / Waist35.5 / Hips48.5 / Hem20 / Rise26
         [M] Total105.5 / Waist35.5 / Hips48.5 / Hem20 / Rise26
         """
-        size_expression = re.compile(r"\[(.+?)\][\s\:]+(.*)")
-
         rows = []
         headers = ["Size"]
 
         for line in size_text.strip().split("\n"):
-            match = size_expression.match(line.strip())
+            match = self.heading_size_expression.match(line.strip())
             if not match:
                 raise RuntimeError(f"Invalid size text format: {line}")
             row_values = [match.group(1)]
