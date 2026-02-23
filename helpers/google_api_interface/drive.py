@@ -1,7 +1,8 @@
 import io
-import os
-import re
 import logging
+import os
+import pathlib
+import re
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 from PIL import Image
 
@@ -60,10 +61,11 @@ class GoogleDriveApiInterface:
         ]
 
     def download_and_process_image(self, file_id, local_path):
+        p = pathlib.Path(local_path)
+        local_path = os.path.join(p.parent, f"{p.stem}.jpg")  # jpg always
+
         if not os.path.exists(local_path):
             logger.info(f"  starting download of {file_id} to {local_path}")
-            if len(local_path.split(".")) < 2:
-                local_path += ".jpg"
             self.download_file_from_drive(file_id, local_path)
             self.resize_image_to_limit(local_path, local_path)
         return local_path
