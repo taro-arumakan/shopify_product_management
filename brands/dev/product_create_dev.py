@@ -18,7 +18,11 @@ def create_26ss_color_only():
     client = dev_client(GbhClientColorOptionOnly())
 
     sheet_name = "26ss アパレルpre-spring어패럴프리스프링오픈(COLOR ONLY)"
-    client.process_sheet_to_products(sheet_name, additional_tags=["New Arrival"])
+    client.process_sheet_to_products(
+        sheet_name,
+        additional_tags=["New Arrival"],
+        restart_at_product_title="COTTON RIB SOCKS",
+    )
 
 
 def main():
