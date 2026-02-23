@@ -39,8 +39,9 @@ class Inventory:
         for variant in product["variants"]["nodes"]:
             self.enable_and_activate_inventory_by_sku(variant["sku"], location_names)
 
-    def enable_and_activate_inventory_by_sku(self, sku, location_names):
-        inventory_item_id = self.inventory_item_id_by_sku(sku)
+    def enable_and_activate_inventory_by_inventory_item_id(
+        self, inventory_item_id, location_names
+    ):
         ress = [self.update_inventory_tracking(inventory_item_id, True)]
         for location_name in location_names:
             ress.append(
@@ -49,6 +50,12 @@ class Inventory:
                 )
             )
         return ress
+
+    def enable_and_activate_inventory_by_sku(self, sku, location_names):
+        inventory_item_id = self.inventory_item_id_by_sku(sku)
+        return self.enable_and_activate_inventory_by_inventory_item_id(
+            inventory_item_id=inventory_item_id, location_names=location_names
+        )
 
     def disable_inventory_tracking_by_variant_id(self, variant_id):
         inventory_item_id = self.inventory_item_by_variant_id(variant_id)
@@ -143,11 +150,12 @@ class Inventory:
     def inventory_items_by_query(self, query_string):
         query = """
         query inventoryItemsByQuery($query_string: String!) {
-            inventoryItems(query:$query_string, first:5) {
+            inventoryItems(query:$query_string, first:100) {
                 nodes{
                     id
+                    sku
                     tracked
-                    inventoryLevels(first:5) {
+                    inventoryLevels(first:100) {
                         nodes {
                             id
                             quantities(names: ["available"]) {
