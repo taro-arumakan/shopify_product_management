@@ -29,9 +29,9 @@ class LememeClient(BrandClientBase):
         option1_attrs = {"Color": string.ascii_lowercase.index("m")}
         option1_attrs.update(
             filter_color=string.ascii_lowercase.index("n"),
-            drive_link=string.ascii_lowercase.index("o"),
-            sku=string.ascii_lowercase.index("p"),
-            stock=string.ascii_lowercase.index("q"),
+            drive_link=string.ascii_lowercase.index("s"),
+            sku=string.ascii_lowercase.index("r"),
+            stock=string.ascii_lowercase.index("u"),
         )
         return option1_attrs
 
