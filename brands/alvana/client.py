@@ -12,7 +12,6 @@ class AlvanaClient(BrandClientBase):
     SHOPNAME = "alvanas"
     VENDOR = "alvana"
     LOCATIONS = ["Jingumae"]
-    PRODUCT_SHEET_START_ROW = 1
     REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
 
     def product_attr_column_map(self):

@@ -84,7 +84,7 @@ class MergeProductsAsVariants:
                 sku=archived_sku,
             )
             self.disable_inventory_tracking_by_sku(archived_sku)
-            self.archive_product_handle(product)
+        self.archive_product_handle(product)
         if new_product_handle:
             logger.info(f"Redirecting {product['handle']} to {new_product_handle}")
             self.create_url_redirect(

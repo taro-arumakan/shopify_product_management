@@ -14,10 +14,9 @@ class GbhClient(BrandClientBase):
     SHOPNAME = "gbhjapan"
     VENDOR = "GBH"
     LOCATIONS = ["Shop location"]
-    PRODUCT_SHEET_START_ROW = 1
 
-    def __init__(self, use_simple_size_format=False):
-        super().__init__()
+    def __init__(self, product_sheet_start_row=None, use_simple_size_format=False):
+        super().__init__(product_sheet_start_row=product_sheet_start_row)
         self.use_simple_size_format = use_simple_size_format
 
     def product_attr_column_map(self):
@@ -106,7 +105,6 @@ class GbhClient(BrandClientBase):
 
 
 class GbhClientColorOptionOnly(GbhClient):
-    PRODUCT_SHEET_START_ROW = 2
 
     def product_attr_column_map(self):
         return dict(

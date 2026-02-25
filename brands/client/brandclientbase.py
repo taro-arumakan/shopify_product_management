@@ -12,14 +12,14 @@ class BrandClientBase(Client, SanityChecks):
     SHOPNAME = ""
     VENDOR = ""
     LOCATIONS = []
-    PRODUCT_SHEET_START_ROW = 1
     NEW_PRODUCT_TAG = "New Arrival"
     REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = True
 
-    def __init__(self):
+    def __init__(self, product_sheet_start_row=None):
         assert self.SHOPNAME, "SHOPNAME must be set in subclass"
         assert self.VENDOR, "VENDOR must be set in subclass"
         assert self.LOCATIONS, "LOCATIONS must be set in subclass"
+        self.product_sheet_start_row = product_sheet_start_row
         from utils import credentials
 
         cred = credentials(self.SHOPNAME)
@@ -44,7 +44,7 @@ class BrandClientBase(Client, SanityChecks):
         return self.to_product_inputs(
             self.sheet_id,
             sheet_name,
-            self.PRODUCT_SHEET_START_ROW,
+            self.product_sheet_start_row,
             product_attr_column_map=self.product_attr_column_map(),
             option1_attr_column_map=self.option1_attr_column_map(),
             option2_attr_column_map=self.option2_attr_column_map(),

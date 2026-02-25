@@ -11,7 +11,6 @@ class BlossomClient(BrandClientBase):
     SHOPNAME = "blossomhcompany"
     VENDOR = "blossom"
     LOCATIONS = ["Blossom Warehouse"]
-    PRODUCT_SHEET_START_ROW = 1
 
     def product_attr_column_map(self):
         return dict(

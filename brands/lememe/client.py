@@ -11,7 +11,6 @@ class LememeClient(BrandClientBase):
     SHOPNAME = "lememek"
     VENDOR = "lememe"
     LOCATIONS = ["Shop location"]
-    PRODUCT_SHEET_START_ROW = 1
 
     def product_attr_column_map(self):
         return dict(
