@@ -6,28 +6,28 @@ from brands.gbh.client import GbhClient, GbhClientColorOptionOnly
 from brands.dev.client import dev_client
 
 
-def create_26ss_color_size():
+def archive():
     client = dev_client(GbhClient())
+    product = client.product_by_title("MID RISE REGULAR FIT JEANS")
+    client.archive_product(product)
+
+
+def recreate():
+    client = dev_client(GbhClient(product_sheet_start_row=1))
     client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
 
     sheet_name = "26ss アパレルpre-spring어패럴프리스프링오픈(COLOR+SIZE)"
-    client.process_sheet_to_products(sheet_name, additional_tags=["New Arrival"])
-
-
-def create_26ss_color_only():
-    client = dev_client(GbhClientColorOptionOnly())
-
-    sheet_name = "26ss アパレルpre-spring어패럴프리스프링오픈(COLOR ONLY)"
     client.process_sheet_to_products(
         sheet_name,
         additional_tags=["New Arrival"],
-        restart_at_product_title="COTTON RIB SOCKS",
+        product_inputs_filter_func=lambda pi: pi["title"]
+        in ["MID RISE REGULAR FIT JEANS"],
     )
 
 
 def main():
-    create_26ss_color_only()
-    create_26ss_color_size()
+    archive()
+    recreate()
 
 
 if __name__ == "__main__":
