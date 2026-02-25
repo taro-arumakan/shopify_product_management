@@ -12,11 +12,11 @@ on:
         required: true
         type: string
       params:
-        description: 'JSON string of args/kwargs e.g. "{\"testrun\": true, \"start_or_end\": \"start\"}"'
+        description: 'JSON string of args/kwargs e.g. {"testrun": true, "start_or_end": "start"}"'
         required: false
         default: '{}'
 jobs:
-  run-script:
+  run-func:
     runs-on: ubuntu-latest
 
     steps:
