@@ -50,6 +50,23 @@ def reprocess():
     client.post_process_product_inputs(product_inputs)
 
 
+def set_price():
+    client = ApricotStudiosClient()
+    sheet_name = "[Spring_1st] 2/25"
+    product_inputs = client.product_inputs_by_sheet_name(sheet_name)
+    q = " OR ".join(f"title:'{pi['title']}'" for pi in product_inputs)
+    products = client.products_by_query(q)
+    new_prices_by_variant_id = {
+        v["id"]: int(int(v["price"]) * 0.9)
+        for p in products
+        for v in p["variants"]["nodes"]
+    }
+    client.update_product_prices_by_dict(
+        products, new_prices_by_variant_id=new_prices_by_variant_id, testrun=False
+    )
+
+
 if __name__ == "__main__":
     # main()
-    reprocess()
+    # reprocess()
+    set_price()
