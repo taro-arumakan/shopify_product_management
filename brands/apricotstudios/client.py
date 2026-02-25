@@ -16,9 +16,13 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
     SHOPNAME = "apricot-studios"
     VENDOR = "Apricot Studios"
     LOCATIONS = ["Apricot Studios Warehouse"]
-    PRODUCT_SHEET_START_ROW = 1
 
-    def __init__(self, dummy_product_id="", product_detail_images_folder_id=""):
+    def __init__(
+        self,
+        dummy_product_id="",
+        product_detail_images_folder_id="",
+        product_sheet_start_row=None,
+    ):
         """
         dummy_product_id: a dummy product which holds product detail images
         product_detail_images_folder_id: Google Drive folder id where translated product detail images are stored by title
@@ -31,7 +35,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             logger.warning(
                 "dummy proudct id and product detail images folder id are required for product creation"
             )
-        super().__init__()
+        super().__init__(product_sheet_start_row=product_sheet_start_row)
 
     def product_attr_column_map(self):
         return dict(

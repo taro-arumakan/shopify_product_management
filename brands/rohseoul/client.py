@@ -12,7 +12,6 @@ class RohseoulClient(BrandClientBase):
     SHOPNAME = "rohseoul"
     VENDOR = "rohseoul"
     LOCATIONS = ["Shop location"]
-    PRODUCT_SHEET_START_ROW = 2
 
     def product_attr_column_map(self):
         return dict(
