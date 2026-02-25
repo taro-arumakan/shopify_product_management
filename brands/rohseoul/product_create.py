@@ -5,15 +5,15 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    handle_suffix = "25fw-3rd"
+    handle_suffix = "26ss-1st"
 
     client = RohseoulClient()
-    sheet_name = "25FW WINTER - copy"
+    sheet_name = "26ss 1rd(NEW)"
     client.sanity_check_sheet(sheet_name, handle_suffix=handle_suffix)
     client.process_sheet_to_products(
         sheet_name=sheet_name,
         handle_suffix=handle_suffix,
-        additional_tags=["25_winter", "New Arrival"],
+        additional_tags=["26ss-1st", "New Arrival"],
     )
 
 
