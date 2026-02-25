@@ -10,11 +10,11 @@ def main():
     client = RohseoulClient()
     sheet_name = "26ss 1rd(NEW)"
     client.sanity_check_sheet(sheet_name, handle_suffix=handle_suffix)
-    # client.process_sheet_to_products(
-    #     sheet_name=sheet_name,
-    #     handle_suffix=handle_suffix,
-    #     additional_tags=["26_spring", "New Arrival"],
-    # )
+    client.process_sheet_to_products(
+        sheet_name=sheet_name,
+        handle_suffix=handle_suffix,
+        additional_tags=["26ss-1rd", "New Arrival"],
+    )
 
 
 if __name__ == "__main__":
