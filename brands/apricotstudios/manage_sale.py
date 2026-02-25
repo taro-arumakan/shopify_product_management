@@ -3,6 +3,7 @@ from brands.apricotstudios.client import ApricotStudiosClient
 
 def end_discount(testrun=True):
     client = ApricotStudiosClient()
+    client.sheet_id = "1KIQqlu5mhc-Q6P0X0jekaq__hvITGkM0W6aVZlMRo2s"
     sheet_name = "[Spring_1st] 2/25"
     product_inputs = client.product_inputs_by_sheet_name(sheet_name)
     q = " OR ".join(f"title:'{pi['title']}'" for pi in product_inputs)
