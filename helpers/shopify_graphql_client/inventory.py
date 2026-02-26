@@ -54,8 +54,8 @@ class Inventory:
         with ThreadPoolExecutor(max_workers=10) as executor:
             results = list(
                 executor.map(
-                    lambda iiid: self.enable_and_activate_inventory_by_inventory_item_id(
-                        iiid, location_names
+                    lambda inventory_item_id: self.enable_and_activate_inventory_by_inventory_item_id(
+                        inventory_item_id, location_names
                     ),
                     inventory_item_ids,
                 )
