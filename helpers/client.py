@@ -241,7 +241,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface):
                 product_id=product_id,
                 skus=skus,
                 media_ids=[],
-                variant_media_ids=[new_media_ids[0]],
+                variant_media_ids=[new_media_ids[0]] * len(options),
                 option_names=options[0]["option_values"].keys(),
                 variant_option_valuess=[
                     option["option_values"].values() for option in options
