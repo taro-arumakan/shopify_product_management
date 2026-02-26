@@ -102,7 +102,6 @@ class GoogleDriveApiInterface:
 
                 resized_img = img.resize((new_width, new_height), Image.LANCZOS)
                 if resized_img.mode == "RGBA":
-                    resized_img = resized_img.convert("P", palette=Image.ADAPTIVE)
                     kwargs = dict(format="PNG", optimize=True, compress_level=9)
                 else:
                     kwargs = dict(format="JPEG", quality=85)
