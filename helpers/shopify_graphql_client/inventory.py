@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,30 @@ class Inventory:
 
     def enable_and_activate_inventory_by_product_id(self, product_id, location_names):
         product = self.product_by_id(product_id)
-        for variant in product["variants"]["nodes"]:
-            self.enable_and_activate_inventory_by_sku(variant["sku"], location_names)
+        return self.enable_and_activate_inventories_by_skus(
+            [v["sku"] for v in product["variants"]["nodes"]], location_names
+        )
+
+    def enable_and_activate_inventories_by_skus(self, skus, location_names):
+        inventory_item_ids = self.inventory_item_ids_by_skus(skus)
+        return self.enable_and_activate_inventories_by_inventory_item_ids(
+            inventory_item_ids, location_names
+        )
+
+    def enable_and_activate_inventories_by_inventory_item_ids(
+        self, inventory_item_ids, location_names
+    ):
+        logger.info(f"activating inventory {inventory_item_ids} in {location_names}")
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            results = list(
+                executor.map(
+                    lambda iiid: self.enable_and_activate_inventory_by_inventory_item_id(
+                        iiid, location_names
+                    ),
+                    inventory_item_ids,
+                )
+            )
+        return results
 
     def enable_and_activate_inventory_by_inventory_item_id(
         self, inventory_item_id, location_names
@@ -143,10 +166,6 @@ class Inventory:
             raise RuntimeError(f"Failed to activate an inventory item: {user_errors}")
         return res["inventoryActivate"]["inventoryLevel"]
 
-    def inventory_item_id_by_sku(self, sku):
-        res = self.inventory_item_by_sku(sku)
-        return res["id"]
-
     def inventory_items_by_query(self, query_string):
         query = """
         query inventoryItemsByQuery($query_string: String!) {
@@ -171,12 +190,24 @@ class Inventory:
         res = self.run_query(query, variables)
         return res["inventoryItems"]["nodes"]
 
+    def inventory_items_by_skus(self, skus: list[str]):
+        q = " OR ".join(f"sku:'{sku}'" for sku in skus)
+        return self.inventory_items_by_query(q)
+
     def inventory_item_by_sku(self, sku):
-        res = self.inventory_items_by_query(f"sku:'{sku}'")
+        res = self.inventory_items_by_skus([sku])
         assert (
             len(res) == 1
         ), f'{"Multiple" if res else "No"} inventoryItems found for {sku}: {res}'
         return res[0]
+
+    def inventory_item_ids_by_skus(self, skus):
+        inventory_items = self.inventory_items_by_skus(skus)
+        return [r["id"] for r in inventory_items]
+
+    def inventory_item_id_by_sku(self, sku):
+        res = self.inventory_item_by_sku(sku)
+        return res["id"]
 
     def inventory_item_by_variant_id(self, variant_id):
         variant = self.variant_by_variant_id(variant_id)
