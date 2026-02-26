@@ -61,13 +61,10 @@ class GoogleDriveApiInterface:
         ]
 
     def download_and_process_image(self, file_id, local_path):
-        p = pathlib.Path(local_path)
-        local_path = os.path.join(p.parent, f"{p.stem}.jpg")  # jpg always
-
         if not os.path.exists(local_path):
             logger.info(f"  starting download of {file_id} to {local_path}")
             self.download_file_from_drive(file_id, local_path)
-            self.resize_image_to_limit(local_path, local_path)
+            local_path = self.resize_image_to_limit(local_path, local_path)
         return local_path
 
     def download_file_from_drive(self, file_id, destination_path):
@@ -79,8 +76,19 @@ class GoogleDriveApiInterface:
             status, done = downloader.next_chunk()
             logger.debug(f"Download {int(status.progress() * 100)}%.")
 
-    @staticmethod
-    def resize_image_to_limit(image_path, output_path, max_megapixels=15, max_mb=15):
+    def rename_file_extension(self, file_path, image_mode):
+        ext = {"RGBA": ".png"}.get(image_mode, ".jpg")
+        p = pathlib.Path(file_path)
+        if ext != p.suffix:
+            new_path = os.path.join(p.parent, f"{p.stem}{ext}")
+            logger.info(f"renaming output file to {new_path}")
+            os.rename(file_path, new_path)
+            return new_path
+        return file_path
+
+    def resize_image_to_limit(
+        self, image_path, output_path, max_megapixels=15, max_mb=15
+    ):
         file_size_mb = os.path.getsize(image_path) / (1024 * 1024)
         with Image.open(image_path) as img:
             current_megapixels = (img.width * img.height) / 1_000_000
@@ -93,13 +101,17 @@ class GoogleDriveApiInterface:
                     new_width, new_height = img.width, img.height
 
                 resized_img = img.resize((new_width, new_height), Image.LANCZOS)
-                if resized_img.mode in ("RGBA", "P"):
-                    resized_img = resized_img.convert("RGB")
-                kwargs = dict(format="JPEG", quality=85, optimize=True)
+                if resized_img.mode == "RGBA":
+                    resized_img = resized_img.convert("P", palette=Image.ADAPTIVE)
+                    kwargs = dict(format="PNG", optimize=True, compress_level=9)
+                else:
+                    kwargs = dict(format="JPEG", quality=85)
                 resized_img.save(output_path, **kwargs)
                 logger.info(
                     f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}"
                 )
+            image_mode = img.mode
+        return self.rename_file_extension(output_path, image_mode)
 
     def find_folder_id_by_name(self, parent_folder_id, folder_name):
         """
