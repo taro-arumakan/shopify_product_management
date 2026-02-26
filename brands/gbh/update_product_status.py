@@ -17,7 +17,7 @@ def archive_products(testrun=True):
 
 def products_to_draft(testrun=True):
     client = utils.client("gbh")
-    products = client.products_by_collection_id("324132896967")
+    products = client.products_by_collection_id("311349936327")
     for product in products:
         product_id = product["id"]
         logging.info(f"Product to draft status: {product['title']} (id: {product_id})")
