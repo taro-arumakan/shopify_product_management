@@ -88,6 +88,7 @@ class GoogleSheetsApiInterface:
             elif column_name in ["sku", "product_number", "barcode"]:
                 v = str(v).strip()
             elif column_name == "drive_link":
+                v = str(v).strip()
                 if all([v, v != "no image", not v.startswith("http")]):
                     v = self.get_richtext_link(sheet_title, row_num, column_index)
             elif column_name in ["weight"]:
