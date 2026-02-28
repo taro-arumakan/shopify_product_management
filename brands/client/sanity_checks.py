@@ -102,12 +102,7 @@ class SanityChecks:
                 res.append(f"Existing product found by {checking}: {param}")
         return res
 
-    def sanity_check_product_inputs(self, product_inputs, ignore_product_titles=None):
-        product_inputs = [
-            pi
-            for pi in product_inputs
-            if pi["title"] not in (ignore_product_titles or [])
-        ]
+    def sanity_check_product_inputs(self, product_inputs, pre_rewrite=False):
         res = []
         try:
             self.check_sku_duplicates(product_inputs)
@@ -116,9 +111,10 @@ class SanityChecks:
             res.append(e1)
         res += self.check_existing_skus(product_inputs)
         res += self.check_existing_products(product_inputs)
-        res += self.check_size_field(product_inputs, raise_on_error=False)
-        res += self.check_description(product_inputs, raise_on_error=False)
         res += self.check_images_link(product_inputs)
+        res += self.check_size_field(product_inputs, raise_on_error=False)
+        if not pre_rewrite:
+            res += self.check_description(product_inputs, raise_on_error=False)
         for r in res:
             logger.error(r)
 
@@ -129,8 +125,8 @@ class SanityChecks:
         self,
         sheet_name,
         handle_suffix=None,
-        ignore_product_titles=None,
         product_inputs_filter_func=None,
+        pre_rewrite=False,
     ):
         product_inputs = self.product_inputs_by_sheet_name(
             sheet_name, handle_suffix=handle_suffix
@@ -141,6 +137,4 @@ class SanityChecks:
         logger.info(
             f"Sanity checking {len(product_inputs)} products from sheet {sheet_name}"
         )
-        return self.sanity_check_product_inputs(
-            product_inputs, ignore_product_titles=ignore_product_titles
-        )
+        return self.sanity_check_product_inputs(product_inputs, pre_rewrite=pre_rewrite)

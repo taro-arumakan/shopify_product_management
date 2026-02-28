@@ -150,7 +150,7 @@ class SsilClient(BrandClientBase):
             rows.append(row_values)
         return super().generate_table_html(headers, rows)
 
-    def sanity_check_product_inputs(self, product_inputs, ignore_product_titles=None):
+    def sanity_check_product_inputs(self, product_inputs, pre_rewrite=False):
         for pi in product_inputs:
             try:
                 self.formatted_material_text_to_html_table(pi["material"])
@@ -159,7 +159,7 @@ class SsilClient(BrandClientBase):
                     f"failed parsing material text of {pi['title']}: {pi['material']}\n{e}"
                 )
         return super().sanity_check_product_inputs(
-            product_inputs, ignore_product_titles=ignore_product_titles
+            product_inputs, pre_rewrite=pre_rewrite
         )
 
     def post_process_product_inputs(self, product_inputs):

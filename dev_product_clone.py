@@ -29,7 +29,9 @@ def main():
     for sheet_name in sheet_names:
         try:
             client.sanity_check_sheet(
-                sheet_name, ignore_product_titles=["SOFFI CASHMERE V-NECK KNIT"]
+                sheet_name,
+                product_inputs_filter_func=lambda pi: pi["title"]
+                not in ["SOFFI CASHMERE V-NECK KNIT"],
             )
         except RuntimeError as e:
             logging.error(f"Sanity check failed for {sheet_name}: {e}")
@@ -41,7 +43,8 @@ def main():
             sheet_name=sheet_name,
             additional_tags=[drop_tag, "New Arrival"],
             scheduled_time=scheduled_time,
-            ignore_product_titles=["SOFFI CASHMERE V-NECK KNIT"],
+            product_inputs_filter_func=lambda pi: pi["title"]
+            not in ["SOFFI CASHMERE V-NECK KNIT"],
         )
 
 
