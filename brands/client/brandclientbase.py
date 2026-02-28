@@ -183,7 +183,6 @@ class BrandClientBase(Client, SanityChecks):
         handle_suffix=None,
         restart_at_product_title=None,
         scheduled_time=None,
-        ignore_product_titles=None,
         product_inputs_filter_func=None,
     ):
         product_inputs = self.product_inputs_by_sheet_name(sheet_name, handle_suffix)
@@ -201,11 +200,6 @@ class BrandClientBase(Client, SanityChecks):
                     raise RuntimeError(
                         f"Product with name {restart_at_product_title} not found in sheet {sheet_name}"
                     )
-        product_inputs = [
-            pi
-            for pi in product_inputs[i:]
-            if pi["title"] not in (ignore_product_titles or [])
-        ]
         if product_inputs_filter_func:
             product_inputs = list(filter(product_inputs_filter_func, product_inputs))
 
