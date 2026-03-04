@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.INFO)
 
 EXCLUDE_APPAREL_TITLES = ["GARDEN BAG SMALL", "TULIP BAG"]
 EXCLUDE_COSMETIC_TITLES = ["DEEP CLEANSING SHAMPOO", "BODY WASH NEROLI MUSK"]
-
+TAG = "26SS_3.10"
 
 def archive_apparel_products():
     client = GbhClient()
@@ -23,12 +23,14 @@ def archive_cosmetic_products():
 
 def create_26ss_color_only():
     client = GbhClientColorOptionOnly(product_sheet_start_row=1)
+    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
     sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR ONLY)"
-    filter_func = lambda pi: pi["title"] not in EXCLUDE_APPAREL_TITLES
+    filter_func = lambda pi: pi["title"] in EXCLUDE_APPAREL_TITLES
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
     client.process_sheet_to_products(
         sheet_name,
-        additional_tags=["New Arrival"]
+        additional_tags=["New Arrival", TAG],
+        product_inputs_filter_func=filter_func
     )
 
 
@@ -36,11 +38,12 @@ def create_26ss_color_size():
     client = GbhClient(product_sheet_start_row=1)
     client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
     sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR+SIZE)"
-    filter_func = lambda pi: pi["title"] not in EXCLUDE_APPAREL_TITLES
+    filter_func = lambda pi: pi["title"] in EXCLUDE_APPAREL_TITLES
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
     client.process_sheet_to_products(
         sheet_name,
-        additional_tags=["New Arrival"]
+        additional_tags=["New Arrival", TAG],
+        product_inputs_filter_func=filter_func
     )
 
 
@@ -52,7 +55,8 @@ def create_cosmetic():
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
     client.process_sheet_to_products(
         sheet_name,
-        additional_tags=["New Arrival"]
+        additional_tags=["New Arrival", TAG],
+        product_inputs_filter_func=filter_func
     )
 
 
@@ -160,12 +164,6 @@ skus = [
 ]
 
 
-def create_collection():
-    client = GbhClient()
-    product_ids = {client.product_id_by_sku(sku) for sku in skus}
-    client.collection_create_by_product_ids("GBH 3/10-3/15 sale", product_ids)
-
-
 def start_end_discounts(testrun=True, start_or_end="end"):
     client = GbhClient()
     variants = [client.variant_by_sku(sku) for sku in skus]
@@ -188,7 +186,6 @@ def main():
     create_26ss_color_only()
     create_26ss_color_size()
     create_cosmetic()
-    create_collection()
     start_end_discounts(testrun=False, start_or_end="start")
 
 if __name__ == "__main__":
