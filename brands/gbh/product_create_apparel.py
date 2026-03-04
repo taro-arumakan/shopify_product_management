@@ -13,10 +13,16 @@ def create_26ss_color_only():
     sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR ONLY)"
     filter_func = lambda pi: pi["title"] not in EXCLUDE_APPAREL_TITLES
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
+
+    scheduled_time = datetime.datetime(
+        2026, 3, 10, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    )
+
     client.process_sheet_to_products(
         sheet_name,
         additional_tags=["New Arrival", TAG],
-        product_inputs_filter_func=filter_func
+        product_inputs_filter_func=filter_func,
+        scheduled_time=scheduled_time
     )
 
 
@@ -26,11 +32,18 @@ def create_26ss_color_size():
     sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR+SIZE)"
     filter_func = lambda pi: pi["title"] not in EXCLUDE_APPAREL_TITLES
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
+
+    scheduled_time = datetime.datetime(
+        2026, 3, 10, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    )
+
     client.process_sheet_to_products(
         sheet_name,
         additional_tags=["New Arrival", TAG],
-        product_inputs_filter_func=filter_func
+        product_inputs_filter_func=filter_func,
+        scheduled_time=scheduled_time
     )
+
 
 def main():
     create_26ss_color_only()
