@@ -62,6 +62,14 @@ class CollectionQueries:
                                 title
                             }
                         }
+                        ruleSet {
+                            rules {
+                                column
+                                relation
+                                condition
+                            }
+                            appliedDisjunctively
+                        }
                     }
                 }
             }
@@ -218,3 +226,38 @@ class CollectionQueries:
             ],
         }
         return self.collection_create_by_rule_set(collection_title, rule_set)
+
+    def collection_update_rule_set(self, collection_id, rule_set):
+        query = """
+        mutation updateCollection($input: CollectionInput!) {
+            collectionUpdate(input: $input) {
+                collection {
+                    id
+                    title
+                    handle
+                    ruleSet {
+                        rules {
+                            column
+                            relation
+                            condition
+                        }
+                        appliedDisjunctively
+                    }
+                }
+                userErrors {
+                    message
+                    field
+                }
+            }
+        }
+        """
+        variables = {
+            "input": {
+                "id": collection_id,
+                "ruleSet": rule_set,
+            }
+        }
+        res = self.run_query(query, variables)
+        if errors := res["collectionUpdate"]["userErrors"]:
+            raise RuntimeError(f"Collection update failed: {errors}")
+        return res["collectionUpdate"]["collection"]
