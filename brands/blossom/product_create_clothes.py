@@ -7,20 +7,20 @@ from brands.blossom.client import BlossomClientClothes
 
 
 def main():
-    sheet_name = "clothes(drop11)_SOFFI CASHMERE V-NECK KNIT"
-    drop_tag = "drop11"
+    sheet_name = "clothes(drop1) PS"
+    drop_tag = "2026_drop1"
+
+    client = BlossomClientClothes(product_sheet_start_row=1)
+
+    client.sanity_check_sheet(sheet_name, pre_rewrite=False)
+
+    # # client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
 
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 1, 26, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 3, 10, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
-
-    client = BlossomClientClothes()
-
-    client.sanity_check_sheet(sheet_name)
-
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
 
     client.process_sheet_to_products(
         sheet_name=sheet_name,

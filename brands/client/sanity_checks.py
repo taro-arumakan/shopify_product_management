@@ -54,7 +54,7 @@ class SanityChecks:
                         image_details = self.get_drive_image_details(drive_id)
                         if not image_details:
                             res.append(
-                                f"Missing or inaccessible drive image for {product_input['title']}: {drive_id}"
+                                f"Missing or inaccessible drive image: {product_input['title']} {skus} - {drive_id}"
                             )
                     else:
                         logger.warning(f"going to have no image: {skus}")
