@@ -16,17 +16,17 @@ def main():
 
     # # client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
 
-    # import zoneinfo
+    import zoneinfo
 
-    # scheduled_time = datetime.datetime(
-    #     2026, 3, 10, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
-    # )
+    scheduled_time = datetime.datetime(
+        2026, 3, 10, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    )
 
-    # client.process_sheet_to_products(
-    #     sheet_name=sheet_name,
-    #     additional_tags=[drop_tag, "New Arrival"],
-    #     scheduled_time=scheduled_time,
-    # )
+    client.process_sheet_to_products(
+        sheet_name=sheet_name,
+        additional_tags=[drop_tag, "New Arrival"],
+        scheduled_time=scheduled_time,
+    )
 
 
 if __name__ == "__main__":
