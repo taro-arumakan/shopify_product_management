@@ -111,18 +111,47 @@ class LememeClient(BrandClientBase):
         self.update_product_care_page_metafield(product_id, product_care_page_title)
         for option in product_input["options"]:
             sku = option["sku"]
-            filter_color = option["filter_color"]
-            variant = self.variant_by_sku(sku)
-            variant_id = variant["id"]
-            self.update_variant_metafield(
-                product_id, variant_id, "custom", "filter_color", filter_color
-            )
+            if filter_color := option.get("filter_color"):
+                variant = self.variant_by_sku(sku)
+                variant_id = variant["id"]
+                self.update_variant_metafield(
+                    product_id, variant_id, "custom", "filter_color", filter_color
+                )
+
+
+class LememeClientApparel(LememeClient):
+
+    def option1_attr_column_map(self):
+        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
+        option1_attrs.update(
+            drive_link=string.ascii_lowercase.index("r"),
+        )
+        return option1_attrs
+
+    def option2_attr_column_map(self):
+        option2_attrs = {"Size": string.ascii_lowercase.index("n")}
+        option2_attrs.update(
+            sku=string.ascii_lowercase.index("o"),
+            stock=string.ascii_lowercase.index("p"),
+        )
+        return option2_attrs
 
 
 def main():
-    client = LememeClient()
-    for pi in client.product_inputs_by_sheet_name("1114_Small Goods"):
-        print(client.get_tags(pi))
+    client = LememeClientApparel(product_sheet_start_row=1)
+    titles = [
+        "Aude Classic Jacket Butter",
+        "Aude Classic Jacket CharcoalGrey",
+        "Mouchou High Neck Leather Jumper Ivory",
+        "Mouchou High Neck Leather Jumper Black",
+        "Fitte Slim Bootcut Slacks Black",
+        "Sole One-Tuck Wide Pants Black",
+        "Sole One-Tuck Wide Pants White",
+    ]
+    client.sanity_check_sheet(
+        sheet_name="0305_RTW_spring",
+        product_inputs_filter_func=lambda pi: pi["title"] in titles,
+    )
 
 
 if __name__ == "__main__":
