@@ -99,6 +99,7 @@ class SanityChecks:
             except MultipleProductsFoundException:
                 res.append(f"Existing product found by {checking}: {param}")
             else:
+                # TODO [CEC-290] filter archived products
                 res.append(f"Existing product found by {checking}: {param}")
         return res
 
