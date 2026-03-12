@@ -110,8 +110,8 @@ class LememeClient(BrandClientBase):
         self.update_badges_metafield(product_id, ["NEW"])
         self.update_product_care_page_metafield(product_id, product_care_page_title)
         for option in product_input["options"]:
-            sku = option["sku"]
             if filter_color := option.get("filter_color"):
+                sku = option["sku"]
                 variant = self.variant_by_sku(sku)
                 variant_id = variant["id"]
                 self.update_variant_metafield(
