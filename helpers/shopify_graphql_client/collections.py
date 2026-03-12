@@ -20,6 +20,7 @@ class CollectionQueries:
                             nodes {
                                 id
                                 title
+                                displayName
                                 sku
                                 price
                                 compareAtPrice
