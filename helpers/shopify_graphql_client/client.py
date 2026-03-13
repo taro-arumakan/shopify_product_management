@@ -6,6 +6,7 @@ from helpers.shopify_graphql_client.archive_and_remove_variant import (
 )
 from helpers.shopify_graphql_client.article import Article
 from helpers.shopify_graphql_client.collections import CollectionQueries
+from helpers.shopify_graphql_client.customers import Customers
 from helpers.shopify_graphql_client.inventory import Inventory
 from helpers.shopify_graphql_client.medias import Medias
 from helpers.shopify_graphql_client.merge_products_as_variants import (
@@ -34,6 +35,7 @@ class ShopifyGraphqlClient(
     ArchiveAndRemoveVariant,
     Article,
     CollectionQueries,
+    Customers,
     Inventory,
     Medias,
     Orders,
