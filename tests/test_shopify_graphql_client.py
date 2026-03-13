@@ -60,7 +60,11 @@ class TestShopifyFunctions(unittest.TestCase):
             "products": {
                 "pageInfo": {"hasNextPage": False, "endCursor": "dummy"},
                 "nodes": [
-                    {"id": "gid://shopify/Product/12345", "title": "Test Product"}
+                    {
+                        "id": "gid://shopify/Product/12345",
+                        "title": "Test Product",
+                        "status": "ACTIVE",
+                    }
                 ],
             }
         }
