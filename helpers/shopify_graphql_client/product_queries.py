@@ -40,35 +40,33 @@ class ProductQueries:
         sort_key="TITLE",
         reverse=False,
     ):
-        PAGE_SIZE = 200
-        reverse_str = "true" if reverse else "false"
         additional_fields_str = (
             f"\n{'\n'.join(additional_fields)}" if additional_fields else ""
         )
 
-        query = """
-        query productsByQueryPaginated($query_string: String!, $after: String) {
-          products(first: %d, query: $query_string, sortKey: %s, reverse: %s, after: $after) {
-            pageInfo {
+        query = f"""
+        query productsByQueryPaginated($query_string: String!, $after: String, $sortKey: ProductSortKeys, $reverse: Boolean, $first: Int!) {{
+          products(first: $first, query: $query_string, sortKey: $sortKey, reverse: $reverse, after: $after) {{
+            pageInfo {{
               hasNextPage
               endCursor
-            }
-            nodes {
+            }}
+            nodes {{
               id
               title
               handle
               status
-              tags%s
-              metafields(first: 10) {
-                nodes {
+              tags{additional_fields_str}
+              metafields(first: 10) {{
+                nodes {{
                   id
                   namespace
                   key
                   value
-                }
-              }
-              variants(first: 30) {
-                nodes {
+                }}
+              }}
+              variants(first: 30) {{
+                nodes {{
                   id
                   title
                   displayName
@@ -76,73 +74,51 @@ class ProductQueries:
                   price
                   compareAtPrice
                   inventoryQuantity
-                  selectedOptions {
+                  selectedOptions {{
                     name
                     value
-                  }
-                  image {
+                  }}
+                  image {{
                     id
                     url
-                  }
-                  metafields(first: 10) {
-                    nodes {
+                  }}
+                  metafields(first: 10) {{
+                    nodes {{
                       id
                       namespace
                       key
                       value
-                    }
-                  }
-                  product {
+                    }}
+                  }}
+                  product {{
                     id
-                  }
-                }
-              }
-              media(first: 100) {
-                nodes {
-                  ... on MediaImage {
+                  }}
+                }}
+              }}
+              media(first: 100) {{
+                nodes {{
+                  ... on MediaImage {{
                     id
-                    image {
+                    image {{
                       id
                       url
-                    }
-                  }
-                }
-              }
-            }
-          }
+                    }}
+                  }}
+                }}
+              }}
+            }}
+          }}
+        }}
+        """
+
+        variables = {
+            "query_string": query_string,
+            "sortKey": sort_key,
+            "reverse": reverse,
         }
-        """ % (
-            PAGE_SIZE,
-            sort_key,
-            reverse_str,
-            additional_fields_str,
+        all_products = self.run_paginated_query(
+            query=query, variables=variables, data_key="products"
         )
-
-        logger.debug(
-            f"商品情報の取得を開始。クエリ: {query_string if query_string else 'なし（全商品）'}"
-        )
-
-        all_products = []
-        cursor = None
-        has_next_page = True
-
-        while has_next_page:
-            res = self.run_query(
-                query,
-                {"query_string": query_string, "after": cursor},
-            )
-            products_data = res["products"]
-            all_products.extend(products_data["nodes"])
-
-            page_info = products_data["pageInfo"]
-            has_next_page = page_info["hasNextPage"]
-            cursor = page_info["endCursor"]
-
-            logger.debug(f"取得済み: {len(all_products)}件の商品")
-            if has_next_page:
-                logger.debug(f"次のページを取得中... (cursor: {cursor})")
-
-        logger.debug(f"商品情報の取得が完了。合計: {len(all_products)}件")
         return all_products
 
     def products_by_title(self, title, *args, **kwargs):
@@ -202,46 +178,49 @@ class ProductQueries:
     def product_id_by_handle(self, handle):
         return self.product_by_handle(handle)["id"]
 
-    def product_variants_by_query(self, query, filter_archived=True):
-        # TODO CEC-282 paginate
-        query = (
-            """
-        {
-            productVariants(first:100, query: "%s") {
-                nodes {
-                    id
-                    title
-                    displayName
-                    sku
-                    price
-                    compareAtPrice
-                    media (first:5){
-                        nodes{
-                            id
-                            ... on MediaImage {
-                                image{
-                                    url
-                                }
-                            }
-                        }
-                    }
-                    selectedOptions {
-                        name
-                        value
-                    }
-                    product {
-                        id
-                        title
-                        status
-                    }
-                }
-            }
-        }
+    def product_variants_by_query(self, query_string, filter_archived=True):
+        query = f"""
+        query productVariantsByQueryPaginated($query_string: String!, $after: String, $first: Int!) {{
+          productVariants(first: $first, query: $query_string, after: $after) {{
+            pageInfo {{
+              hasNextPage
+              endCursor
+            }}
+            nodes {{
+              id
+              title
+              displayName
+              sku
+              price
+              compareAtPrice
+              media (first:5){{
+                nodes{{
+                  id
+                  ... on MediaImage {{
+                    image{{
+                      url
+                    }}
+                  }}
+                }}
+              }}
+              selectedOptions {{
+                name
+                value
+              }}
+              product {{
+                id
+                title
+                status
+              }}
+            }}
+          }}
+        }}
         """
-            % query
+        res = self.run_paginated_query(
+            query=query,
+            variables={"query_string": query_string},
+            data_key="productVariants",
         )
-        res = self.run_query(query)
-        res = res["productVariants"]["nodes"]
         if filter_archived:
             # Shopify API ignores product_status filter on productVariants query
             logger.debug("Filtering ARCHIVED products' variants")
