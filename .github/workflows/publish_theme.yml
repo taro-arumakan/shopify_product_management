@@ -1,0 +1,74 @@
+name: publish theme
+
+on:
+  workflow_dispatch:
+    inputs:
+      shop_name:
+        description: "name of the shop to publish a theme on"
+        required: true
+        type: string
+      theme_name:
+        description: "name of the theme to publish"
+        required: true
+        type: string
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.21"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: create a .env file
+        run: |
+          cat > .env << EOF
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          gbhjapan-ACCESS_TOKEN=${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          gbhjapan-GSPREAD_ID=${{ secrets.GBHJAPAN_GSPREAD_ID }}
+          ssilkr-ACCESS_TOKEN=${{ secrets.SSILKR_ACCESS_TOKEN }}
+          ssilkr-GSPREAD_ID=${{ secrets.SSILKR_GSPREAD_ID }}
+          rohseoul-ACCESS_TOKEN=${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          rohseoul-GSPREAD_ID=${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
+          lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+          alvanas-ACCESS_TOKEN=${{ secrets.ALVANAS_ACCESS_TOKEN }}
+          alvanas-GSPREAD_ID=${{ secrets.ALVANAS_GSPREAD_ID }}
+          apricot-studios-ACCESS_TOKEN=${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
+          archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+          a-and-stores-ACCESS_TOKEN=${{ secrets.A_AND_STORES_ACCESS_TOKEN }}
+          quickstart-6f3c9e4c-ACCESS_TOKEN=${{ secrets.DEV_STORE_ACCESS_TOKEN }}
+          EOF
+
+      - name: publish theme
+        env:
+          PYTHONPATH: .
+        run: |
+          uv run .github/actions/publish_theme.py ${{ github.event.inputs.shop_name }} ${{ github.event.inputs.theme_name }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
