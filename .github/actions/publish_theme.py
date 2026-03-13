@@ -15,8 +15,9 @@ def main():
     theme_name = sys.argv[2]
 
     client = utils.client(shop_name)
+    logging.info(f"publishing on {client.VENDOR}: {theme_name}")
     theme_id = client.theme_id_by_theme_name(theme_name)
-    logging.info(f"publishing on {client.VENDOR} - {theme_id}: {theme_name}")
+    logging.info(f"publishing {theme_id}")
     client.publish_theme(theme_id)
 
 
