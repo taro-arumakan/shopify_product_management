@@ -13,7 +13,7 @@ on:
         type: string
 
 jobs:
-  run-script:
+  publish-theme:
     runs-on: ubuntu-latest
 
     steps:
@@ -65,8 +65,10 @@ jobs:
       - name: publish theme
         env:
           PYTHONPATH: .
+          INPUT_SHOP_NAME: ${{ github.event.inputs.shop_name }}
+          INPUT_THEME_NAME: ${{ github.event.inputs.theme_name }}
         run: |
-          uv run .github/actions/publish_theme.py ${{ github.event.inputs.shop_name }} ${{ github.event.inputs.theme_name }}
+          uv run .github/actions/publish_theme.py "$INPUT_SHOP_NAME" "$INPUT_THEME_NAME"
 
       - name: Cleanup
         if: always()
