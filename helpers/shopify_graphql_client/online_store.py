@@ -83,7 +83,9 @@ class OnlineStore:
             % theme_name
         )
         res = self.run_query(query)
-        assert len(res["themes"]["nodes"]) == 1
+        assert (
+            len(res["themes"]["nodes"]) == 1
+        ), f"{'Multiple' if res["themes"]["nodes"] else 'No'} theme found for '{theme_name}'"
         return res["themes"]["nodes"][0]["id"]
 
     def publish_theme(self, theme_id):
