@@ -85,3 +85,21 @@ class ShopifyGraphqlClient(
                 f"Warning running the query: {warnings}\n\n{query}\n\n{variables}"
             )
         return res["data"]
+
+    def run_paginated_query(self, query, variables, data_key):
+        """
+        query should accept `$first: Int!` argument. refer to ProductQueries.products_by_query.
+        """
+        all_items = []
+        vars = variables.copy()
+        vars["first"] = 200
+        has_next_page = True
+        while has_next_page:
+            res = self.run_query(query, vars)
+            data = res[data_key]
+            all_items.extend(data["nodes"])
+            page_info = data["pageInfo"]
+            has_next_page = page_info["hasNextPage"]
+            if has_next_page:
+                vars["after"] = page_info["endCursor"]
+        return all_items
