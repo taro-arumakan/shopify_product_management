@@ -68,6 +68,45 @@ class OnlineStore:
         res = self.run_query(query)
         return res["themes"]["nodes"][0]["files"]["nodes"]
 
+    def theme_id_by_theme_name(self, theme_name):
+        query = (
+            """
+        query {
+            themes(names:"%s" first:1) {
+                nodes {
+                    id
+                    name
+                }
+            }
+        }
+        """
+            % theme_name
+        )
+        res = self.run_query(query)
+        assert len(res["themes"]["nodes"]) == 1
+        return res["themes"]["nodes"][0]["id"]
+
+    def publish_theme(self, theme_id):
+        query = """
+        mutation themePublish($id: ID!) {
+            themePublish(id: $id) {
+                theme {
+                    id
+                    name
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        variables = {"id": self.sanitize_id(theme_id, prefix="OnlineStoreTheme")}
+        res = self.run_query(query=query, variables=variables)
+        if errors := res["themePublish"]["userErrors"]:
+            raise RuntimeError(f"Failed to publish {theme_id}: {errors}")
+        return res["themePublish"]["theme"]
+
     def pages_by_query(self, query_string, sort_key="PUBLISHED_AT"):
         query = """
         query pagesByQuery($query_string: String!, $sort_key: PageSortKeys!) {
