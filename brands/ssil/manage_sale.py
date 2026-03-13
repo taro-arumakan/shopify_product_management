@@ -1,5 +1,9 @@
-import utils
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 import pandas as pd
+import utils
 
 
 def end_2026_gold_line(testrun=True):
@@ -15,7 +19,7 @@ def start_2026_new_year_sale(testrun=True):
     )
     df = pd.DataFrame(columns=["title", "sku"], data=rows)
     skus = df["sku"].tolist()
-    variants = [client.variant_by_sku(sku) for sku in skus]
+    variants = client.variants_by_skus(skus)
     discounted_prices_by_variant_id = {
         v["id"]: int(int(v["price"]) * 0.85) for v in variants
     }
@@ -33,7 +37,7 @@ def end_2026_new_year_sale(testrun=True):
     )
     df = pd.DataFrame(columns=["title", "sku"], data=rows)
     skus = df["sku"].tolist()
-    variants = [client.variant_by_sku(sku) for sku in skus]
+    variants = client.variants_by_skus(skus)
     client.revert_variant_prices(variants, testrun=testrun)
 
 
@@ -56,4 +60,7 @@ def start_end_new_clover_sale(testrun=True, start_or_end="end"):
 
 
 if __name__ == "__main__":
-    start_end_new_clover_sale()
+    start_2026_new_year_sale(testrun=True)
+    end_2026_new_year_sale(testrun=True)
+    start_end_new_clover_sale(testrun=True, start_or_end="start")
+    start_end_new_clover_sale(testrun=True, start_or_end="end")
