@@ -22,6 +22,7 @@ class Customers:
                         emailAddress
                         marketingState
                     }
+                    tags
                 }
             }
         }
@@ -48,3 +49,31 @@ class Customers:
             f"last_abandoned_order_date:>={last_abandand_order_after:%Y-%m-%d}"
         )
         return self.customers_by_query(query_string)
+
+    def update_customers_tags(self, customer_id, tags):
+        query = """
+        mutation customerUpdate($input: CustomerInput!) {
+            customerUpdate(input: $input) {
+                customer {
+                    id
+                    tags
+                    firstName
+                    lastName
+                }
+                userErrors {
+                    message
+                    field
+                }
+            }
+        }
+        """
+        variables = {
+            "input": {
+                "id": self.sanitize_id(customer_id, prefix="Customer"),
+                "tags": tags,
+            }
+        }
+        res = self.run_query(query, variables)
+        if errors := res["customerUpdate"]["userErrors"]:
+            raise RuntimeError(f"Failed to update tags: {errors}")
+        return res["customerUpdate"]["customer"]
