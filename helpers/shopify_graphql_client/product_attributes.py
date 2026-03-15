@@ -60,10 +60,8 @@ class ProductAttributes:
             }
         )
         res = self.run_query(query, variables)
-        if res["productUpdate"]["userErrors"]:
-            raise RuntimeError(
-                f"Failed to update {attribute_names}: {res['productUpdate']['userErrors']}"
-            )
+        if errors := res["productUpdate"]["userErrors"]:
+            raise RuntimeError(f"Failed to update {attribute_names}: {errors}")
         return res
 
     def update_product_title(self, product_id, title):
