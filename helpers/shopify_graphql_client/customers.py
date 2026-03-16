@@ -1,5 +1,6 @@
 import datetime
 import logging
+import string
 import zoneinfo
 
 logger = logging.getLogger(__name__)
@@ -7,13 +8,12 @@ logger = logging.getLogger(__name__)
 
 class Customers:
     def customers_by_query(
-        self,
-        query_string,
-        sort_key="NAME",
+        self, customers_query_string, sort_key="NAME", orders_query_string=None
     ):
-        query = """
-        query customersByQuery($query_string: String!) {
-            customers(first: 200, query: $query_string, sortKey: %s) {
+        query = string.Template(
+            """
+        query customersByQuery($$customers_query_string: String!) {
+            customers(first: 200, query: $$customers_query_string, sortKey: $sort_key) {
                 nodes {
                     id
                     firstName
@@ -23,13 +23,27 @@ class Customers:
                         marketingState
                     }
                     tags
+                    $orders_fragment
                 }
             }
         }
-        """ % (
-            sort_key
+        """
         )
-        variables = {"query_string": query_string}
+        if orders_query_string:
+            orders_fragment = string.Template(
+                """
+            orders(first: 20, query: "$orders_query_string") {
+                nodes {
+                    id
+                    cancelledAt
+                }
+            }
+            """
+            ).substitute(orders_query_string=orders_query_string)
+        else:
+            orders_fragment = ""
+        query = query.substitute(sort_key=sort_key, orders_fragment=orders_fragment)
+        variables = {"customers_query_string": customers_query_string}
         res = self.run_query(query, variables)
         return res["customers"]["nodes"]
 
@@ -77,3 +91,18 @@ class Customers:
         if errors := res["customerUpdate"]["userErrors"]:
             raise RuntimeError(f"Failed to update tags: {errors}")
         return res["customerUpdate"]["customer"]
+
+
+def main():
+    import utils
+
+    client = utils.client("kume")
+    for customer in client.customers_by_query(
+        "last_abandoned_order_date:>=2026-03-01",
+        orders_query_string="discount_code:auto_5%_off",
+    ):
+        print(customer)
+
+
+if __name__ == "__main__":
+    main()
