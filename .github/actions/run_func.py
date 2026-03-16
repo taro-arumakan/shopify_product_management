@@ -1,7 +1,10 @@
-import sys
-import json
 import importlib.util
+import json
+import logging
+import sys
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main():
@@ -15,6 +18,11 @@ def main():
     func_name = sys.argv[2]
     raw_params = sys.argv[3]
     params = json.loads(raw_params)
+
+    logging.info(f"script_path: {repr(script_path)}")
+    logging.info(f"func_name: {repr(func_name)}")
+    logging.info(f"raw_params: {repr(raw_params)}")
+    logging.info(f"params: {repr(params)}")
 
     module_name = Path(script_path).stem
     spec = importlib.util.spec_from_file_location(module_name, script_path)
