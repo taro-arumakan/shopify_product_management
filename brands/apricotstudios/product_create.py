@@ -8,21 +8,21 @@ logging.basicConfig(level=logging.INFO)
 def main():
     client = ApricotStudiosClient(
         "gid://shopify/Product/9344675578112",
-        product_detail_images_folder_id="1fCXufym34XgTt80wq0ADVrQ-3SWXZQIZ",
+        product_detail_images_folder_id="1gXZGa5C6Zlg7X-icBsHfk0u6CYgibQpW",
+        product_sheet_start_row=2
     )
-    sheet_name = "[Spring_1st] 2/25"
+    sheet_name = "[Spring_2nd] 3/25"
 
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 2, 25, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 3, 25, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
-    # client.sanity_check_sheet(sheet_name)
+    client.sanity_check_sheet(sheet_name)
     client.process_sheet_to_products(
         sheet_name,
-        restart_at_product_title="Bliss Collar Work Jacket",
-        additional_tags=["26_spring_1st", "New Arrival"],
+        additional_tags=["26_Spring_Babycot", "New Arrival"],
         scheduled_time=scheduled_time,
     )
 
@@ -67,6 +67,6 @@ def set_price():
 
 
 if __name__ == "__main__":
-    # main()
+    main()
     # reprocess()
-    set_price()
+    # set_price()

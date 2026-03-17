@@ -40,6 +40,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
     def product_attr_column_map(self):
         return dict(
             title=string.ascii_lowercase.index("f"),
+            price=string.ascii_lowercase.index("h"),
             collection=string.ascii_lowercase.index("c"),
             category=string.ascii_lowercase.index("d"),
             # release_date=string.ascii_lowercase.index("b"),
@@ -60,9 +61,8 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
     def option2_attr_column_map(self):
         option2_attrs = {"サイズ": string.ascii_lowercase.index("v")}
         option2_attrs.update(
-            price=string.ascii_lowercase.index("h"),
             sku=string.ascii_lowercase.index("w"),
-            stock=string.ascii_lowercase.index("y"),
+            stock=string.ascii_lowercase.index("x"),
         )
         return option2_attrs
 
