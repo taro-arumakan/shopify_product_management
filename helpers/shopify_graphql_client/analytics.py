@@ -253,9 +253,8 @@ class Analytics:
         # 2. KPI Calculations (for the left panel)
         total_sales = df["total_sales"].sum()
         total_sessions = df["sessions"].sum()
-        total_orders = df["orders"].sum()
-        avg_cvr = (total_orders / total_sessions) * 100
-        avg_aov = total_sales / total_orders
+        avg_cvr = float(df["conversion_rate__totals"][0]) * 100
+        avg_aov = int(df["average_order_value__totals"][0])
 
         # 3. Setup Layout (Left: Summary, Right: Charts)
         fig = plt.figure(figsize=(14, 10), facecolor="white")
