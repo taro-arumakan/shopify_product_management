@@ -174,7 +174,8 @@ class SsilClientGoldLine(SsilClient):
             tags=string.ascii_lowercase.index("b"),
             price=string.ascii_lowercase.index("d"),
             description=string.ascii_lowercase.index("f"),
-            product_care=string.ascii_lowercase.index("h"),
+            # no product care, rather disclaimer, to be added at product template.
+            # product_care=string.ascii_lowercase.index("h"),
             material=string.ascii_lowercase.index("i"),
             size_text=string.ascii_lowercase.index("j"),
             made_in=string.ascii_lowercase.index("k"),
