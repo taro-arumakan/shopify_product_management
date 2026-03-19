@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import numpy as np
 from matplotlib.gridspec import GridSpec
 
 
@@ -123,6 +124,16 @@ class Analytics:
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
             ORDER BY new_or_returning_customer ASC
             LIMIT 2
+        """
+        return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+
+    def report_conversion_breakdown(self, date_from, date_to, to_dataframe=True):
+        shopifyql_query = f"""
+            FROM sessions
+            SHOW sessions, sessions_with_cart_additions, sessions_that_reached_checkout,
+                sessions_that_completed_checkout
+            WHERE human_or_bot_session IN ('human', 'bot')
+            SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
@@ -401,6 +412,69 @@ class Analytics:
         # Adjust layout to make room for the bottom text
         plt.tight_layout(rect=[0, 0.08, 1, 1])
 
+        try:
+            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+        finally:
+            plt.close(fig)
+
+    def generate_conversion_breakdown(self, output_path, date_from, date_to):
+        df = self.report_conversion_breakdown(date_from, date_to)
+
+        metrics = {
+            "Add to Cart": "sessions_with_cart_additions",
+            "Checkout": "sessions_that_reached_checkout",
+            "Purchase": "sessions_that_completed_checkout",
+        }
+
+        labels = ["Add to Cart", "Checkout", "Purchase"]
+        for m in metrics.values():
+            df[m] = self.clean_numeric(df[m]).astype(int)
+        vals = [df[metrics[l]].sum() for l in labels]
+
+        # 2. Assign specific colors per requirement
+        # Add to Cart: Yellow, Checkout: Blue, Purchase: Green
+        colors = ["#F7B500", "#4E91C2", "#00A859"]
+
+        # 3. Setup Plot
+        fig, ax = plt.subplots(figsize=(10, 5), facecolor="white")
+        y = np.arange(len(labels))
+        height = 0.5
+
+        # 4. Horizontal Bars with specific colors
+        ax.barh(y, vals, height, color=colors, alpha=0.9)
+
+        # 5. Styling & Invert Y-axis for funnel flow
+        ax.set_yticks(y)
+        ax.set_yticklabels(labels, fontsize=12, fontweight="bold")
+        ax.invert_yaxis()  # Add to Cart at top
+
+        # Hide spines for a clean look
+        for spine in ["top", "right", "bottom", "left"]:
+            ax.spines[spine].set_visible(False)
+        ax.set_xticks([])
+        ax.tick_params(left=False)
+
+        # 6. Data Labels (Counts) positioned at the end of each bar
+        for i, val in enumerate(vals):
+            ax.text(
+                val + (max(vals) * 0.01),
+                i,
+                f"{int(val):,}",
+                va="center",
+                fontsize=12,
+                fontweight="bold",
+                color=colors[i],
+            )
+
+        ax.set_title(
+            "Conversion Funnel - Add to Cart to Purchase",
+            fontsize=16,
+            fontweight="bold",
+            loc="left",
+            pad=25,
+        )
+
+        plt.tight_layout()
         try:
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
         finally:

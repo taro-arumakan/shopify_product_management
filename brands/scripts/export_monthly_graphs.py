@@ -13,6 +13,7 @@ def run(brand, report_year, report_month):
         "store_kpi_graph",
         "sales_by_product_graph",
         "customer_type_donut",
+        "conversion_breakdown",
     ]
     client = utils.client(brand)
     target_folder_id = client.find_or_create_folder_by_name(
@@ -51,4 +52,5 @@ def adhoc():
 
 
 if __name__ == "__main__":
+    adhoc()
     main()
