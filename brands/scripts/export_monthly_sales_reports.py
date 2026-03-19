@@ -12,15 +12,16 @@ def run(brand, report_year, report_month):
     template_path = f"{base_dir}/monthly_sales_report_template.xlsx"
     client = utils.client(brand)
     output_path = f"/tmp/monthly_sales_report_{datetime.date(report_year, report_month, 1):%Y%m}_{client.VENDOR}.xlsx"
-    client.generate_monthly_sales_report(
-        template_path,
+    client.generate_monthly(
+        client.generate_sales_report,
+        template_path=template_path,
         sheet_name="monthly_sales_report",
         output_path=output_path,
         report_year=report_year,
         report_month=report_month,
     )
     target_folder_id = client.find_or_create_folder_by_name(
-        parent_folder_id="1bGXNkunwH99lA9Usl8dYWJJ7yoO53bun",
+        parent_folder_id="1VECxD6GbTbk7s1HG3qsZvl-G1YKns8LP",
         folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
     )
     client.upload_to_drive(
