@@ -221,9 +221,7 @@ class Analytics:
         plt.savefig(output_path, dpi=300)
         plt.close(fig)
 
-    def generate_monthly_online_store_graph(
-        self, output_path, report_year, report_month
-    ):
+    def generate_monthly_store_kpi_graph(self, output_path, report_year, report_month):
 
         df_total_sales = self.run_monthly_report(
             self.report_total_sales, report_year, report_month

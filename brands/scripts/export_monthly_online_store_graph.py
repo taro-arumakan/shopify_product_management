@@ -8,8 +8,8 @@ import utils
 
 def run(brand, report_year, report_month):
     client = utils.client(brand)
-    output_path = f"/tmp/monthly_online_store_graph_{datetime.date(report_year, report_month, 1):%Y%m}_{client.VENDOR}.png"
-    client.generate_monthly_online_store_graph(
+    output_path = f"/tmp/monthly_store_kpi_graph_{datetime.date(report_year, report_month, 1):%Y%m}_{client.VENDOR}.png"
+    client.generate_monthly_store_kpi_graph(
         output_path=output_path,
         report_year=report_year,
         report_month=report_month,
