@@ -323,7 +323,7 @@ class Analytics:
             df["average_order_value"].mean(), color="#D62728", linestyle="--", alpha=0.4
         )
         ax3.set_title("Average Order Value", fontsize=12, fontweight="bold", loc="left")
-        ax3.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"¥{int(x):,}"))
+        ax3.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"{int(x):,}"))
 
         # Clean up formatting for all charts
         for ax in [ax1, ax2, ax3]:
