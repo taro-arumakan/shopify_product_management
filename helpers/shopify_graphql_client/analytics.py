@@ -37,6 +37,11 @@ class Analytics:
         res = res["shopifyqlQuery"]["tableData"]
         return self.tabledata_to_dataframe(res) if to_dataframe else res
 
+    def clean_numeric(self, series):
+        return pd.to_numeric(
+            series.astype(str).str.replace(",", ""), errors="coerce"
+        ).fillna(0)
+
     def tabledata_to_dataframe(self, shopifyql_res):
         df = pd.DataFrame(shopifyql_res["rows"])
         df = df[[c["name"] for c in shopifyql_res["columns"]]]
@@ -106,6 +111,18 @@ class Analytics:
             TIMESERIES day WITH TOTALS, CURRENCY 'JPY'
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
             ORDER BY day ASC
+        """
+        return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+
+    def report_customer_type(self, date_from, date_to, to_dataframe=True):
+        shopifyql_query = f"""
+            FROM sales
+            SHOW customers
+            WHERE new_or_returning_customer IS NOT NULL
+            GROUP BY new_or_returning_customer
+            SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
+            ORDER BY new_or_returning_customer ASC
+            LIMIT 2
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
@@ -233,16 +250,15 @@ class Analytics:
             self.report_sessions, report_year, report_month
         )
 
-        def clean_numeric(series):
-            return pd.to_numeric(
-                series.astype(str).str.replace(",", ""), errors="coerce"
-            ).fillna(0)
-
-        df_total_sales["total_sales"] = clean_numeric(df_total_sales["total_sales"])
-        df_aov["orders"] = clean_numeric(df_aov["orders"]).astype(int)
-        df_aov["average_order_value"] = clean_numeric(df_aov["average_order_value"])
-        df_cvr["sessions"] = clean_numeric(df_cvr["sessions"]).astype(int)
-        df_cvr["conversion_rate"] = clean_numeric(df_cvr["conversion_rate"])
+        df_total_sales["total_sales"] = self.clean_numeric(
+            df_total_sales["total_sales"]
+        )
+        df_aov["orders"] = self.clean_numeric(df_aov["orders"]).astype(int)
+        df_aov["average_order_value"] = self.clean_numeric(
+            df_aov["average_order_value"]
+        )
+        df_cvr["sessions"] = self.clean_numeric(df_cvr["sessions"]).astype(int)
+        df_cvr["conversion_rate"] = self.clean_numeric(df_cvr["conversion_rate"])
 
         df = pd.merge(df_aov, df_cvr, on="day", how="outer").sort_values("day")
         df = pd.merge(df, df_total_sales, on="day", how="outer").sort_values("day")
@@ -333,3 +349,62 @@ class Analytics:
 
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
+
+    def generate_customer_type_donut(self, output_path, report_year, report_month):
+
+        df = self.run_monthly_report(
+            self.report_customer_type, report_year, report_month
+        )
+        df.columns = ["customer_type", "count"]
+        df = df.set_index("customer_type").reindex(["Returning", "New"]).reset_index()
+        df["count"] = self.clean_numeric(df["count"]).astype(int)
+
+        total_customers = df["count"].sum()
+        colors = ["#F39233", "#4E91C2"]
+
+        fig, ax = plt.subplots(figsize=(8, 9), facecolor="white")
+
+        wedges, texts, autotexts = ax.pie(
+            df["count"],
+            labels=df["customer_type"],
+            autopct="%1.1f%%",
+            startangle=90,  # Top center
+            counterclock=False,  # Clockwise
+            colors=colors,
+            pctdistance=0.75,
+            wedgeprops={
+                "linewidth": 2,
+                "edgecolor": "white",
+                "width": 0.6,  # Thick donut
+            },
+            textprops={"fontsize": 12, "fontweight": "bold"},
+        )
+
+        for autotext in autotexts:
+            autotext.set_color("white")
+            autotext.set_fontsize(11)
+
+        plt.title(
+            "Customer Mix - New vs Returning", fontsize=16, fontweight="bold", pad=20
+        )
+
+        # 5. Add "Total Customers" at the bottom center
+        fig.text(
+            0.5,
+            0.05,
+            f"Total Customers: {int(total_customers)}",
+            ha="center",
+            fontsize=14,
+            fontweight="bold",
+            color="#848484",
+        )
+
+        ax.axis("equal")
+
+        # Adjust layout to make room for the bottom text
+        plt.tight_layout(rect=[0, 0.08, 1, 1])
+
+        try:
+            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+        finally:
+            plt.close(fig)
