@@ -5,24 +5,33 @@ logging.basicConfig(level=logging.INFO)
 
 import utils
 
+parent_folder_id = "1qIl57QGB0TCgD_IsZ4vcFjxBbjZQVomN"
+
 
 def run(brand, report_year, report_month):
+    graphs = [
+        "store_kpi_graph",
+        "sales_by_product_graph",
+        "customer_type_donut",
+    ]
     client = utils.client(brand)
-    output_path = f"/tmp/customer_type_donut{datetime.date(report_year, report_month, 1):%Y%m}_{client.VENDOR}.png"
-    client.generate_monthly_store_kpi_graph(
-        output_path=output_path,
-        report_year=report_year,
-        report_month=report_month,
-    )
     target_folder_id = client.find_or_create_folder_by_name(
-        parent_folder_id="1U-ZKzMcQrnaaD7W-2xsqY4e7bGWgmjDg",
+        parent_folder_id=parent_folder_id,
         folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
     )
-    client.upload_to_drive(
-        filepath=output_path,
-        mimetype="image/png",
-        folder_id=target_folder_id,
-    )
+    for i, graph in enumerate(graphs):
+        output_path = f"/tmp/{client.VENDOR}_{datetime.date(report_year, report_month, 1):%Y%m}_{str(i).zfill(2)}_{graph}_.png"
+        client.generate_monthly(
+            getattr(client, f"generate_{graph}"),
+            output_path=output_path,
+            report_year=report_year,
+            report_month=report_month,
+        )
+        client.upload_to_drive(
+            filepath=output_path,
+            mimetype="image/png",
+            folder_id=target_folder_id,
+        )
 
 
 def main():
@@ -42,5 +51,4 @@ def adhoc():
 
 
 if __name__ == "__main__":
-    adhoc()
     main()
