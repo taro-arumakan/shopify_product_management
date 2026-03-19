@@ -139,6 +139,17 @@ class Analytics:
             to_dataframe=to_dataframe,
         )
 
+    def generate_monthly(self, generate_func, report_year, report_month, **kwargs):
+        return generate_func(
+            date_from=datetime.date(report_year, report_month, 1),
+            date_to=datetime.date(
+                report_year,
+                report_month,
+                calendar.monthrange(report_year, report_month)[1],
+            ),
+            **kwargs,
+        )
+
     def inject_dataframe_to_xlsx(
         self, output_path, sheet_name, dataframe, startrow, header=False
     ):
@@ -163,13 +174,11 @@ class Analytics:
                 header=header,
             )
 
-    def generate_monthly_sales_report(
-        self, template_path, sheet_name, output_path, report_year, report_month
+    def generate_sales_report(
+        self, template_path, sheet_name, output_path, date_from, date_to
     ):
         shutil.copyfile(template_path, output_path)
-        df = self.run_monthly_report(
-            self.report_sales_by_sku, report_year, report_month
-        )
+        df = self.report_sales_by_sku(date_from, date_to)
         self.inject_dataframe_to_xlsx(
             output_path=output_path,
             sheet_name=sheet_name,
@@ -178,12 +187,8 @@ class Analytics:
             header=False,
         )
 
-    def generate_monthly_sales_by_product_graph(
-        self, output_path, report_year, report_month
-    ):
-        df = self.run_monthly_report(
-            self.report_total_sales_by_product, report_year, report_month
-        )
+    def generate_sales_by_product_graph(self, output_path, date_from, date_to):
+        df = self.report_total_sales_by_product(date_from, date_to)
         df = df[["product_title", "total_sales"]].sort_values(
             by="total_sales", ascending=False
         )
@@ -238,17 +243,11 @@ class Analytics:
         plt.savefig(output_path, dpi=300)
         plt.close(fig)
 
-    def generate_monthly_store_kpi_graph(self, output_path, report_year, report_month):
+    def generate_store_kpi_graph(self, output_path, date_from, date_to):
 
-        df_total_sales = self.run_monthly_report(
-            self.report_total_sales, report_year, report_month
-        )
-        df_aov = self.run_monthly_report(
-            self.report_average_order_value, report_year, report_month
-        )
-        df_cvr = self.run_monthly_report(
-            self.report_sessions, report_year, report_month
-        )
+        df_total_sales = self.report_total_sales(date_from, date_to)
+        df_aov = self.report_average_order_value(date_from, date_to)
+        df_cvr = self.report_sessions(date_from, date_to)
 
         df_total_sales["total_sales"] = self.clean_numeric(
             df_total_sales["total_sales"]
@@ -350,11 +349,9 @@ class Analytics:
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
 
-    def generate_customer_type_donut(self, output_path, report_year, report_month):
+    def generate_customer_type_donut(self, output_path, date_from, date_to):
 
-        df = self.run_monthly_report(
-            self.report_customer_type, report_year, report_month
-        )
+        df = self.report_customer_type(date_from, date_to)
         df.columns = ["customer_type", "count"]
         df = df.set_index("customer_type").reindex(["Returning", "New"]).reset_index()
         df["count"] = self.clean_numeric(df["count"]).astype(int)
