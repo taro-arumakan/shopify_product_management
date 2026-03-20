@@ -128,7 +128,6 @@ def main():
         "ROH SEOUL",
         "SSIL",
     ]
-    brands = ["ROH SEOUL", "SSIL"]
     for brand in brands:
         client.generate_monthly_brand_report(brand, 2026, 2)
 
