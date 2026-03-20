@@ -17,6 +17,7 @@ class GoogleApiInterface(GoogleDriveApiInterface, GoogleSheetsApiInterface):
         )
         self.drive_service = build("drive", "v3", credentials=self.credentials)
         self.sheets_service = build("sheets", "v4", credentials=self.credentials)
+        self.slides_service = build("slides", "v1", credentials=self.credentials)
         self.gspread_client = gspread.authorize(self.credentials)
         self.sheet_id = sheet_id
         super().__init__()

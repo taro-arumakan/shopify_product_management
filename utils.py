@@ -45,7 +45,12 @@ def client(shop_name: str) -> BrandClientBase:
 
         res = AlvanaClient()
 
-    elif shop_name in ["apricot-studios", "apricot", "apricotstudios"]:
+    elif shop_name in [
+        "apricot-studios",
+        "apricot",
+        "apricotstudios",
+        "apricot studios",
+    ]:
         from brands.apricotstudios.client import ApricotStudiosClient
 
         res = ApricotStudiosClient(None, None)
@@ -80,7 +85,7 @@ def client(shop_name: str) -> BrandClientBase:
 
         res = GbhClientColorOptionOnly()
 
-    elif shop_name in ["kumej", "kume"]:
+    elif shop_name in ["kumej", "kume", "kumé"]:
         from brands.kume.client import KumeClient
 
         res = KumeClient()
@@ -90,7 +95,7 @@ def client(shop_name: str) -> BrandClientBase:
 
         res = LememeClient()
 
-    elif shop_name in ["roh", "rohseoul"]:
+    elif shop_name in ["roh", "rohseoul", "roh seoul"]:
         from brands.rohseoul.client import RohseoulClient
 
         res = RohseoulClient()

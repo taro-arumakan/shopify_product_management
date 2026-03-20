@@ -112,41 +112,48 @@ class GoogleDriveApiInterface:
             image_mode = img.mode
         return self.rename_file_extension(output_path, image_mode)
 
-    def find_folder_id_by_name(self, parent_folder_id, folder_name):
+    def find_in_folder_id_by_name(self, parent_folder_id, item_name, item_type=None):
         """
-        Find a folder ID by its name inside a given parent folder.
+        Find an item by its name inside a given parent folder.
 
         :param parent_folder_id: ID of the parent folder where the search is performed.
-        :param folder_name: Name of the folder to search for.
-        :return: The ID of the folder if found, None otherwise.
+        :param item_name: Name of the item to search for.
+        :return: item meta of the folder if found, None otherwise.
         """
-        # Query for folders with the specified name inside the parent folder
-        folder_name = folder_name.replace("'", "\\'")
+
+        item_name = item_name.replace("'", "\\'")
         query = (
             f"'{parent_folder_id}' in parents and "
-            f"mimeType='application/vnd.google-apps.folder' and "
-            f"name='{folder_name}' and "
-            f"trashed=false"
+            f"name='{item_name}' and "
+            "trashed=false"
         )
+        if item_type == "folder":
+            query += " and mimeType='application/vnd.google-apps.folder'"
         results = (
             self.drive_service.files()
             .list(
                 q=query,
-                pageSize=10,  # Assuming there are not too many folders with the same name
-                fields="files(id, name)",
+                pageSize=10,  # Assuming there are not too many items with the same name
+                fields="files(id, name, webViewLink)",
                 includeItemsFromAllDrives=True,
                 supportsAllDrives=True,
             )
             .execute()
         )
-
         items = results.get("files", [])
         if items and len(items) > 1:
             raise RuntimeError(
-                f"Multiple folders found with the name '{folder_name}' in parent folder '{parent_folder_id}'."
+                f"Multiple items found with the name '{item_name}' in parent folder '{parent_folder_id}'."
             )
         elif items:
-            return items[0]["id"]
+            return items[0]
+
+    def find_folder_id_by_name(self, parent_folder_id, folder_name):
+        folder = self.find_in_folder_id_by_name(
+            parent_folder_id=parent_folder_id, item_name=folder_name, item_type="folder"
+        )
+        if folder:
+            return folder["id"]
 
     def find_or_create_folder_by_name(self, parent_folder_id, folder_name):
         if folder_id := self.find_folder_id_by_name(
@@ -195,7 +202,36 @@ class GoogleDriveApiInterface:
                 body={"name": os.path.basename(filepath), "parents": [folder_id]},
                 media_body=media,
                 fields="id",
+                supportsAllDrives=True,
             )
             .execute()
         )
         logger.info(f"Uploaded: {f.get('id')}")
+
+    def make_public_by_file_id(self, file_id):
+        self.drive_service.permissions().create(
+            fileId=file_id,
+            body={"type": "anyone", "role": "reader"},
+            supportsAllDrives=True,
+        ).execute()
+
+    def make_private_by_file_id(self, file_id):
+        # List permissions and delete the 'anyone' one
+        perms = (
+            self.drive_service.permissions()
+            .list(
+                fileId=file_id,
+                supportsAllDrives=True,
+            )
+            .execute()
+        )
+        for perm in perms.get("permissions", []):
+            if perm["type"] == "anyone":
+                self.drive_service.permissions().delete(
+                    fileId=file_id,
+                    permissionId=perm["id"],
+                    supportsAllDrives=True,
+                ).execute()
+
+    def get_direct_url(self, file_id):
+        return f"https://drive.google.com/uc?export=download&id={file_id}"  # Direct download link format
