@@ -40,15 +40,22 @@ def untag(brand):
         )
 
 
-def main():
-    brands = [
-        "Archivépke",
-        "KUMÉ",
-        "LEMEME",
-    ]
+brands = [
+    "Archivépke",
+    "KUMÉ",
+    "LEMEME",
+]
+
+
+def tag_brands():
     for brand in brands:
         tag(brand)
 
 
+def untag_brands():
+    for brand in brands:
+        untag(brand)
+
+
 if __name__ == "__main__":
-    main()
+    untag_brands()
