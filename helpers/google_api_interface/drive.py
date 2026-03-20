@@ -202,6 +202,7 @@ class GoogleDriveApiInterface:
                 body={"name": os.path.basename(filepath), "parents": [folder_id]},
                 media_body=media,
                 fields="id",
+                supportsAllDrives=True,
             )
             .execute()
         )
