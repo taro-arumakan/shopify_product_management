@@ -16,6 +16,7 @@ def get_eligible_customers(client, rundate):
 
 
 def tag(brand):
+    logging.info(f"tagging {brand}")
     client = utils.client(brand)
     for customer in get_eligible_customers(client, datetime.date.today()):
         logging.info(
@@ -27,6 +28,7 @@ def tag(brand):
 
 
 def untag(brand):
+    logging.info(f"untagging {brand}")
     client = utils.client(brand)
     for customer in client.customers_by_query(
         customers_query_string="tag:'auto_5%_off'"
