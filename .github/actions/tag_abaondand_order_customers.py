@@ -19,7 +19,7 @@ def tag(brand):
     client = utils.client(brand)
     for customer in get_eligible_customers(client, datetime.date.today()):
         logging.info(
-            f"tagging customer {customer['id']} - {customer.get('defaultEmailAddress', {}).get('emailAddress', '')}{customer.get('firstName', '')} {customer.get('lastName', '')}"
+            f"tagging customer {customer['id']} - {(customer.get('defaultEmailAddress') or {}).get('emailAddress', '')}{(customer.get('firstName') or '')} {(customer.get('lastName') or '')}"
         )
         client.update_customers_tags(
             customer["id"], ",".join(customer["tags"] + ["auto_5%_off"])
@@ -32,7 +32,7 @@ def untag(brand):
         customers_query_string="tag:'auto_5%_off'"
     ):
         logging.info(
-            f"untagging customer {customer['id']} - {customer.get('defaultEmailAddress', {}).get('emailAddress', '')}{customer.get('firstName', '')} {customer.get('lastName', '')}"
+            f"untagging customer {customer['id']} - {(customer.get('defaultEmailAddress') or {}).get('emailAddress', '')}{(customer.get('firstName') or '')} {(customer.get('lastName') or '')}"
         )
         client.update_customers_tags(
             customer["id"],
