@@ -8,8 +8,9 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
 
-    client = GbhHomeClient(use_simple_size_format=False)
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    client = GbhHomeClient(
+        use_simple_size_format=False, remove_existing_new_product_indicators=False
+    )
     sheet_name = "HOME_SQUARE ROOM SHOES / TOWEL"
 
     client.sanity_check_sheet(sheet_name)

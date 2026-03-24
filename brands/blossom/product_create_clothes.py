@@ -25,11 +25,11 @@ def main():
     sheet_name = "clothes(drop1) PS"
     drop_tag = "2026_drop1"
 
-    client = BlossomClientClothes(product_sheet_start_row=1)
+    client = BlossomClientClothes(
+        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+    )
 
     client.sanity_check_sheet(sheet_name, pre_rewrite=False)
-
-    # client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
 
     import zoneinfo
 

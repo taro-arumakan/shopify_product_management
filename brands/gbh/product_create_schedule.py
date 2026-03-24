@@ -23,8 +23,9 @@ def archive_cosmetic_products():
 
 
 def create_26ss_color_only():
-    client = GbhClientColorOptionOnly(product_sheet_start_row=1)
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    client = GbhClientColorOptionOnly(
+        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+    )
     sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR ONLY)"
     filter_func = lambda pi: pi["title"] in EXCLUDE_APPAREL_TITLES
 
@@ -36,8 +37,9 @@ def create_26ss_color_only():
 
 
 def create_26ss_color_size():
-    client = GbhClient(product_sheet_start_row=1)
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    client = GbhClient(
+        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+    )
     sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR+SIZE)"
     filter_func = lambda pi: pi["title"] in EXCLUDE_APPAREL_TITLES
 
@@ -49,8 +51,9 @@ def create_26ss_color_size():
 
 
 def create_cosmetic():
-    client = GbhCosmeticClient(product_sheet_start_row=1)
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    client = GbhCosmeticClient(
+        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+    )
     sheet_name = "新コスメ(코스메신상)3/10open"
     filter_func = lambda pi: pi["title"] in EXCLUDE_COSMETIC_TITLES
 

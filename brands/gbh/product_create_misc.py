@@ -8,8 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
 
-    client = GbhClientNoOptions()
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    client = GbhClientNoOptions(remove_existing_new_product_indicators=False)
     sheet_name = "福袋(복주머니)"
 
     client.sanity_check_sheet(sheet_name)
