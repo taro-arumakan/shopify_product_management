@@ -9,7 +9,7 @@ def main():
     client = ApricotStudiosClient(
         "gid://shopify/Product/9344675578112",
         product_detail_images_folder_id="1gXZGa5C6Zlg7X-icBsHfk0u6CYgibQpW",
-        product_sheet_start_row=2
+        product_sheet_start_row=2,
     )
     sheet_name = "[Spring_2nd] 3/25"
 
@@ -52,12 +52,9 @@ def reprocess():
 
 def set_price():
     client = ApricotStudiosClient()
-    sheet_name = "[Spring_1st] 2/25"
-    product_inputs = client.product_inputs_by_sheet_name(sheet_name)
-    q = " OR ".join(f"title:'{pi['title']}'" for pi in product_inputs)
-    products = client.products_by_query(q)
+    products = client.products_by_collection_id("474890764544")
     new_prices_by_variant_id = {
-        v["id"]: int(int(v["price"]) * 0.9)
+        v["id"]: int(int(v["compareAtPrice"]) * 0.9)
         for p in products
         for v in p["variants"]["nodes"]
     }
@@ -67,6 +64,6 @@ def set_price():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     # reprocess()
-    # set_price()
+    set_price()
