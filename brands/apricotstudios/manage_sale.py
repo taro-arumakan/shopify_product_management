@@ -1,12 +1,9 @@
 from brands.apricotstudios.client import ApricotStudiosClient
 
 
-def end_discount(testrun=True):
+def apricot_26spring_babycot_end_discount(testrun=True):
     client = ApricotStudiosClient()
-    sheet_name = "[Spring_1st] 2/25"
-    product_inputs = client.product_inputs_by_sheet_name(sheet_name)
-    q = " OR ".join(f"title:'{pi['title']}'" for pi in product_inputs)
-    products = client.products_by_query(q)
+    products = client.products_by_collection_id("474890764544")
     client.revert_product_prices(products, testrun=testrun)
 
 
