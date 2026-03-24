@@ -399,8 +399,7 @@ def main():
         print(pi["title"])
         print(client.get_size_field(pi))
 
-    client = GbhClientColorOptionOnly()
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    client = GbhClientColorOptionOnly(remove_existing_new_product_indicators=False)
     for pi in client.product_inputs_by_sheet_name("APPAREL 25FW 2次 (COLOR ONLY)"):
         print(pi["title"])
         print(client.get_size_field(pi))

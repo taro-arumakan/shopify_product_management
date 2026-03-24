@@ -9,7 +9,7 @@ from brands.blossom.client import BlossomClientClothes
 
 def main():
 
-    client = BlossomClientClothes()
+    client = BlossomClientClothes(remove_existing_new_product_indicators=False)
     client.shop_name = "quickstart-6f3c9e4c"
     client.access_token = os.environ["quickstart-6f3c9e4c-ACCESS_TOKEN"]
     client.base_url = (
@@ -37,8 +37,6 @@ def main():
             logging.error(f"Sanity check failed for {sheet_name}: {e}")
 
     for sheet_name, drop_tag in zip(sheet_names, drop_tags):
-        client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = sheet_name == "clothes(drop11)"
-
         client.process_sheet_to_products(
             sheet_name=sheet_name,
             additional_tags=[drop_tag, "New Arrival"],

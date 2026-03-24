@@ -13,13 +13,17 @@ class BrandClientBase(Client, SanityChecks):
     VENDOR = ""
     LOCATIONS = []
     NEW_PRODUCT_TAG = "New Arrival"
-    REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = True
 
-    def __init__(self, product_sheet_start_row=None):
+    def __init__(
+        self, product_sheet_start_row=None, remove_existing_new_product_indicators=None
+    ):
         assert self.SHOPNAME, "SHOPNAME must be set in subclass"
         assert self.VENDOR, "VENDOR must be set in subclass"
         assert self.LOCATIONS, "LOCATIONS must be set in subclass"
         self.product_sheet_start_row = product_sheet_start_row
+        self.remove_existing_new_product_indicators = (
+            remove_existing_new_product_indicators
+        )
         from utils import credentials
 
         cred = credentials(self.SHOPNAME)
@@ -137,7 +141,10 @@ class BrandClientBase(Client, SanityChecks):
                 self.update_badges_metafield(product["id"], badges)
 
     def pre_process_product_inputs(self, product_inputs):
-        if self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS:
+        assert (
+            self.remove_existing_new_product_indicators is not None
+        ), f"remove_existing_new_product_indicators must be set explicitly."
+        if self.remove_existing_new_product_indicators:
             self.remove_existing_new_proudct_tags()
             self.remove_existing_new_badges()
 
@@ -189,7 +196,7 @@ class BrandClientBase(Client, SanityChecks):
         if not restart_at_product_title:
             i = 0
         else:
-            self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+            self.remove_existing_new_product_indicators = False
             if restart_at_product_title == "DO NOT CREATE":
                 i = len(product_inputs)
             else:

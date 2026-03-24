@@ -103,6 +103,9 @@ class SanityChecks:
         return res
 
     def sanity_check_product_inputs(self, product_inputs, pre_rewrite=False):
+        assert (
+            self.remove_existing_new_product_indicators is not None
+        ), f"remove_existing_new_product_indicators must be set explicitly."
         res = []
         try:
             self.check_sku_duplicates(product_inputs)

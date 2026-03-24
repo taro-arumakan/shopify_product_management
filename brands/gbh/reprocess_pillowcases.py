@@ -4,8 +4,9 @@ from brands.gbh.client import GbhHomeClient
 logging.basicConfig(level=logging.INFO)
 
 
-client = GbhHomeClient(use_simple_size_format=True)
-client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+client = GbhHomeClient(
+    use_simple_size_format=True, remove_existing_new_product_indicator=False
+)
 
 product = client.product_by_title("GBH HOME PILLOWCASE (2 SIZES)")
 client.archive_product(product)
