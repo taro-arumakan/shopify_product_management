@@ -2,7 +2,7 @@ name: Export monthly sales reports
 
 on:
   schedule:
-    # 1st of every month at 3:00 JST (UTC 18:00 previous day)
+    # 2nd of every month at 3:00 JST (UTC 18:00 previous day)
     - cron: "0 3 2 * *"
   workflow_dispatch:
 
@@ -61,7 +61,7 @@ jobs:
           NOTIFYEES_EXPIRED_ORDERS=${{ secrets.NOTIFYEES_EXPIRED_ORDERS }}
           EOF
 
-      - name: Run close_expired_orders script
+      - name: Run export_monthly_sales_reports script
         env:
           PYTHONPATH: .
         run: |
