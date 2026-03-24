@@ -6,7 +6,7 @@ class Reporting:
     MONTHLY_REPORT_OUTPUT_FOLDER_ID = "1WCmMFHnFBnSin439p1OGFEyQdgDr9lNh"
 
     def get_logo_image_id(self, brand_name):
-        res = self.find_in_folder_id_by_name(
+        res = self.find_by_folder_id_by_name(
             self.LOGO_FOLDER_ID, f"logo_{brand_name}.png"
         )
         return res["id"]
@@ -16,7 +16,7 @@ class Reporting:
             self.MONTHLY_IMAGES_FOLDER_ID,
             f"{str(report_year).zfill(2)}{str(report_month).zfill(2)}",
         )
-        res = self.find_in_folder_id_by_name(
+        res = self.find_by_folder_id_by_name(
             parent_folder_id, f"{brand_name}_{graph_name}.png"
         )
         return res["id"]

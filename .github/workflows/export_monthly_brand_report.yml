@@ -2,8 +2,8 @@ name: Export monthly sales reports
 
 on:
   schedule:
-    # 2nd of every month at 3:30 UTC (12:30 JST)
-    - cron: "30 3 2 * *"
+    # 2nd of every month at 3:45 UTC (JST 12:45)
+    - cron: "45 3 2 * *"
   workflow_dispatch:
 
 jobs:
@@ -61,11 +61,11 @@ jobs:
           NOTIFYEES_EXPIRED_ORDERS=${{ secrets.NOTIFYEES_EXPIRED_ORDERS }}
           EOF
 
-      - name: Run export_monthly_sales_reports script
+      - name: Run export_monthly_brand_reports script
         env:
           PYTHONPATH: .
         run: |
-          uv run brands/scripts/export_monthly_sales_reports.py
+          uv run brands/scripts/export_monthly_brand_reports.py
 
       - name: Cleanup
         if: always()

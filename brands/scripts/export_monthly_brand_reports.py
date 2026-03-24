@@ -21,6 +21,7 @@ def run(brand, report_year, report_month):
         folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
     )
     for graph in graphs:
+        logging.info(f"uploadging {graph} for {brand}")
         output_path = f"/tmp/{brand}_{graph}.png"
         client.generate_monthly(
             getattr(client, f"generate_{graph}"),
@@ -33,6 +34,8 @@ def run(brand, report_year, report_month):
             mimetype="image/png",
             folder_id=target_folder_id,
         )
+    logging.info(f"uploadging monthly report for {brand}")
+    client.generate_monthly_brand_report(brand, report_year, report_month)
 
 
 def main():
@@ -70,4 +73,5 @@ def adhoc():
 
 
 if __name__ == "__main__":
+    # adhoc()
     main()
