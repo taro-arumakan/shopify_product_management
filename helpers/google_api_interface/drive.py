@@ -112,7 +112,7 @@ class GoogleDriveApiInterface:
             image_mode = img.mode
         return self.rename_file_extension(output_path, image_mode)
 
-    def find_in_folder_id_by_name(self, parent_folder_id, item_name, item_type=None):
+    def find_by_folder_id_by_name(self, parent_folder_id, item_name, item_type=None):
         """
         Find an item by its name inside a given parent folder.
 
@@ -149,7 +149,7 @@ class GoogleDriveApiInterface:
             return items[0]
 
     def find_folder_id_by_name(self, parent_folder_id, folder_name):
-        folder = self.find_in_folder_id_by_name(
+        folder = self.find_by_folder_id_by_name(
             parent_folder_id=parent_folder_id, item_name=folder_name, item_type="folder"
         )
         if folder:
