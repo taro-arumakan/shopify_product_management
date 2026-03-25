@@ -22,11 +22,11 @@ def update_series():
 
 
 def main():
-    sheet_name = "clothes(drop1) PS"
-    drop_tag = "2026_drop1"
+    sheet_name = "clothes(drop2) PS"
+    drop_tag = "2026_drop2"
 
     client = BlossomClientClothes(
-        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+        product_sheet_start_row=1, remove_existing_new_product_indicators=True
     )
 
     client.sanity_check_sheet(sheet_name, pre_rewrite=False)
@@ -34,7 +34,7 @@ def main():
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 3, 10, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 3, 26, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.process_sheet_to_products(
@@ -45,4 +45,4 @@ def main():
 
 
 if __name__ == "__main__":
-    update_series()
+    main()

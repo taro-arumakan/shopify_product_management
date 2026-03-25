@@ -176,8 +176,13 @@ class GoogleSheetsApiInterface:
             .rsplit("/", 1)[-1]
             .replace("open?id=", "")
             .replace("?usp=drive_link", "")
+            .replace("&usp=drive_link", "")
             .replace("?usp=sharing", "")
+            .replace("&usp=sharing", "")
+            .replace("?usp=drive_fs", "")
             .replace("&usp=drive_fs", "")
+            .replace("?usp=drive_copy", "")
+            .replace("&usp=drive_copy", "")
             .replace("?dmr=1&ec=wgc-drive-globalnav-goto", "")
         )
         return re.sub(r"\?role=.*$", "", res)
