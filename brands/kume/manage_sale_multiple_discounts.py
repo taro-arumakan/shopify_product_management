@@ -2,9 +2,6 @@ from brands.kume.client import KumeClient
 
 
 def start_end_discounts(testrun=True, start_or_end="start"):
-    """
-    KUMÉ 3/16 26ss 2nd drop & 10% off
-    """
     client = KumeClient()
 
     sku_discount_map = {
@@ -17,7 +14,6 @@ def start_end_discounts(testrun=True, start_or_end="start"):
         "M-KM-26SS-TS04-NV-M": 0.95,
         "M-KM-26SS-TS04-NV-L": 0.95,
         "M-KM-26SS-TS04-NV-XL": 0.95,
-
         "M-KM-26SS-SW08BEM": 0.95,
         "M-KM-26SS-SW08BEL": 0.95,
         "M-KM-26SS-SW08GRM": 0.95,
@@ -26,29 +22,24 @@ def start_end_discounts(testrun=True, start_or_end="start"):
         "M-KM-26SS-SW08OLL": 0.95,
         "M-KM-26SS-SW08ORM": 0.95,
         "M-KM-26SS-SW08ORL": 0.95,
-
         "M-KM-26SS-JP02CHL": 0.95,
         "M-KM-26SS-JP02CHXL": 0.95,
-
         "M-KM-26SS-BL11DGRL": 0.95,
         "M-KM-26SS-BL11DGRXL": 0.95,
         "M-KM-26SS-BL11IVL": 0.95,
         "M-KM-26SS-BL11IVXL": 0.95,
-
         "M-KM-26SS-BL10LGRM": 0.95,
         "M-KM-26SS-BL10LGRL": 0.95,
         "M-KM-26SS-BL10LGRXL": 0.95,
         "M-KM-26SS-BL10PKM": 0.95,
         "M-KM-26SS-BL10PKL": 0.95,
         "M-KM-26SS-BL10PKXL": 0.95,
-
         "M-KM-25FW-PT06-BK-L": 0.9,
         "M-KM-25FW-PT06-BK-M": 0.9,
         "M-KM-25FW-PT06-BK-XL": 0.9,
         "M-KM-25FW-PT06-MBL-L": 0.9,
         "M-KM-25FW-PT06-MBL-M": 0.9,
         "M-KM-25FW-PT06-MBL-XL": 0.9,
-
         "KM-26SS-SW04BKS": 0.95,
         "KM-26SS-SW04BKM": 0.95,
         "KM-26SS-SW04BKL": 0.95,
@@ -58,7 +49,6 @@ def start_end_discounts(testrun=True, start_or_end="start"):
         "KM-26SS-SW04MTS": 0.95,
         "KM-26SS-SW04MTM": 0.95,
         "KM-26SS-SW04MTL": 0.95,
-
         "KM-26SS-SW01BKS": 0.95,
         "KM-26SS-SW01BKM": 0.95,
         "KM-26SS-SW01BKL": 0.95,
@@ -68,43 +58,45 @@ def start_end_discounts(testrun=True, start_or_end="start"):
         "KM-26SS-SW01MTS": 0.95,
         "KM-26SS-SW01MTM": 0.95,
         "KM-26SS-SW01MTL": 0.95,
-
         "KM-26SS-SK02ECS": 0.95,
         "KM-26SS-SK02ECM": 0.95,
         "KM-26SS-SK02ECL": 0.95,
         "KM-26SS-SK02IVS": 0.95,
         "KM-26SS-SK02IVM": 0.95,
         "KM-26SS-SK02IVL": 0.95,
-
         "KM-26SS-PT05IVS": 0.95,
         "KM-26SS-PT05IVM": 0.95,
         "KM-26SS-PT05IVL": 0.95,
         "KM-26SS-PT05LBLS": 0.95,
         "KM-26SS-PT05LBLM": 0.95,
         "KM-26SS-PT05LBLL": 0.95,
-
         "KM-26SS-PT04-CH-S": 0.95,
         "KM-26SS-PT04-CH-M": 0.95,
         "KM-26SS-PT04-CH-L": 0.95,
         "KM-26SS-PT04-LKK-S": 0.95,
         "KM-26SS-PT04-LKK-M": 0.95,
         "KM-26SS-PT04-LKK-L": 0.95,
-
         "KM-26SS-PT02-BK-S": 0.95,
         "KM-26SS-PT02-BK-M": 0.95,
         "KM-26SS-PT02-BK-L": 0.95,
-
         "KM-26SS-OP01-IV-S": 0.95,
         "KM-26SS-OP01-IV-M": 0.95,
         "KM-26SS-OP01-IV-L": 0.95,
         "KM-26SS-OP01-NV-S": 0.95,
         "KM-26SS-OP01-NV-M": 0.95,
         "KM-26SS-OP01-NV-L": 0.95,
-
         "KM-26SS-JP01-CH-F": 0.95,
         "KM-26SS-JP01-IV-F": 0.95,
         "KM-26SS-JP01-OL-F": 0.95,
-
+        "KM-26SS-BL07-IV-S": 0.95,
+        "KM-26SS-BL07-IV-M": 0.95,
+        "KM-26SS-BL07-IV-L": 0.95,
+        "KM-26SS-BL05-BK-S": 0.95,
+        "KM-26SS-BL05-BK-M": 0.95,
+        "KM-26SS-BL05-BK-L": 0.95,
+        "KM-26SS-BL05-WH-S": 0.95,
+        "KM-26SS-BL05-WH-M": 0.95,
+        "KM-26SS-BL05-WH-L": 0.95,
         "KM-25SS-SW06-BK-M": 0.85,
         "KM-25SS-SW06-BK-S": 0.85,
         "KM-25SS-SW06-IV-M": 0.85,
@@ -113,15 +105,62 @@ def start_end_discounts(testrun=True, start_or_end="start"):
         "KM-25SS-SW06-LYE-S": 0.85,
         "KM-25SS-SW06-MBE-M": 0.85,
         "KM-25SS-SW06-MBE-S": 0.85,
-
+        "KM-25SS-SW04-LYE-S": 0.85,
+        "KM-25SS-SW04-LYE-M": 0.85,
+        "KM-25SS-SW04-IV-S": 0.85,
+        "KM-25SS-SW04-IV-M": 0.85,
+        "KM-25SS-SW04-MBE-S": 0.85,
+        "KM-25SS-SW04-MBE-M": 0.85,
+        "KM-25SS-SW03-LBL-S": 0.9,
+        "KM-25SS-SW03-LBL-M": 0.9,
+        "KM-25SS-SW03-WH-S": 0.9,
+        "KM-25SS-SW03-WH-M": 0.9,
+        "KM-25SS-SW03-BK-S": 0.9,
+        "KM-25SS-SW03-BK-M": 0.9,
+        "KM-25SS-SW03-LYE-S": 0.9,
+        "KM-25SS-SW03-LYE-M": 0.9,
+        "KM-25SS-SK04-IV-L": 0.9,
+        "KM-25SS-SK04-IV-M": 0.9,
+        "KM-25SS-SK04-IV-S": 0.9,
+        "KM-25SS-PT02-LYL-M": 0.85,
+        "KM-25SS-PT02-LYL-S": 0.85,
+        "KM-25SS-JP01-PC-S": 0.85,
+        "KM-25SS-JP01-PC-M": 0.85,
+        "KM-25SS-JK01-IV-M": 0.85,
+        "KM-25SS-JK01-IV-S": 0.85,
+        "KM-25SS-JK01-LBE-M": 0.85,
+        "KM-25SS-JK01-LBE-S": 0.85,
+        "KM-25SS-CT01-BE-F": 0.85,
+        "KM-25SS-BL06-IV-M": 0.9,
+        "KM-25SS-BL06-IV-S": 0.9,
+        "KM-25SS-BL06-NV-M": 0.9,
+        "KM-25SS-BL06-NV-S": 0.9,
+        "KM-25SS-BL04-WH-S": 0.85,
+        "KM-25SS-BL04-WH-M": 0.85,
+        "KM-25SS-BL01-WH-F": 0.9,
+        "KM-25SS-BL01-LM-F": 0.9,
+        "KM-25SS-BL01-SBL-F": 0.9,
+        "KM-25SS-BL01-PK-F": 0.9,
         "KM-25SS-BG01-BK-F": 0.8,
         "KM-25SS-BG01-WH-F": 0.8,
         "KM-25SS-BG01-YL-F": 0.8,
-
+        "KM-25FW-SW02-CH-M": 0.9,
+        "KM-25FW-SW02-CH-S": 0.9,
+        "KM-25FW-SW02-DBN-M": 0.9,
+        "KM-25FW-SW02-DBN-S": 0.9,
+        "KM-25FW-SW02-LBL-M": 0.9,
+        "KM-25FW-SW02-LBL-S": 0.9,
+        "KM-25FW-SK04-BE-L": 0.9,
+        "KM-25FW-SK04-BE-M": 0.9,
+        "KM-25FW-SK04-BE-S": 0.9,
+        "KM-25FW-SK04-BK-L": 0.9,
+        "KM-25FW-SK04-BK-M": 0.9,
+        "KM-25FW-SK04-BK-S": 0.9,
         "KM-25FW-JK01-TBK-M": 0.8,
         "KM-25FW-JK01-TBK-S": 0.8,
         "KM-25FW-JK01-BK-M": 0.8,
         "KM-25FW-JK01-BK-S": 0.8,
+        "KM-25FW-BL02-BL-F": 0.9,
     }
 
     skus = list(sku_discount_map.keys())
