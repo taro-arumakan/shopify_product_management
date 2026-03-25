@@ -79,21 +79,21 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_total_sales_by_product(self, date_from, date_to, to_dataframe=True):
+    def report_net_sales_by_product(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
-            SHOW total_sales
+            SHOW net_sales
             WHERE product_title IS NOT NULL
             GROUP BY product_title, product_vendor, product_type WITH TOTALS, CURRENCY 'JPY'
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
-            ORDER BY total_sales DESC
+            ORDER BY net_sales DESC
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_total_sales_by_day(self, date_from, date_to, to_dataframe=True):
+    def report_net_sales_by_day(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
-            SHOW total_sales
+            SHOW net_sales
             TIMESERIES day WITH TOTALS, CURRENCY 'JPY'
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
             ORDER BY day ASC
@@ -146,7 +146,7 @@ class Analytics:
     def report_sales_kpi_by_month(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
-            SHOW total_sales, average_order_value, orders, returning_customer_rate
+            SHOW net_sales, average_order_value, orders, returning_customer_rate
             TIMESERIES month WITH CURRENCY 'JPY'
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
         """
@@ -246,16 +246,14 @@ class Analytics:
         )
 
     def generate_sales_by_product_graph(self, output_path, date_from, date_to):
-        df = self.report_total_sales_by_product(date_from, date_to)
-        df = df[["product_title", "total_sales"]].sort_values(
-            by="total_sales", ascending=False
+        df = self.report_net_sales_by_product(date_from, date_to)
+        df = df[["product_title", "net_sales"]].sort_values(
+            by="net_sales", ascending=False
         )
 
         top_8 = df.head(8).copy()  # 2. Group Top 8 + Others
-        others_val = df.iloc[8:]["total_sales"].sum()
-        others_df = pd.DataFrame(
-            [{"product_title": "Others", "total_sales": others_val}]
-        )
+        others_val = df.iloc[8:]["net_sales"].sum()
+        others_df = pd.DataFrame([{"product_title": "Others", "net_sales": others_val}])
         plot_df = pd.concat([top_8, others_df], ignore_index=True)
 
         # indices: 0:Blue, 1:Orange, 2:Green, 3:Red, 4:Purple, 5:Brown, 6:Pink, 7:Gray, 9:Cyan (for Others)
@@ -265,7 +263,7 @@ class Analytics:
         fig, ax = plt.subplots(figsize=(12, 10))
 
         wedges, texts, autotexts = ax.pie(
-            plot_df["total_sales"],
+            plot_df["net_sales"],
             labels=plot_df["product_title"],
             autopct="%1.1f%%",
             startangle=90,  # Start at top center
@@ -303,16 +301,16 @@ class Analytics:
 
     def generate_store_kpi_by_day_graph(self, output_path, date_from, date_to):
 
-        df_total_sales = self.report_total_sales_by_day(date_from, date_to)
+        df_net_sales = self.report_net_sales_by_day(date_from, date_to)
         df_aov = self.report_average_order_value_by_day(date_from, date_to)
         df_cvr = self.report_sessions_by_day(date_from, date_to)
 
         df = pd.merge(df_aov, df_cvr, on="day", how="outer").sort_values("day")
-        df = pd.merge(df, df_total_sales, on="day", how="outer").sort_values("day")
+        df = pd.merge(df, df_net_sales, on="day", how="outer").sort_values("day")
         df["day"] = pd.to_datetime(df["day"])
 
         # 2. KPI Calculations (for the left panel)
-        total_sales = df["total_sales"].sum()
+        net_sales = df["net_sales"].sum()
         total_sessions = df["sessions"].sum()
         avg_cvr = float(df["conversion_rate__totals"][0])
         avg_aov = int(df["average_order_value__totals"][0])
@@ -327,7 +325,7 @@ class Analytics:
         ax_text.axis("off")
 
         kpis = [
-            ("TOTAL SALES", f"¥{int(total_sales):,}", 0.85),
+            ("TOTAL SALES", f"¥{int(net_sales):,}", 0.85),
             ("TOTAL SESSIONS", f"{int(total_sessions):,}", 0.60),
             ("AVERAGE CVR", f"{avg_cvr:.2f}%", 0.35),
             ("AVERAGE AOV", f"¥{int(avg_aov):,}", 0.10),
@@ -348,7 +346,7 @@ class Analytics:
         ax1 = fig.add_subplot(gs[0, 1])
         ax1_twin = ax1.twinx()
 
-        ax1.bar(df["day"], df["total_sales"], color="#4E91C2", alpha=0.8, label="Sales")
+        ax1.bar(df["day"], df["net_sales"], color="#4E91C2", alpha=0.8, label="Sales")
         ax1_twin.plot(
             df["day"],
             df["sessions"],
