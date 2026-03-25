@@ -16,7 +16,7 @@ def run(brand, report_year, report_month):
         "conversion_breakdown",
     ]
     client = utils.client(brand)
-    target_folder_id = client.find_or_create_folder_by_name(
+    graph_target_folder_id = client.find_or_create_folder_by_name(
         parent_folder_id=parent_folder_id,
         folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
     )
@@ -32,9 +32,9 @@ def run(brand, report_year, report_month):
         client.upload_to_drive(
             filepath=output_path,
             mimetype="image/png",
-            folder_id=target_folder_id,
+            folder_id=graph_target_folder_id,
         )
-    logging.info(f"uploadging monthly report for {brand}")
+    logging.info(f"generating monthly report for {brand}")
     client.generate_monthly_brand_report(brand, report_year, report_month)
 
 
