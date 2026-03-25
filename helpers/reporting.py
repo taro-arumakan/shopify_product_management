@@ -62,7 +62,7 @@ class Reporting:
         ]
 
         graphs_names = [
-            "store_kpi_graph",
+            "daily_store_kpi_graph",
             "sales_by_product_graph",
             "customer_type_donut",
             "conversion_breakdown",
