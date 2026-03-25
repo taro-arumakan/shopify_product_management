@@ -10,7 +10,7 @@ parent_folder_id = "13e7ejhsYGaelUwwteM3SC6_aMrhEsZW4"
 
 def run(brand, report_year, report_month):
     graphs = [
-        "daily_store_kpi_graph",
+        "store_kpi_by_day_graph",
         "sales_by_product_graph",
         "customer_type_donut",
         "conversion_breakdown",

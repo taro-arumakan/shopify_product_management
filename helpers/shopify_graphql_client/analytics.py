@@ -13,6 +13,7 @@ from matplotlib.gridspec import GridSpec
 
 
 class Analytics:
+
     def run_shopifyql(self, shpoifyql_query, to_dataframe=True):
         query = (
             """
@@ -38,23 +39,28 @@ class Analytics:
         res = res["shopifyqlQuery"]["tableData"]
         return self.tabledata_to_dataframe(res) if to_dataframe else res
 
-    def clean_numeric(self, series):
-        return pd.to_numeric(
-            series.astype(str).str.replace(",", ""), errors="coerce"
-        ).fillna(0)
-
     def tabledata_to_dataframe(self, shopifyql_res):
         df = pd.DataFrame(shopifyql_res["rows"])
         df = df[[c["name"] for c in shopifyql_res["columns"]]]
+        int_cols = [
+            c["name"] for c in shopifyql_res["columns"] if c["dataType"] == "INTEGER"
+        ]
         money_cols = [
             c["name"] for c in shopifyql_res["columns"] if c["dataType"] == "MONEY"
+        ]
+        percentage_cols = [
+            c["name"] for c in shopifyql_res["columns"] if c["dataType"] == "PERCENT"
         ]
         date_cols = [
             c["name"]
             for c in shopifyql_res["columns"]
             if c["dataType"] == "DAY_TIMESTAMP"
         ]
+        df[int_cols] = df[int_cols].apply(pd.to_numeric, errors="coerce").astype(int)
         df[money_cols] = df[money_cols].apply(pd.to_numeric, errors="coerce")
+        df[percentage_cols] = (
+            df[percentage_cols].apply(pd.to_numeric, errors="coerce") * 100
+        )
         df[date_cols] = df[date_cols].apply(pd.to_datetime, errors="coerce")
         return df
 
@@ -84,7 +90,7 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_daily_total_sales(self, date_from, date_to, to_dataframe=True):
+    def report_total_sales_by_day(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
             SHOW total_sales
@@ -94,7 +100,7 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_daily_average_order_value(self, date_from, date_to, to_dataframe=True):
+    def report_average_order_value_by_day(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
             SHOW orders, average_order_value
@@ -105,7 +111,7 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_daily_sessions(self, date_from, date_to, to_dataframe=True):
+    def report_sessions_by_day(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sessions
             SHOW sessions, conversion_rate
@@ -136,6 +142,34 @@ class Analytics:
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+
+    def report_sales_kpi_by_month(self, date_from, date_to, to_dataframe=True):
+        shopifyql_query = f"""
+            FROM sales
+            SHOW total_sales, average_order_value, orders
+            TIMESERIES month WITH CURRENCY 'JPY'
+            SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
+        """
+        return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+
+    def report_sessions_kpi_by_month(self, date_from, date_to, to_dataframe=True):
+        shopifyql_query = f"""
+            FROM sessions
+            SHOW sessions, conversion_rate
+            TIMESERIES month WITH CURRENCY 'JPY'
+            SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
+            ORDER BY month ASC
+        """
+        return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+
+    def report_kpi_by_month(self, date_from, date_to, to_dataframe=True):
+        df_sessions = self.report_sessions_kpi_by_month(
+            date_from, date_to, to_dataframe
+        )
+        df_sales = self.report_sales_kpi_by_month(date_from, date_to, to_dataframe)
+        return pd.merge(df_sessions, df_sales, on="month", how="outer").sort_values(
+            "month"
+        )
 
     def run_monthly_report(
         self, report_func, report_year, report_month, to_dataframe=True
@@ -254,21 +288,11 @@ class Analytics:
         plt.savefig(output_path, dpi=300)
         plt.close(fig)
 
-    def generate_daily_store_kpi_graph(self, output_path, date_from, date_to):
+    def generate_store_kpi_by_day_graph(self, output_path, date_from, date_to):
 
-        df_total_sales = self.report_daily_total_sales(date_from, date_to)
-        df_aov = self.report_daily_average_order_value(date_from, date_to)
-        df_cvr = self.report_daily_sessions(date_from, date_to)
-
-        df_total_sales["total_sales"] = self.clean_numeric(
-            df_total_sales["total_sales"]
-        )
-        df_aov["orders"] = self.clean_numeric(df_aov["orders"]).astype(int)
-        df_aov["average_order_value"] = self.clean_numeric(
-            df_aov["average_order_value"]
-        )
-        df_cvr["sessions"] = self.clean_numeric(df_cvr["sessions"]).astype(int)
-        df_cvr["conversion_rate"] = self.clean_numeric(df_cvr["conversion_rate"])
+        df_total_sales = self.report_total_sales_by_day(date_from, date_to)
+        df_aov = self.report_average_order_value_by_day(date_from, date_to)
+        df_cvr = self.report_sessions_by_day(date_from, date_to)
 
         df = pd.merge(df_aov, df_cvr, on="day", how="outer").sort_values("day")
         df = pd.merge(df, df_total_sales, on="day", how="outer").sort_values("day")
@@ -277,7 +301,7 @@ class Analytics:
         # 2. KPI Calculations (for the left panel)
         total_sales = df["total_sales"].sum()
         total_sessions = df["sessions"].sum()
-        avg_cvr = float(df["conversion_rate__totals"][0]) * 100
+        avg_cvr = float(df["conversion_rate__totals"][0])
         avg_aov = int(df["average_order_value__totals"][0])
 
         # 3. Setup Layout (Left: Summary, Right: Charts)
@@ -326,7 +350,7 @@ class Analytics:
 
         # Chart 2: Conversion Rate (Line)
         ax2 = fig.add_subplot(gs[1, 1])
-        cvr_data = df["conversion_rate"] * 100
+        cvr_data = df["conversion_rate"]
         ax2.plot(df["day"], cvr_data, color="#31A354", marker="o", markersize=3)
         ax2.axhline(
             cvr_data.mean(), color="#31A354", linestyle="--", alpha=0.4
@@ -365,7 +389,6 @@ class Analytics:
         df = self.report_customer_type(date_from, date_to)
         df.columns = ["customer_type", "count"]
         df = df.set_index("customer_type").reindex(["Returning", "New"]).reset_index()
-        df["count"] = self.clean_numeric(df["count"]).astype(int)
 
         total_customers = df["count"].sum()
         colors = ["#F39233", "#4E91C2"]
@@ -427,8 +450,6 @@ class Analytics:
         }
 
         labels = ["Add to Cart", "Checkout", "Purchase"]
-        for m in metrics.values():
-            df[m] = self.clean_numeric(df[m]).astype(int)
         vals = [df[metrics[l]].sum() for l in labels]
 
         # 2. Assign specific colors per requirement
