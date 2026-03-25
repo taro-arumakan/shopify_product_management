@@ -146,7 +146,7 @@ class Analytics:
     def report_sales_kpi_by_month(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
-            SHOW total_sales, average_order_value, orders
+            SHOW total_sales, average_order_value, orders, returning_customer_rate
             TIMESERIES month WITH CURRENCY 'JPY'
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
         """
@@ -230,6 +230,19 @@ class Analytics:
             dataframe=df,
             startrow=20,
             header=False,
+        )
+
+    def generate_kpi_by_month_report(
+        self, template_path, sheet_name, output_path, date_from, date_to
+    ):
+        shutil.copyfile(template_path, output_path)
+        df = self.report_kpi_by_month(date_from, date_to)
+        self.inject_dataframe_to_xlsx(
+            output_path=output_path,
+            sheet_name=sheet_name,
+            dataframe=df,
+            startrow=0,
+            header=True,
         )
 
     def generate_sales_by_product_graph(self, output_path, date_from, date_to):
