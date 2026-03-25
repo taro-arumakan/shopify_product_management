@@ -5,19 +5,20 @@ logging.basicConfig(level=logging.INFO)
 
 import utils
 
-parent_folder_id = "13e7ejhsYGaelUwwteM3SC6_aMrhEsZW4"
+graph_parent_folder_id = "13e7ejhsYGaelUwwteM3SC6_aMrhEsZW4"
 
 
 def run(brand, report_year, report_month):
     graphs = [
-        "daily_store_kpi_graph",
+        "store_kpi_by_day_graph",
         "sales_by_product_graph",
         "customer_type_donut",
         "conversion_breakdown",
     ]
     client = utils.client(brand)
-    target_folder_id = client.find_or_create_folder_by_name(
-        parent_folder_id=parent_folder_id,
+    # TODO [CEC-306] better to consolidate graph upload and slide generation processes
+    graph_target_folder_id = client.find_or_create_folder_by_name(
+        parent_folder_id=graph_parent_folder_id,
         folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
     )
     for graph in graphs:
@@ -32,9 +33,9 @@ def run(brand, report_year, report_month):
         client.upload_to_drive(
             filepath=output_path,
             mimetype="image/png",
-            folder_id=target_folder_id,
+            folder_id=graph_target_folder_id,
         )
-    logging.info(f"uploadging monthly report for {brand}")
+    logging.info(f"generating monthly report for {brand}")
     client.generate_monthly_brand_report(brand, report_year, report_month)
 
 
