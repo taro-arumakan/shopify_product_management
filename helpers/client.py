@@ -4,13 +4,14 @@ import os
 import pathlib
 import smtplib
 from email.message import EmailMessage
+from helpers.reporting import Reporting
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
 
 logger = logging.getLogger(__name__)
 
 
-class Client(ShopifyGraphqlClient, GoogleApiInterface):
+class Client(ShopifyGraphqlClient, GoogleApiInterface, Reporting):
     def __init__(self, shop_name, access_token, google_credential_path, sheet_id=None):
         ShopifyGraphqlClient.__init__(
             self, shop_name=shop_name, access_token=access_token
