@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.INFO)
 
 import utils
 
-parent_folder_id = "13e7ejhsYGaelUwwteM3SC6_aMrhEsZW4"
+graph_parent_folder_id = "13e7ejhsYGaelUwwteM3SC6_aMrhEsZW4"
 
 
 def run(brand, report_year, report_month):
@@ -16,8 +16,9 @@ def run(brand, report_year, report_month):
         "conversion_breakdown",
     ]
     client = utils.client(brand)
+    # TODO [CEC-306] better to consolidate graph upload and slide generation processes
     graph_target_folder_id = client.find_or_create_folder_by_name(
-        parent_folder_id=parent_folder_id,
+        parent_folder_id=graph_parent_folder_id,
         folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
     )
     for graph in graphs:
