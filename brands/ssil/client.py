@@ -20,25 +20,25 @@ class SsilClient(BrandClientBase):
             tags=string.ascii_lowercase.index("b"),
             price=string.ascii_lowercase.index("d"),
             description=string.ascii_lowercase.index("f"),
-            product_care=string.ascii_lowercase.index("g"),
-            material=string.ascii_lowercase.index("h"),
-            size_text=string.ascii_lowercase.index("i"),
-            made_in=string.ascii_lowercase.index("j"),
+            product_care=string.ascii_lowercase.index("h"),
+            material=string.ascii_lowercase.index("i"),
+            size_text=string.ascii_lowercase.index("j"),
+            made_in=string.ascii_lowercase.index("k"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("k")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("l")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("l"),
+            drive_link=string.ascii_lowercase.index("m"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("m")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("n")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("n"),
-            hs_code=string.ascii_lowercase.index("o"),
-            stock=string.ascii_lowercase.index("p"),
+            sku=string.ascii_lowercase.index("o"),
+            hs_code=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
 
