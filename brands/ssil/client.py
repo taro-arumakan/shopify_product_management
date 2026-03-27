@@ -63,13 +63,6 @@ class SsilClient(BrandClientBase):
         )
         return description_html
 
-    def get_tags(self, product_input, additional_tags=None):
-        return ",".join(
-            [product_input["tags"]]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
-
     def append_ring_size_guide_link(self, size_richtext):
         additional_children_dicts = {
             "children": [

@@ -15,7 +15,10 @@ class BrandClientBase(Client, SanityChecks):
     NEW_PRODUCT_TAG = "New Arrival"
 
     def __init__(
-        self, product_sheet_start_row=None, remove_existing_new_product_indicators=None
+        self,
+        product_sheet_start_row=None,
+        remove_existing_new_product_indicators=None,
+        products_season_tag=None,
     ):
         assert self.SHOPNAME, "SHOPNAME must be set in subclass"
         assert self.VENDOR, "VENDOR must be set in subclass"
@@ -24,6 +27,7 @@ class BrandClientBase(Client, SanityChecks):
         self.remove_existing_new_product_indicators = (
             remove_existing_new_product_indicators
         )
+        self.products_season_tag = products_season_tag
         from utils import credentials
 
         cred = credentials(self.SHOPNAME)
@@ -55,8 +59,15 @@ class BrandClientBase(Client, SanityChecks):
             handle_suffix=handle_suffix,
         )
 
+    def get_tags_from_product_input(self, product_input):
+        return product_input["tags"]
+
     def get_tags(self, product_input, additional_tags):
-        return [self.NEW_PRODUCT_TAG]
+        return ",".join(
+            [self.products_season_tag, self.NEW_PRODUCT_TAG]
+            + self.get_tags_from_product_input(product_input)
+            + (additional_tags or [])
+        )
 
     def get_size_field(self, product_input):
         raise NotImplementedError
@@ -192,6 +203,9 @@ class BrandClientBase(Client, SanityChecks):
         scheduled_time=None,
         product_inputs_filter_func=None,
     ):
+        assert (
+            self.products_season_tag is not None
+        ), "products_season_tag must be set explicitly"
         product_inputs = self.product_inputs_by_sheet_name(sheet_name, handle_suffix)
         if not restart_at_product_title:
             i = 0

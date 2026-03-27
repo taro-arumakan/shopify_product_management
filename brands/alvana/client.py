@@ -77,13 +77,6 @@ class AlvanaClient(BrandClientBase):
         )
         return description_html
 
-    def get_tags(self, product_input, additional_tags=None):
-        return ",".join(
-            [product_input["tags"]]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
-
     def get_size_field(self, product_input):
         return self.formatted_size_text_to_html_table(product_input["size_text"])
 

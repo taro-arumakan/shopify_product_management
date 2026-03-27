@@ -56,7 +56,7 @@ class ArchivepkeClient(BrandClientBase):
             made_in=product_input["made_in"],
         )
 
-    def get_tags(self, product_input, additional_tags=None):
+    def get_tags_from_product_input(self, product_input):
         tag_mapping = {
             "Standard": "Standard Line",
         }
@@ -66,12 +66,7 @@ class ArchivepkeClient(BrandClientBase):
         category = tag_mapping.get(
             product_input.get("category", ""), product_input.get("category", "")
         )
-
-        return ",".join(
-            [product_input["release_date"], collection, category]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
+        return [product_input["release_date"], collection, category]
 
     def get_size_field(self, product_input):
         size_text = product_input.get("size_text")
