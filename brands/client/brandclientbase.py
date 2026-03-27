@@ -27,6 +27,8 @@ class BrandClientBase(Client, SanityChecks):
         self.remove_existing_new_product_indicators = (
             remove_existing_new_product_indicators
         )
+        if products_season_tag:
+            assert " " not in products_season_tag, "Prefer no whitespaces in a tag"
         self.products_season_tag = products_season_tag
         from utils import credentials
 
