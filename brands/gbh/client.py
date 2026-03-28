@@ -90,13 +90,6 @@ class GbhClient(BrandClientBase):
 
         return description_html
 
-    def get_tags(self, product_input, additional_tags=None):
-        return ",".join(
-            [product_input["tags"]]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
-
     def get_size_field(self, product_input):
         if self.use_simple_size_format:
             return self.escape_html(product_input["size_text"])
@@ -227,7 +220,7 @@ class GbhClientSizeOptionOnly(GbhClient):
     def get_size_field(self, product_input):
         return product_input["size_text"]
 
-    def get_tags(self, product_input, additional_tags=None):
+    def get_tags_from_product_input(self, product_input):
         return []
 
 

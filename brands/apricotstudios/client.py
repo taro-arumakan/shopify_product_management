@@ -73,16 +73,12 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
         """
         return ""
 
-    def get_tags(self, product_input, additional_tags=None):
-        return ",".join(
-            [
-                product_input["collection"],
-                product_input["category"],
-                # product_input["release_date"],
-            ]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
+    def get_tags_from_product_input(self, product_input):
+        return [
+            product_input["collection"],
+            product_input["category"],
+            # product_input["release_date"],
+        ]
 
     def get_size_field(self, product_input):
         size_text = product_input.get("size_text")

@@ -106,6 +106,9 @@ class SanityChecks:
         assert (
             self.remove_existing_new_product_indicators is not None
         ), f"remove_existing_new_product_indicators must be set explicitly."
+        assert (
+            self.products_season_tag is not None
+        ), "products_season_tag must be set explicitly"
         res = []
         try:
             self.check_sku_duplicates(product_inputs)

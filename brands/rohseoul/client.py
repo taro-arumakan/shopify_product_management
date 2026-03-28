@@ -59,17 +59,13 @@ class RohseoulClient(BrandClientBase):
             made_in=product_input["made_in"],
         )
 
-    def get_tags(self, product_input, additional_tags=None):
-        return ",".join(
-            [
-                product_input["release_date"],
-                product_input["collection"],
-                product_input["category"],
-                product_input["bag_category"],
-            ]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
+    def get_tags_from_product_input(self, product_input):
+        return [
+            product_input["release_date"],
+            product_input["collection"],
+            product_input["category"],
+            product_input["bag_category"],
+        ]
 
     @staticmethod
     def get_size_table_html(size_text):
