@@ -10,7 +10,7 @@ def get_eligible_customers(client, rundate):
     threshold_date = rundate - datetime.timedelta(days=7)
     customers = client.customers_by_query(
         customers_query_string=f"last_abandoned_order_date:>={threshold_date:%Y-%m-%d}",
-        orders_query_string="discount_code:auto_5%_off",
+        orders_query_string="discount_code:'auto_5%_off'",
     )
     return [customer for customer in customers if not customer["orders"]["nodes"]]
 
