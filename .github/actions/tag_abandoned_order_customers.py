@@ -45,7 +45,7 @@ def untag(brand):
 brands = [
     "Archivépke",
     "KUMÉ",
-    # "LEMEME",
+    "LEMEME",
 ]
 
 
