@@ -1,9 +1,23 @@
+import datetime
+import logging
+import pprint
+
+logger = logging.getLogger(__name__)
+
+
 class Reporting:
 
     SLIDES_TEMPLATE_ID = "1jhxdJvbCrF3dozSi819lbkAKt9N45zqjfeNvAddsCxI"
     LOGO_FOLDER_ID = "1tGmwEe0dJrWuVHtnUqnxU3bxbIO0JJoB"
     MONTHLY_IMAGES_FOLDER_ID = "13e7ejhsYGaelUwwteM3SC6_aMrhEsZW4"
     MONTHLY_REPORT_OUTPUT_FOLDER_ID = "1WCmMFHnFBnSin439p1OGFEyQdgDr9lNh"
+
+    monthly_report_graph_names = [
+        "store_kpi_by_day_graph",
+        "sales_by_product_graph",
+        "customer_type_donut",
+        "conversion_breakdown",
+    ]
 
     def get_logo_image_id(self, brand_name):
         res = self.find_by_folder_id_by_name(
@@ -21,7 +35,32 @@ class Reporting:
         )
         return res["id"]
 
+    def generate_monthly_brand_report_graphs(
+        self, brand_name, report_year, report_month
+    ):
+        graph_target_folder_id = self.find_or_create_folder_by_name(
+            parent_folder_id=self.MONTHLY_IMAGES_FOLDER_ID,
+            folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
+        )
+        for graph in self.monthly_report_graph_names:
+            logger.info(f"{self} - uploadging {graph} to {graph_target_folder_id}")
+            output_path = f"/tmp/{brand_name}_{graph}.png"
+            self.generate_monthly(
+                getattr(self, f"generate_{graph}"),
+                output_path=output_path,
+                report_year=report_year,
+                report_month=report_month,
+            )
+            self.upload_to_drive(
+                filepath=output_path,
+                mimetype="image/png",
+                folder_id=graph_target_folder_id,
+            )
+
     def generate_monthly_brand_report(self, brand_name, report_year, report_month):
+        logger.info(f"{self} generating graphs")
+        self.generate_monthly_brand_report_graphs(brand_name, report_year, report_month)
+
         destination_folder_id = self.find_or_create_folder_by_name(
             self.MONTHLY_REPORT_OUTPUT_FOLDER_ID,
             f"{str(report_year).zfill(2)}{str(report_month).zfill(2)}",
@@ -32,6 +71,7 @@ class Reporting:
             "parents": [destination_folder_id],  #'1ECtC8vKGYuV1hyDvVlEqe-pGwBMeasEz'],
             "supportsAllDrives": True,
         }
+        logger.info(f"{self} copying template to {destination_folder_id}/{copy_title}")
         new_presentation = (
             self.drive_service.files()
             .copy(
@@ -42,6 +82,7 @@ class Reporting:
             .execute()
         )
         presentation_id = new_presentation.get("id")
+        logger.info(f"{self} copied to {presentation_id}")
 
         # 3. Define Replacements
         # Note: Slides API requires image URLs. You'll need to upload local PNGs
@@ -61,13 +102,6 @@ class Reporting:
             },
         ]
 
-        graphs_names = [
-            "store_kpi_by_day_graph",
-            "sales_by_product_graph",
-            "customer_type_donut",
-            "conversion_breakdown",
-        ]
-
         alt_text_file_id_map = {
             graph_name: self.get_graph_image_id(
                 report_year=report_year,
@@ -75,7 +109,7 @@ class Reporting:
                 brand_name=brand_name,
                 graph_name=graph_name,
             )
-            for graph_name in graphs_names
+            for graph_name in self.monthly_report_graph_names
         }
         alt_text_file_id_map.update(brand_logo=self.get_logo_image_id(brand_name))
 
@@ -101,15 +135,23 @@ class Reporting:
                         }
                     )
 
+        logger.info(f"{self} replacing contents")
         try:
+            logger.debug(
+                f"{self} making files public temporarily:\n{pprint.pformat(alt_text_file_id_map, indent=2, width=80)}"
+            )
             for file_id in alt_text_file_id_map.values():
                 self.make_public_by_file_id(file_id)
 
+            logger.debug(
+                f"{self} replacing contents:\n{pprint.pformat(requests, indent=2, width=80)}"
+            )
             self.slides_service.presentations().batchUpdate(
                 presentationId=presentation_id, body={"requests": requests}
             ).execute()
 
         finally:
+            logger.info(f"{self} making files private")
             for file_id in alt_text_file_id_map.values():
                 self.make_private_by_file_id(file_id)
 
