@@ -43,7 +43,9 @@ class Reporting:
             folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
         )
         for graph in self.monthly_report_graph_names:
-            logger.info(f"{self} - uploadging {graph} to {graph_target_folder_id}")
+            logger.info(
+                f"{self.__class__.__name__} - uploadging {graph} to {graph_target_folder_id}"
+            )
             output_path = f"/tmp/{brand_name}_{graph}.png"
             self.generate_monthly(
                 getattr(self, f"generate_{graph}"),
@@ -58,7 +60,7 @@ class Reporting:
             )
 
     def generate_monthly_brand_report(self, brand_name, report_year, report_month):
-        logger.info(f"{self} generating graphs")
+        logger.info(f"{self.__class__.__name__} generating graphs")
         self.generate_monthly_brand_report_graphs(brand_name, report_year, report_month)
 
         destination_folder_id = self.find_or_create_folder_by_name(
@@ -68,10 +70,12 @@ class Reporting:
         copy_title = f"[{brand_name}] {report_year}.{report_month} Review and Strategic Recommendations"
         body = {
             "name": copy_title,
-            "parents": [destination_folder_id],  #'1ECtC8vKGYuV1hyDvVlEqe-pGwBMeasEz'],
+            "parents": [destination_folder_id],
             "supportsAllDrives": True,
         }
-        logger.info(f"{self} copying template to {destination_folder_id}/{copy_title}")
+        logger.info(
+            f"{self.__class__.__name__} copying template to {destination_folder_id}/{copy_title}"
+        )
         new_presentation = (
             self.drive_service.files()
             .copy(
@@ -82,7 +86,7 @@ class Reporting:
             .execute()
         )
         presentation_id = new_presentation.get("id")
-        logger.info(f"{self} copied to {presentation_id}")
+        logger.info(f"{self.__class__.__name__} copied to {presentation_id}")
 
         # 3. Define Replacements
         # Note: Slides API requires image URLs. You'll need to upload local PNGs
@@ -135,23 +139,23 @@ class Reporting:
                         }
                     )
 
-        logger.info(f"{self} replacing contents")
+        logger.info(f"{self.__class__.__name__} replacing contents")
         try:
             logger.debug(
-                f"{self} making files public temporarily:\n{pprint.pformat(alt_text_file_id_map, indent=2, width=80)}"
+                f"{self.__class__.__name__} making files public temporarily:\n{pprint.pformat(alt_text_file_id_map, indent=2, width=80)}"
             )
             for file_id in alt_text_file_id_map.values():
                 self.make_public_by_file_id(file_id)
 
             logger.debug(
-                f"{self} replacing contents:\n{pprint.pformat(requests, indent=2, width=80)}"
+                f"{self.__class__.__name__} replacing contents:\n{pprint.pformat(requests, indent=2, width=80)}"
             )
             self.slides_service.presentations().batchUpdate(
                 presentationId=presentation_id, body={"requests": requests}
             ).execute()
 
         finally:
-            logger.info(f"{self} making files private")
+            logger.info(f"{self.__class__.__name__} making files private")
             for file_id in alt_text_file_id_map.values():
                 self.make_private_by_file_id(file_id)
 
