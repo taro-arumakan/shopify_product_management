@@ -26,7 +26,9 @@ def main():
     drop_tag = "2026_drop3"
 
     client = BlossomClientClothes(
-        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+        product_sheet_start_row=1,
+        remove_existing_new_product_indicators=False,
+        products_season_tag=drop_tag,
     )
 
     client.sanity_check_sheet(sheet_name, pre_rewrite=False)
@@ -37,19 +39,21 @@ def main():
         2026, 4, 3, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
-    # client.process_sheet_to_products(
-    #     sheet_name=sheet_name,
-    #     additional_tags=[drop_tag, "New Arrival"],
-    #     scheduled_time=scheduled_time,
-    # )
+    client.process_sheet_to_products(
+        sheet_name=sheet_name,
+        additional_tags=["New Arrival"],
+        scheduled_time=scheduled_time,
+    )
 
 
 def create_jp_exclusive():
     sheet_name = "clothes(JP EXCLUSIVE)"
-    drop_tag = "2026_JP_EXCLUSIVE"
+    drop_tag = "2026_drop3"
 
     client = BlossomClientClothes(
-        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+        product_sheet_start_row=1,
+        remove_existing_new_product_indicators=False,
+        products_season_tag=drop_tag,
     )
 
     client.sanity_check_sheet(sheet_name, pre_rewrite=False)
@@ -60,13 +64,13 @@ def create_jp_exclusive():
         2026, 4, 3, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
-    # client.process_sheet_to_products(
-    #     sheet_name=sheet_name,
-    #     additional_tags=[drop_tag, "New Arrival"],
-    #     scheduled_time=scheduled_time,
-    # )
+    client.process_sheet_to_products(
+        sheet_name=sheet_name,
+        additional_tags=["New Arrival"],
+        scheduled_time=scheduled_time,
+    )
 
 
 if __name__ == "__main__":
-    # main()
+    main()
     create_jp_exclusive()
