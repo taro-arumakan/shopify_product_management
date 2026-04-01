@@ -64,7 +64,7 @@ class Customers:
         )
         return self.customers_by_query(query_string)
 
-    def update_customers_tags(self, customer_id, tags):
+    def update_customer_tags(self, customer_id, tags):
         query = """
         mutation customerUpdate($input: CustomerInput!) {
             customerUpdate(input: $input) {

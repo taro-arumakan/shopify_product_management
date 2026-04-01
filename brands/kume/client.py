@@ -105,14 +105,9 @@ class KumeClient(BrandClientBase):
             made_in=product_input["made_in"],
         )
 
-    def get_tags(self, product_input, additional_tags=None):
+    def get_tags_from_product_input(self, product_input):
         category_tags = list(map(str.strip, product_input["category"].split(" AND ")))
-        return ",".join(
-            category_tags
-            + [product_input["collection"]]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
+        return category_tags + [product_input["collection"]]
 
     def get_size_field(self, product_input):
         size_text = product_input.get("size_text")
