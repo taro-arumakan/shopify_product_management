@@ -2,21 +2,46 @@ from brands.blossom.client import BlossomClient
 import utils
 import pandas as pd
 
-# Blossom 2/7 - END OF SEASON SALE ALL 20% OFF
+
+# Blossom 26SS drop3 10% OFF
 def start_end_discounts(testrun=True, start_or_end="start"):
     client = BlossomClient()
-    products = client.products_by_query("tag_not:'BAG' AND tag_not:'ACC' AND tag_not:'SHOES'")
+
+    skus = [
+        "BC2601SPPT005-01-GR-XS",
+        "BC2601SPPT005-01-GR-S",
+        "BC2601SPPT005-01-GR-M",
+        "BC2602SPBL004-01-GR-S",
+        "BC2602SPBL004-01-GR-M",
+        "BC2601SPSK001-01-GR-XS",
+        "BC2601SPSK001-01-GR-S",
+        "BC2601SPSK001-01-GR-M",
+        "BC2601SPBL002-01-IV-S",
+        "BC2601SPBL002-01-IV-M",
+        "BC2601SPBL002-01-GR-S",
+        "BC2601SPBL002-01-GR-M",
+        "BC2601SPBL002-01-KB-S",
+        "BC2601SPBL002-01-KB-M",
+        "BC2601SPBL002-01-BK-S",
+        "BC2601SPBL002-01-BK-M",
+        "BC2601SPCT001-01-GR-S",
+        "BC2601SPCT001-01-GR-M",
+        "BC2601SPCT001-01-KB-S",
+        "BC2601SPCT001-01-KB-M",
+        "BC2601SPCT001-01-BK-S",
+        "BC2601SPCT001-01-BK-M",
+    ]
+
+    variants = [client.variant_by_sku(sku) for sku in skus]
 
     if start_or_end == "end":
-        client.revert_product_prices(products, testrun=testrun)
+        client.revert_variant_prices(variants, testrun=testrun)
     else:
         new_prices_by_variant_id = {
-            v["id"]: int(int(v["compareAtPrice"] or v["price"]) * 0.8)
-            for p in products
-            for v in p["variants"]["nodes"]
+            v["id"]: int(int(v["compareAtPrice"] or v["price"]) * 0.9) for v in variants
         }
-        client.update_product_prices_by_dict(
-            products, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
+        client.update_variant_prices_by_dict(
+            variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
         )
 
 
