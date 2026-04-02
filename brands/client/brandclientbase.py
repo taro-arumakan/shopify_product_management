@@ -223,6 +223,8 @@ class BrandClientBase(Client, SanityChecks):
                     raise RuntimeError(
                         f"Product with name {restart_at_product_title} not found in sheet {sheet_name}"
                     )
+        product_inputs = product_inputs[i:]
+
         if product_inputs_filter_func:
             product_inputs = list(filter(product_inputs_filter_func, product_inputs))
 

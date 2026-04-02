@@ -93,12 +93,12 @@ class GoogleDriveApiInterface:
         with Image.open(image_path) as img:
             current_megapixels = (img.width * img.height) / 1_000_000
             if current_megapixels > max_megapixels or file_size_mb > max_mb:
-                if current_megapixels > max_megapixels:
-                    scale_factor = (max_megapixels / current_megapixels) ** 0.5
-                    new_width = int(img.width * scale_factor)
-                    new_height = int(img.height * scale_factor)
-                else:
-                    new_width, new_height = img.width, img.height
+                mp_scale = (max_megapixels / current_megapixels) ** 0.5 if current_megapixels > max_megapixels else 1.0
+                size_scale = (max_mb / file_size_mb) ** 0.5 if file_size_mb > max_mb else 1.0
+                scale_factor = min(mp_scale, size_scale)
+                
+                new_width = int(img.width * scale_factor)
+                new_height = int(img.height * scale_factor)
 
                 resized_img = img.resize((new_width, new_height), Image.LANCZOS)
                 if resized_img.mode == "RGBA":
