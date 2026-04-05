@@ -84,8 +84,7 @@ def main():
     brands = ["KUME", "GBH", "BLOSSOM", "LEMEME"]
     for brand in brands:
         logging.info(f"Checking {brand}...")
-        check(brand, email_recipients=["taro@sniarti.fi"])
-        # check(brand, email_recipients=os.environ[f"NOTIFYEES_{brand}"].split(","))
+        check(brand, email_recipients=os.environ[f"NOTIFYEES_{brand}"].split(","))
 
 
 if __name__ == "__main__":
