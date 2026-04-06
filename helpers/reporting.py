@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pprint
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,7 @@ class Reporting:
                         {
                             "updatePageElementAltText": {
                                 "objectId": element["objectId"],
-                                "title": element["title"],
+                                "title": element.get("title", ""),
                                 "description": alt_text,
                             }
                         }
