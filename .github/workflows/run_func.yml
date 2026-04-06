@@ -1,4 +1,5 @@
 name: Run a func
+run-name: "${{ github.event.inputs.script_path }} | ${{ github.event.inputs.func_name }}"
 
 on:
   workflow_dispatch:

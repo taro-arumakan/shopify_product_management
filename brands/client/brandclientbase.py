@@ -13,13 +13,23 @@ class BrandClientBase(Client, SanityChecks):
     VENDOR = ""
     LOCATIONS = []
     NEW_PRODUCT_TAG = "New Arrival"
-    REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = True
 
-    def __init__(self, product_sheet_start_row=None):
+    def __init__(
+        self,
+        product_sheet_start_row=None,
+        remove_existing_new_product_indicators=None,
+        products_season_tag=None,
+    ):
         assert self.SHOPNAME, "SHOPNAME must be set in subclass"
         assert self.VENDOR, "VENDOR must be set in subclass"
         assert self.LOCATIONS, "LOCATIONS must be set in subclass"
         self.product_sheet_start_row = product_sheet_start_row
+        self.remove_existing_new_product_indicators = (
+            remove_existing_new_product_indicators
+        )
+        if products_season_tag:
+            assert " " not in products_season_tag, "Prefer no whitespaces in a tag"
+        self.products_season_tag = products_season_tag
         from utils import credentials
 
         cred = credentials(self.SHOPNAME)
@@ -51,8 +61,15 @@ class BrandClientBase(Client, SanityChecks):
             handle_suffix=handle_suffix,
         )
 
+    def get_tags_from_product_input(self, product_input):
+        return product_input["tags"]
+
     def get_tags(self, product_input, additional_tags):
-        return [self.NEW_PRODUCT_TAG]
+        return ",".join(
+            [self.products_season_tag, self.NEW_PRODUCT_TAG]
+            + self.get_tags_from_product_input(product_input)
+            + (additional_tags or [])
+        )
 
     def get_size_field(self, product_input):
         raise NotImplementedError
@@ -137,7 +154,10 @@ class BrandClientBase(Client, SanityChecks):
                 self.update_badges_metafield(product["id"], badges)
 
     def pre_process_product_inputs(self, product_inputs):
-        if self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS:
+        assert (
+            self.remove_existing_new_product_indicators is not None
+        ), f"remove_existing_new_product_indicators must be set explicitly."
+        if self.remove_existing_new_product_indicators:
             self.remove_existing_new_proudct_tags()
             self.remove_existing_new_badges()
 
@@ -185,11 +205,14 @@ class BrandClientBase(Client, SanityChecks):
         scheduled_time=None,
         product_inputs_filter_func=None,
     ):
+        assert (
+            self.products_season_tag is not None
+        ), "products_season_tag must be set explicitly"
         product_inputs = self.product_inputs_by_sheet_name(sheet_name, handle_suffix)
         if not restart_at_product_title:
             i = 0
         else:
-            self.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+            self.remove_existing_new_product_indicators = False
             if restart_at_product_title == "DO NOT CREATE":
                 i = len(product_inputs)
             else:
@@ -200,6 +223,8 @@ class BrandClientBase(Client, SanityChecks):
                     raise RuntimeError(
                         f"Product with name {restart_at_product_title} not found in sheet {sheet_name}"
                     )
+        product_inputs = product_inputs[i:]
+
         if product_inputs_filter_func:
             product_inputs = list(filter(product_inputs_filter_func, product_inputs))
 

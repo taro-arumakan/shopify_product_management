@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO)
 EXCLUDE_APPAREL_TITLES = ["GARDEN BAG SMALL", "TULIP BAG"]
 TAG = "26SS_3.10"
 
+
 def create_26ss_color_only():
     client = GbhClientColorOptionOnly(product_sheet_start_row=1)
     sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR ONLY)"
@@ -22,13 +23,14 @@ def create_26ss_color_only():
         sheet_name,
         additional_tags=["New Arrival", TAG],
         product_inputs_filter_func=filter_func,
-        scheduled_time=scheduled_time
+        scheduled_time=scheduled_time,
     )
 
 
 def create_26ss_color_size():
-    client = GbhClient(product_sheet_start_row=1)
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    client = GbhClient(
+        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+    )
     sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR+SIZE)"
     filter_func = lambda pi: pi["title"] not in EXCLUDE_APPAREL_TITLES
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
@@ -41,7 +43,7 @@ def create_26ss_color_size():
         sheet_name,
         additional_tags=["New Arrival", TAG],
         product_inputs_filter_func=filter_func,
-        scheduled_time=scheduled_time
+        scheduled_time=scheduled_time,
     )
 
 

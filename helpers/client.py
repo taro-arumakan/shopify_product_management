@@ -255,7 +255,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface, Reporting):
             product_id, location_names=location_names
         )
 
-    def send_email(self, subject: str, body: str, to_addrs: list[str]):
+    def send_email(self, subject: str, body: str, to_addrs: list[str], subtype="plain"):
         smtp_host = os.getenv("SMTP_HOST")
         smtp_port = int(os.getenv("SMTP_PORT", "587"))
         smtp_user = os.getenv("SMTP_USER")
@@ -266,7 +266,7 @@ class Client(ShopifyGraphqlClient, GoogleApiInterface, Reporting):
         msg["Subject"] = subject
         msg["From"] = from_addr
         msg["To"] = ", ".join(to_addrs)
-        msg.set_content(body)
+        msg.set_content(body, subtype=subtype)
 
         with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.starttls()

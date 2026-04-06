@@ -12,7 +12,6 @@ class AlvanaClient(BrandClientBase):
     SHOPNAME = "alvanas"
     VENDOR = "alvana"
     LOCATIONS = ["Jingumae"]
-    REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
 
     def product_attr_column_map(self):
         return dict(
@@ -77,13 +76,6 @@ class AlvanaClient(BrandClientBase):
             "${MADEIN}", product_input["made_in"]
         )
         return description_html
-
-    def get_tags(self, product_input, additional_tags=None):
-        return ",".join(
-            [product_input["tags"]]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
 
     def get_size_field(self, product_input):
         return self.formatted_size_text_to_html_table(product_input["size_text"])

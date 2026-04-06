@@ -1,4 +1,4 @@
-name: Export monthly sales reports
+name: Export monthly brand reports
 
 on:
   schedule:

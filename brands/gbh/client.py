@@ -90,13 +90,6 @@ class GbhClient(BrandClientBase):
 
         return description_html
 
-    def get_tags(self, product_input, additional_tags=None):
-        return ",".join(
-            [product_input["tags"]]
-            + super().get_tags(product_input, additional_tags)
-            + (additional_tags or [])
-        )
-
     def get_size_field(self, product_input):
         if self.use_simple_size_format:
             return self.escape_html(product_input["size_text"])
@@ -227,7 +220,7 @@ class GbhClientSizeOptionOnly(GbhClient):
     def get_size_field(self, product_input):
         return product_input["size_text"]
 
-    def get_tags(self, product_input, additional_tags=None):
+    def get_tags_from_product_input(self, product_input):
         return []
 
 
@@ -399,8 +392,7 @@ def main():
         print(pi["title"])
         print(client.get_size_field(pi))
 
-    client = GbhClientColorOptionOnly()
-    client.REMOVE_EXISTING_NEW_PRODUCT_INDICATORS = False
+    client = GbhClientColorOptionOnly(remove_existing_new_product_indicators=False)
     for pi in client.product_inputs_by_sheet_name("APPAREL 25FW 2次 (COLOR ONLY)"):
         print(pi["title"])
         print(client.get_size_field(pi))

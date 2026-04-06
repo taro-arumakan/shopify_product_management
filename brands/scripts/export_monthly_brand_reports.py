@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 import utils
 
@@ -27,32 +27,8 @@ def update_graphs(brand_name, report_year, report_month):
 
 
 def run(brand, report_year, report_month):
-    graphs = [
-        "daily_store_kpi_graph",
-        "sales_by_product_graph",
-        "customer_type_donut",
-        "conversion_breakdown",
-    ]
     client = utils.client(brand)
-    target_folder_id = client.find_or_create_folder_by_name(
-        parent_folder_id=parent_folder_id,
-        folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
-    )
-    for graph in graphs:
-        logging.info(f"uploadging {graph} for {brand}")
-        output_path = f"/tmp/{brand}_{graph}.png"
-        client.generate_monthly(
-            getattr(client, f"generate_{graph}"),
-            output_path=output_path,
-            report_year=report_year,
-            report_month=report_month,
-        )
-        client.upload_to_drive(
-            filepath=output_path,
-            mimetype="image/png",
-            folder_id=target_folder_id,
-        )
-    logging.info(f"uploadging monthly report for {brand}")
+    logging.info(f"generating monthly report for {brand}")
     client.generate_monthly_brand_report(brand, report_year, report_month)
 
 

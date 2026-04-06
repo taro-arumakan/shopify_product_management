@@ -11,6 +11,13 @@ class Reporting:
     MONTHLY_IMAGES_FOLDER_ID = "13e7ejhsYGaelUwwteM3SC6_aMrhEsZW4"
     MONTHLY_REPORT_OUTPUT_FOLDER_ID = "1WCmMFHnFBnSin439p1OGFEyQdgDr9lNh"
 
+    monthly_report_graph_names = [
+        "store_kpi_by_day_graph",
+        "sales_by_product_graph",
+        "customer_type_donut",
+        "conversion_breakdown",
+    ]
+
     def get_logo_image_id(self, brand_name):
         res = self.find_by_folder_id_by_name(
             self.LOGO_FOLDER_ID, f"logo_{brand_name}.png"
@@ -175,13 +182,6 @@ class Reporting:
             },
         ]
 
-        graphs_names = [
-            "daily_store_kpi_graph",
-            "sales_by_product_graph",
-            "customer_type_donut",
-            "conversion_breakdown",
-        ]
-
         alt_text_file_id_map = {
             graph_name: self.get_graph_image_id(
                 report_year=report_year,
@@ -189,7 +189,7 @@ class Reporting:
                 brand_name=brand_name,
                 graph_name=graph_name,
             )
-            for graph_name in graphs_names
+            for graph_name in self.monthly_report_graph_names
         }
         alt_text_file_id_map.update(brand_logo=self.get_logo_image_id(brand_name))
 
