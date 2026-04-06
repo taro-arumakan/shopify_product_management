@@ -62,7 +62,10 @@ class BrandClientBase(Client, SanityChecks):
         )
 
     def get_tags_from_product_input(self, product_input):
-        return product_input["tags"]
+        tags = product_input.get("tags") or []
+        if isinstance(tags, str):
+            return [t.strip() for t in tags.split(",") if t.strip()]
+        return list(tags)
 
     def get_tags(self, product_input, additional_tags):
         return ",".join(

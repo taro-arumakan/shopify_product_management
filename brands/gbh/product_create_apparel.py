@@ -12,7 +12,7 @@ TAG = "26SS_2nd"
 def create_26ss_2nd_color_only():
     client = GbhClientColorOptionOnly(
         product_sheet_start_row=1,
-        remove_existing_new_product_indicators=False,
+        remove_existing_new_product_indicators=True,
         products_season_tag=TAG,
     )
     sheet_name = "26ss アパレル2次spring2차스프링오픈(COLOR ONLY) "
@@ -20,15 +20,15 @@ def create_26ss_2nd_color_only():
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
 
     scheduled_time = datetime.datetime(
-        2026, 3, 10, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 4, 7, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
-    # client.process_sheet_to_products(
-    #     sheet_name,
-    #     additional_tags=["New Arrival", "26SS_2nd_apparel"],
-    #     scheduled_time=scheduled_time,
-    #     product_inputs_filter_func=filter_func
-    # )
+    client.process_sheet_to_products(
+        sheet_name,
+        additional_tags=["New Arrival", "26SS_2nd_apparel"],
+        scheduled_time=scheduled_time,
+        product_inputs_filter_func=filter_func,
+    )
 
 
 def create_26ss_color_size():
@@ -53,7 +53,6 @@ def create_26ss_color_size():
 
 def main():
     create_26ss_2nd_color_only()
-
 
 
 if __name__ == "__main__":

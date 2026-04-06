@@ -19,14 +19,14 @@ def main():
     client.sanity_check_sheet(sheet_name)
 
     scheduled_time = datetime.datetime(
-        2026, 2, 27, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 4, 7, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
-    # client.process_sheet_to_products(
-    #     sheet_name,
-    #     additional_tags=["New Arrival", "26SS_2nd_pajamas"],
-    #     scheduled_time=scheduled_time
-    # )
+    client.process_sheet_to_products(
+        sheet_name,
+        additional_tags=["New Arrival", "26SS_2nd_pajamas"],
+        scheduled_time=scheduled_time,
+    )
 
 
 if __name__ == "__main__":

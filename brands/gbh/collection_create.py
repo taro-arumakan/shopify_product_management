@@ -1,56 +1,4 @@
-import logging
-from brands.gbh.client import GbhClient, GbhClientColorOptionOnly, GbhCosmeticClient
-
-logging.basicConfig(level=logging.INFO)
-
-EXCLUDE_APPAREL_TITLES = ["SLIM FIT BASIC SLEEVELESS", "DRAWSTRING PANTS"]
-EXCLUDE_COSMETIC_TITLES = []
-TAG = "26SS_2nd"
-
-
-def archive_apparel_products():
-    client = GbhClient()
-    for title in EXCLUDE_APPAREL_TITLES:
-        product = client.product_by_title(title)
-        client.archive_product(product)
-
-
-def archive_cosmetic_products():
-    client = GbhClient()
-    for title in EXCLUDE_COSMETIC_TITLES:
-        product = client.product_by_title(title)
-        client.archive_product(product)
-
-
-def create_26ss_2nd_color_only():
-    client = GbhClientColorOptionOnly(
-        product_sheet_start_row=1,
-        remove_existing_new_product_indicators=False,
-        products_season_tag=TAG,
-    )
-    sheet_name = "26ss アパレル2次spring2차스프링오픈(COLOR ONLY) "
-    filter_func = lambda pi: pi["title"] in EXCLUDE_APPAREL_TITLES
-
-    client.process_sheet_to_products(
-        sheet_name,
-        additional_tags=["New Arrival"],
-        product_inputs_filter_func=filter_func,
-    )
-
-
-def create_cosmetic():
-    client = GbhCosmeticClient(
-        product_sheet_start_row=1, remove_existing_new_product_indicators=False
-    )
-    sheet_name = "新コスメ(코스메신상)3/10open"
-    filter_func = lambda pi: pi["title"] in EXCLUDE_COSMETIC_TITLES
-
-    client.process_sheet_to_products(
-        sheet_name,
-        additional_tags=["New Arrival", TAG],
-        product_inputs_filter_func=filter_func,
-    )
-
+from brands.gbh.client import GbhClient
 
 skus = [
     "APC1SL030WHFF",
@@ -71,7 +19,7 @@ skus = [
     "APB3CD080IVFF",
     "APC1SK040WHFF",
     "APB1PT040RDFF",
-    "APB2PT020BKFF",
+    # "APB2PT020BKFF",
     "8800256756995",
     "8800256757008",
     "8800256757015",
@@ -211,43 +159,10 @@ skus = [
 ]
 
 
-def start_end_discounts(testrun=True, start_or_end="end"):
-    client = GbhClient()
-    variants = [client.variant_by_sku(sku) for sku in skus]
-
-    if start_or_end == "end":
-        client.revert_variant_prices(variants, testrun=testrun)
-    else:
-        new_prices_by_variant_id = {
-            v["id"]: int(int(v["compareAtPrice"] or v["price"]) * 0.9) for v in variants
-        }
-        client.update_variant_prices_by_dict(
-            variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
-        )
-
-
-def add_selected_skus_to_collection():
-    client = GbhClient()
-    target_collection_id = "328576434375"
-    target_skus = [
-        "APB1PT040RDFF",
-        "APB2PT020BKFF",
-        "APC1SL070RDFF",
-        "APC1SL070OLFF",
-        "APC1SL070BKFF",
-    ]
-    product_ids = [client.product_id_by_sku(sku) for sku in target_skus]
-    client.collection_add_products(target_collection_id, product_ids)
-
-
 def main():
-    archive_apparel_products()
-    # archive_cosmetic_products()
-    create_26ss_2nd_color_only()
-    add_selected_skus_to_collection()
-    # create_26ss_color_size()
-    # create_cosmetic()
-    start_end_discounts(testrun=False, start_or_end="start")
+    client = GbhClient()
+    product_ids = {client.product_id_by_sku(sku) for sku in skus}
+    client.collection_create_by_product_ids("26SS_2nd_Sale", product_ids)
 
 
 if __name__ == "__main__":
