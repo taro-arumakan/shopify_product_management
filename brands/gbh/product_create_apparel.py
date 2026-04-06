@@ -5,13 +5,17 @@ from brands.gbh.client import GbhClient, GbhClientColorOptionOnly
 
 logging.basicConfig(level=logging.INFO)
 
-EXCLUDE_APPAREL_TITLES = ["GARDEN BAG SMALL", "TULIP BAG"]
-TAG = "26SS_3.10"
+EXCLUDE_APPAREL_TITLES = ["SLIM FIT BASIC SLEEVELESS", "DRAWSTRING PANTS"]
+TAG = "26SS_2nd"
 
 
-def create_26ss_color_only():
-    client = GbhClientColorOptionOnly(product_sheet_start_row=1)
-    sheet_name = "26ss アパレル１次spring1차스프링오픈(COLOR ONLY)"
+def create_26ss_2nd_color_only():
+    client = GbhClientColorOptionOnly(
+        product_sheet_start_row=1,
+        remove_existing_new_product_indicators=False,
+        products_season_tag=TAG,
+    )
+    sheet_name = "26ss アパレル2次spring2차스프링오픈(COLOR ONLY) "
     filter_func = lambda pi: pi["title"] not in EXCLUDE_APPAREL_TITLES
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
 
@@ -19,12 +23,12 @@ def create_26ss_color_only():
         2026, 3, 10, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
-    client.process_sheet_to_products(
-        sheet_name,
-        additional_tags=["New Arrival", TAG],
-        product_inputs_filter_func=filter_func,
-        scheduled_time=scheduled_time,
-    )
+    # client.process_sheet_to_products(
+    #     sheet_name,
+    #     additional_tags=["New Arrival", "26SS_2nd_apparel"],
+    #     scheduled_time=scheduled_time,
+    #     product_inputs_filter_func=filter_func
+    # )
 
 
 def create_26ss_color_size():
@@ -48,8 +52,8 @@ def create_26ss_color_size():
 
 
 def main():
-    create_26ss_color_only()
-    create_26ss_color_size()
+    create_26ss_2nd_color_only()
+
 
 
 if __name__ == "__main__":
