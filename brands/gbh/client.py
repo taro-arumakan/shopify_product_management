@@ -1,6 +1,7 @@
 import datetime
 import logging
 import pathlib
+import re
 import string
 import textwrap
 from brands.client.brandclientbase import BrandClientBase
@@ -15,8 +16,18 @@ class GbhClient(BrandClientBase):
     VENDOR = "GBH"
     LOCATIONS = ["Shop location"]
 
-    def __init__(self, product_sheet_start_row=None, use_simple_size_format=False):
-        super().__init__(product_sheet_start_row=product_sheet_start_row)
+    def __init__(
+        self,
+        product_sheet_start_row=None,
+        use_simple_size_format=False,
+        remove_existing_new_product_indicators=None,
+        products_season_tag=None,
+    ):
+        super().__init__(
+            product_sheet_start_row=product_sheet_start_row,
+            remove_existing_new_product_indicators=remove_existing_new_product_indicators,
+            products_season_tag=products_season_tag,
+        )
         self.use_simple_size_format = use_simple_size_format
 
     def product_attr_column_map(self):
@@ -225,7 +236,100 @@ class GbhClientSizeOptionOnly(GbhClient):
 
 
 class GbhHomeClient(GbhClient):
-    pass
+    """
+    HOME シートのうち、次のようなブロック形式のサイズ欄を解釈する。
+      Short Sleeve Top
+      [S]
+      Length: 65 cm, Shoulder Width: 47 cm, ...
+    1行1サイズの [S] LENGTH ... / ... 形式は従来どおり formatted_size_text_to_html_table に任せる。
+    """
+
+    _GBH_HOME_SIZE_ONLY_LINE = re.compile(r"^\[[^\]]+\]\s*$")
+
+    @classmethod
+    def _looks_like_home_multiline_size_block(cls, size_text: str) -> bool:
+        if not size_text or not str(size_text).strip():
+            return False
+        return any(
+            cls._GBH_HOME_SIZE_ONLY_LINE.match(ln.strip())
+            for ln in size_text.splitlines()
+        )
+
+    @staticmethod
+    def _parse_home_comma_separated_key_value_line(line: str):
+        pairs = []
+        for part in re.split(r",\s+", line.strip()):
+            if ":" not in part:
+                continue
+            key, val = part.split(":", 1)
+            key, val = key.strip(), val.strip()
+            if key:
+                pairs.append((key, val))
+        return pairs
+
+    def _home_multiline_size_text_to_html(self, size_text: str) -> str:
+        lines = [ln.strip() for ln in size_text.splitlines() if ln.strip()]
+        section_title = None
+        pending_size_label = None
+        sections = []
+        current_rows = []
+
+        def flush_section():
+            nonlocal current_rows
+            if current_rows:
+                sections.append((section_title, list(current_rows)))
+                current_rows = []
+
+        for line in lines:
+            if self._GBH_HOME_SIZE_ONLY_LINE.match(line):
+                pending_size_label = line.strip()[1:-1].strip()
+                continue
+            if ":" in line and re.search(r":\s*[\d.]", line):
+                pairs = self._parse_home_comma_separated_key_value_line(line)
+                if not pairs or pending_size_label is None:
+                    raise RuntimeError(f"Invalid size text format: {line}")
+                row = {"Size": pending_size_label}
+                row.update(dict(pairs))
+                current_rows.append(row)
+                pending_size_label = None
+                continue
+
+            flush_section()
+            section_title = line
+            pending_size_label = None
+
+        flush_section()
+
+        if not sections:
+            raise RuntimeError("No size tables parsed from multiline format")
+
+        parts = []
+        for title, rows in sections:
+            if not rows:
+                continue
+            header_order = []
+            for row in rows:
+                for k in row:
+                    if k not in header_order:
+                        header_order.append(k)
+            headers = ["Size"] + [h for h in header_order if h != "Size"]
+            table_rows = [[row.get(h, "") for h in headers] for row in rows]
+            table_html = self.generate_table_html(headers, table_rows)
+            if title:
+                safe_title = self.escape_html(title)
+                parts.append(f"<h4>{safe_title}</h4>\n{table_html}")
+            else:
+                parts.append(table_html)
+
+        return "<br>\n<br>\n".join(parts)
+
+    def get_size_field(self, product_input):
+        if self.use_simple_size_format:
+            return self.escape_html(product_input["size_text"])
+        text = product_input["size_text"]
+        if self._looks_like_home_multiline_size_block(text):
+            return self._home_multiline_size_text_to_html(text)
+        return self.formatted_size_text_to_html_table(text)
 
 
 class GbhCosmeticClient(GbhClient):

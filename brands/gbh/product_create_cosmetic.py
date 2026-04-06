@@ -5,25 +5,28 @@ from brands.gbh.client import GbhClientColorOptionOnly, GbhCosmeticClient
 
 logging.basicConfig(level=logging.INFO)
 
-EXCLUDE_COSMETIC_TITLES = ["DEEP CLEANSING SHAMPOO", "BODY WASH NEROLI MUSK"]
-TAG = "26SS_3.10"
+FILTER_COSMETIC_TITLES = ["POCKET MULTI BALM", "TRAVEL KIT (single)"]
+TAG = "26SS_2nd"
 
 
 def main():
     client = GbhCosmeticClient(
-        product_sheet_start_row=1, remove_existing_new_product_indicators=False
+        product_sheet_start_row=1,
+        remove_existing_new_product_indicators=False,
+        products_season_tag=TAG,
     )
-    sheet_name = "新コスメ(코스메신상)3/10open"
-    filter_func = lambda pi: pi["title"] not in EXCLUDE_COSMETIC_TITLES
+
+    sheet_name = "26.04.07マルチバームオープン(26.04.07멀티밤오픈)"
+    filter_func = lambda pi: pi["title"] in FILTER_COSMETIC_TITLES
     client.sanity_check_sheet(sheet_name, product_inputs_filter_func=filter_func)
 
     scheduled_time = datetime.datetime(
-        2026, 3, 10, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 4, 7, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.process_sheet_to_products(
         sheet_name,
-        additional_tags=["New Arrival", TAG],
+        additional_tags=["New Arrival", "26SS_2nd_cosme"],
         product_inputs_filter_func=filter_func,
         scheduled_time=scheduled_time,
     )
