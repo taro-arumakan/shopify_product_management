@@ -52,7 +52,7 @@ def main():
         "SSIL",
     ]
     for brand in brands:
-        export_graphs(brand, report_date.year, report_date.month)
+        run(brand, report_date.year, report_date.month)
 
 
 def adhoc():
