@@ -21,9 +21,9 @@ class RohseoulClient(BrandClientBase):
             bag_category=string.ascii_lowercase.index("h"),
             category=string.ascii_lowercase.index("i"),
             description=string.ascii_lowercase.index("r"),
-            size_text=string.ascii_lowercase.index("v"),
-            material=string.ascii_lowercase.index("w"),
-            made_in=string.ascii_lowercase.index("x"),
+            size_text=string.ascii_lowercase.index("s"),
+            material=string.ascii_lowercase.index("t"),
+            made_in=string.ascii_lowercase.index("u"),
         )
 
     def option1_attr_column_map(self):
