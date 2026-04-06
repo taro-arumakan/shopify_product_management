@@ -6,6 +6,12 @@ logging.basicConfig(level=logging.DEBUG)
 import utils
 
 
+def export_graphs(brand, report_year, report_month):
+    client = utils.client(brand)
+    logging.info(f"generating graphs for {brand}")
+    client.generate_monthly_brand_report_graphs(brand, report_year, report_month)
+
+
 def update_graphs(brand_name, report_year, report_month):
     client = utils.client(brand_name)
     presentation_id = client.find_monthly_brand_report(
@@ -46,7 +52,7 @@ def main():
         "SSIL",
     ]
     for brand in brands:
-        run(brand, report_date.year, report_date.month)
+        export_graphs(brand, report_date.year, report_date.month)
 
 
 def adhoc():

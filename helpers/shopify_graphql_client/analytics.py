@@ -90,10 +90,10 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_net_sales_by_day(self, date_from, date_to, to_dataframe=True):
+    def report_sales_amount_by_day(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
-            SHOW net_sales
+            SHOW net_sales + shipping_charges AS sales_amount
             TIMESERIES day WITH TOTALS, CURRENCY 'JPY'
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
             ORDER BY day ASC
@@ -301,7 +301,7 @@ class Analytics:
 
     def generate_store_kpi_by_day_graph(self, output_path, date_from, date_to):
 
-        df_net_sales = self.report_net_sales_by_day(date_from, date_to)
+        df_net_sales = self.report_sales_amount_by_day(date_from, date_to)
         df_aov = self.report_average_order_value_by_day(date_from, date_to)
         df_cvr = self.report_sessions_by_day(date_from, date_to)
 
@@ -310,7 +310,7 @@ class Analytics:
         df["day"] = pd.to_datetime(df["day"])
 
         # 2. KPI Calculations (for the left panel)
-        net_sales = df["net_sales"].sum()
+        sales_amount = df["sales_amount"].sum()
         total_sessions = df["sessions"].sum()
         avg_cvr = float(df["conversion_rate__totals"][0])
         avg_aov = int(df["average_order_value__totals"][0])
@@ -325,7 +325,7 @@ class Analytics:
         ax_text.axis("off")
 
         kpis = [
-            ("TOTAL SALES", f"¥{int(net_sales):,}", 0.85),
+            ("TOTAL SALES", f"¥{int(sales_amount):,}", 0.85),
             ("TOTAL SESSIONS", f"{int(total_sessions):,}", 0.60),
             ("AVERAGE CVR", f"{avg_cvr:.2f}%", 0.35),
             ("AVERAGE AOV", f"¥{int(avg_aov):,}", 0.10),
@@ -346,7 +346,9 @@ class Analytics:
         ax1 = fig.add_subplot(gs[0, 1])
         ax1_twin = ax1.twinx()
 
-        ax1.bar(df["day"], df["net_sales"], color="#4E91C2", alpha=0.8, label="Sales")
+        ax1.bar(
+            df["day"], df["sales_amount"], color="#4E91C2", alpha=0.8, label="Sales"
+        )
         ax1_twin.plot(
             df["day"],
             df["sessions"],
