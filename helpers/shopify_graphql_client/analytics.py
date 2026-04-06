@@ -84,7 +84,7 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_total_sales(self, date_from, date_to, to_dataframe=True):
+    def report_daily_total_sales(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
             SHOW total_sales
@@ -94,7 +94,7 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_average_order_value(self, date_from, date_to, to_dataframe=True):
+    def report_daily_average_order_value(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sales
             SHOW orders, average_order_value
@@ -105,7 +105,7 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_sessions(self, date_from, date_to, to_dataframe=True):
+    def report_daily_sessions(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
             FROM sessions
             SHOW sessions, conversion_rate
@@ -254,11 +254,11 @@ class Analytics:
         plt.savefig(output_path, dpi=300)
         plt.close(fig)
 
-    def generate_store_kpi_graph(self, output_path, date_from, date_to):
+    def generate_daily_store_kpi_graph(self, output_path, date_from, date_to):
 
-        df_total_sales = self.report_total_sales(date_from, date_to)
-        df_aov = self.report_average_order_value(date_from, date_to)
-        df_cvr = self.report_sessions(date_from, date_to)
+        df_total_sales = self.report_daily_total_sales(date_from, date_to)
+        df_aov = self.report_daily_average_order_value(date_from, date_to)
+        df_cvr = self.report_daily_sessions(date_from, date_to)
 
         df_total_sales["total_sales"] = self.clean_numeric(
             df_total_sales["total_sales"]

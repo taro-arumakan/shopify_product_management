@@ -28,7 +28,7 @@ def update_graphs(brand_name, report_year, report_month):
 
 def run(brand, report_year, report_month):
     graphs = [
-        "store_kpi_graph",
+        "daily_store_kpi_graph",
         "sales_by_product_graph",
         "customer_type_donut",
         "conversion_breakdown",
