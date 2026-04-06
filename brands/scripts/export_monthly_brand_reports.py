@@ -12,6 +12,26 @@ def export_graphs(brand, report_year, report_month):
     client.generate_monthly_brand_report_graphs(brand, report_year, report_month)
 
 
+def update_graphs(brand_name, report_year, report_month):
+    client = utils.client(brand_name)
+    presentation_id = client.find_monthly_brand_report(
+        brand_name, report_year, report_month
+    )
+    alt_text_file_id_map = {
+        graph_name: client.get_graph_image_id(
+            report_year=report_year,
+            report_month=report_month,
+            brand_name=brand_name,
+            graph_name=graph_name,
+        )
+        for graph_name in ["store_kpi_by_day_graph"]
+    }
+    requests = client.populate_image_replacement_requests(
+        presentation_id, alt_text_file_id_map
+    )
+    client.replace_slide_contents(presentation_id, requests)
+
+
 def run(brand, report_year, report_month):
     client = utils.client(brand)
     logging.info(f"generating monthly report for {brand}")
