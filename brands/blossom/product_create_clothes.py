@@ -27,7 +27,7 @@ def create_26ss_drop4():
 
     client = BlossomClientClothes(
         product_sheet_start_row=1,
-        remove_existing_new_product_indicators=False,
+        remove_existing_new_product_indicators=True,
         products_season_tag=drop_tag,
     )
 
