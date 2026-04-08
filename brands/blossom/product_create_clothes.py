@@ -21,9 +21,34 @@ def update_series():
         client.process_series_products(series_name, products)
 
 
-def main():
-    sheet_name = "clothes(drop3) PS"
-    drop_tag = "2026_drop3"
+def create_26ss_drop4():
+    sheet_name = "clothes(drop4) PS"
+    drop_tag = "2026_drop4"
+
+    client = BlossomClientClothes(
+        product_sheet_start_row=1,
+        remove_existing_new_product_indicators=True,
+        products_season_tag=drop_tag,
+    )
+
+    client.sanity_check_sheet(sheet_name, pre_rewrite=False)
+
+    import zoneinfo
+
+    scheduled_time = datetime.datetime(
+        2026, 4, 9, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    )
+
+    client.process_sheet_to_products(
+        sheet_name=sheet_name,
+        additional_tags=["New Arrival"],
+        scheduled_time=scheduled_time,
+    )
+
+
+def create_26ss_drop5():
+    sheet_name = "clothes(drop5)"
+    drop_tag = "2026_drop5"
 
     client = BlossomClientClothes(
         product_sheet_start_row=1,
@@ -36,7 +61,7 @@ def main():
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 4, 3, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 4, 9, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.process_sheet_to_products(
@@ -72,5 +97,5 @@ def create_jp_exclusive():
 
 
 if __name__ == "__main__":
-    main()
-    create_jp_exclusive()
+    create_26ss_drop4()
+    create_26ss_drop5()
