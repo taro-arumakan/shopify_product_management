@@ -75,9 +75,6 @@ class BlossomClient(BrandClientBase):
         )
         return description_html
 
-    def get_tags(self, product_input, additional_tags=None):
-        return super().get_tags(product_input, additional_tags)
-
     def get_size_field(self, product_input):
         if size_text := product_input.get("size_text"):
             return self.formatted_size_text_to_html_table(size_text)
