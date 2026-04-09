@@ -3,20 +3,17 @@ from brands.rohseoul.client import RohseoulClient
 from brands.rohseoul.article_templates import article_template_campaign
 
 theme_dir = "/Users/taro/sc/rohseoul/"
-theme_name = "trove bag"
+theme_name = "prod"
 
-article_title = "Campaign - 25 Holiday"
-campaign_title = "CAMPAIGN - HOLIDAY 25"
-campaign_subtitle = "Silent Layer: Where Warmth Meets Still Air"
-campaign_description = r"""世界を白く染めた雪は、音さえも静かに包み込みます。
-そんな冬の静寂に寄り添うように、ROH SEOULはあたたかな素材と洗練されたデザインを選びました。
-雪に残る足跡のように、そっと記憶に残るディテール。
-冬という季節の感情を、ひとつひとつのフォルムに落とし込んだコレクションです。""".replace(
+article_title = "Campaign - 26 Summer"
+campaign_title = "CAMPAIGN - SUMMER 26"
+campaign_subtitle = "Soft Pause: Where Summer Gently Settles"
+campaign_description = r"""ROH SEOULのSUMMER 26コレクションは、“とどまる時間”から始まります。やわらかな陽光が均一に差し込む空間、開かれた窓からゆっくりと行き交う空気。時間は特定の方向を持たず、静かに流れていきます。過度な動きのないひとときの中で、休息は自然と深まり、感覚は穏やかに整えられていく。SUMMER 26はその静かな余白に寄り添い、次へと続く旅のための新たな余白をそっと残します。""".replace(
     "\n", "<br/>"
 )
 
-thumbnail_image_file_name = "25_Holiday_CP_cover.jpg"
-campaign_images_dir = "/Users/taro/Downloads/CAMPAIGN - HOLIDAY 25"
+thumbnail_image_file_name = "26_SUMMER_CP_cover.jpg"
+campaign_images_dir = "/Users/taro/Downloads/CAMPAIGN - Summer 26"
 
 
 def main():
