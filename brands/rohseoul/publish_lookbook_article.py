@@ -77,6 +77,7 @@ def process_a_subdir(client: RohseoulClient, subdir):
     section_seq = section_title.replace("#", "")
     dirpath = os.path.join(images_dir, subdir)
     file_names = sorted(os.listdir(dirpath))
+    file_names = [client.shopify_sanitized_filename(fn) for fn in file_names]
     res = {
         f"rich_text_{section_seq}": {
             "type": "rich-text",
@@ -154,13 +155,17 @@ def main():
             sections_dict.update(section_dict)
     theme_file_path = client.article_template_path(theme_dir, blog_title, article_title)
 
+    print("writing to", theme_file_path)
     client.write_to_json(
         theme_file_path, sections_dict=sections_dict, template_json=template_json
     )
+    print(f"adding article {article_title} to {theme_name}")
     client.add_article(
         blog_title,
         article_title,
-        thumbnail_image_name=thumbnail_image_file_name,
+        thumbnail_image_name=client.shopify_sanitized_filename(
+            thumbnail_image_file_name
+        ),
         theme_name=theme_name,
     )
 
