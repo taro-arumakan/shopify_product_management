@@ -4,16 +4,14 @@ import string
 from brands.rohseoul.client import RohseoulClient
 from brands.rohseoul.article_templates import article_template_lookbook
 
-lookbook_title = "Winter 25"
-article_title = "LOOKBOOK - 25 Winter"
+lookbook_title = "Summer 26"
+article_title = "LOOKBOOK - 26 Summer"
 
-images_dir = (
-    "/Users/taro/Downloads/drive-download-20251113T060403Z-1-001/LOOKBOOK - WINTER 25"
-)
-thumbnail_image_file_name = "25_Winter_lookbook_cover.jpg"
+images_dir = "/Users/taro/Downloads/LOOKBOOK - SUMMER 26"
+thumbnail_image_file_name = "LOOKBOOK_-_SUMMER_26_COVER_IMAGE.jpg"
 
 lookbook_products_sheet_id = "17tfWLDl6rcewWnwULPEz5nA7TVLz1ShEuKgILnP7xa4"
-lookbook_products_sheet_name = "LOOKBOOK - WINTER 25"
+lookbook_products_sheet_name = "LOOKBOOK - SUMMER 26"
 
 lookbook_products_start_row = 3
 lookbook_look_col = string.ascii_lowercase.index("b")
@@ -23,7 +21,7 @@ lookbook_link_col = string.ascii_lowercase.index("e")
 
 blog_title = "Lookbook"
 theme_dir = "/Users/taro/sc/rohseoul/"
-theme_name = "trove bag"
+theme_name = "prod"
 
 
 lookbook_products_dicts = None
