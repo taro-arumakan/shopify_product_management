@@ -30,13 +30,16 @@ def main():
         (p for p in os.listdir(campaign_images_dir) if p.endswith(".jpg")),
         key=client.natural_compare,
     )
+    file_names = [client.shopify_sanitized_filename(fn) for fn in file_names]
     client.article_from_image_file_names_and_product_titles(
         theme_dir=theme_dir,
         theme_name=theme_name,
         template_json=template_json,
         blog_title="Lookbook",
         article_title=article_title,
-        thumbnail_image_file_name=thumbnail_image_file_name,
+        thumbnail_image_file_name=client.shopify_sanitized_filename(
+            thumbnail_image_file_name
+        ),
         article_image_file_names=file_names,
         publish_article=True,
     )

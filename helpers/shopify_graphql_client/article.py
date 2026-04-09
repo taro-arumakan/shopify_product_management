@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+import re
 import string
 import time
 from helpers.shopify_graphql_client.article_json_template import article_json_template
@@ -19,6 +20,13 @@ punctuation_translator = str.maketrans({s: "_" for s in punctuation_chrs})
 
 
 class Article:
+
+    def shopify_sanitized_filename(self, filename):
+        name, ext = os.path.splitext(filename)
+        sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
+        sanitized_name = sanitized_name.rstrip("_")
+        return f"{sanitized_name}{ext}"
+
     def shopify_compatible_name(self, name):
         name = self.punctuations_to_underscore(name)
         if name.startswith("_"):
