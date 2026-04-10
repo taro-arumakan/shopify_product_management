@@ -59,6 +59,7 @@ jobs:
           SMTP_PASS=${{ secrets.SMTP_PASS }}
           SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
           NOTIFYEES_EXPIRED_ORDERS=${{ secrets.NOTIFYEES_EXPIRED_ORDERS }}
+          NOTIFYEES_EXPIRED_ORDERS_LEMEME=${{ secrets.NOTIFYEES_EXPIRED_ORDERS_LEMEME }}
           EOF
 
       - name: Run close_expired_orders script
