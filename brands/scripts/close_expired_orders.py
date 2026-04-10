@@ -56,7 +56,11 @@ def main():
     ]
     for brand in brands:
         logging.info(f"Checking {brand}...")
-        process(brand, os.environ["NOTIFYEES_EXPIRED_ORDERS"].split(","), dryrun=False)
+        recipients = (
+            os.environ.get(f"NOTIFYEES_EXPIRED_ORDERS_{brand.upper()}")
+            or os.environ["NOTIFYEES_EXPIRED_ORDERS"]
+        )
+        process(brand, recipients.split(","), dryrun=False)
 
 
 if __name__ == "__main__":

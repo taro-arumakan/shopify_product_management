@@ -181,11 +181,11 @@ class Orders:
             self.order_close(order_id=order_id)
 
     def get_expired_orders_for_cancellation(
-        self, processing_date: datetime.date = None
+        self, processing_date: datetime.date = None, days_older_than: int = 14
     ):
         """Expired orders older than 14 days that need cancellation and closure"""
         processing_date = processing_date or datetime.date.today()
         processing_date = datetime.datetime.combine(processing_date, datetime.time())
-        asof = processing_date - datetime.timedelta(days=14)
+        asof = processing_date - datetime.timedelta(days=days_older_than)
         asof = asof.astimezone(zoneinfo.ZoneInfo("Asia/Tokyo"))
         return self.orders_expired_not_closed(asof=asof)
