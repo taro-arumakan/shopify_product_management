@@ -128,7 +128,7 @@ def start_end_best_products_sale(testrun=True, start_or_end="end"):
     ]
 
     client = utils.client("ssil")
-    variants = [client.variant_by_sku(sku) for sku in set(skus)]
+    variants = client.variants_by_skus(set(skus))
 
     if start_or_end == "end":
         client.revert_variant_prices(variants=variants, testrun=testrun)
