@@ -163,9 +163,8 @@ def start_end_discounts(testrun=True, start_or_end="start"):
         "KM-25FW-BL02-BL-F": 0.9,
     }
 
-    skus = list(sku_discount_map.keys())
-    variants = [client.variant_by_sku(sku) for sku in skus]
- 
+    variants = client.variants_by_skus(sku_discount_map.keys())
+
     if start_or_end == "end":
         client.revert_variant_prices(variants, testrun=testrun)
     else:
@@ -176,7 +175,7 @@ def start_end_discounts(testrun=True, start_or_end="start"):
             base_price = int(v["compareAtPrice"] or v["price"])
             new_price = int(base_price * discount_rate)
             new_prices_by_variant_id[v["id"]] = new_price
-        
+
         client.update_variant_prices_by_dict(
             variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
         )
@@ -184,6 +183,7 @@ def start_end_discounts(testrun=True, start_or_end="start"):
 
 def main():
     start_end_discounts(testrun=True, start_or_end="start")
+
 
 if __name__ == "__main__":
     main()

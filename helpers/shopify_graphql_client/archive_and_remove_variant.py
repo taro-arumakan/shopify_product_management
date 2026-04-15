@@ -97,7 +97,7 @@ class ArchiveAndRemoveVariant:
             self.disable_inventory_tracking_by_sku(variant["sku"])
 
     def archive_and_remove_variant_by_skus(self, skus, option_name="カラー"):
-        variants = [self.variant_by_sku(sku, active_only=False) for sku in skus]
+        variants = self.variants_by_skus(skus, active_only=False)
         self.archive_and_remove_variants(
             [variant["id"] for variant in variants], option_name
         )

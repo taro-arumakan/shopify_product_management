@@ -6,21 +6,21 @@ def start_end_discounts(testrun=True, start_or_end="end"):
 
     # 26SS NEW COLOR 15% PROMOTION 3.5~3.15
     skus = [
-    "OVBAX26051GBK",
-    "OVBAX26051GGR",
-    "OVBAX26052GBK",
-    "OVBAX26052SCR",
-    "OVBAX26053BLK",
-    "OVBAX26053IGR",
-    "OVBAX26055BLK",
-    "OVBAX26055CMI",
-    "OVBAX26055OBG",
-    "OVBSX26055BLK",
-    "OVBSX26154BLK"
+        "OVBAX26051GBK",
+        "OVBAX26051GGR",
+        "OVBAX26052GBK",
+        "OVBAX26052SCR",
+        "OVBAX26053BLK",
+        "OVBAX26053IGR",
+        "OVBAX26055BLK",
+        "OVBAX26055CMI",
+        "OVBAX26055OBG",
+        "OVBSX26055BLK",
+        "OVBSX26154BLK",
     ]
 
-    variants = [client.variant_by_sku(sku) for sku in skus]
- 
+    variants = client.variants_by_skus(skus)
+
     if start_or_end == "end":
         client.revert_variant_prices(variants, testrun=testrun)
     else:

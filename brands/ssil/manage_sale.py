@@ -144,4 +144,4 @@ def start_end_best_products_sale(testrun=True, start_or_end="end"):
 
 
 if __name__ == "__main__":
-    start_end_best_products_sale(testrun=True, start_or_end="start")
+    start_end_best_products_sale(testrun=False, start_or_end="start")

@@ -131,7 +131,7 @@ skus = [
 
 def start_end_discounts_2025_new_year(testrun=True, start_or_end="end"):
     client = RohseoulClient()
-    variants = [client.variant_by_sku(sku) for sku in skus]
+    variants = client.variants_by_skus(skus)
 
     if start_or_end == "end":
         client.revert_variant_prices(variants=variants, testrun=testrun)

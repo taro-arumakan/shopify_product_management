@@ -20,7 +20,7 @@ product_inputs = client.product_inputs_by_sheet_name("PILLOWCASE 修正")
 skus = [
     v2["sku"] for p in product_inputs for v1 in p["options"] for v2 in v1["options"]
 ]
-variants = [client.variant_by_sku(sku) for sku in skus]
+variants = client.variants_by_skus(skus)
 new_prices_by_variant_id = {
     variant["id"]: int(int(variant["compareAtPrice"]) * 0.9) for variant in variants
 }

@@ -5,7 +5,7 @@ rows = client.worksheet_rows(
     "1fGXTDfe10F4hBG08JG5tj4Ae4bKgXtJtJYWJnPTUd4w", "On sale tab list"
 )
 
-variants = [client.variant_by_sku(row[5]) for row in rows[2:18]]
+variants = client.variants_by_skus([row[5] for row in rows[2:18]])
 product_ids = set(v["product"]["id"] for v in variants)
 
 for product_id in product_ids:

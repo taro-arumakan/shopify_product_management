@@ -213,7 +213,7 @@ skus = [
 
 def start_end_discounts(testrun=True, start_or_end="end"):
     client = GbhClient()
-    variants = [client.variant_by_sku(sku) for sku in skus]
+    variants = client.variants_by_skus(skus)
 
     if start_or_end == "end":
         client.revert_variant_prices(variants, testrun=testrun)
