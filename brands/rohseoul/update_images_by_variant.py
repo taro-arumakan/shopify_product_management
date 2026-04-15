@@ -13,7 +13,7 @@ IMAGES_LOCAL_DIR = f"{pathlib.Path.home()}/Downloads/{datetime.date.today():%Y%m
 
 def main():
     client = utils.client("rohseoul")
-    rows = client.worksheet_rows(client.sheet_id, "26ss 1rd(CO)")[2:]
+    rows = client.worksheet_rows(client.sheet_id, "26ss 2nd(CO)")[2:]
     sku_column_index = string.ascii_lowercase.index("f")
     drive_link_column_index = string.ascii_lowercase.index("q")
     for row in rows:
