@@ -210,3 +210,54 @@ class OnlineStore:
                 f"Error creating URL redirect: {res['urlRedirectCreate']['userErrors']}"
             )
         return res["urlRedirectCreate"]["urlRedirect"]
+
+    def upsert_theme_file(self, theme_id, file_name, contents):
+        query = """
+            mutation themeFilesUpsert($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $themeId: ID!) {
+                themeFilesUpsert(files: $files, themeId: $themeId) {
+                    upsertedThemeFiles {
+                        filename
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+        """
+        variables = {
+            "themeId": theme_id,
+            "files": [
+                {"filename": file_name, "body": {"type": "TEXT", "value": contents}},
+            ],
+        }
+        res = self.run_query(query, variables)
+        if res["themeFilesUpsert"]["userErrors"]:
+            raise RuntimeError(
+                f"Error updating a theme file: {res['themeFilesUpsert']['userErrors']}"
+            )
+        return res["themeFilesUpsert"]["upsertedThemeFiles"]
+
+
+def main():
+    import utils
+
+    client = utils.client("ROH")
+    theme = client.themes_by_names("dev")[0]
+    current_content = client.theme_file_by_theme_name_and_file_name(
+        theme["name"], "templates/index.json"
+    )[0]["body"]["content"]
+    new_content = current_content.replace(
+        "shopify://shop_images/roh_26ss_pc_7w.jpg",
+        "shopify://shop_images/roh_26ss_pc_6w.jpg",
+    )
+    new_content = new_content.replace(
+        "shopify://shop_images/roh_26ss_m_7w.jpg",
+        "shopify://shop_images/roh_26ss_m_6w.jpg",
+    )
+    res = client.upsert_theme_file(theme["id"], "templates/index.json", new_content)
+    print(res)
+
+
+if __name__ == "__main__":
+    main()
