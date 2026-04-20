@@ -91,22 +91,17 @@ class MergeProductsAsVariants:
                 f"/products/{product['handle']}", f"/products/{new_product_handle}"
             )
 
-    def merge_products_as_variants_by_title(self, product_title, location_names):
+    def merge_products_as_variants(self, products, new_product_title, location_names):
         """
         Total selling stock quantity gets added to the first in the list of location_names.
         Pass the primary location first e.g. ["Archivépke Warehouse", "Envycube Warehouse"].
         """
-        products = self.products_by_query(
-            f"title:'{product_title}' AND status:'ACTIVE'", sort_key="CREATED_AT"
-        )
-        assert (
-            len(products) >= 2
-        ), f"need at least 2 products to merge for title {product_title}"
+        assert len(products) >= 2, f"need at least 2 products to merge: {products}"
         products = list(reversed(products))
         logger.info(f"Merging products:\n{"\n".join(p['handle'] for p in products)}")
         merged = self.duplicate_product(
             products[0]["id"],
-            products[0]["title"],
+            new_product_title,
             include_images=True,
             new_status="DRAFT",
         )
@@ -132,6 +127,16 @@ class MergeProductsAsVariants:
         logger.info(f"Activating the new product")
         self.enable_and_activate_inventory_by_product_id(new_product_id, location_names)
         self.activate_and_publish_by_product_id(new_product_id)
+
+    def merge_products_as_variants_by_title(self, product_title, location_names):
+        products = self.products_by_query(
+            f"title:'{product_title}' AND status:'ACTIVE'", sort_key="CREATED_AT"
+        )
+        self.merge_products_as_variants(
+            products=products,
+            new_product_title=product_title,
+            location_names=location_names,
+        )
 
 
 def main():
