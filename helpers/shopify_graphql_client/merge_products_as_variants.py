@@ -91,7 +91,7 @@ class MergeProductsAsVariants:
                 f"/products/{product['handle']}", f"/products/{new_product_handle}"
             )
 
-    def merge_products_as_variants(self, product_title, location_names):
+    def merge_products_as_variants_by_title(self, product_title, location_names):
         """
         Total selling stock quantity gets added to the first in the list of location_names.
         Pass the primary location first e.g. ["Archivépke Warehouse", "Envycube Warehouse"].
@@ -139,7 +139,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
     client = utils.client("rohseoul")
-    client.merge_products_as_variants("Tin square shoulder bag", ["Shop location"])
+    client.merge_products_as_variants_by_title("Tin square shoulder bag")
 
 
 if __name__ == "__main__":

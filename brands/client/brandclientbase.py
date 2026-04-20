@@ -112,8 +112,8 @@ class BrandClientBase(Client, SanityChecks):
     def update_stock(self, product_input):
         return super().update_stock(product_input, self.LOCATIONS[0])
 
-    def merge_products_as_variants(self, product_title):
-        return super().merge_products_as_variants(
+    def merge_products_as_variants_by_title(self, product_title):
+        return super().merge_products_as_variants_by_title(
             product_title, location_names=self.LOCATIONS
         )
 
@@ -125,7 +125,7 @@ class BrandClientBase(Client, SanityChecks):
                 if orders:
                     return True
 
-    def merge_existing_products_as_variants(self):
+    def merge_existing_products_as_variants_by_title(self):
         product_titles = self.product_titles_with_multiple_products()
         for product_title in product_titles:
             if self.has_open_orders(product_title):
@@ -134,7 +134,7 @@ class BrandClientBase(Client, SanityChecks):
                 )
             else:
                 logger.info(f"merging products with title {product_title} as variants")
-                self.merge_products_as_variants(product_title)
+                self.merge_products_as_variants_by_title(product_title)
 
     def remove_existing_new_proudct_tags(self):
         products = self.products_by_tag(self.NEW_PRODUCT_TAG)

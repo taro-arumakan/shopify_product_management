@@ -11,7 +11,7 @@ def main():
         "Mini Pulpy hobo bag Nylon",
     ]
     for title in titles:
-        client.merge_products_as_variants(title)
+        client.merge_products_as_variants_by_title(title)
 
 
 if __name__ == "__main__":
