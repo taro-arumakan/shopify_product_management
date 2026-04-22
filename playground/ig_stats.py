@@ -2,6 +2,7 @@ import datetime
 import os
 import requests
 import pandas as pd
+import zoneinfo
 
 from dotenv import load_dotenv
 
@@ -13,35 +14,39 @@ VERSION = "v25.0"
 
 
 def stats():
-    today = datetime.datetime.now()
-    seven_days_ago = int((today - datetime.timedelta(days=7)).timestamp())
-
-    url = f"https://graph.facebook.com/{VERSION}/{IG_USER_ID}/media"
-    res = requests.get(
-        url,
-        params={"since": seven_days_ago, "until": today, "access_token": ACCESS_TOKEN},
+    today = datetime.datetime(
+        2026, 4, 14, 23, 59, 59, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
+    seven_days_ago = today - datetime.timedelta(days=7)
+    today = int(today.timestamp())
+    seven_days_ago = int(seven_days_ago.timestamp())
 
-    total_reach = 0
-    total_saves = 0
+    # url = f"https://graph.facebook.com/{VERSION}/{IG_USER_ID}/media"
+    # res = requests.get(
+    #     url,
+    #     params={"since": seven_days_ago, "until": today, "access_token": ACCESS_TOKEN},
+    # )
 
-    for item in res.json()["data"]:
-        i_url = f"https://graph.facebook.com/{VERSION}/{item['id']}/insights"
-        i_res = requests.get(
-            i_url, params={"metric": "reach,saved", "access_token": ACCESS_TOKEN}
-        )
+    # total_reach = 0
+    # total_saves = 0
 
-        # Extract values
-        metrics = {m["name"]: m["values"][0]["value"] for m in i_res.json()["data"]}
-        total_reach += metrics.get("reach", 0)
-        total_saves += metrics.get("saved", 0)
+    # for item in res.json()["data"]:
+    #     i_url = f"https://graph.facebook.com/{VERSION}/{item['id']}/insights"
+    #     i_res = requests.get(
+    #         i_url, params={"metric": "reach,saved", "access_token": ACCESS_TOKEN}
+    #     )
+
+    #     # Extract values
+    #     metrics = {m["name"]: m["values"][0]["value"] for m in i_res.json()["data"]}
+    #     total_reach += metrics.get("reach", 0)
+    #     total_saves += metrics.get("saved", 0)
 
     # 3. Fetch Account-Level Profile Visits
     acc_url = f"https://graph.facebook.com/{VERSION}/{IG_USER_ID}/insights"
     acc_res = requests.get(
         acc_url,
         params={
-            "metric": "profile_views,website_clicks",
+            "metric": "profile_views,website_clicks,reach,saves,total_interactions",
             "metric_type": "total_value",
             "period": "day",
             "since": seven_days_ago,
@@ -50,18 +55,25 @@ def stats():
         },
     )
 
-    # Sum up the daily profile views for the week
-    profile_visits = [
-        d for d in acc_res.json()["data"] if d["name"] == "profile_views"
-    ][0]["total_value"]["value"]
-    website_clicks = [
-        d for d in acc_res.json()["data"] if d["name"] == "website_clicks"
-    ][0]["total_value"]["value"]
+    acc_data = acc_res.json()["data"]
 
-    print("total reach:", total_reach)
-    print("total_saves:", total_saves)
-    print("profile_visits:", profile_visits)
+    reach = [d for d in acc_data if d["name"] == "reach"][0]["total_value"]["value"]
+    saves = [d for d in acc_data if d["name"] == "saves"][0]["total_value"]["value"]
+    profile_views = [d for d in acc_data if d["name"] == "profile_views"][0][
+        "total_value"
+    ]["value"]
+    website_clicks = [d for d in acc_data if d["name"] == "website_clicks"][0][
+        "total_value"
+    ]["value"]
+    total_interactions = [d for d in acc_data if d["name"] == "total_interactions"][0][
+        "total_value"
+    ]["value"]
+
+    print("reach:", reach)
+    print("saves:", saves)
+    print("profile_views:", profile_views)
     print("website_clicks:", website_clicks)
+    print("total_interactions:", total_interactions)
 
 
 def get_media_performance():
