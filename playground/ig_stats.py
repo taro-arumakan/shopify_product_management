@@ -56,7 +56,7 @@ def paid_stats(
     params = {
         "level": "account",
         "fields": "impressions,reach,inline_link_clicks,outbound_clicks,spend",
-        "filtering": "[{'field':'publisher_platform','operator':'IN','value':['instagram']}]",
+        # "filtering": "[{'field':'publisher_platform','operator':'IN','value':['instagram']}]",
         "time_range": f"{{'since':'{start_date:%Y-%m-%d}','until':'{end_date:%Y-%m-%d}'}}",
         "access_token": token,
     }
@@ -66,7 +66,7 @@ def paid_stats(
 
 
 if __name__ == "__main__":
-    brands = ["blossomhcompany", "lememek", "archive-epke", "ssilkr"]
+    brands = ["blossomhcompany", "lememek", "archive-epke", "ssilkr", "apricot-studios"]
     report_date = datetime.date(2026, 4, 14)
     end_date = datetime.datetime.combine(
         report_date, datetime.time(23, 59, 59), tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
