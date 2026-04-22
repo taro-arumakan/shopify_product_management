@@ -88,7 +88,7 @@ class RohseoulClient(BrandClientBase):
         return self.get_size_table_html(product_input["size_text"])
 
     def pre_process_product_inputs(self, product_inputs):
-        self.merge_existing_products_as_variants()
+        self.merge_existing_products_as_variants_by_title()
         super().pre_process_product_inputs(product_inputs=product_inputs)
 
 

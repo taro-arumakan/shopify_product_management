@@ -11,7 +11,7 @@ def main():
     ]
     for title in titles:
         assert not client.has_open_orders(title), f"Outstanding orders for {title}"
-        client.merge_products_as_variants(title)
+        client.merge_products_as_variants_by_title(title)
 
 
 if __name__ == "__main__":

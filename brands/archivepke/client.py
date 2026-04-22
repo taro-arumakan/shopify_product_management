@@ -76,7 +76,7 @@ class ArchivepkeClient(BrandClientBase):
             logger.warning(f"no size_text for {product_input['title']}")
 
     def pre_process_product_inputs(self, product_inputs):
-        self.merge_existing_products_as_variants()
+        self.merge_existing_products_as_variants_by_title()
         super().pre_process_product_inputs(product_inputs=product_inputs)
 
 
