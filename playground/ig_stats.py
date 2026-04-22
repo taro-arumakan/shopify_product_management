@@ -8,12 +8,27 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-ACCESS_TOKEN = os.environ["blossomhcompany-IG_TOKEN"]
+META_TOKEN = os.environ["blossomhcompany-META_TOKEN"]
 IG_USER_ID = os.environ["blossomhcompany-IG_USER_ID"]
+AD_ACCOUNT_ID = os.environ["blossomhcompany-META_AD_ACCOUNT_ID"]
+
+META_TOKEN = os.environ["lememek-META_TOKEN"]
+IG_USER_ID = os.environ["lememek-IG_USER_ID"]
+AD_ACCOUNT_ID = os.environ["lememek-META_AD_ACCOUNT_ID"]
+
+META_TOKEN = os.environ["archive-epke-META_TOKEN"]
+IG_USER_ID = os.environ["archive-epke-IG_USER_ID"]
+AD_ACCOUNT_ID = os.environ["archive-epke-META_AD_ACCOUNT_ID"]
+
+META_TOKEN = os.environ["ssilkr-META_TOKEN"]
+IG_USER_ID = os.environ["ssilkr-IG_USER_ID"]
+AD_ACCOUNT_ID = os.environ["ssilkr-META_AD_ACCOUNT_ID"]
+
+
 VERSION = "v25.0"
 
 
-def stats():
+def omni_stats():
     today = datetime.datetime(
         2026, 4, 14, 23, 59, 59, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
@@ -24,7 +39,7 @@ def stats():
     # url = f"https://graph.facebook.com/{VERSION}/{IG_USER_ID}/media"
     # res = requests.get(
     #     url,
-    #     params={"since": seven_days_ago, "until": today, "access_token": ACCESS_TOKEN},
+    #     params={"since": seven_days_ago, "until": today, "META_TOKEN": META_TOKEN},
     # )
 
     # total_reach = 0
@@ -33,7 +48,7 @@ def stats():
     # for item in res.json()["data"]:
     #     i_url = f"https://graph.facebook.com/{VERSION}/{item['id']}/insights"
     #     i_res = requests.get(
-    #         i_url, params={"metric": "reach,saved", "access_token": ACCESS_TOKEN}
+    #         i_url, params={"metric": "reach,saved", "META_TOKEN": META_TOKEN}
     #     )
 
     #     # Extract values
@@ -51,7 +66,7 @@ def stats():
             "period": "day",
             "since": seven_days_ago,
             "until": today,
-            "access_token": ACCESS_TOKEN,
+            "access_token": META_TOKEN,
         },
     )
 
@@ -76,10 +91,24 @@ def stats():
     print("total_interactions:", total_interactions)
 
 
+def get_paid_only_metrics(ad_account_id, token, since, until):
+    url = f"https://graph.facebook.com/{VERSION}/act_{ad_account_id}/insights"
+
+    params = {
+        "level": "account",
+        "fields": "reach,impressions,inline_link_clicks,spend",
+        "time_range": f"{{'since':'{since}','until':'{until}'}}",
+        "access_token": token,
+    }
+
+    response = requests.get(url, params=params).json()
+    return response["data"][0]
+
+
 def get_media_performance():
     # 1. Fetch recent media
     media_url = f"https://graph.facebook.com/{VERSION}/{IG_USER_ID}/media"
-    res = requests.get(media_url, params={"access_token": ACCESS_TOKEN})
+    res = requests.get(media_url, params={"access_token": META_TOKEN})
     media_ids = [item["id"] for item in res.json()["data"]]
 
     report_data = []
@@ -89,7 +118,7 @@ def get_media_performance():
         metrics = "reach,saved,total_interactions"
         insight_url = f"https://graph.facebook.com/{VERSION}/{m_id}/insights"
         i_res = requests.get(
-            insight_url, params={"metric": metrics, "access_token": ACCESS_TOKEN}
+            insight_url, params={"metric": metrics, "access_token": META_TOKEN}
         )
 
         # Flatten the nested JSON for your DataFrame
@@ -124,4 +153,14 @@ def list_brand_ids(token):
 
 
 if __name__ == "__main__":
-    stats()
+    omni_stats()
+    # Note: Marketing API uses 'YYYY-MM-DD' strings for time_range,
+    # unlike the IG API which uses Unix timestamps.
+    paid_stats = get_paid_only_metrics(
+        AD_ACCOUNT_ID, META_TOKEN, "2026-04-08", "2026-04-14"
+    )
+
+    print(f"Paid Impressions: {paid_stats['impressions']}")
+    print(f"Paid Reach: {paid_stats['reach']}")
+    print(f"Paid Link Clicks: {paid_stats['inline_link_clicks']}")
+    print(f"Spend: {paid_stats['spend']}")
