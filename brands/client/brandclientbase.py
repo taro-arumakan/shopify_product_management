@@ -38,6 +38,9 @@ class BrandClientBase(Client, SanityChecks):
             access_token=cred.access_token,
             google_credential_path=cred.google_credential_path,
             sheet_id=cred.google_sheet_id,
+            ig_user_id=cred.ig_user_id,
+            meta_ad_account_id=cred.meta_ad_account_id,
+            meta_token=cred.meta_token,
         )
 
     def product_attr_column_map(self):

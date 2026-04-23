@@ -7,17 +7,35 @@ from email.message import EmailMessage
 from helpers.reporting import Reporting
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
+from helpers.meta_reporting_interface import MetaReportingInterface
 
 logger = logging.getLogger(__name__)
 
 
-class Client(ShopifyGraphqlClient, GoogleApiInterface, Reporting):
-    def __init__(self, shop_name, access_token, google_credential_path, sheet_id=None):
+class Client(
+    ShopifyGraphqlClient, GoogleApiInterface, Reporting, MetaReportingInterface
+):
+    def __init__(
+        self,
+        shop_name,
+        access_token,
+        google_credential_path,
+        sheet_id=None,
+        ig_user_id=None,
+        meta_ad_account_id=None,
+        meta_token=None,
+    ):
         ShopifyGraphqlClient.__init__(
             self, shop_name=shop_name, access_token=access_token
         )
         GoogleApiInterface.__init__(
             self, google_credential_path=google_credential_path, sheet_id=sheet_id
+        )
+        MetaReportingInterface.__init__(
+            self,
+            ig_user_id=ig_user_id,
+            meta_ad_account_id=meta_ad_account_id,
+            meta_token=meta_token,
         )
 
     def add_product_images(

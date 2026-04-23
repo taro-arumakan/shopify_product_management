@@ -19,17 +19,20 @@ def credentials(shop_name):
         access_token: str
         google_credential_path: str
         google_sheet_id: str
+        ig_user_id: str
+        meta_ad_account_id: str
+        meta_token: str
 
     assert load_dotenv(override=True)
-    access_token = os.environ[f"{shop_name}-ACCESS_TOKEN"]
-    google_credential_path = os.environ["GOOGLE_CREDENTIAL_PATH"]
-    google_sheet_id = os.environ.get(f"{shop_name}-GSPREAD_ID")
-    res = {
-        "shop_name": shop_name,
-        "access_token": access_token,
-        "google_credential_path": google_credential_path,
-        "google_sheet_id": google_sheet_id,
-    }
+    res = dict(
+        shop_name=shop_name,
+        access_token=os.environ[f"{shop_name}-ACCESS_TOKEN"],
+        google_credential_path=os.environ["GOOGLE_CREDENTIAL_PATH"],
+        google_sheet_id=os.environ.get(f"{shop_name}-GSPREAD_ID"),
+        ig_user_id=os.environ.get(f"{shop_name}-IG_USER_ID"),
+        meta_ad_account_id=os.environ.get(f"{shop_name}-META_AD_ACCOUNT_ID"),
+        meta_token=os.environ.get(f"{shop_name}-META_TOKEN"),
+    )
     return Credentials(**res)
 
 

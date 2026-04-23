@@ -56,7 +56,7 @@ def paid_stats(
     params = {
         "level": "account",
         "fields": "impressions,reach,inline_link_clicks,outbound_clicks,spend",
-        # "filtering": "[{'field':'publisher_platform','operator':'IN','value':['instagram']}]",
+        "filtering": "[{'field':'publisher_platform','operator':'IN','value':['instagram']}]",
         "time_range": f"{{'since':'{start_date:%Y-%m-%d}','until':'{end_date:%Y-%m-%d}'}}",
         "access_token": token,
     }
