@@ -117,6 +117,7 @@ class OnlineStore:
                     id
                     handle
                     title
+                    body
                     createdAt
                     publishedAt
                     templateSuffix
@@ -140,6 +141,37 @@ class OnlineStore:
         if len(res) != 1:
             raise RuntimeError(f"Error getting page id for {page_title}: {res}")
         return res[0]["id"]
+
+    def page_create(self, page_title, page_body):
+        query = """
+        mutation CreatePage($page: PageCreateInput!) {
+            pageCreate(page: $page) {
+                page {
+                    id
+                    title
+                    handle
+                }
+                userErrors {
+                    code
+                    field
+                    message
+                }
+            }
+        }
+        """
+        variables = {
+            "page": {
+                "title": page_title,
+                # "handle": "new-page-title",
+                "body": page_body,
+                "isPublished": True,
+                # "templateSuffix": "custom"
+            }
+        }
+        res = self.run_query(query, variables)
+        if error := res["pageCreate"]["userErrors"]:
+            raise RuntimeError(f"Failed to create a page: {error}")
+        return res["pageCreate"]["page"]
 
     def url_redirects_by_query(self, query_string):
         query = """
@@ -242,21 +274,22 @@ class OnlineStore:
 def main():
     import utils
 
-    client = utils.client("ROH")
-    theme = client.themes_by_names("dev")[0]
-    current_content = client.theme_file_by_theme_name_and_file_name(
-        theme["name"], "templates/index.json"
-    )[0]["body"]["content"]
-    new_content = current_content.replace(
-        "shopify://shop_images/roh_26ss_pc_7w.jpg",
-        "shopify://shop_images/roh_26ss_pc_6w.jpg",
-    )
-    new_content = new_content.replace(
-        "shopify://shop_images/roh_26ss_m_7w.jpg",
-        "shopify://shop_images/roh_26ss_m_6w.jpg",
-    )
-    res = client.upsert_theme_file(theme["id"], "templates/index.json", new_content)
-    print(res)
+    client = utils.client("LEMEME")
+    page_title = "ゴールデンウィーク期間中の営業・配送のお知らせ"
+    page = client.pages_by_title(page_title)[0]
+    page_body_template = page["body"]
+    for brand in [
+        "ROH SEOUL",
+        "KUMÉ",
+        "Archivépke",
+        "GBH",
+        "Apricot Studios",
+        "Blossom",
+        "SSIL",
+    ]:
+        client = utils.client(brand)
+        body = page_body_template.replace("LEMEME", brand)
+        client.page_create(page_title=page_title, page_body=body)
 
 
 if __name__ == "__main__":
