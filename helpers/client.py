@@ -21,6 +21,7 @@ class Client(
         access_token,
         google_credential_path,
         sheet_id=None,
+        fb_page_id=None,
         ig_user_id=None,
         meta_ad_account_id=None,
         meta_token=None,
@@ -33,6 +34,7 @@ class Client(
         )
         MetaReportingInterface.__init__(
             self,
+            fb_page_id=fb_page_id,
             ig_user_id=ig_user_id,
             meta_ad_account_id=meta_ad_account_id,
             meta_token=meta_token,
