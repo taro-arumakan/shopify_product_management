@@ -180,7 +180,16 @@ class Variants:
         prices,
         stocks,
         location_id,
+        metafieldss=None,
     ):
+        metafieldss = metafieldss or ([] * len(skus))
+        assert (
+            len(variant_option_valuess)
+            == len(skus)
+            == len(prices)
+            == len(stocks)
+            == len(metafieldss)
+        ), "length of variant attributes do not match"
         for media_id in media_ids or []:
             logger.info(f"Assigning media ID {media_id} to product ID {product_id}")
             self.assign_existing_image_to_products_by_id(media_id, [product_id])
@@ -198,13 +207,19 @@ class Variants:
                 },
                 "mediaId": variant_media_id,
                 "price": price,
+                "metafields": metafields,
                 "inventoryQuantities": {
                     "availableQuantity": stock,
                     "locationId": location_id,
                 },
             }
-            for variant_option_values, sku, variant_media_id, price, stock in zip(
-                variant_option_valuess, skus, variant_media_ids, prices, stocks
+            for variant_option_values, sku, variant_media_id, price, stock, metafields in zip(
+                variant_option_valuess,
+                skus,
+                variant_media_ids,
+                prices,
+                stocks,
+                metafieldss,
             )
         ]
         return self.product_variants_bulk_create(product_id, variants)
