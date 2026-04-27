@@ -32,8 +32,10 @@ class MergeProductsAsVariants:
         option_names = variant_option_names or [
             o["name"] for o in right["variants"]["nodes"][0]["selectedOptions"]
         ]
-        location_id = self.location_id_by_name(location_name)
-
+        metafieldss = [
+            [m for m in v["metafields"]["nodes"] if m["namespace"] == "custom"]
+            for v in right["variants"]["nodes"]
+        ]
         option_valuess = []
         stocks = []
         for variant in right["variants"]["nodes"]:
@@ -52,6 +54,7 @@ class MergeProductsAsVariants:
             option_valuess.append(option_values)
             stocks.append(variant["inventoryQuantity"])
 
+        location_id = self.location_id_by_name(location_name)
         self.variants_add(
             target_product_id,
             skus,
@@ -62,6 +65,7 @@ class MergeProductsAsVariants:
             prices,
             stocks,
             location_id,
+            metafieldss=metafieldss,
         )
 
     def archive_product_handle(self, product):
