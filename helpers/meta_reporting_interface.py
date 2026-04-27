@@ -67,7 +67,7 @@ class MetaReportingInterface:
             "page_media_view": "views",  # Total Impressions equivalent
             "page_total_media_view_unique": "reach",  # Total Reach equivalent
             "page_views_total": "profile_views",  # Profile Views
-            "page_post_engagements": "total_interactions",  # Total Clicks/Actions
+            # "page_post_engagements": "total_interactions",  # Total Clicks/Actions
         }
 
         fb_url = f"https://graph.facebook.com/{self.VERSION}/{self.fb_page_id}/insights"
@@ -91,14 +91,14 @@ class MetaReportingInterface:
         ig_data = self.omni_ig_stags(start_date=start_date, end_date=end_date)
         fb_data = self.omni_fb_stats(start_date=start_date, end_date=end_date)
         return {
-            k: ig_data[k] + fb_data[k]
+            k: ig_data[k] + fb_data.get(k, 0)
             for k in [
                 "views",
                 "reach",
-                # "saves",
                 "profile_views",
+                "saves",
                 # "website_clicks",
-                "total_interactions",
+                # "total_interactions",
             ]
         }
 
@@ -118,37 +118,49 @@ class MetaReportingInterface:
         }
 
         response = requests.get(url, params=params).json()
-        return response["data"][0]
+        if res := response["data"]:
+            return res[0]
 
 
 if __name__ == "__main__":
     import utils
 
-    brands = ["apricot-studios", "blossomhcompany", "lememek", "archive-epke", "ssilkr"]
-    report_date = datetime.date(2026, 4, 14)
-    end_date = datetime.datetime.combine(
-        report_date, datetime.time(23, 59, 59), tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
-    )
-    start_date = end_date - datetime.timedelta(days=7)
+    brands = ["Apricot Studios", "BLOSSOM", "LEMEME", "Archivépke", "SSIL"]
+    report_dates = [datetime.date(2026, 4, d) for d in range(7, 31, 7)]
+    client = utils.client(brands[0])
+    worksheet = client.gspread_client.open_by_key(
+        "14jUOdsb83EnEmQpXmmLmo3MtCK-CHiZ7bSocOLSjsFo"
+    ).get_worksheet(1)
     for b in brands:
-        client = utils.client(b)
-        omni = client.omni_stats(start_date, end_date)
-        paid = client.paid_stats(
-            start_date=start_date + datetime.timedelta(seconds=1),
-            end_date=end_date,
-        )
         print(b)
-        print(f"Omni Impressions: {omni['views']}")
-        print(f"Paid Impressions: {paid['impressions']}")
-        print(f"Omni Reach: {omni['reach']}")
-        print(f"Paid Reach: {paid['reach']}")
-        print(f"Omni Profile Views: {omni['profile_views']}")
-        print(
-            f"Paid Profile Views (Approximate): {paid['outbound_clicks'][0]['value']}"
-        )
-        # TODO investigate interactions
-        print(f"Omni Link Clicks: {omni['total_interactions']}")
-        print(f"Paid Link Clicks: {paid['inline_link_clicks']}")
-        # print(f"Omni Saves: {omni['saves']}")
-        print(f"Spend: {paid['spend']}")
-        print()
+        client = utils.client(b)
+        for report_date in report_dates:
+            end_date = datetime.datetime.combine(
+                report_date,
+                datetime.time(23, 59, 59),
+                tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"),
+            )
+            start_date = end_date - datetime.timedelta(days=7)
+
+            omni = client.omni_stats(start_date, end_date)
+            paid = client.paid_stats(
+                start_date=start_date + datetime.timedelta(seconds=1),
+                end_date=end_date,
+            )
+            worksheet.insert_row(
+                values=[
+                    f"{report_date:%Y/%m/%d}",
+                    b,
+                    omni["reach"],
+                    paid["reach"] if paid else "",
+                    omni["profile_views"],
+                    paid["inline_link_clicks"] if paid else "",
+                    omni["saves"],
+                    "",
+                    "",
+                    "",
+                    "",
+                    paid["spend"] if paid else "",
+                ],
+                index=3,
+            )
