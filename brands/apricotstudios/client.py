@@ -74,11 +74,16 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
         return ""
 
     def get_tags_from_product_input(self, product_input):
+        normalize = self.normalize_tag
         return [
-            product_input["collection"],
-            product_input["category"],
+            normalize(product_input["collection"]),
+            normalize(product_input["category"]),
             # product_input["release_date"],
         ]
+
+    @staticmethod
+    def normalize_tag(tag: str) -> str:
+        return str(tag).strip().capitalize()
 
     def get_size_field(self, product_input):
         size_text = product_input.get("size_text")
