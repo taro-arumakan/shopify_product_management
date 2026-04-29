@@ -14,23 +14,23 @@ class LememeClient(BrandClientBase):
 
     def product_attr_column_map(self):
         return dict(
-            title=string.ascii_lowercase.index("b"),
-            tags=string.ascii_lowercase.index("c"),
-            price=string.ascii_lowercase.index("e"),
-            description=string.ascii_lowercase.index("g"),
-            product_care_option=string.ascii_lowercase.index("h"),
-            material=string.ascii_lowercase.index("j"),
-            size_text=string.ascii_lowercase.index("k"),
-            made_in=string.ascii_lowercase.index("l"),
+            title=string.ascii_lowercase.index("c"),
+            tags=string.ascii_lowercase.index("d"),
+            price=string.ascii_lowercase.index("f"),
+            description=string.ascii_lowercase.index("h"),
+            product_care_option=string.ascii_lowercase.index("i"),
+            material=string.ascii_lowercase.index("k"),
+            size_text=string.ascii_lowercase.index("l"),
+            made_in=string.ascii_lowercase.index("m"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("n")}
         option1_attrs.update(
             filter_color=string.ascii_lowercase.index("n"),
-            drive_link=string.ascii_lowercase.index("r"),
+            drive_link=string.ascii_lowercase.index("p"),
             sku=string.ascii_lowercase.index("o"),
-            stock=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option1_attrs
 
@@ -97,10 +97,10 @@ class LememeClient(BrandClientBase):
         logger.info(f'updating metafields for {product_input["title"]}')
         size_table_html = self.get_size_field(product_input)
         self.update_size_table_html_metafield(product_id, size_table_html)
+        self.update_badges_metafield(product_id, ["NEW"])
         product_care_page_title = (
             "Product Care - " + product_input.get("product_care_option", "").strip()
         )
-        self.update_badges_metafield(product_id, ["NEW"])
         self.update_product_care_page_metafield(product_id, product_care_page_title)
         for option in product_input["options"]:
             if filter_color := option.get("filter_color"):
