@@ -93,10 +93,16 @@ class GoogleDriveApiInterface:
         with Image.open(image_path) as img:
             current_megapixels = (img.width * img.height) / 1_000_000
             if current_megapixels > max_megapixels or file_size_mb > max_mb:
-                mp_scale = (max_megapixels / current_megapixels) ** 0.5 if current_megapixels > max_megapixels else 1.0
-                size_scale = (max_mb / file_size_mb) ** 0.5 if file_size_mb > max_mb else 1.0
+                mp_scale = (
+                    (max_megapixels / current_megapixels) ** 0.5
+                    if current_megapixels > max_megapixels
+                    else 1.0
+                )
+                size_scale = (
+                    (max_mb / file_size_mb) ** 0.5 if file_size_mb > max_mb else 1.0
+                )
                 scale_factor = min(mp_scale, size_scale)
-                
+
                 new_width = int(img.width * scale_factor)
                 new_height = int(img.height * scale_factor)
 
@@ -112,7 +118,9 @@ class GoogleDriveApiInterface:
             image_mode = img.mode
         return self.rename_file_extension(output_path, image_mode)
 
-    def find_by_folder_id_by_name(self, parent_folder_id, item_name, item_type=None):
+    def find_by_folder_id_by_name(
+        self, parent_folder_id, item_name, item_type=None, exact_name=True
+    ):
         """
         Find an item by its name inside a given parent folder.
 
@@ -122,11 +130,8 @@ class GoogleDriveApiInterface:
         """
 
         item_name = item_name.replace("'", "\\'")
-        query = (
-            f"'{parent_folder_id}' in parents and "
-            f"name='{item_name}' and "
-            "trashed=false"
-        )
+        s = f"name{'=' if exact_name else ' contains '}'{item_name}'"
+        query = f"'{parent_folder_id}' in parents and {s} and trashed=false"
         if item_type == "folder":
             query += " and mimeType='application/vnd.google-apps.folder'"
         results = (
