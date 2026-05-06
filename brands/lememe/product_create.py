@@ -1,22 +1,22 @@
 import logging
-from brands.lememe.client import LememeClient
+from brands.lememe.client import LememeClient, LememeClientApparel
 
 
 logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    client = LememeClient(
-        product_sheet_start_row=946,
+    client = LememeClientApparel(
+        product_sheet_start_row=1,
         remove_existing_new_product_indicators=True,
-        products_season_tag="26_hot_summer_bag",
+        products_season_tag="2026_0506_RTW_summer",
     )
-    sheet_name = "0501_bags_summer"
+    sheet_name = "0506_RTW_summer"
     import datetime
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 5, 1, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 5, 6, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.sanity_check_sheet(sheet_name)
