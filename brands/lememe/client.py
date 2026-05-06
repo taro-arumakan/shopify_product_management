@@ -129,6 +129,11 @@ class LememeClientApparel(LememeClient):
         )
         return option2_attrs
 
+    def get_tags_from_product_input(self, product_input):
+        return ["Apparel"] + super().get_tags_from_product_input(
+            product_input=product_input
+        )
+
 
 def main():
     client = LememeClientApparel(product_sheet_start_row=1)
