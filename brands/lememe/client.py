@@ -122,9 +122,9 @@ class LememeClientApparel(LememeClient):
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"sku": string.ascii_lowercase.index("p")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("o")}
         option2_attrs.update(
-            Size=string.ascii_lowercase.index("o"),
+            sku=string.ascii_lowercase.index("p"),
             stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
