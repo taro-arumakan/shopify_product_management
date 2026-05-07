@@ -126,41 +126,44 @@ if __name__ == "__main__":
     import utils
 
     brands = ["Apricot Studios", "BLOSSOM", "LEMEME", "Archivépke", "SSIL"]
-    report_dates = [datetime.date(2026, 4, d) for d in range(7, 31, 7)]
+
     client = utils.client(brands[0])
-    worksheet = client.gspread_client.open_by_key(
-        "14jUOdsb83EnEmQpXmmLmo3MtCK-CHiZ7bSocOLSjsFo"
-    ).get_worksheet(1)
+    sheet_id = "14jUOdsb83EnEmQpXmmLmo3MtCK-CHiZ7bSocOLSjsFo"
+    sheet_title = "Monthly"
+
+    sheet_index = client.get_sheet_index_by_title(sheet_id, sheet_title)
+    worksheet = client.gspread_client.open_by_key(sheet_id).get_worksheet(sheet_index)
+
     for b in brands:
         print(b)
         client = utils.client(b)
-        for report_date in report_dates:
-            end_date = datetime.datetime.combine(
-                report_date,
-                datetime.time(23, 59, 59),
-                tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"),
-            )
-            start_date = end_date - datetime.timedelta(days=7)
 
-            omni = client.omni_stats(start_date, end_date)
-            paid = client.paid_stats(
-                start_date=start_date + datetime.timedelta(seconds=1),
-                end_date=end_date,
-            )
-            worksheet.insert_row(
-                values=[
-                    f"{report_date:%Y/%m/%d}",
-                    b,
-                    omni["reach"],
-                    paid["reach"] if paid else "",
-                    omni["profile_views"],
-                    paid["inline_link_clicks"] if paid else "",
-                    omni["saves"],
-                    "",
-                    "",
-                    "",
-                    "",
-                    paid["spend"] if paid else "",
-                ],
-                index=3,
-            )
+        end_date = datetime.datetime.combine(
+            datetime.date(2026, 4, 30),
+            datetime.time(23, 59, 59),
+            tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"),
+        )
+        start_date = datetime.datetime(2026, 3, 31, 23, 59, 59)
+
+        omni = client.omni_stats(start_date, end_date)
+        paid = client.paid_stats(
+            start_date=start_date + datetime.timedelta(seconds=1),
+            end_date=end_date,
+        )
+        worksheet.insert_row(
+            values=[
+                f"{end_date:%Y/%m/%d}",
+                b,
+                omni["reach"],
+                paid["reach"] if paid else "",
+                omni["profile_views"],
+                paid["inline_link_clicks"] if paid else "",
+                omni["saves"],
+                "",
+                "",
+                "",
+                "",
+                paid["spend"] if paid else "",
+            ],
+            index=3,
+        )
