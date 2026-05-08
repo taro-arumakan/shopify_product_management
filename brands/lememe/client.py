@@ -19,8 +19,8 @@ class LememeClient(BrandClientBase):
             price=string.ascii_lowercase.index("f"),
             description=string.ascii_lowercase.index("h"),
             product_care_option=string.ascii_lowercase.index("i"),
-            material=string.ascii_lowercase.index("j"),
-            size_text=string.ascii_lowercase.index("k"),
+            material=string.ascii_lowercase.index("k"),
+            size_text=string.ascii_lowercase.index("l"),
             made_in=string.ascii_lowercase.index("m"),
         )
 
