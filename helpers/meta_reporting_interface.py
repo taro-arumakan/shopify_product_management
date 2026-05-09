@@ -122,48 +122,89 @@ class MetaReportingInterface:
             return res[0]
 
 
-if __name__ == "__main__":
+def report_dates_for_weekly(report_year, report_month):
+    import calendar
+
+    month_matrix = calendar.monthcalendar(report_year, report_month)
+    return [
+        datetime.date(report_year, report_month, week[6])
+        for week in month_matrix
+        if week[6] != 0
+    ]
+
+
+def report_dates_for_monthly(report_year, report_month):
+    import calendar
+
+    _, last_day = calendar.monthrange(report_year, report_month)
+    return [datetime.date(report_year, report_month, last_day)]
+
+
+def run(
+    brand: str, sheet_name: str, report_date: datetime.date, start_date: datetime.date
+):
     import utils
 
-    brands = ["Apricot Studios", "BLOSSOM", "LEMEME", "Archivépke", "SSIL"]
-
-    client = utils.client(brands[0])
+    client = utils.client(brand)
     sheet_id = "14jUOdsb83EnEmQpXmmLmo3MtCK-CHiZ7bSocOLSjsFo"
-    sheet_title = "Monthly"
-
-    sheet_index = client.get_sheet_index_by_title(sheet_id, sheet_title)
+    sheet_index = client.get_sheet_index_by_title(sheet_id, sheet_name)
     worksheet = client.gspread_client.open_by_key(sheet_id).get_worksheet(sheet_index)
+    end_date = datetime.datetime.combine(
+        report_date,
+        datetime.time(23, 59, 59),
+        tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"),
+    )
+    start_date = datetime.datetime.combine(
+        start_date,
+        datetime.time(23, 59, 59),
+        tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"),
+    )
+
+    omni = client.omni_stats(start_date, end_date)
+    paid = client.paid_stats(
+        start_date=start_date + datetime.timedelta(seconds=1),
+        end_date=end_date,
+    )
+    worksheet.insert_row(
+        values=[
+            f"{report_date:%Y/%m/%d}",
+            brand,
+            omni["reach"],
+            paid["reach"] if paid else "",
+            omni["profile_views"],
+            paid["inline_link_clicks"] if paid else "",
+            omni["saves"],
+            "",
+            "",
+            "",
+            "",
+            paid["spend"] if paid else "",
+        ],
+        index=3,
+    )
+
+
+def run_range(brands, monthly_or_weekly, report_year, report_month):
+    assert monthly_or_weekly.lower() in ["monthly", "weekly"]
+    if monthly_or_weekly.lower() == "weekly":
+        report_dates = report_dates_for_weekly(report_year, report_month)
+        start_dates = [
+            report_date - datetime.timedelta(days=7) for report_date in report_dates
+        ]
+    else:
+        report_dates = report_dates_for_monthly(report_year, report_month)
+        start_dates = [datetime.date(report_year, report_month, 1)]
+
+    sheet_title = "Weekly" if monthly_or_weekly.lower() == "weekly" else "Monthly"
 
     for b in brands:
         print(b)
-        client = utils.client(b)
+        for report_date, start_date in zip(report_dates, start_dates):
+            run(b, sheet_title, report_date, start_date)
 
-        end_date = datetime.datetime.combine(
-            datetime.date(2026, 4, 30),
-            datetime.time(23, 59, 59),
-            tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"),
-        )
-        start_date = datetime.datetime(2026, 3, 31, 23, 59, 59)
 
-        omni = client.omni_stats(start_date, end_date)
-        paid = client.paid_stats(
-            start_date=start_date + datetime.timedelta(seconds=1),
-            end_date=end_date,
-        )
-        worksheet.insert_row(
-            values=[
-                f"{end_date:%Y/%m/%d}",
-                b,
-                omni["reach"],
-                paid["reach"] if paid else "",
-                omni["profile_views"],
-                paid["inline_link_clicks"] if paid else "",
-                omni["saves"],
-                "",
-                "",
-                "",
-                "",
-                paid["spend"] if paid else "",
-            ],
-            index=3,
-        )
+if __name__ == "__main__":
+    brands = ["Apricot Studios", "BLOSSOM", "LEMEME", "Archivépke", "SSIL"]
+    brands = ["ROH SEOUL"]
+    run_range(brands, monthly_or_weekly="Weekly", report_year=2026, report_month=4)
+    run("ROH SEOUL", "Weekly", datetime.date(2026, 5, 3), datetime.date(2026, 4, 27))
