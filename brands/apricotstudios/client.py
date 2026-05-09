@@ -74,10 +74,25 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
         return ""
 
     def get_tags_from_product_input(self, product_input):
-        normalize = self.normalize_tag
+        allowed_category_tags = [
+            "Accessory",
+            "Bag",
+            "Bottom",
+            "Daughter",
+            "Goods",
+            "Indoorwear",
+            "Outer",
+            "Set-up",
+            "Top",
+        ]
+        category = self.normalize_tag(product_input["category"])
+        assert (
+            category in allowed_category_tags
+        ), f"Unknown category tag {category} found. Correct or update the theme's facets snippet"
+
         return [
-            normalize(product_input["collection"]),
-            normalize(product_input["category"]),
+            self.normalize_tag(product_input["collection"]),
+            category,
             # product_input["release_date"],
         ]
 
