@@ -7,16 +7,16 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    sheet_name = "Pendant Collection"
+    sheet_name = "APPAREL"
     client = SsilClient(
         product_sheet_start_row=1,
         remove_existing_new_product_indicators=True,
-        products_season_tag="26_0427_pendant_collection",
+        products_season_tag="26_APPAREL",
     )
     # filter_func = lambda pi: pi["title"] not in ["CLOVER BAND R"]
     client.sanity_check_sheet(sheet_name)
     scheduled_time = datetime.datetime(
-        2026, 4, 28, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 5, 15, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
     client.process_sheet_to_products(
         sheet_name,
