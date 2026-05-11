@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pandas as pd
 import pprint
 
 logger = logging.getLogger(__name__)
@@ -201,23 +202,71 @@ class Reporting:
 
         self.replace_slide_contents(presentation_id, requests)
 
+    def dashboard_row(self, report_date, timeseries_by="month"):
+        meta_stats = self.dashboard_stats_meta(report_date, timeseries_by)
+        shopify_stats = self.dashboard_stats_shopify(report_date, timeseries_by)
+        df = pd.merge(
+            meta_stats,
+            shopify_stats,
+            left_on="report_date",
+            right_on=timeseries_by,
+            how="outer",
+        )
+        assert (
+            len(df) == 1
+        ), "Should not get multiple rows for a dashboard stats row:\ndf"
+        row = df.iloc[0]
+        return [
+            f"{report_date:%Y-%m-%d}",
+            self.BRAND_NAME,
+            int(row["reach_omni"]),
+            int(row["reach_paid"]) if row["reach_paid"] else "",
+            int(row["profile_views_omni"]),
+            int(row["profile_views_paid"]) if row["profile_views_paid"] else "",
+            int(row["saves"]),
+            int(row["sessions"]),
+            # TODO should return the percentage as a float in tabledata_to_dataframe and delegate the formatting to presentation layer
+            float(row["conversion_rate"]) / 100,
+            int(row["average_order_value"]),
+            int(row["net_sales"]),
+            int(row["spend"]) if row["spend"] else "",
+        ]
+
+    def upsert_dashboard_row(self, report_date, timeseries_by):
+        # TODO if existing row with the date and brand, update, or delete then insert.
+        sheet_name = f"dev_{timeseries_by}ly"
+        sheet_id = "14jUOdsb83EnEmQpXmmLmo3MtCK-CHiZ7bSocOLSjsFo"
+        sheet_index = self.get_sheet_index_by_title(sheet_id, sheet_name)
+        worksheet = self.gspread_client.open_by_key(sheet_id).get_worksheet(sheet_index)
+        row = self.dashboard_row(report_date, timeseries_by)
+        worksheet.insert_row(
+            values=row,
+            index=3,
+        )
+
 
 def main():
     import utils
 
-    client = utils.client("blossom")
     brands = [
         "Apricot Studios",
         "BLOSSOM",
         "Archivépke",
-        "GBH",
-        "KUMÉ",
         "LEMEME",
         "ROH SEOUL",
         "SSIL",
     ]
+    end_date = datetime.date(2026, 5, 10)
+    weekly_report_dates = [end_date - datetime.timedelta(days=7 * i) for i in range(7)]
+    monthly_report_dates = [datetime.date(2026, 4, 30), datetime.date(2026, 3, 31)]
     for brand in brands:
-        client.generate_monthly_brand_report(brand, 2026, 2)
+        client = utils.client(brand)
+        for date in reversed(weekly_report_dates):
+            print(f"running weekly for {brand} for {date}")
+            client.upsert_dashboard_row(date, "week")
+        for date in reversed(monthly_report_dates):
+            print(f"running monthly for {brand} for {date}")
+            client.upsert_dashboard_row(date, "month")
 
 
 if __name__ == "__main__":

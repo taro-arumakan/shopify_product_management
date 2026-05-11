@@ -111,15 +111,26 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_sessions_by_day(self, date_from, date_to, to_dataframe=True):
+    def report_sessions_by(
+        self, date_from, date_to, timeseries_by="day", to_dataframe=True
+    ):
         shopifyql_query = f"""
             FROM sessions
             SHOW sessions, conversion_rate
-            TIMESERIES day WITH TOTALS, CURRENCY 'JPY'
+            TIMESERIES {timeseries_by} WITH TOTALS, CURRENCY 'JPY'
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
-            ORDER BY day ASC
+            ORDER BY {timeseries_by} ASC
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+
+    def report_sessions_by_day(self, date_from, date_to, to_dataframe=True):
+        return self.report_sessions_by(date_from, date_to, "day", to_dataframe)
+
+    def report_sessions_by_week(self, date_from, date_to, to_dataframe=True):
+        return self.report_sessions_by(date_from, date_to, "week", to_dataframe)
+
+    def report_sessions_by_month(self, date_from, date_to, to_dataframe=True):
+        return self.report_sessions_by(date_from, date_to, "month", to_dataframe)
 
     def report_customer_type(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
@@ -143,33 +154,42 @@ class Analytics:
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_sales_kpi_by_month(self, date_from, date_to, to_dataframe=True):
+    def report_sales_kpi_by(
+        self, date_from, date_to, timeseries_by="month", to_dataframe=True
+    ):
         shopifyql_query = f"""
             FROM sales
             SHOW average_order_value, net_sales, orders, returning_customer_rate
-            TIMESERIES month WITH CURRENCY 'JPY'
+            TIMESERIES {timeseries_by} WITH CURRENCY 'JPY'
             SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
         """
         return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
 
-    def report_sessions_kpi_by_month(self, date_from, date_to, to_dataframe=True):
-        shopifyql_query = f"""
-            FROM sessions
-            SHOW sessions, conversion_rate
-            TIMESERIES month WITH CURRENCY 'JPY'
-            SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}
-            ORDER BY month ASC
-        """
-        return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+    def report_sales_kpi_by_month(self, date_from, date_to, to_dataframe=True):
+        return self.report_sales_kpi_by(date_from, date_to, "month", to_dataframe)
 
-    def report_kpi_by_month(self, date_from, date_to, to_dataframe=True):
-        df_sessions = self.report_sessions_kpi_by_month(
-            date_from, date_to, to_dataframe
+    def report_sales_kpi_by_week(self, date_from, date_to, to_dataframe=True):
+        return self.report_sales_kpi_by(date_from, date_to, "week", to_dataframe)
+
+    def report_sales_kpi_by_day(self, date_from, date_to, to_dataframe=True):
+        return self.report_sales_kpi_by(date_from, date_to, "day", to_dataframe)
+
+    def dashboard_stats_shopify(self, report_date, timeseries_by="month"):
+        assert timeseries_by in ["week", "month"]
+        date_to = report_date
+        date_from = (
+            report_date - datetime.timedelta(days=6)
+            if timeseries_by == "week"
+            else (datetime.date(report_date.year, report_date.month, 1))
         )
-        df_sales = self.report_sales_kpi_by_month(date_from, date_to, to_dataframe)
-        return pd.merge(df_sessions, df_sales, on="month", how="outer").sort_values(
-            "month"
+        sessions = self.report_sessions_by(date_from, date_to, timeseries_by)
+        sales_kpis = self.report_sales_kpi_by(date_from, date_to, timeseries_by)
+        assert len(sessions) == len(sales_kpis) == 1
+        res = pd.merge(sessions, sales_kpis, on=timeseries_by, how="outer").sort_values(
+            timeseries_by, ascending=False
         )
+        res.at[0, timeseries_by] = f"{date_to:%Y-%m-%d}"
+        return res
 
     def run_monthly_report(
         self, report_func, report_year, report_month, to_dataframe=True

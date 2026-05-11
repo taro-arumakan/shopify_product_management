@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pandas as pd
 import requests
 import zoneinfo
 
@@ -15,10 +16,21 @@ class MetaReportingInterface:
         self.meta_ad_account_id = meta_ad_account_id
         self.meta_token = meta_token
 
+    omni_ig_keys = [
+        "views",
+        "reach",
+        "saves",
+        "profile_views",
+        "website_clicks",
+        "total_interactions",
+    ]
+
     def _get_omni_ig_stat_value_by_key(self, d, k):
         return [dd for dd in d if dd["name"] == k][0]["total_value"]["value"]
 
-    def omni_ig_stags(self, start_date, end_date):
+    def _omni_ig_stats(self, start_date, end_date):
+        logger.info(f"omni IG stats between {start_date} and {end_date}")
+
         acc_url = (
             f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/insights"
         )
@@ -37,15 +49,27 @@ class MetaReportingInterface:
         acc_data = acc_res.json()["data"]
         return {
             k: self._get_omni_ig_stat_value_by_key(acc_data, k)
-            for k in [
-                "views",
-                "reach",
-                "saves",
-                "profile_views",
-                "website_clicks",
-                "total_interactions",
-            ]
+            for k in self.omni_ig_keys
         }
+
+    def omni_ig_stats(self, start_date, end_date):
+        # XXX Facebook Graph API limitation for Instagram - only 30 days limitation
+        delta = end_date - start_date
+        MAX_RANGE = datetime.timedelta(days=30)
+
+        if delta > MAX_RANGE:
+            mid_point = start_date + MAX_RANGE
+            ranges = [(start_date, mid_point), (mid_point, end_date)]
+        else:
+            ranges = [(start_date, end_date)]
+
+        total_stats = {}
+        for s, e in ranges:
+            period_res = self._omni_ig_stats(s, e)
+            for k in self.omni_ig_keys:
+                total_stats.setdefault(k, 0)
+                total_stats[k] += period_res[k]
+        return total_stats
 
     def _sum_fb_metric(self, data, metric_name):
         """Helper to sum daily values from FB Page Insights"""
@@ -88,7 +112,7 @@ class MetaReportingInterface:
 
     def omni_stats(self, start_date, end_date):
         logger.info(f"omni stats between {start_date} and {end_date}")
-        ig_data = self.omni_ig_stags(start_date=start_date, end_date=end_date)
+        ig_data = self.omni_ig_stats(start_date=start_date, end_date=end_date)
         fb_data = self.omni_fb_stats(start_date=start_date, end_date=end_date)
         return {
             k: ig_data[k] + fb_data.get(k, 0)
@@ -120,6 +144,43 @@ class MetaReportingInterface:
         response = requests.get(url, params=params).json()
         if res := response["data"]:
             return res[0]
+
+    def dashboard_stats_meta(self, report_date, timeseries_by="month"):
+        assert timeseries_by in ["week", "month"]
+        date_from = (
+            report_date - datetime.timedelta(days=6)
+            if timeseries_by == "week"
+            else (datetime.date(report_date.year, report_date.month, 1))
+        )
+
+        end_date = datetime.datetime.combine(
+            report_date,
+            datetime.time(23, 59, 59),
+            tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"),
+        )
+        start_date = datetime.datetime.combine(
+            date_from,
+            datetime.time(0, 0, 0),
+            tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo"),
+        )
+
+        omni = self.omni_stats(start_date, end_date)
+        paid = self.paid_stats(
+            start_date,
+            end_date,
+        )
+        row = [
+            dict(
+                report_date=f"{report_date:%Y-%m-%d}",
+                reach_omni=omni["reach"],
+                reach_paid=paid["reach"] if paid else "",
+                profile_views_omni=omni["profile_views"],
+                profile_views_paid=paid["inline_link_clicks"] if paid else "",
+                saves=omni["saves"],
+                spend=paid["spend"] if paid else "",
+            )
+        ]
+        return pd.DataFrame(row)
 
 
 def report_dates_for_weekly(report_year, report_month):
