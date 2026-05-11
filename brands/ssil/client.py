@@ -13,6 +13,7 @@ class SsilClient(BrandClientBase):
     SHOPNAME = "ssilkr"
     VENDOR = "ssil"
     LOCATIONS = ["SSIL Warehouse"]
+    BRAND_NAME = "SSIL"
 
     def product_attr_column_map(self):
         return dict(
