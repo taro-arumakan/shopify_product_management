@@ -188,7 +188,7 @@ class GoogleDriveApiInterface:
             .list(
                 q=query,
                 pageSize=1000,
-                fields="files(id, name)",
+                fields="files(id, name, webViewLink)",
                 includeItemsFromAllDrives=True,
                 supportsAllDrives=True,
             )
