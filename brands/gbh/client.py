@@ -15,6 +15,7 @@ class GbhClient(BrandClientBase):
     SHOPNAME = "gbhjapan"
     VENDOR = "GBH"
     LOCATIONS = ["Shop location"]
+    BRAND_NAME = "GBH"
 
     def __init__(
         self,

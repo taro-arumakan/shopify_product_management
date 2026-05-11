@@ -16,6 +16,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
     SHOPNAME = "apricot-studios"
     VENDOR = "Apricot Studios"
     LOCATIONS = ["Apricot Studios Warehouse"]
+    BRAND_NAME = "Apricot Studios"
 
     def __init__(
         self,

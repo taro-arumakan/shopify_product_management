@@ -11,6 +11,7 @@ class ArchivepkeClient(BrandClientBase):
     SHOPNAME = "archive-epke"
     VENDOR = "archive-epke"
     LOCATIONS = ["Archivépke Warehouse", "Envycube Warehouse"]
+    BRAND_NAME = "Archivépke"
 
     def product_attr_column_map(self):
         return dict(
