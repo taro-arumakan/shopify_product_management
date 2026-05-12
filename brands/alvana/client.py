@@ -17,6 +17,7 @@ class AlvanaClient(BrandClientBase):
     def product_attr_column_map(self):
         return dict(
             title=string.ascii_lowercase.index("b"),
+            product_sku=string.ascii_lowercase.index("c"),
             tags=string.ascii_lowercase.index("d"),
             price=string.ascii_lowercase.index("e"),
             description=string.ascii_lowercase.index("f"),
@@ -31,15 +32,15 @@ class AlvanaClient(BrandClientBase):
         option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
         option1_attrs.update(
             filter_color=string.ascii_lowercase.index("m"),
-            drive_link=string.ascii_lowercase.index("n"),
+            drive_link=string.ascii_lowercase.index("o"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"サイズ": string.ascii_lowercase.index("o")}
+        option2_attrs = {"サイズ": string.ascii_lowercase.index("p")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("p"),
-            stock=string.ascii_lowercase.index("q"),
+            sku=string.ascii_lowercase.index("q"),
+            stock=string.ascii_lowercase.index("r"),
         )
         return option2_attrs
 
@@ -47,20 +48,24 @@ class AlvanaClient(BrandClientBase):
     def product_description_template():
         res = r"""
             <div id="alvanaProduct">
-                <p>${DESCRIPTION}</p>
-                <br>
-                <table width="100%">
+              <p>${DESCRIPTION}</p>
+              <br>
+              <table width="100%">
                 <tbody>
-                    <tr>
+                  <tr>
                     <th>素材</th>
                     <td>${MATERIAL}</td>
-                    </tr>
-                    <tr>
+                  </tr>
+                  <tr>
                     <th>原産国</th>
                     <td>${MADEIN}</td>
-                    </tr>
+                  </tr>
+                  <tr>
+                    <th>品番</th>
+                    <td>${PRODUCT_SKU}</td>
+                  </tr>
                 </tbody>
-                </table>
+              </table>
             </div>
             """
         return textwrap.dedent(res)
@@ -75,6 +80,9 @@ class AlvanaClient(BrandClientBase):
         )
         description_html = description_html.replace(
             "${MADEIN}", product_input["made_in"]
+        )
+        description_html = description_html.replace(
+            "${PRODUCT_SKU}", product_input["product_sku"]
         )
         return description_html
 
