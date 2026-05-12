@@ -126,6 +126,32 @@ class MetaReportingInterface:
             ]
         }
 
+    def get_historical_exchange_rate(self, rate_date, from_curr, to_curr="JPY"):
+        if isinstance(rate_date, datetime.date):
+            rate_date = f"{rate_date:%Y-%m-%d}"
+        url = f"https://api.frankfurter.app/{rate_date}?from={from_curr}&to={to_curr}"
+        res = requests.get(url).json()
+        return res["rates"][to_curr]
+
+    exchange_rates_by_date_by_currency = {}
+
+    def apply_exchange_rate(self, res):
+        currency = res["account_currency"]
+        rate_date = res["date_stop"]
+        if currency != "JPY":
+            if not self.exchange_rates_by_date_by_currency.get(rate_date, {}).get(
+                currency
+            ):
+                rate = self.get_historical_exchange_rate(rate_date, currency)
+                self.exchange_rates_by_date_by_currency.setdefault(rate_date, {})[
+                    currency
+                ] = rate
+            res["spend"] = round(
+                float(res["spend"])
+                * self.exchange_rates_by_date_by_currency[rate_date][currency]
+            )
+        return res
+
     def paid_stats(self, start_date: datetime.datetime, end_date: datetime.datetime):
         logger.info(f"paid stats between {start_date} and {end_date}")
         url = f"https://graph.facebook.com/{self.VERSION}/act_{self.meta_ad_account_id}/insights"
@@ -135,7 +161,7 @@ class MetaReportingInterface:
 
         params = {
             "level": "account",
-            "fields": "impressions,reach,inline_link_clicks,outbound_clicks,spend",
+            "fields": "account_currency,impressions,reach,inline_link_clicks,outbound_clicks,spend",
             # "filtering": "[{'field':'publisher_platform','operator':'IN','value':['instagram']}]",
             "time_range": f"{{'since':'{start_date:%Y-%m-%d}','until':'{end_date:%Y-%m-%d}'}}",
             "access_token": self.meta_token,
@@ -143,7 +169,7 @@ class MetaReportingInterface:
 
         response = requests.get(url, params=params).json()
         if res := response["data"]:
-            return res[0]
+            return self.apply_exchange_rate(res[0])
 
     def dashboard_stats_meta(self, report_date, timeseries_by="month"):
         assert timeseries_by in ["week", "month"]

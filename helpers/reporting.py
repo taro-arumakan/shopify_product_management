@@ -232,6 +232,14 @@ class Reporting:
             int(row["spend"]) if row["spend"] else "",
         ]
 
+    def find_existing_row_index(self, worksheet, report_date, brand):
+        # Find the row index (1-based for Google Sheets) matching with col date A and brand B
+        all_values = worksheet.get_all_values()
+        for i, existing_row in enumerate(all_values):
+            if len(existing_row) >= 2:
+                if existing_row[0] == report_date and existing_row[1] == brand:
+                    return i + 1
+
     def upsert_dashboard_row(self, report_date, timeseries_by):
         # TODO if existing row with the date and brand, update, or delete then insert.
         sheet_name = f"dev_{timeseries_by}ly"
@@ -239,10 +247,14 @@ class Reporting:
         sheet_index = self.get_sheet_index_by_title(sheet_id, sheet_name)
         worksheet = self.gspread_client.open_by_key(sheet_id).get_worksheet(sheet_index)
         row = self.dashboard_row(report_date, timeseries_by)
-        worksheet.insert_row(
-            values=row,
-            index=3,
-        )
+        if exising_row_index := self.find_existing_row_index(worksheet, row[0], row[1]):
+            range_label = f"A{exising_row_index}:L{exising_row_index}"
+            worksheet.update(range_label, [row])
+        else:
+            worksheet.insert_row(
+                values=row,
+                index=3,
+            )
 
 
 def main():
@@ -256,6 +268,7 @@ def main():
         "ROH SEOUL",
         "SSIL",
     ]
+    brands = ["ROH", "Archivépke"]
     end_date = datetime.date(2026, 5, 10)
     weekly_report_dates = [end_date - datetime.timedelta(days=7 * i) for i in range(7)]
     monthly_report_dates = [datetime.date(2026, 4, 30), datetime.date(2026, 3, 31)]
