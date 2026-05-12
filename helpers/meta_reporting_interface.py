@@ -129,26 +129,26 @@ class MetaReportingInterface:
     def get_historical_exchange_rate(self, rate_date, from_curr, to_curr="JPY"):
         if isinstance(rate_date, datetime.date):
             rate_date = f"{rate_date:%Y-%m-%d}"
-        url = f"https://api.frankfurter.app/{rate_date}?from={from_curr}&to={to_curr}"
+        url = f"https://api.frankfurter.dev/v2/rate/{from_curr}/{to_curr}?date={rate_date}"
         res = requests.get(url).json()
-        return res["rates"][to_curr]
+        return res["rate"]
 
-    exchange_rates_by_date_by_currency = {}
+    exchange_rates_by_date_by_pair = {}
 
     def apply_exchange_rate(self, res):
         currency = res["account_currency"]
         rate_date = res["date_stop"]
         if currency != "JPY":
-            if not self.exchange_rates_by_date_by_currency.get(rate_date, {}).get(
-                currency
+            if not self.exchange_rates_by_date_by_pair.get(rate_date, {}).get(
+                f"{currency}JPY"
             ):
                 rate = self.get_historical_exchange_rate(rate_date, currency)
-                self.exchange_rates_by_date_by_currency.setdefault(rate_date, {})[
-                    currency
+                self.exchange_rates_by_date_by_pair.setdefault(rate_date, {})[
+                    f"{currency}JPY"
                 ] = rate
             res["spend"] = round(
                 float(res["spend"])
-                * self.exchange_rates_by_date_by_currency[rate_date][currency]
+                * self.exchange_rates_by_date_by_pair[rate_date][f"{currency}JPY"]
             )
         return res
 
