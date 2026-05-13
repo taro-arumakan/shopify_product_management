@@ -6,32 +6,24 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    client = LememeClient(
+    client = LememeClientApparel(
         product_sheet_start_row=1,
         remove_existing_new_product_indicators=True,
-        products_season_tag="2026_0515_bags",
+        products_season_tag="2026_0520_RTW_summer",
     )
-    sheet_name = "0515_bags"
-    target_titles = {
-        "Sac Lume",
-        "Sac Clea",
-        "Sac Romain Nylon",
-        "Sac Benoit Black",
-    }
+    sheet_name = "0520_RTW_summer"
+
     import datetime
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 5, 15, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 5, 20, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
-    client.sanity_check_sheet(
-        sheet_name,
-        product_inputs_filter_func=lambda pi: pi.get("title") in target_titles,
-    )
+    client.sanity_check_sheet(sheet_name)
     client.process_sheet_to_products(
         sheet_name,
-        product_inputs_filter_func=lambda pi: pi.get("title") in target_titles,
+        additional_tags=["New Arrival"],
         scheduled_time=scheduled_time,
     )
 
