@@ -33,6 +33,7 @@ class AlvanaClient(BrandClientBase):
         option1_attrs.update(
             filter_color=string.ascii_lowercase.index("m"),
             drive_link=string.ascii_lowercase.index("o"),
+            remarks=string.ascii_lowercase.index("u"),
         )
         return option1_attrs
 

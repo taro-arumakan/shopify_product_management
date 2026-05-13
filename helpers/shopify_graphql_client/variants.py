@@ -182,7 +182,7 @@ class Variants:
         location_id,
         metafieldss=None,
     ):
-        metafieldss = metafieldss or ([] * len(skus))
+        metafieldss = metafieldss or ([[]] * len(skus))
         assert (
             len(variant_option_valuess)
             == len(skus)
