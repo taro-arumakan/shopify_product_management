@@ -166,7 +166,7 @@ class ProductQueries:
 
     def product_by_title(self, title, *args, **kwargs):
         return self.product_by_query(
-            f"title:'{title.replace("'", "\\'")}'", *args, **kwargs
+            f'title:"{title.replace('"', '\\"')}"', *args, **kwargs
         )
 
     def product_id_by_title(self, title):
