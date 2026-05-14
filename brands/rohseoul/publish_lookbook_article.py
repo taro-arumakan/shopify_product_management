@@ -10,8 +10,8 @@ article_title = "LOOKBOOK - 26 Summer"
 images_dir = "/Users/taro/Downloads/LOOKBOOK - SUMMER 26"
 thumbnail_image_file_name = "LOOKBOOK_-_SUMMER_26_COVER_IMAGE.jpg"
 
-lookbook_products_sheet_id = "17tfWLDl6rcewWnwULPEz5nA7TVLz1ShEuKgILnP7xa4"
-lookbook_products_sheet_name = "LOOKBOOK - SUMMER 26"
+LP_SHEET_ID = "17tfWLDl6rcewWnwULPEz5nA7TVLz1ShEuKgILnP7xa4"
+LP_SHEET_NAME = "LOOKBOOK - SUMMER 26"
 
 lookbook_products_start_row = 3
 lookbook_look_col = string.ascii_lowercase.index("b")
@@ -27,7 +27,9 @@ theme_name = "prod"
 lookbook_products_dicts = None
 
 
-def populate_lookbook_products_dicts(client: RohseoulClient):
+def populate_lookbook_products_dicts(
+    client: RohseoulClient, lookbook_products_sheet_id, lookbook_products_sheet_name
+):
     global lookbook_products_dicts
     if not lookbook_products_dicts:
         res = {}
@@ -117,7 +119,9 @@ def process_a_subdir(client: RohseoulClient, subdir):
             },
         },
     }
-    lookbook_products_dict = populate_lookbook_products_dicts(client)
+    lookbook_products_dict = populate_lookbook_products_dicts(
+        client, LP_SHEET_ID, LP_SHEET_NAME
+    )
     for i, filename in enumerate(file_names):
         block = {
             f"image_with_text_{i}": {
