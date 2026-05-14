@@ -26,9 +26,6 @@ theme_dir = "/Users/taro/sc/rohseoul/"
 theme_name = "prod"
 
 
-lookbook_products_dicts = None
-
-
 def variant_color(variant):
     for so in variant["selectedOptions"]:
         if so["name"] == "カラー":
@@ -63,36 +60,33 @@ def lookup_product_variant_url(client: RohseoulClient, product_and_color):
 def populate_lookbook_products_dicts(
     client: RohseoulClient, lookbook_products_sheet_id, lookbook_products_sheet_name
 ):
-    global lookbook_products_dicts
-    if not lookbook_products_dicts:
-        res = {}
-        rows = client.worksheet_rows(
-            lookbook_products_sheet_id, lookbook_products_sheet_name
-        )[lookbook_products_start_row:]
-        rows = [
-            [
-                r[lookbook_look_col],
-                r[lookbook_number_col],
-                r[lookbook_item_col],
-                r[lookbook_link_col],
-            ]
-            for r in rows
+    res = {}
+    rows = client.worksheet_rows(
+        lookbook_products_sheet_id, lookbook_products_sheet_name
+    )[lookbook_products_start_row:]
+    rows = [
+        [
+            r[lookbook_look_col],
+            r[lookbook_number_col],
+            r[lookbook_item_col],
+            r[lookbook_link_col],
         ]
-        df = pd.DataFrame(rows, columns=["look", "number", "item", "link"])
-        fill_columns = ["look", "number"]
-        df[fill_columns] = df[fill_columns].replace("", pd.NA)
-        df[fill_columns] = df[fill_columns].ffill()
-        df["number"] = df["number"].astype(int)
-        res = {}
-        for _, row in df.iterrows():
-            res.setdefault(f"{row['look']}-{row['number']}", []).append(
-                (
-                    row["item"],
-                    row["link"] or lookup_product_variant_url(client, row["item"]),
-                )
+        for r in rows
+    ]
+    df = pd.DataFrame(rows, columns=["look", "number", "item", "link"])
+    fill_columns = ["look", "number"]
+    df[fill_columns] = df[fill_columns].replace("", pd.NA)
+    df[fill_columns] = df[fill_columns].ffill()
+    df["number"] = df["number"].astype(int)
+    res = {}
+    for _, row in df.iterrows():
+        res.setdefault(f"{row['look']}-{row['number']}", []).append(
+            (
+                row["item"],
+                row["link"] or lookup_product_variant_url(client, row["item"]),
             )
-        lookbook_products_dicts = res
-    return lookbook_products_dicts
+        )
+    return res
 
 
 def populate_product_content(lookbook_products_dict, look, number):
