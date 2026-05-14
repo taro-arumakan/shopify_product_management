@@ -19,7 +19,6 @@ class SsilClient(BrandClientBase):
         return dict(
             title=string.ascii_lowercase.index("a"),
             tags=string.ascii_lowercase.index("b"),
-            price=string.ascii_lowercase.index("d"),
             description=string.ascii_lowercase.index("f"),
             product_care=string.ascii_lowercase.index("h"),
             material=string.ascii_lowercase.index("i"),
@@ -40,6 +39,7 @@ class SsilClient(BrandClientBase):
             sku=string.ascii_lowercase.index("o"),
             hs_code=string.ascii_lowercase.index("p"),
             stock=string.ascii_lowercase.index("q"),
+            price=string.ascii_lowercase.index("d"),
         )
         return option2_attrs
 
@@ -166,7 +166,6 @@ class SsilClientGoldLine(SsilClient):
         return dict(
             title=string.ascii_lowercase.index("a"),
             tags=string.ascii_lowercase.index("b"),
-            price=string.ascii_lowercase.index("d"),
             description=string.ascii_lowercase.index("f"),
             # no product care, rather disclaimer, to be added at product template.
             # product_care=string.ascii_lowercase.index("h"),
@@ -188,6 +187,7 @@ class SsilClientGoldLine(SsilClient):
             sku=string.ascii_lowercase.index("o"),
             hs_code=string.ascii_lowercase.index("p"),
             stock=string.ascii_lowercase.index("q"),
+            price=string.ascii_lowercase.index("d"),
         )
         return option2_attrs
 
