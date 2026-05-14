@@ -23,8 +23,9 @@ def update_price():
                 variant = [v for v in variants if v["sku"] == size_option["sku"]]
                 assert len(variant) == 1
                 variant = variant[0]
+                variant["compareAtPrice"] = size_option["price"]
                 print(
-                    f"updating {size_option['sku']} from {variant['price']} to {size_option['price']}"
+                    f"updating {size_option['sku']} from {variant['price']} to {size_option['price']} {variant['compareAtPrice']}"
                 )
                 new_prices_by_variant_id[variant["id"]] = size_option["price"]
     client.update_variant_prices_by_dict(variants, new_prices_by_variant_id, False)
