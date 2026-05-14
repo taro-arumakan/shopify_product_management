@@ -1,5 +1,7 @@
+import functools
 import os
 import pandas as pd
+import re
 import string
 from brands.rohseoul.client import RohseoulClient
 from brands.rohseoul.article_templates import article_template_lookbook
@@ -25,6 +27,37 @@ theme_name = "prod"
 
 
 lookbook_products_dicts = None
+
+
+def variant_color(variant):
+    for so in variant["selectedOptions"]:
+        if so["name"] == "カラー":
+            return so["value"]
+
+
+@functools.lru_cache(maxsize=128)
+def products_by_title_cached(client: RohseoulClient, product_title):
+    return client.products_by_query(f"""title:"{product_title}" AND status:'ACTIVE'""")
+
+
+@functools.lru_cache(maxsize=128)
+def lookup_product_variant_url(client: RohseoulClient, product_and_color):
+    # Pattern explanation:
+    # ^(.*)         -> Group 1: Matches everything from the start (greedy)
+    # \s+           -> Matches the whitespace separator
+    # ([A-Z].*)     -> Group 2: Matches a capital letter followed by anything to the end
+    pattern = r"^(.*)\s+([A-Z].*)$"
+
+    match = re.search(pattern, product_and_color)
+    if match:
+        title = match.group(1)
+        color = match.group(2)
+        print(f"Title: {title} | Color: {color}")
+        products = products_by_title_cached(client, title)
+        for p in products:
+            for v in p["variants"]["nodes"]:
+                if variant_color(v).lower() == color.lower():
+                    return f"https://rohseoul.jp/products/{p['handle']}?variant={v['id'].rsplit("/", 1)[-1]}"
 
 
 def populate_lookbook_products_dicts(
@@ -53,7 +86,10 @@ def populate_lookbook_products_dicts(
         res = {}
         for _, row in df.iterrows():
             res.setdefault(f"{row['look']}-{row['number']}", []).append(
-                (row["item"], row["link"])
+                (
+                    row["item"],
+                    row["link"] or lookup_product_variant_url(client, row["item"]),
+                )
             )
         lookbook_products_dicts = res
     return lookbook_products_dicts
