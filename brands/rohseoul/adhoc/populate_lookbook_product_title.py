@@ -8,11 +8,9 @@ from brands.rohseoul.publish_lookbook_article import populate_lookbook_products_
 
 client = utils.client("rohseoul")
 lookbook_products_dict = populate_lookbook_products_dicts(
-    client, "17tfWLDl6rcewWnwULPEz5nA7TVLz1ShEuKgILnP7xa4", "LOOKBOOK - SPRING 26"
+    client, "17tfWLDl6rcewWnwULPEz5nA7TVLz1ShEuKgILnP7xa4", "LOOKBOOK - SUMMER 26"
 )
-path = (
-    f"{pathlib.Path.home()}/sc/rohseoul/templates/article.lookbook-lookbook-26-ss.json"
-)
+path = f"{pathlib.Path.home()}/sc/rohseoul/templates/article.lookbook-lookbook---26-summer.json"
 
 
 def variant_color(variant):
