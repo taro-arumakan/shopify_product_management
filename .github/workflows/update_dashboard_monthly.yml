@@ -1,4 +1,4 @@
-name: Export monthly brand reports
+name: Update dashboard monthly
 
 on:
   schedule:
