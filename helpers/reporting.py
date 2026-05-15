@@ -241,7 +241,6 @@ class Reporting:
                     return i + 1
 
     def upsert_dashboard_row(self, report_date, timeseries_by):
-        # TODO if existing row with the date and brand, update, or delete then insert.
         sheet_name = f"dev_{timeseries_by}ly"
         sheet_id = "14jUOdsb83EnEmQpXmmLmo3MtCK-CHiZ7bSocOLSjsFo"
         sheet_index = self.get_sheet_index_by_title(sheet_id, sheet_name)
