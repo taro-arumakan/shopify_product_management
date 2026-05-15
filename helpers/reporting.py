@@ -248,8 +248,10 @@ class Reporting:
         row = self.dashboard_row(report_date, timeseries_by)
         if exising_row_index := self.find_existing_row_index(worksheet, row[0], row[1]):
             range_label = f"A{exising_row_index}:L{exising_row_index}"
+            logger.info(f"updating an existing row {range_label}")
             worksheet.update(range_label, [row])
         else:
+            logger.info(f"adding a new row {range_label}")
             worksheet.insert_row(
                 values=row,
                 index=3,

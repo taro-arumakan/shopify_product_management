@@ -1,4 +1,5 @@
 import datetime
+import logging
 import sys
 import zoneinfo
 import utils
@@ -29,7 +30,7 @@ def main():
 
     for brand in brands:
         client = utils.client(brand)
-        print(f"running {term}ly for {brand} for {report_date}")
+        logging.info(f"running {term}ly for {brand} for {report_date}")
         client.upsert_dashboard_row(report_date, term)
 
 
