@@ -89,7 +89,7 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
-          uv run brands/scripts/export_monthly_brand_reports.py "month"
+          uv run brands/scripts/update_dashboard.py "month"
 
       - name: Cleanup
         if: always()
