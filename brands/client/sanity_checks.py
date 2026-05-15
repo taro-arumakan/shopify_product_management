@@ -44,6 +44,9 @@ class SanityChecks:
                     print(description_html)
         return res
 
+    def check_metafields(self, product_inputs):
+        return []
+
     def check_images_link(self, product_inputs):
         res = []
         for product_input in product_inputs:
@@ -119,6 +122,7 @@ class SanityChecks:
         res += self.check_existing_products(product_inputs)
         res += self.check_images_link(product_inputs)
         res += self.check_size_field(product_inputs, raise_on_error=False)
+        res += self.check_metafields()
         if not pre_rewrite:
             res += self.check_description(product_inputs, raise_on_error=False)
         for r in res:

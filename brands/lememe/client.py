@@ -112,6 +112,19 @@ class LememeClient(BrandClientBase):
                     product_id, variant_id, "custom", "filter_color", filter_color
                 )
 
+    def check_metafields(self, product_inputs):
+        res = []
+        product_care_page_titles = set(
+            "Product Care - " + product_input.get("product_care_option", "").strip()
+            for product_input in product_inputs
+        )
+        for pt in product_care_page_titles:
+            try:
+                self.page_id_by_title(pt)
+            except RuntimeError as e:
+                res.append(e)
+        return res
+
 
 class LememeClientApparel(LememeClient):
 
