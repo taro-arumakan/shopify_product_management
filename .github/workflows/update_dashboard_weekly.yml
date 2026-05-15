@@ -1,0 +1,97 @@
+name: Update dashboard monthly
+
+on:
+  schedule:
+    # Every Sunday 18:45 UTC (Every Monday 3:45 JST)
+    - cron: "45 18 * * 0"
+  workflow_dispatch:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.21"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          gbhjapan-ACCESS_TOKEN=${{ secrets.GBHJAPAN_ACCESS_TOKEN }}
+          gbhjapan-GSPREAD_ID=${{ secrets.GBHJAPAN_GSPREAD_ID }}
+          ssilkr-ACCESS_TOKEN=${{ secrets.SSILKR_ACCESS_TOKEN }}
+          ssilkr-GSPREAD_ID=${{ secrets.SSILKR_GSPREAD_ID }}
+          ssilkr-FB_PAGE_ID=${{ secrets.SSILKR_FB_PAGE_ID }}
+          ssilkr-IG_USER_ID=${{ secrets.SSILKR_IG_USER_ID }}
+          ssilkr-META_AD_ACCOUNT_ID=${{ secrets.SSILKR_META_AD_ACCOUNT_ID }}
+          ssilkr-META_TOKEN=${{ secrets.SSILKR_META_TOKEN }}
+          rohseoul-ACCESS_TOKEN=${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          rohseoul-GSPREAD_ID=${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          rohseoul-FB_PAGE_ID=${{ secrets.ROHSEOUL_FB_PAGE_ID }}
+          rohseoul-IG_USER_ID=${{ secrets.ROHSEOUL_IG_USER_ID }}
+          rohseoul-META_AD_ACCOUNT_ID=${{ secrets.ROHSEOUL_META_AD_ACCOUNT_ID }}
+          rohseoul-META_TOKEN=${{ secrets.ROHSEOUL_META_TOKEN }}
+          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
+          lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
+          lememek-FB_PAGE_ID=${{ secrets.LEMEMEK_FB_PAGE_ID }}
+          lememek-IG_USER_ID=${{ secrets.LEMEMEK_IG_USER_ID }}
+          lememek-META_AD_ACCOUNT_ID=${{ secrets.LEMEMEK_META_AD_ACCOUNT_ID }}
+          lememek-META_TOKEN=${{ secrets.LEMEMEK_META_TOKEN }}
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+          blossomhcompany-FB_PAGE_ID=${{ secrets.BLOSSOMHCOMPANY_FB_PAGE_ID }}
+          blossomhcompany-IG_USER_ID=${{ secrets.BLOSSOMHCOMPANY_IG_USER_ID }}
+          blossomhcompany-META_AD_ACCOUNT_ID=${{ secrets.BLOSSOMHCOMPANY_META_AD_ACCOUNT_ID }}
+          blossomhcompany-META_TOKEN=${{ secrets.BLOSSOMHCOMPANY_META_TOKEN }}
+          alvanas-ACCESS_TOKEN=${{ secrets.ALVANAS_ACCESS_TOKEN }}
+          alvanas-GSPREAD_ID=${{ secrets.ALVANAS_GSPREAD_ID }}
+          apricot-studios-ACCESS_TOKEN=${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          apricot-studios-FB_PAGE_ID=${{ secrets.APRICOT_STUDIOS_FB_PAGE_ID }}
+          apricot-studios-IG_USER_ID=${{ secrets.APRICOT_STUDIOS_IG_USER_ID }}
+          apricot-studios-META_AD_ACCOUNT_ID=${{ secrets.APRICOT_STUDIOS_META_AD_ACCOUNT_ID }}
+          apricot-studios-META_TOKEN=${{ secrets.APRICOT_STUDIOS_META_TOKEN }}
+          archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
+          archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+          archive-epke-FB_PAGE_ID=${{ secrets.ARCHIVE_EPKE_FB_PAGE_ID }}
+          archive-epke-IG_USER_ID=${{ secrets.ARCHIVE_EPKE_IG_USER_ID }}
+          archive-epke-META_AD_ACCOUNT_ID=${{ secrets.ARCHIVE_EPKE_META_AD_ACCOUNT_ID }}
+          archive-epke-META_TOKEN=${{ secrets.ARCHIVE_EPKE_META_TOKEN }}
+          a-and-stores-ACCESS_TOKEN=${{ secrets.A_AND_STORES_ACCESS_TOKEN }}
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
+          NOTIFYEES_EXPIRED_ORDERS=${{ secrets.NOTIFYEES_EXPIRED_ORDERS }}
+          EOF
+
+      - name: Run update_dashboard script with parameter week
+        env:
+          PYTHONPATH: .
+        run: |
+          uv run brands/scripts/update_dashboard.py "week"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
