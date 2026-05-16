@@ -111,7 +111,11 @@ def client(shop_name: str) -> BrandClientBase:
         res = SsilClient()
 
     else:
-        shop_name_map = {"dev": "quickstart-6f3c9e4c", "la": "leisureallstars"}
+        shop_name_map = {
+            "dev": "quickstart-6f3c9e4c",
+            "la": "leisureallstars",
+            "a&st": "a-and-stores",
+        }
         shop_name = shop_name_map.get(shop_name, shop_name)
         cred = credentials(shop_name)
         res = Client(
