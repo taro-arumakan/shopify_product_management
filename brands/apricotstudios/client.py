@@ -23,6 +23,8 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
         dummy_product_id="",
         product_detail_images_folder_id="",
         product_sheet_start_row=None,
+        remove_existing_new_product_indicators=None,
+        products_season_tag=None,
     ):
         """
         dummy_product_id: a dummy product which holds product detail images
@@ -36,34 +38,38 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             logger.warning(
                 "dummy proudct id and product detail images folder id are required for product creation"
             )
-        super().__init__(product_sheet_start_row=product_sheet_start_row)
+        super().__init__(
+            product_sheet_start_row=product_sheet_start_row,
+            remove_existing_new_product_indicators=remove_existing_new_product_indicators,
+            products_season_tag=products_season_tag,
+        )
 
     def product_attr_column_map(self):
         return dict(
-            title=string.ascii_lowercase.index("f"),
-            price=string.ascii_lowercase.index("h"),
-            collection=string.ascii_lowercase.index("c"),
-            category=string.ascii_lowercase.index("d"),
+            title=string.ascii_lowercase.index("g"),
+            price=string.ascii_lowercase.index("i"),
+            collection=string.ascii_lowercase.index("d"),
+            category=string.ascii_lowercase.index("e"),
             # release_date=string.ascii_lowercase.index("b"),
-            description=string.ascii_lowercase.index("j"),
-            material=string.ascii_lowercase.index("n"),
-            size_text=string.ascii_lowercase.index("p"),
-            made_in=string.ascii_lowercase.index("q"),
-            product_main_images_link=string.ascii_lowercase.index("r"),
+            description=string.ascii_lowercase.index("k"),
+            material=string.ascii_lowercase.index("o"),
+            size_text=string.ascii_lowercase.index("q"),
+            made_in=string.ascii_lowercase.index("r"),
+            product_main_images_link=string.ascii_lowercase.index("s"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"カラー": string.ascii_lowercase.index("u")}
+        option1_attrs = {"カラー": string.ascii_lowercase.index("v")}
         option1_attrs.update(
-            variant_images_link=string.ascii_lowercase.index("t"),
+            variant_images_link=string.ascii_lowercase.index("u"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"サイズ": string.ascii_lowercase.index("v")}
+        option2_attrs = {"サイズ": string.ascii_lowercase.index("w")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("w"),
-            stock=string.ascii_lowercase.index("x"),
+            sku=string.ascii_lowercase.index("x"),
+            stock=string.ascii_lowercase.index("y"),
         )
         return option2_attrs
 

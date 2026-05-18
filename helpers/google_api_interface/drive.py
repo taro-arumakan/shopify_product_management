@@ -76,7 +76,8 @@ class GoogleDriveApiInterface:
             status, done = downloader.next_chunk()
             logger.debug(f"Download {int(status.progress() * 100)}%.")
 
-    def rename_file_extension(self, file_path, image_mode):
+    @staticmethod
+    def rename_file_extension(file_path, image_mode):
         ext = {"RGBA": ".png"}.get(image_mode, ".jpg")
         p = pathlib.Path(file_path)
         if ext != p.suffix:
@@ -86,8 +87,9 @@ class GoogleDriveApiInterface:
             return new_path
         return file_path
 
+    @staticmethod
     def resize_image_to_limit(
-        self, image_path, output_path, max_megapixels=15, max_mb=15
+        image_path, output_path, max_megapixels=15, max_mb=15
     ):
         file_size_mb = os.path.getsize(image_path) / (1024 * 1024)
         with Image.open(image_path) as img:
@@ -116,7 +118,7 @@ class GoogleDriveApiInterface:
                     f"Image resized to {new_width}x{new_height} pixels and saved as {kwargs}"
                 )
             image_mode = img.mode
-        return self.rename_file_extension(output_path, image_mode)
+        return GoogleDriveApiInterface.rename_file_extension(output_path, image_mode)
 
     def find_by_folder_id_by_name(
         self, parent_folder_id, item_name, item_type=None, exact_name=True
