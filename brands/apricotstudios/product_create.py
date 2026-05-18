@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     client = ApricotStudiosClient(
-        "gid://shopify/Product/9344675578112",
+        "gid://shopify/Product/9453758742784",
         product_detail_images_folder_id="1-ARk3T-ySDlw4V5e4-n3wnQpzb7p2bV8",
         product_sheet_start_row=1,
         remove_existing_new_product_indicators=True,
@@ -24,7 +24,7 @@ def main():
     client.sanity_check_sheet(sheet_name)
     client.process_sheet_to_products(
         sheet_name,
-        additional_tags=["26_0520_summer", "New Arrival"],
+        additional_tags=["New Arrival"],
         scheduled_time=scheduled_time,
     )
 
