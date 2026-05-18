@@ -2,8 +2,8 @@ name: Update dashboard monthly
 
 on:
   schedule:
-    # Every Sunday 18:45 UTC (Every Monday 3:45 JST)
-    - cron: "45 18 * * 0"
+    # Every Monday 18:45 UTC (Every Tuesday 3:45 JST)
+    - cron: "45 18 * * 1"
   workflow_dispatch:
 
 jobs:

@@ -251,7 +251,7 @@ class Reporting:
             logger.info(f"updating an existing row {range_label}")
             worksheet.update(range_label, [row])
         else:
-            logger.info(f"adding a new row {range_label}")
+            logger.info(f"adding a new row")
             worksheet.insert_row(
                 values=row,
                 index=3,
