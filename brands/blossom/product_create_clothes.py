@@ -21,9 +21,9 @@ def update_series():
         client.process_series_products(series_name, products)
 
 
-def create_26ss_drop6():
-    sheet_name = "clothes(drop6)"
-    drop_tag = "2026_drop6"
+def create_products():
+    sheet_name = "clothes(SS DROP 1)"
+    drop_tag = "2026_SUMMER_DROP1"
 
     client = BlossomClientClothes(
         product_sheet_start_row=1,
@@ -36,7 +36,7 @@ def create_26ss_drop6():
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 4, 28, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 5, 22, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.process_sheet_to_products(
@@ -72,4 +72,4 @@ def create_jp_exclusive():
 
 
 if __name__ == "__main__":
-    create_26ss_drop6()
+    create_products()

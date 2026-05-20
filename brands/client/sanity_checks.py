@@ -122,7 +122,7 @@ class SanityChecks:
         res += self.check_existing_products(product_inputs)
         res += self.check_images_link(product_inputs)
         res += self.check_size_field(product_inputs, raise_on_error=False)
-        res += self.check_metafields()
+        res += self.check_metafields(product_inputs)
         if not pre_rewrite:
             res += self.check_description(product_inputs, raise_on_error=False)
         for r in res:
