@@ -193,6 +193,7 @@ class ProductQueries:
               sku
               price
               compareAtPrice
+              inventoryQuantity
               media (first:5){{
                 nodes{{
                   id
