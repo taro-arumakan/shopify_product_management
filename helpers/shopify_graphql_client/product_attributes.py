@@ -79,7 +79,12 @@ class ProductAttributes:
         return self.update_product_attribute(product_id, "handle", handle)
 
     def update_product_status(self, product_id, status):
-        assert status in ["ACTIVE", "DRAFT", "ARCHIVED"], "Invalid status"
+        assert status in [
+            "ACTIVE",
+            "DRAFT",
+            "ARCHIVED",
+            "UNLISTED",
+        ], f"Invalid status: {status}"
         return self.update_product_attribute(product_id, "status", status)
 
     def update_product_theme_template(self, product_id, template_suffix):
