@@ -1,0 +1,658 @@
+{
+  "brand": "lememe",
+  "shop_name": "lememek",
+  "sheet_name": "0520_RTW_summer",
+  "start_row": 1,
+  "handle_suffix": null,
+  "rows": [
+    [
+      "NO.",
+      "発売日",
+      "商品名\n상품명",
+      "カテゴリー/コレクション\n카테고리/컬렉션\n (Tags)",
+      "KR RRP",
+      "税込み価格\n세금포함 금액",
+      "商品説明\n제품 설명",
+      "商品説明\n제품설명",
+      "手入れ方法\n관리 방법",
+      "素材\n소재",
+      "重さ / 寸法 \n무게 / 실측",
+      "",
+      "原産国\n원산지",
+      "カラー\n컬러",
+      "サイズ\n사이즈",
+      "品番\n품번",
+      "在庫数\n재고수",
+      "備考\n비고",
+      "画像\n이미지경로"
+    ],
+    [
+      1,
+      46162,
+      "Fine U-Neck Cardigan",
+      "INNER, CARDIGAN, 26SS,NEW",
+      138000,
+      16500,
+      "파인 U넥 가디건\n입체적인 텍스처가 돋보이는 코튼 100% 소재의 반팔니트 가디건입니다",
+      "立体的なテクスチャーが表情豊かな、Fine U-Neck Cardigan（ファイン Uネック カーディガン）。コットン100％素材ならではの心地よい肌触りと、さりげなく開いたUネックが、着こなしに上品な抜け感を添えます。デイリーに取り入れやすい、頼れる一着です。",
+      "Clothes",
+      "COTTON 100%\n",
+      "[FREE] 어깨 35 / 가슴 48 / 밑단 34 / 소매기장 25 / 소매통 21 / 소매부리 12 / 총기장 54",
+      "[FREE]肩幅 35 / バスト 48 / 裾幅 34 / 袖丈 25 / 袖幅 21 / 袖口 12 / 総丈 54",
+      "KOREA",
+      "WHITE",
+      "FREE",
+      "BFQCDAM122WH00F\n",
+      10,
+      "",
+      "BFQCDAM122WH"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "NAVY",
+      "FREE",
+      "BFQCDAM122NA00F\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1a1WSYUG1dtntLmADs2aXGx9pgSC-iSI3"
+    ],
+    [
+      2,
+      46162,
+      "Leone Draped Half-Sleeve Blouse",
+      "TOP, BLOUSE, 26SS,NEW",
+      128000,
+      15400.000000000002,
+      "레오네 드레이프드 반팔 블라우스\n자연스럽게 흐르는 드레이프 디테일이 돋보이는 반팔 블라우스입니다. \n",
+      "\n自然に流れるドレープディテールが優雅な印象を纏う、Leone Draped Half-Sleeve Blouse（レオーネ ドレープド ハーフスリーブ ブラウス）。素材の動きに合わせてしなやかに揺れるシルエットが、着るたびに洗練された表情を演出します。日常にさりげない上品さを添える一着です。",
+      "Clothes",
+      "NYLON 52%, RAYON 39%, LINEN 5%, POLYURETHANE 4%\n",
+      "[FREE] 어깨 61 / 가슴 52 / 밑단 47 / 총기장 56 / 벨트길이 160",
+      "[FREE]肩幅 61 / バスト 52 / 裾幅 47 / 総丈 56 / ベルト長さ 160",
+      "CHINA",
+      "BUTTER",
+      "FREE",
+      "BFQBLAM319BT00F\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1jiyjl82jGL2nQDuhGIUzuCsCC3EthP_j"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "BLACK",
+      "FREE",
+      "BFQBLAM319BL00F\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1UolF57bJYGtuPGUCAhWTwV6z9qoWYjtr"
+    ],
+    [
+      3,
+      46162,
+      "Marie Half-Sleeve Blouse",
+      "TOP, BLOUSE, 26SS,NEW",
+      128000,
+      15400.000000000002,
+      "마리 반팔 블라우스\n라운드넥에 스트링과 셔링이 포인트 되는 반팔 블라우스입니다.\n얇지만 톡톡하며 바스락거리는 소재감이라 여름에도 달라붙지 않고 편하게 착용할 수 있습니다.",
+      "\nラウンドネックのストリングとシャーリングがさりげないアクセントを添える、Marie Half-Sleeve Blouse（マリー ハーフスリーブ ブラウス）。薄手でありながら程よい張りとハリ感のある素材が、夏の暑い日でも肌に張り付かず、一日中快適な着心地を叶えます。軽やかでいて上品な、夏のマストな一着です。",
+      "Clothes",
+      "SHELL : COTTON 86 NYLON 14%\r\nLINING : POLYESTER 80% COTTON 20%\r\n",
+      "[S] 어깨 35.5 / 가슴 53 / 밑단 54 / 소매기장 26 / 소매통 18.5 / 소매부리 18 / 총기장 51\n[M] 어깨 36.5 / 가슴 55.5 / 밑단 56.5 / 소매기장 27 / 소매통 19 / 소매부리 18.5 / 총기장 52",
+      "[S]肩幅 35.5 / バスト 53 / 裾幅 54 / 袖丈 26 / 袖幅 18.5 / 袖口 18 / 総丈 51\n[M]肩幅 36.5 / バスト 55.5 / 裾幅 56.5 / 袖丈 27 / 袖幅 19 / 袖口 18.5 / 総丈 52\n",
+      "CHINA",
+      "BEIGE",
+      "S",
+      "BFQBLAM320BE00S\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1elljlBsZNVFc-OSDZdR2DSRITZ3A_xIO"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "M",
+      "BFQBLAM320BE00M\r\n",
+      10,
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "WHITE",
+      "S",
+      "BFQBLAM320WH00S\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1_P4INJszXcp-y-pOHM1V98D7vseC0Ius"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "M",
+      "BFQBLAM320WH00M\r\n",
+      10,
+      "",
+      ""
+    ],
+    [
+      4,
+      46162,
+      "Deux Strap Blouse",
+      "TOP, BLOUSE, 26SS,NEW",
+      138000,
+      16500,
+      "듀 스트랩 블라우스\n은은하게 시어서커 조직감이 돋보이는 코튼 혼방 소재의 블라우스로 한여름까지 착용하기 좋습니다.\n어깨에 달린 단추로 어깨 끈을 탈부착하여 다양한 무드로 착용할 수 있습니다. ",
+      "ほのかなシアサッカーの織り感が涼やかな表情を生み出す、Deux Strap Blouse（デュー ストラップ ブラウス）。コットン混素材の心地よい肌触りで、真夏まで快適に着用いただけます。肩のボタンでストラップの着脱が可能で、その日の気分やスタイリングに合わせて多彩なムードをお楽しみいただける一着です。",
+      "Clothes",
+      "COTTON 79 NYLON 21%\n",
+      "[FREE] 가슴 49.5 / 허리 41.2 / 밑단 49.2 / 화장 31 / 소매부리 20.5 / 총기장 54.5\n",
+      "[FREE]バスト 49.5 / ウエスト 41.2 / 裾幅 49.2 / 裄丈 31 / 袖口 20.5 / 総丈 54.5",
+      "KOREA",
+      "SKY BLUE",
+      "FREE",
+      "BFQBLAM322SB00F\r\n",
+      10,
+      "",
+      "BFQBLAM322SB"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "SAGE GREEN",
+      "FREE",
+      "BFQBLAM322GR00F\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1s0P9l5tmBEAgPhVasbAYWs4mf5idg0zJ"
+    ],
+    [
+      5,
+      46162,
+      "Ete Two Tuck Shorts",
+      "BOTTOM, PANTS, SHORTS, 26SS,NEW",
+      118000,
+      14300.000000000002,
+      "에떼 투턱 쇼츠\n클래식한 디자인에 많이 짧지 않은 기장감으로 여름에 여러 옷과 매치하기 좋은 아이템입니다.\n가볍고 시원한 터치감의 나일론 혼방 원단으로 한여름까지 착용하기 좋습니다. ",
+      "クラシックなデザインと程よい丈感が幅広いコーディネートに馴染む、Ete Two Tuck Shorts（エテ ツータック ショーツ）。軽やかでさらりとした肌触りのナイロン混素材が、真夏の暑い日も涼しく快適な着心地を叶えます。夏のスタイリングに自然と溶け込む、頼れる一着です。",
+      "Clothes",
+      "SHELL : NYLON 64% RAYON 34% POLYURETHANE 2%\r\nLINING : POLYESTER 100%\r\n",
+      "[S] 허리 35.5 / 엉덩이 47 / 밑단 33.2 / 총장 42.6 / 앞밑위 30.7 / 뒷밑위 40.2\n[M] 허리 38 / 엉덩이 49.5 / 밑단 35.7 / 총장 43.6 / 앞밑위 31.5 / 뒷밑위 41",
+      "[S]ウエスト 35.5 / ヒップ 47 / 裾幅 33.2 / 総丈 42.6 / 前股上 30.7 / 後股上 40.2\n[M]ウエスト 38 / ヒップ 49.5 / 裾幅 35.7 / 総丈 43.6 / 前股上 31.5 / 後股上 41",
+      "CHINA",
+      "BROWN",
+      "S",
+      "BFQPTAM521BR00S\r\n",
+      10,
+      "",
+      "BFQPTAM521BR"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "M",
+      "BFQPTAM521BR00M\r\n",
+      10,
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "WHITE",
+      "S",
+      "BFQPTAM521WH00S\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1z7gBrSX3TGsZeU8KJ1WiZmBGwbQev1AO"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "M",
+      "BFQPTAM521WH00M\r\n",
+      10,
+      "",
+      ""
+    ],
+    [
+      6,
+      46162,
+      "Marie Flare Skirt",
+      "BOTTOM, SKIRT, 26SS,NEW",
+      158000,
+      18700,
+      "마리 플레어 스커트\n플레어지는 실루엣이 돋보이는 미디기장의 스커트입니다.\n얇지만 톡톡하며 바스락거리는 소재감이라 여름에도 달라붙지 않고 편하게 착용할 수 있습니다.",
+      "やわらかく広がるフレアシルエットが女性らしい印象を纏う、Marie Flare Skirt（マリー フレア スカート）。薄手でありながら程よい張りとハリ感のある素材が、夏の暑い日でも肌に張り付かず、一日中快適な着心地を叶えます。ミディ丈の上品な佇まいが、日常のコーディネートに優雅さを添える一着です。",
+      "Clothes",
+      "SHELL : COTTON 86% NYLON 14%\r\nLINING : POLYESTER 100%\r\n",
+      "[S] 허리 33.5 / 엉덩이 49 / 밑단 43.5 / 총장 80.5\n[M] 허리 36 / 엉덩이 51.5 / 밑단 44.8 / 총장 81.5",
+      "[S]ウエスト 33.5 / ヒップ 49 / 裾幅 43.5 / 総丈 80.5\n[M]ウエスト 36 / ヒップ 51.5 / 裾幅 44.8 / 総丈 81.5",
+      "CHINA",
+      "BEIGE",
+      "S",
+      "BFQSKAM716BE00S\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1Ajs1nMyL2JddiKDBVArUd4HSYShftJC9"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "M",
+      "BFQSKAM716BE00M\r\n",
+      10,
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "WHITE",
+      "S",
+      "BFQSKAM716WH00S\r\n",
+      10,
+      "",
+      "https://drive.google.com/drive/folders/1bNdcz0vaSin1Vr92FS3uYo-MPMjGCKgF"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "M",
+      "BFQSKAM716WH00M\r\n",
+      10,
+      "",
+      ""
+    ]
+  ],
+  "drive_link_cache": {
+    "2": "https://drive.google.com/drive/folders/10czusR5zvE2N9s-Hcai0Cg1pYkmsfUbL",
+    "3": "https://drive.google.com/drive/folders/1a1WSYUG1dtntLmADs2aXGx9pgSC-iSI3",
+    "4": "https://drive.google.com/drive/folders/1jiyjl82jGL2nQDuhGIUzuCsCC3EthP_j",
+    "5": "https://drive.google.com/drive/folders/1UolF57bJYGtuPGUCAhWTwV6z9qoWYjtr",
+    "6": "https://drive.google.com/drive/folders/1elljlBsZNVFc-OSDZdR2DSRITZ3A_xIO",
+    "8": "https://drive.google.com/drive/folders/1_P4INJszXcp-y-pOHM1V98D7vseC0Ius",
+    "10": "https://drive.google.com/drive/folders/1dpKsheC4K5ZWERpTueKcNYoz3006eZ-b",
+    "11": "https://drive.google.com/drive/folders/1s0P9l5tmBEAgPhVasbAYWs4mf5idg0zJ",
+    "12": "https://drive.google.com/drive/folders/1nH-1s3qj19Ab7a7Oxcdz2X3HvsQpXU5t",
+    "14": "https://drive.google.com/drive/folders/1z7gBrSX3TGsZeU8KJ1WiZmBGwbQev1AO",
+    "16": "https://drive.google.com/drive/folders/1Ajs1nMyL2JddiKDBVArUd4HSYShftJC9",
+    "18": "https://drive.google.com/drive/folders/1bNdcz0vaSin1Vr92FS3uYo-MPMjGCKgF"
+  },
+  "expected": [
+    {
+      "title": "Fine U-Neck Cardigan",
+      "tags": "INNER, CARDIGAN, 26SS,NEW",
+      "price": 16500,
+      "description": "立体的なテクスチャーが表情豊かな、Fine U-Neck Cardigan（ファイン Uネック カーディガン）。コットン100％素材ならではの心地よい肌触りと、さりげなく開いたUネックが、着こなしに上品な抜け感を添えます。デイリーに取り入れやすい、頼れる一着です。",
+      "product_care_option": "Clothes",
+      "material": "[FREE] 어깨 35 / 가슴 48 / 밑단 34 / 소매기장 25 / 소매통 21 / 소매부리 12 / 총기장 54",
+      "size_text": "[FREE]肩幅 35 / バスト 48 / 裾幅 34 / 袖丈 25 / 袖幅 21 / 袖口 12 / 総丈 54",
+      "made_in": "KOREA",
+      "options": [
+        {
+          "Color": "WHITE",
+          "drive_link": "https://drive.google.com/drive/folders/10czusR5zvE2N9s-Hcai0Cg1pYkmsfUbL",
+          "options": [
+            {
+              "Size": "FREE",
+              "sku": "BFQCDAM122WH00F",
+              "stock": 10
+            }
+          ]
+        },
+        {
+          "Color": "NAVY",
+          "drive_link": "https://drive.google.com/drive/folders/1a1WSYUG1dtntLmADs2aXGx9pgSC-iSI3",
+          "options": [
+            {
+              "Size": "FREE",
+              "sku": "BFQCDAM122NA00F",
+              "stock": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Leone Draped Half-Sleeve Blouse",
+      "tags": "TOP, BLOUSE, 26SS,NEW",
+      "price": 15400,
+      "description": "自然に流れるドレープディテールが優雅な印象を纏う、Leone Draped Half-Sleeve Blouse（レオーネ ドレープド ハーフスリーブ ブラウス）。素材の動きに合わせてしなやかに揺れるシルエットが、着るたびに洗練された表情を演出します。日常にさりげない上品さを添える一着です。",
+      "product_care_option": "Clothes",
+      "material": "[FREE] 어깨 61 / 가슴 52 / 밑단 47 / 총기장 56 / 벨트길이 160",
+      "size_text": "[FREE]肩幅 61 / バスト 52 / 裾幅 47 / 総丈 56 / ベルト長さ 160",
+      "made_in": "CHINA",
+      "options": [
+        {
+          "Color": "BUTTER",
+          "drive_link": "https://drive.google.com/drive/folders/1jiyjl82jGL2nQDuhGIUzuCsCC3EthP_j",
+          "options": [
+            {
+              "Size": "FREE",
+              "sku": "BFQBLAM319BT00F",
+              "stock": 10
+            }
+          ]
+        },
+        {
+          "Color": "BLACK",
+          "drive_link": "https://drive.google.com/drive/folders/1UolF57bJYGtuPGUCAhWTwV6z9qoWYjtr",
+          "options": [
+            {
+              "Size": "FREE",
+              "sku": "BFQBLAM319BL00F",
+              "stock": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Marie Half-Sleeve Blouse",
+      "tags": "TOP, BLOUSE, 26SS,NEW",
+      "price": 15400,
+      "description": "ラウンドネックのストリングとシャーリングがさりげないアクセントを添える、Marie Half-Sleeve Blouse（マリー ハーフスリーブ ブラウス）。薄手でありながら程よい張りとハリ感のある素材が、夏の暑い日でも肌に張り付かず、一日中快適な着心地を叶えます。軽やかでいて上品な、夏のマストな一着です。",
+      "product_care_option": "Clothes",
+      "material": "[S] 어깨 35.5 / 가슴 53 / 밑단 54 / 소매기장 26 / 소매통 18.5 / 소매부리 18 / 총기장 51\n[M] 어깨 36.5 / 가슴 55.5 / 밑단 56.5 / 소매기장 27 / 소매통 19 / 소매부리 18.5 / 총기장 52",
+      "size_text": "[S]肩幅 35.5 / バスト 53 / 裾幅 54 / 袖丈 26 / 袖幅 18.5 / 袖口 18 / 総丈 51\n[M]肩幅 36.5 / バスト 55.5 / 裾幅 56.5 / 袖丈 27 / 袖幅 19 / 袖口 18.5 / 総丈 52",
+      "made_in": "CHINA",
+      "options": [
+        {
+          "Color": "BEIGE",
+          "drive_link": "https://drive.google.com/drive/folders/1elljlBsZNVFc-OSDZdR2DSRITZ3A_xIO",
+          "options": [
+            {
+              "Size": "S",
+              "sku": "BFQBLAM320BE00S",
+              "stock": 10
+            },
+            {
+              "Size": "M",
+              "sku": "BFQBLAM320BE00M",
+              "stock": 10
+            }
+          ]
+        },
+        {
+          "Color": "WHITE",
+          "drive_link": "https://drive.google.com/drive/folders/1_P4INJszXcp-y-pOHM1V98D7vseC0Ius",
+          "options": [
+            {
+              "Size": "S",
+              "sku": "BFQBLAM320WH00S",
+              "stock": 10
+            },
+            {
+              "Size": "M",
+              "sku": "BFQBLAM320WH00M",
+              "stock": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Deux Strap Blouse",
+      "tags": "TOP, BLOUSE, 26SS,NEW",
+      "price": 16500,
+      "description": "ほのかなシアサッカーの織り感が涼やかな表情を生み出す、Deux Strap Blouse（デュー ストラップ ブラウス）。コットン混素材の心地よい肌触りで、真夏まで快適に着用いただけます。肩のボタンでストラップの着脱が可能で、その日の気分やスタイリングに合わせて多彩なムードをお楽しみいただける一着です。",
+      "product_care_option": "Clothes",
+      "material": "[FREE] 가슴 49.5 / 허리 41.2 / 밑단 49.2 / 화장 31 / 소매부리 20.5 / 총기장 54.5",
+      "size_text": "[FREE]バスト 49.5 / ウエスト 41.2 / 裾幅 49.2 / 裄丈 31 / 袖口 20.5 / 総丈 54.5",
+      "made_in": "KOREA",
+      "options": [
+        {
+          "Color": "SKY BLUE",
+          "drive_link": "https://drive.google.com/drive/folders/1dpKsheC4K5ZWERpTueKcNYoz3006eZ-b",
+          "options": [
+            {
+              "Size": "FREE",
+              "sku": "BFQBLAM322SB00F",
+              "stock": 10
+            }
+          ]
+        },
+        {
+          "Color": "SAGE GREEN",
+          "drive_link": "https://drive.google.com/drive/folders/1s0P9l5tmBEAgPhVasbAYWs4mf5idg0zJ",
+          "options": [
+            {
+              "Size": "FREE",
+              "sku": "BFQBLAM322GR00F",
+              "stock": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Ete Two Tuck Shorts",
+      "tags": "BOTTOM, PANTS, SHORTS, 26SS,NEW",
+      "price": 14300,
+      "description": "クラシックなデザインと程よい丈感が幅広いコーディネートに馴染む、Ete Two Tuck Shorts（エテ ツータック ショーツ）。軽やかでさらりとした肌触りのナイロン混素材が、真夏の暑い日も涼しく快適な着心地を叶えます。夏のスタイリングに自然と溶け込む、頼れる一着です。",
+      "product_care_option": "Clothes",
+      "material": "[S] 허리 35.5 / 엉덩이 47 / 밑단 33.2 / 총장 42.6 / 앞밑위 30.7 / 뒷밑위 40.2\n[M] 허리 38 / 엉덩이 49.5 / 밑단 35.7 / 총장 43.6 / 앞밑위 31.5 / 뒷밑위 41",
+      "size_text": "[S]ウエスト 35.5 / ヒップ 47 / 裾幅 33.2 / 総丈 42.6 / 前股上 30.7 / 後股上 40.2\n[M]ウエスト 38 / ヒップ 49.5 / 裾幅 35.7 / 総丈 43.6 / 前股上 31.5 / 後股上 41",
+      "made_in": "CHINA",
+      "options": [
+        {
+          "Color": "BROWN",
+          "drive_link": "https://drive.google.com/drive/folders/1nH-1s3qj19Ab7a7Oxcdz2X3HvsQpXU5t",
+          "options": [
+            {
+              "Size": "S",
+              "sku": "BFQPTAM521BR00S",
+              "stock": 10
+            },
+            {
+              "Size": "M",
+              "sku": "BFQPTAM521BR00M",
+              "stock": 10
+            }
+          ]
+        },
+        {
+          "Color": "WHITE",
+          "drive_link": "https://drive.google.com/drive/folders/1z7gBrSX3TGsZeU8KJ1WiZmBGwbQev1AO",
+          "options": [
+            {
+              "Size": "S",
+              "sku": "BFQPTAM521WH00S",
+              "stock": 10
+            },
+            {
+              "Size": "M",
+              "sku": "BFQPTAM521WH00M",
+              "stock": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Marie Flare Skirt",
+      "tags": "BOTTOM, SKIRT, 26SS,NEW",
+      "price": 18700,
+      "description": "やわらかく広がるフレアシルエットが女性らしい印象を纏う、Marie Flare Skirt（マリー フレア スカート）。薄手でありながら程よい張りとハリ感のある素材が、夏の暑い日でも肌に張り付かず、一日中快適な着心地を叶えます。ミディ丈の上品な佇まいが、日常のコーディネートに優雅さを添える一着です。",
+      "product_care_option": "Clothes",
+      "material": "[S] 허리 33.5 / 엉덩이 49 / 밑단 43.5 / 총장 80.5\n[M] 허리 36 / 엉덩이 51.5 / 밑단 44.8 / 총장 81.5",
+      "size_text": "[S]ウエスト 33.5 / ヒップ 49 / 裾幅 43.5 / 総丈 80.5\n[M]ウエスト 36 / ヒップ 51.5 / 裾幅 44.8 / 総丈 81.5",
+      "made_in": "CHINA",
+      "options": [
+        {
+          "Color": "BEIGE",
+          "drive_link": "https://drive.google.com/drive/folders/1Ajs1nMyL2JddiKDBVArUd4HSYShftJC9",
+          "options": [
+            {
+              "Size": "S",
+              "sku": "BFQSKAM716BE00S",
+              "stock": 10
+            },
+            {
+              "Size": "M",
+              "sku": "BFQSKAM716BE00M",
+              "stock": 10
+            }
+          ]
+        },
+        {
+          "Color": "WHITE",
+          "drive_link": "https://drive.google.com/drive/folders/1bNdcz0vaSin1Vr92FS3uYo-MPMjGCKgF",
+          "options": [
+            {
+              "Size": "S",
+              "sku": "BFQSKAM716WH00S",
+              "stock": 10
+            },
+            {
+              "Size": "M",
+              "sku": "BFQSKAM716WH00M",
+              "stock": 10
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
