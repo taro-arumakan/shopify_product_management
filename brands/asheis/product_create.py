@@ -14,11 +14,49 @@ look_images_parent_dir = (
 product_dirs = client.list_folders(product_images_parent_dir.rsplit("/", 1)[-1])
 print(len(product_dirs))
 
-for product_image_dir in product_dirs[:2]:
-    product_title = product_image_dir["name"]
-    look_dir = client.find_by_folder_id_by_name(
+
+def product_tag_from_title(product_title):
+    pt_map = {
+        "pants": "bottom",
+        "skirt": "bottom",
+        "coat": "top",
+        "top": "top",
+        "neck": "top",
+        "jacket": "top",
+        "knit": "knit",
+        "cardigan": "knit",
+    }
+    for pt, mapped in pt_map.items():
+        if pt in product_title.lower():
+            return mapped
+    return "misc"
+
+
+def get_look_dir(client, product_title):
+    title_map = {
+        "ELLA TASSAR crew neck": "ELLA TASSAR pull over",
+        "CECIL COTTON WOOL": "CECIL COTTON WOOL ２piece",
+        "CECIL COTTON WOOL v-neck": "CECIL COTTON WOOL v neck",
+        "KAIA RIB KNIT cardigan": "KAIA RIB KNIT blouse",
+    }
+    product_title = title_map.get(product_title, product_title)
+    if look_dir := client.find_by_folder_id_by_name(
         look_images_parent_dir.rsplit("/", 1)[-1], product_title, exact_name=False
-    )
+    ):
+        return look_dir
+    for i in range(1, 3):
+        if look_dir := client.find_by_folder_id_by_name(
+            look_images_parent_dir.rsplit("/", 1)[-1],
+            product_title.rsplit(" ", i)[0],
+            exact_name=False,
+        ):
+            return look_dir
+    raise RuntimeError(f"no look dir found for {product_title}")
+
+
+for product_image_dir in product_dirs[3:]:
+    product_title = product_image_dir["name"].replace("　", " ")
+    look_dir = get_look_dir(client, product_title)
 
     print(client.get_drive_image_details(product_image_dir["id"]))
     print(client.get_drive_image_details(look_dir["id"]))
@@ -68,7 +106,7 @@ for product_image_dir in product_dirs[:2]:
 </div>
         """,
         vendor="asheis",
-        tags=["dummy", "clothes"],
+        tags=["dummy", "clothes"] + [product_tag_from_title(product_title)],
         option_dicts=[
             {
                 "option_values": {"Color": "BLACK", "Size": "S"},
@@ -103,5 +141,6 @@ for product_image_dir in product_dirs[:2]:
         res["id"], product_image_dir["id"], local_dir, filename_prefix
     )
     client.add_product_images(res["id"], look_dir["id"], local_dir, filename_prefix)
+    client.activate_and_publish_by_product_id(res["id"])
 
     print()
