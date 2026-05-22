@@ -3,7 +3,20 @@
     "allow": [
       "Bash(.venv/bin/python:*)",
       "Bash(awk '{print $5, $9}')",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(ls -la /Users/taro/sc/ 2>/dev/null | head -40; echo \"---exists check---\"; ls -la /Users/taro/sc/shopify_favorites_service 2>/dev/null && echo \"ALREADY EXISTS\" || echo \"does not exist yet\")",
+      "Bash(python3 -m venv .venv)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/pytest -q)",
+      "Bash(python3.12 -m venv .venv)",
+      "Bash(SHOP_NAME=demo ACCESS_TOKEN=tok APP_PROXY_SECRET=secret .venv/bin/python -c ' *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(gh repo *)",
+      "Bash(python3.12 -m venv .venv312)",
+      "Bash(.venv312/bin/pip install *)",
+      "Bash(.venv312/bin/pytest -q)",
+      "Bash(git add *)",
+      "Bash(git push *)"
     ]
   }
 }
