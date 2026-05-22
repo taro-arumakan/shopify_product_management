@@ -25,6 +25,7 @@ from helpers.shopify_graphql_client.product_variants_to_products import (
     ProductVariantsToProducts,
 )
 from helpers.shopify_graphql_client.publications import Publications
+from helpers.shopify_graphql_client.shipping import Shipping
 from helpers.shopify_graphql_client.variants import Variants
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ class ShopifyGraphqlClient(
     Metafields,
     MergeProductsAsVariants,
     Publications,
+    Shipping,
     Variants,
 ):
     def __init__(self, shop_name, access_token):
