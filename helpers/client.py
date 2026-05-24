@@ -292,3 +292,6 @@ class Client(
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
+
+    def _nl_to_br(self, s):
+        return s.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>")
