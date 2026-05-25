@@ -232,6 +232,14 @@ class ProductCreate:
         rows = []
         headers = ["Size"]
 
+        size_text = (
+            size_text.replace("／", "/").replace("\r\n", "\n").replace("\r", "\n")
+        )
+        size_text = re.sub(
+            r"\][^\s:]", lambda m: "] " + m.group(0)[1], size_text
+        )  # ensure space after ]
+        size_text = re.sub(r"\s*/\s*", " / ", size_text)  # canonicalize " / "
+
         for line in size_text.strip().split("\n"):
             match = self.heading_size_expression.match(line.strip())
             if not match:

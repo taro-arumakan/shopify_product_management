@@ -20,7 +20,7 @@ class LememeClient(BrandClientBase):
             price=string.ascii_lowercase.index("f"),
             description=string.ascii_lowercase.index("h"),
             product_care_option=string.ascii_lowercase.index("i"),
-            material=string.ascii_lowercase.index("k"),
+            material=string.ascii_lowercase.index("j"),
             size_text=string.ascii_lowercase.index("l"),
             made_in=string.ascii_lowercase.index("m"),
         )
@@ -63,10 +63,10 @@ class LememeClient(BrandClientBase):
     def get_description_html(self, product_input):
         description_html = self.product_description_template()
         description_html = description_html.replace(
-            "${DESCRIPTION}", product_input["description"].replace("\n", "<br>")
+            "${DESCRIPTION}", self._nl_to_br(product_input["description"])
         )
         description_html = description_html.replace(
-            "${MATERIAL}", product_input["material"]
+            "${MATERIAL}", self._nl_to_br(product_input["material"])
         )
         description_html = description_html.replace(
             "${MADEIN}", product_input["made_in"]
@@ -147,6 +147,9 @@ class LememeClientApparel(LememeClient):
         return ["Apparel"] + super().get_tags_from_product_input(
             product_input=product_input
         )
+
+    def get_size_field(self, product_input):
+        return self.formatted_size_text_to_html_table(product_input["size_text"])
 
 
 def main():
