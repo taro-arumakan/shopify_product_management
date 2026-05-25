@@ -63,6 +63,7 @@ jobs:
           NOTIFYEES_GBH=${{ secrets.NOTIFYEES_GBH }}
           NOTIFYEES_KUME=${{ secrets.NOTIFYEES_KUME }}
           NOTIFYEES_LEMEME=${{ secrets.NOTIFYEES_LEMEME }}
+          NOTIFYEES_ROHSEOUL=${{ secrets.NOTIFYEES_ROHSEOUL }}
           EOF
 
       - name: Run check_expected_shipping_date script
