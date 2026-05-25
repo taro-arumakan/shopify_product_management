@@ -81,7 +81,7 @@ def check(brand, email_recipients):
 
 def main():
     assert dotenv.load_dotenv(override=True)
-    brands = ["KUME", "GBH", "BLOSSOM", "LEMEME"]
+    brands = ["KUME", "GBH", "BLOSSOM", "LEMEME", "ROHSEOUL"]
     for brand in brands:
         logging.info(f"Checking {brand}...")
         check(brand, email_recipients=os.environ[f"NOTIFYEES_{brand}"].split(","))
