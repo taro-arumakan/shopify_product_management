@@ -79,18 +79,6 @@ class Shipping:
             f"zone {zone_name} not found in profile {delivery_profile['name']}"
         )
 
-    @staticmethod
-    def _condition_id_from_method_definition_id(method_definition_id):
-        """Conditional rates are returned as the base method definition id with a
-        `?source=RateRangeCondition&source_id=<id>` suffix. Pull out the condition id.
-        """
-        source_id = parse_qs(urlparse(method_definition_id).query).get(
-            "source_id", [None]
-        )[0]
-        if not source_id:
-            return None
-        return f"gid://shopify/DeliveryCondition/{source_id}"
-
     def update_delivery_flat_rate(
         self,
         new_price,
@@ -100,8 +88,15 @@ class Shipping:
         new_method_name=None,
         testrun=True,
     ):
-        """Update the flat rate for a zone, deleting any conditional ("discount")
-        rates such as a free-shipping campaign, and optionally renaming the method."""
+        """Replace the zone's method definition with a flat-rate one.
+
+        Implemented as delete + create rather than update: when the existing
+        method definition has rate-range conditions ("discount" rates such as a
+        free-shipping campaign), Shopify rejects `methodDefinitionsToUpdate`
+        with "This method definition cannot be updated because it uses new
+        configurations...". Deleting the old method cascades the conditions
+        away, then we create a fresh flat-rate method in the same mutation.
+        """
         dp = self.delivery_profile_by_name(profile_name)
         profile_id = dp["id"]
         location_group = dp["profileLocationGroups"][0]
@@ -109,47 +104,45 @@ class Shipping:
         method_nodes = zone["methodDefinitions"]["nodes"]
 
         base_method = next(m for m in method_nodes if "?" not in m["id"])
-        condition_ids = [
-            condition_id
-            for m in method_nodes
-            if (condition_id := self._condition_id_from_method_definition_id(m["id"]))
-        ]
-
-        method_input = {
-            "id": base_method["id"],
-            "rateDefinition": {
-                "id": base_method["rateProvider"]["id"],
-                "price": {"amount": str(new_price), "currencyCode": currency_code},
-            },
-        }
-        if new_method_name is not None:
-            method_input["name"] = new_method_name
+        method_name = new_method_name or base_method["name"]
 
         profile_input = {
+            "methodDefinitionsToDelete": [base_method["id"]],
             "locationGroupsToUpdate": [
                 {
                     "id": location_group["locationGroup"]["id"],
                     "zonesToUpdate": [
-                        {"id": zone["id"], "methodDefinitionsToUpdate": [method_input]}
+                        {
+                            "id": zone["zone"]["id"],
+                            "methodDefinitionsToCreate": [
+                                {
+                                    "name": method_name,
+                                    "active": True,
+                                    "rateDefinition": {
+                                        "price": {
+                                            "amount": str(new_price),
+                                            "currencyCode": currency_code,
+                                        }
+                                    },
+                                }
+                            ],
+                        }
                     ],
                 }
             ],
         }
-        if condition_ids:
-            profile_input["conditionsToDelete"] = condition_ids
 
         logger.info(
-            f"Updating {profile_name} / {zone_name}: "
+            f"Replacing {profile_name} / {zone_name} method: "
             f"'{base_method['name']}' ({base_method['rateProvider']['price']['amount']} "
             f"{base_method['rateProvider']['price']['currencyCode']}) "
-            f"-> '{new_name or base_method['name']}' ({new_price} {currency_code}); "
-            f"deleting {len(condition_ids)} condition(s)"
+            f"-> '{method_name}' ({new_price} {currency_code})"
         )
         if testrun:
             logger.info("Test run mode - no changes will be made")
             return profile_input
         else:
-            return self.update_delivery_profile(profile_id)
+            return self.update_delivery_profile(profile_id, profile_input)
 
 
 def main():
