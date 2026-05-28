@@ -12,7 +12,7 @@ def main():
             zone_name="国内配送",
             new_price=880,
             new_method_name="通常配送 お支払い完了から10-14日を目安にお届けします",
-            testrun=True,
+            testrun=False,
         )
     )
 
