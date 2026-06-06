@@ -55,14 +55,22 @@ def main():
         brands = DEFAULT_BRANDS
         year, month = last_full_month()
 
+    failures = []
     for brand in brands:
         logging.info(f"=== {brand} {year}-{month:02d} (Shopify + Meta + Instagram) ===")
-        client = utils.client(brand)
-        paths = client.extract_all_monthly(report_year=year, report_month=month)
-        logging.info(
-            f"{brand}: extracted sources {sorted(k for k in paths if k != 'rollup')} "
-            f"+ rollup"
-        )
+        try:
+            client = utils.client(brand)
+            paths = client.extract_all_monthly(report_year=year, report_month=month)
+            logging.info(
+                f"{brand}: extracted sources "
+                f"{sorted(k for k in paths if k != 'rollup')} + rollup"
+            )
+        except Exception as e:
+            logging.exception(f"{brand} extraction failed: {e}")
+            failures.append(brand)
+
+    if failures:
+        raise SystemExit(f"Monthly extraction failed for: {', '.join(failures)}")
 
 
 if __name__ == "__main__":
