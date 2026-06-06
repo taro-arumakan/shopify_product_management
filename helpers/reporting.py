@@ -414,6 +414,15 @@ class Reporting:
         ]
         posts = self.ig_posts_with_insights(month_start, month_end)
         format_counts = self.ig_published_format_counts(month_start, month_end)
+
+        # Stories can't be pulled retroactively, so fold in what the daily capture
+        # has accumulated for this month (empty for months before the daily job ran).
+        month_prefix = f"{report_year}-{report_month:02d}"
+        report_stories = [
+            s
+            for s in self.read_combined_ig_daily(brand_name, "stories")
+            if (s.get("timestamp") or "").startswith(month_prefix)
+        ]
         format_row = [
             {
                 "month": f"{month_start:%Y-%m}",
@@ -421,8 +430,18 @@ class Reporting:
                 "reels": format_counts.get("REELS", 0),
                 "posts_total": format_counts.get("FEED", 0)
                 + format_counts.get("REELS", 0),
+                "stories": len(report_stories),
             }
         ]
+        story_fieldnames = [
+            "capture_date",
+            "story_id",
+            "timestamp",
+            "media_type",
+            "media_product_type",
+            "permalink",
+            "caption",
+        ] + self.IG_STORY_METRICS
 
         period = f"{report_year}{report_month:02d}"
         local_dir = local_dir or os.path.join(
@@ -461,9 +480,14 @@ class Reporting:
                 self.IG_POST_COLUMNS,
             ),
             (
+                f"Instagram stories - {month_start:%Y-%m-%d} - {month_end:%Y-%m-%d}.csv",
+                report_stories,
+                story_fieldnames,
+            ),
+            (
                 f"Instagram published format counts - {month_start:%Y-%m}.csv",
                 format_row,
-                ["month", "feed_posts", "reels", "posts_total"],
+                ["month", "feed_posts", "reels", "posts_total", "stories"],
             ),
         ]
         written = []
@@ -487,6 +511,39 @@ class Reporting:
         for name in names:
             folder_id = self.find_or_create_folder_by_name(folder_id, name)
         return folder_id
+
+    def _find_folder_path(self, parent_id, *names):
+        """Resolve a nested folder path read-only, returning None if any segment
+        is missing (does not create folders)."""
+        folder_id = parent_id
+        for name in names:
+            folder_id = self.find_folder_id_by_name(folder_id, name)
+            if not folder_id:
+                return None
+        return folder_id
+
+    def read_combined_ig_daily(self, brand_name, data_type, local_dir=None):
+        """Read the combined daily IG file (account.csv / stories.csv) from Drive.
+
+        Returns a list of row dicts, or [] if the daily capture hasn't produced one
+        yet (e.g. backfilled months before the daily job existed).
+        """
+        ig_folder = self._find_folder_path(
+            self.MONTHLY_EXTRACTION_FOLDER_ID, "_daily", brand_name, "Instagram"
+        )
+        if not ig_folder:
+            return []
+        match = self.find_by_folder_id_by_name(ig_folder, f"{data_type}.csv")
+        if not match:
+            return []
+        local_dir = local_dir or os.path.join(
+            tempfile.gettempdir(), "ig_combine", brand_name.replace(" ", "_")
+        )
+        os.makedirs(local_dir, exist_ok=True)
+        path = os.path.join(local_dir, f"_read_{data_type}.csv")
+        self.download_file_from_drive(match["id"], path)
+        with open(path, newline="", encoding="utf-8-sig") as fh:
+            return list(csv.DictReader(fh))
 
     def capture_instagram_daily(
         self, capture_date=None, brand_name=None, local_dir=None, upload=True
