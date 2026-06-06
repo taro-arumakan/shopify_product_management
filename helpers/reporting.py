@@ -347,6 +347,30 @@ class Reporting:
                     output_path, "text/csv", drive_folder_id
                 )
             written.append(output_path)
+
+        # Placement breakdown (IG/FB/Threads/...) over the 13-month window, so the
+        # all-placements headline can be reconciled and Facebook spillover is visible.
+        breakdown = self.meta_placement_breakdown(yoy_start, month_end, "monthly")
+        breakdown_path = os.path.join(
+            local_dir,
+            f"Meta spend by placement - {yoy_start:%Y-%m-%d} - {month_end:%Y-%m-%d}.csv",
+        )
+        self.write_dicts_to_csv(
+            breakdown,
+            breakdown_path,
+            fieldnames=[
+                "month",
+                "publisher_platform",
+                "spend",
+                "purchases",
+                "purchase_value",
+                "roas_computed",
+            ],
+        )
+        if upload:
+            self.replace_or_upload_to_drive(breakdown_path, "text/csv", drive_folder_id)
+        written.append(breakdown_path)
+
         logger.info(
             f"{self.__class__.__name__} extracted {len(written)} Meta reports for "
             f"{brand_name} {period}"

@@ -10,9 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 class MetaReportingInterface:
-    # Paid reporting focuses on Instagram placements; Facebook spend for these
-    # brands is negligible. Set to None to report across all placements.
-    PUBLISHER_PLATFORMS = ("instagram",)
+    # Paid reporting covers ALL placements so the headline reconciles with the
+    # money actually spent (the account bills across placements regardless of
+    # intent). A publisher_platform breakdown surfaces the per-placement split
+    # (e.g. Facebook spillover at ~0 ROAS). Set to ("instagram",) to hard-filter.
+    PUBLISHER_PLATFORMS = None
 
     def __init__(self, fb_page_id, ig_user_id, meta_ad_account_id, meta_token):
         self.VERSION = "v25.0"
@@ -414,21 +416,20 @@ class MetaReportingInterface:
 
     exchange_rates_by_date_by_pair = {}
 
+    def jpy_rate(self, currency, rate_date):
+        """Cached <currency>->JPY rate for a date (1.0 when already JPY)."""
+        if not currency or currency == "JPY":
+            return 1.0
+        pair = f"{currency}JPY"
+        if not self.exchange_rates_by_date_by_pair.get(rate_date, {}).get(pair):
+            rate = self.get_historical_exchange_rate(rate_date, currency)
+            self.exchange_rates_by_date_by_pair.setdefault(rate_date, {})[pair] = rate
+        return self.exchange_rates_by_date_by_pair[rate_date][pair]
+
     def apply_exchange_rate(self, res):
-        currency = res["account_currency"]
-        rate_date = res["date_stop"]
-        if currency != "JPY":
-            if not self.exchange_rates_by_date_by_pair.get(rate_date, {}).get(
-                f"{currency}JPY"
-            ):
-                rate = self.get_historical_exchange_rate(rate_date, currency)
-                self.exchange_rates_by_date_by_pair.setdefault(rate_date, {})[
-                    f"{currency}JPY"
-                ] = rate
-            res["spend"] = round(
-                float(res["spend"])
-                * self.exchange_rates_by_date_by_pair[rate_date][f"{currency}JPY"]
-            )
+        rate = self.jpy_rate(res.get("account_currency"), res.get("date_stop"))
+        if rate != 1.0:
+            res["spend"] = round(float(res["spend"]) * rate)
         return res
 
     def paid_stats(self, start_date: datetime.datetime, end_date: datetime.datetime):
@@ -502,12 +503,16 @@ class MetaReportingInterface:
     def _flatten_ad_insight(self, row):
         """Flatten one raw insights row (with nested actions) into a flat dict.
 
-        Spend is normalised to JPY via apply_exchange_rate (no-op when the account
-        already bills in JPY). ROAS is recomputed as purchase_value / spend so the
-        headline figure is spend-weighted and currency-consistent, alongside Meta's
-        own reported purchase_roas.
+        ALL monetary fields - spend and the conversion values (purchase_value,
+        add_to_cart_value) - are normalised to JPY with the same per-row rate, so
+        ROAS and value reconcile for non-JPY (e.g. KRW) accounts. Count metrics and
+        Meta's own purchase_roas are currency-neutral and left as-is.
         """
-        row = self.apply_exchange_rate(row)
+        rate = self.jpy_rate(row.get("account_currency"), row.get("date_stop"))
+
+        def to_jpy(value):
+            return round(float(value) * rate) if value not in (None, "") else value
+
         out = {
             "report_start": row.get("date_start"),
             "report_end": row.get("date_stop"),
@@ -519,7 +524,7 @@ class MetaReportingInterface:
             "impressions": row.get("impressions"),
             "reach": row.get("reach"),
             "frequency": row.get("frequency"),
-            "spend": row.get("spend"),
+            "spend": to_jpy(row.get("spend")),
             "clicks_all": row.get("clicks"),
             "link_clicks": row.get("inline_link_clicks"),
             "ctr": row.get("ctr"),
@@ -534,11 +539,11 @@ class MetaReportingInterface:
         for col, types in self.AD_INSIGHT_ACTION_COLUMNS.items():
             out[col] = self._first_action_value(actions, types)
         for col, types in self.AD_INSIGHT_ACTION_VALUE_COLUMNS.items():
-            out[col] = self._first_action_value(action_values, types)
+            out[col] = to_jpy(self._first_action_value(action_values, types))
         out["purchase_roas_meta"] = self._first_action_value(
             row.get("purchase_roas"), ["omni_purchase", "purchase"]
         )
-        spend = float(row.get("spend") or 0)
+        spend = float(out.get("spend") or 0)
         purchase_value = out.get("purchase_value")
         out["roas_computed"] = (
             round(float(purchase_value) / spend, 4)
@@ -616,6 +621,56 @@ class MetaReportingInterface:
             url = res.get("paging", {}).get("next")
             result_params = None  # the 'next' url already carries the query string
         return [self._flatten_ad_insight(row) for row in raw]
+
+    def meta_placement_breakdown(self, start_date, end_date, time_increment="monthly"):
+        """Account spend / conversions split by publisher_platform (IG/FB/Threads/...).
+
+        Surfaces where the budget actually goes, so Facebook spillover at near-zero
+        ROAS is visible rather than hidden. Monetary fields normalised to JPY.
+        """
+        url = f"https://graph.facebook.com/{self.VERSION}/act_{self.meta_ad_account_id}/insights"
+        params = {
+            "level": "account",
+            "fields": "account_currency,spend,actions,action_values,purchase_roas",
+            "breakdowns": "publisher_platform",
+            "time_increment": time_increment,
+            "time_range": f"{{'since':'{start_date:%Y-%m-%d}','until':'{end_date:%Y-%m-%d}'}}",
+            "limit": 500,
+            "access_token": self.meta_token,
+        }
+        raw = []
+        while url:
+            res = self._meta_get_with_retry(url, params)
+            raw.extend(res["data"])
+            url = res.get("paging", {}).get("next")
+            params = None
+        rows = []
+        for r in raw:
+            rate = self.jpy_rate(r.get("account_currency"), r.get("date_stop"))
+            spend = round(float(r.get("spend") or 0) * rate)
+            value = self._first_action_value(
+                r.get("action_values"), ["omni_purchase", "purchase"]
+            )
+            value = round(float(value) * rate) if value not in (None, "") else None
+            rows.append(
+                {
+                    "month": r.get("date_start"),
+                    "publisher_platform": r.get("publisher_platform"),
+                    "spend": spend,
+                    "purchases": self._first_action_value(
+                        r.get("actions"), ["omni_purchase", "purchase"]
+                    ),
+                    "purchase_value": value,
+                    "roas_computed": (
+                        round(value / spend, 4) if value and spend else None
+                    ),
+                }
+            )
+        logger.info(
+            f"{self.__class__.__name__} placement breakdown: {len(rows)} rows "
+            f"({start_date} .. {end_date})"
+        )
+        return rows
 
     def _poll_meta_async_job(self, run_id, poll_seconds=5, max_polls=120):
         """Block until an async insights job completes; raise on failure/timeout."""
