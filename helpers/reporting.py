@@ -683,6 +683,163 @@ class Reporting:
             written.append(combined_path)
         return written
 
+    def build_monthly_kpi_rollup(
+        self, report_year, report_month, brand_name=None, period_dir=None, upload=True
+    ):
+        """Combine the three sources into one monthly KPI sheet (13 months).
+
+        Shopify metrics are re-queried (cheap); Meta and Instagram are read from the
+        monthly raw CSVs the extractors just wrote (so the costly pulls aren't
+        repeated). Saved next to the raw files so reporting can consume either.
+        """
+        import glob
+        from functools import reduce
+
+        brand_name = brand_name or getattr(self, "BRAND_NAME", None)
+        assert brand_name, "brand_name is required (no BRAND_NAME on this client)"
+
+        month_end = datetime.date(
+            report_year,
+            report_month,
+            calendar.monthrange(report_year, report_month)[1],
+        )
+        yoy_start = datetime.date(report_year - 1, report_month, 1)
+        period = f"{report_year}{report_month:02d}"
+        period_dir = period_dir or os.path.join(
+            tempfile.gettempdir(),
+            "monthly_extraction",
+            brand_name.replace(" ", "_"),
+            period,
+        )
+
+        def to_month_key(series):
+            return series.astype(str).str[:10]
+
+        frames = []
+
+        # Shopify - cheap to re-query, clean column names
+        try:
+            kpi = self.report_sales_kpi_by(yoy_start, month_end, "month")
+            sessions = self.run_shopifyql(
+                f"FROM sessions SHOW sessions, conversion_rate TIMESERIES month "
+                f"SINCE {yoy_start:%Y-%m-%d} UNTIL {month_end:%Y-%m-%d} ORDER BY month ASC"
+            )
+            kpi["month"] = to_month_key(kpi["month"])
+            sessions["month"] = to_month_key(sessions["month"])
+            shop = pd.merge(
+                kpi[
+                    [
+                        "month",
+                        "orders",
+                        "net_sales",
+                        "average_order_value",
+                        "returning_customer_rate",
+                    ]
+                ],
+                sessions[["month", "sessions", "conversion_rate"]],
+                on="month",
+                how="outer",
+            )
+            frames.append(shop)
+        except Exception as e:
+            logger.warning(f"{self.__class__.__name__} rollup: Shopify skipped ({e})")
+
+        # Meta - aggregate the per-ad monthly file by month
+        meta_files = [
+            f
+            for f in glob.glob(
+                os.path.join(period_dir, "Meta", "Meta ads by ad - *.csv")
+            )
+            if " - daily - " not in f
+        ]
+        if meta_files:
+            m = pd.read_csv(meta_files[0])
+            for col in ["spend", "purchase_value", "purchases"]:
+                m[col] = pd.to_numeric(m.get(col), errors="coerce")
+            g = (
+                m.groupby("report_start")
+                .agg(
+                    ad_spend=("spend", "sum"),
+                    ad_purchase_value=("purchase_value", "sum"),
+                    ad_purchases=("purchases", "sum"),
+                )
+                .reset_index()
+                .rename(columns={"report_start": "month"})
+            )
+            g["ad_roas"] = (g["ad_purchase_value"] / g["ad_spend"]).round(4)
+            g["month"] = to_month_key(g["month"])
+            frames.append(g)
+
+        # Instagram - monthly account metrics file is already clean
+        ig_files = [
+            f
+            for f in glob.glob(
+                os.path.join(
+                    period_dir, "Instagram", "Instagram account metrics - *.csv"
+                )
+            )
+            if " - daily - " not in f
+        ]
+        if ig_files:
+            ig = pd.read_csv(ig_files[0])
+            ig = ig.rename(columns={c: f"ig_{c}" for c in ig.columns if c != "month"})
+            ig["month"] = to_month_key(ig["month"])
+            frames.append(ig)
+
+        if not frames:
+            logger.warning(f"{self.__class__.__name__} rollup: no sources available")
+            return None
+
+        rollup = reduce(
+            lambda a, b: pd.merge(a, b, on="month", how="outer"), frames
+        ).sort_values("month")
+
+        os.makedirs(period_dir, exist_ok=True)
+        out_path = os.path.join(
+            period_dir,
+            f"Monthly KPI rollup - {yoy_start:%Y-%m} - {month_end:%Y-%m}.csv",
+        )
+        rollup.to_csv(out_path, index=False, encoding="utf-8-sig")
+        if upload:
+            brand_folder = self._find_or_create_folder_path(
+                self.MONTHLY_EXTRACTION_FOLDER_ID, period, brand_name
+            )
+            self.replace_or_upload_to_drive(out_path, "text/csv", brand_folder)
+        logger.info(
+            f"{self.__class__.__name__} built monthly KPI rollup for {brand_name} "
+            f"({len(rollup)} months, {len(rollup.columns)} columns)"
+        )
+        return out_path
+
+    def extract_all_monthly(
+        self, report_year, report_month, brand_name=None, upload=True
+    ):
+        """Extract every source's seed CSVs plus the cross-source KPI rollup.
+
+        Shopify always runs; Meta and Instagram run when the brand has Meta creds.
+        Returns a dict of source -> written paths (rollup under 'rollup').
+        """
+        brand_name = brand_name or getattr(self, "BRAND_NAME", None)
+        assert brand_name, "brand_name is required (no BRAND_NAME on this client)"
+
+        paths = {
+            "shopify": self.extract_shopify_analytics_reports(
+                report_year, report_month, brand_name=brand_name, upload=upload
+            )
+        }
+        if self.meta_ad_account_id and self.meta_token:
+            paths["meta"] = self.extract_meta_ads_reports(
+                report_year, report_month, brand_name=brand_name, upload=upload
+            )
+        if self.ig_user_id and self.meta_token:
+            paths["instagram"] = self.extract_instagram_reports(
+                report_year, report_month, brand_name=brand_name, upload=upload
+            )
+        paths["rollup"] = self.build_monthly_kpi_rollup(
+            report_year, report_month, brand_name=brand_name, upload=upload
+        )
+        return paths
+
     def dashboard_row(self, report_date, timeseries_by="month"):
         meta_stats = self.dashboard_stats_meta(report_date, timeseries_by)
         shopify_stats = self.dashboard_stats_shopify(report_date, timeseries_by)

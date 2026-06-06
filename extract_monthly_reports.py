@@ -1,13 +1,15 @@
 """Extract the seed CSVs for the staff's monthly brand reports and upload them to
-Google Drive. Covers Shopify Admin -> Analytics and Meta (Ad Manager) ad insights.
+Google Drive. Covers Shopify Admin -> Analytics, Meta (Ad Manager) ad insights, and
+Instagram (Business Suite) account/post metrics, plus a cross-source KPI rollup.
 
 For each brand and report month this writes, per source:
   * a 13-month series (same month last year .. report month) for year-over-year
   * a daily series for the report month, so the latest month can be traced
 
 Files land in Drive under Reporting.MONTHLY_EXTRACTION_FOLDER_ID as
-<YYYYMM>/<brand>/Shopify/<report>.csv and <YYYYMM>/<brand>/Meta/<report>.csv.
-Re-runs overwrite same-named files. Meta is skipped for brands without Meta creds.
+<YYYYMM>/<brand>/{Shopify,Meta,Instagram}/<report>.csv, with the combined
+<YYYYMM>/<brand>/Monthly KPI rollup - ....csv alongside them. Re-runs overwrite
+same-named files. Meta/Instagram are skipped for brands without Meta creds.
 
 Usage:
     python extract_monthly_reports.py                 # default brands, last full month
@@ -54,16 +56,13 @@ def main():
         year, month = last_full_month()
 
     for brand in brands:
+        logging.info(f"=== {brand} {year}-{month:02d} (Shopify + Meta + Instagram) ===")
         client = utils.client(brand)
-
-        logging.info(f"=== Shopify: {brand} {year}-{month:02d} ===")
-        client.extract_shopify_analytics_reports(report_year=year, report_month=month)
-
-        if client.meta_ad_account_id and client.meta_token:
-            logging.info(f"=== Meta: {brand} {year}-{month:02d} ===")
-            client.extract_meta_ads_reports(report_year=year, report_month=month)
-        else:
-            logging.info(f"=== Meta: skipped for {brand} (no Meta credentials) ===")
+        paths = client.extract_all_monthly(report_year=year, report_month=month)
+        logging.info(
+            f"{brand}: extracted sources {sorted(k for k in paths if k != 'rollup')} "
+            f"+ rollup"
+        )
 
 
 if __name__ == "__main__":
