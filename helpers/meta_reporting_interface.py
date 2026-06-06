@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time
 import pandas as pd
 import requests
 import zoneinfo
@@ -9,12 +10,23 @@ logger = logging.getLogger(__name__)
 
 
 class MetaReportingInterface:
+    # Paid reporting focuses on Instagram placements; Facebook spend for these
+    # brands is negligible. Set to None to report across all placements.
+    PUBLISHER_PLATFORMS = ("instagram",)
+
     def __init__(self, fb_page_id, ig_user_id, meta_ad_account_id, meta_token):
         self.VERSION = "v25.0"
         self.fb_page_id = fb_page_id
         self.ig_user_id = ig_user_id
         self.meta_ad_account_id = meta_ad_account_id
         self.meta_token = meta_token
+
+    def _publisher_platform_filtering(self):
+        """Insights ``filtering`` param restricting to PUBLISHER_PLATFORMS, or None."""
+        if not self.PUBLISHER_PLATFORMS:
+            return None
+        platforms = list(self.PUBLISHER_PLATFORMS)
+        return f"[{{'field':'publisher_platform','operator':'IN','value':{platforms}}}]"
 
     omni_ig_keys = [
         "views",
@@ -24,6 +36,273 @@ class MetaReportingInterface:
         "website_clicks",
         "total_interactions",
     ]
+
+    # The six Business Suite "結果" (Results) account metrics. The Graph API only
+    # serves these as a single total_value per call (no daily breakdown), but a
+    # 1-day window returns that day's value exactly, so iterating days rebuilds the
+    # daily series Business Suite shows. 'follows' is special-cased: follower_count
+    # is the only follows metric and the API serves it for the last 30 days only.
+    IG_ACCOUNT_METRICS = [
+        "reach",
+        "views",
+        "profile_views",
+        "website_clicks",
+        "total_interactions",
+    ]
+
+    def ig_account_metrics_for_day(self, day):
+        """The day's account metrics as a flat dict (one 1-day total_value call).
+
+        Includes 'follows' (follower_count) only when the day is within the API's
+        trailing-30-day window; otherwise the column is left blank.
+        """
+        url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/insights"
+        since = int(datetime.datetime(day.year, day.month, day.day).timestamp())
+        until = int(
+            (
+                datetime.datetime(day.year, day.month, day.day)
+                + datetime.timedelta(days=1)
+            ).timestamp()
+        )
+        res = self._meta_get_with_retry(
+            url,
+            {
+                "metric": ",".join(self.IG_ACCOUNT_METRICS),
+                "period": "day",
+                "metric_type": "total_value",
+                "since": since,
+                "until": until,
+                "access_token": self.meta_token,
+            },
+        )
+        row = {"date": f"{day:%Y-%m-%d}"}
+        for metric in res.get("data", []):
+            row[metric["name"]] = metric.get("total_value", {}).get("value")
+
+        if datetime.date.today() - day <= datetime.timedelta(days=30):
+            follows = self._meta_get_with_retry(
+                url,
+                {
+                    "metric": "follower_count",
+                    "period": "day",
+                    "since": since,
+                    "until": until,
+                    "access_token": self.meta_token,
+                },
+            )
+            values = (follows.get("data") or [{}])[0].get("values") or []
+            row["follows"] = sum(v.get("value", 0) for v in values) if values else None
+        else:
+            row["follows"] = None
+        return row
+
+    def ig_account_metrics_by_day(self, date_from, date_to):
+        """Daily account-metric rows for an inclusive date range (one call per day)."""
+        rows = []
+        day = date_from
+        while day <= date_to:
+            rows.append(self.ig_account_metrics_for_day(day))
+            day += datetime.timedelta(days=1)
+        logger.info(
+            f"{self.__class__.__name__} pulled IG account metrics for "
+            f"{len(rows)} days ({date_from} .. {date_to})"
+        )
+        return rows
+
+    # Story-level insight metrics (image & video stories support these).
+    IG_STORY_METRICS = [
+        "reach",
+        "views",
+        "replies",
+        "navigation",
+        "profile_visits",
+        "profile_activity",
+        "follows",
+        "shares",
+        "total_interactions",
+    ]
+
+    def ig_stories_with_insights(self):
+        """Currently-live stories (last 24h) with their insights, one row each.
+
+        Instagram only exposes stories for 24h, so this must run daily to accumulate
+        history — past stories cannot be fetched retroactively.
+        """
+        url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/stories"
+        listing = self._meta_get_with_retry(
+            url,
+            {
+                "fields": "id,media_type,media_product_type,timestamp,permalink,caption",
+                "access_token": self.meta_token,
+            },
+        )
+        rows = []
+        for story in listing.get("data", []):
+            row = {
+                "story_id": story.get("id"),
+                "timestamp": story.get("timestamp"),
+                "media_type": story.get("media_type"),
+                "media_product_type": story.get("media_product_type"),
+                "permalink": story.get("permalink"),
+                "caption": story.get("caption"),
+            }
+            try:
+                insights = self._meta_get_with_retry(
+                    f"https://graph.facebook.com/{self.VERSION}/{story['id']}/insights",
+                    {
+                        "metric": ",".join(self.IG_STORY_METRICS),
+                        "access_token": self.meta_token,
+                    },
+                )
+                for metric in insights.get("data", []):
+                    values = metric.get("values")
+                    row[metric["name"]] = (
+                        values[0]["value"]
+                        if values
+                        else metric.get("total_value", {}).get("value")
+                    )
+            except RuntimeError as e:
+                logger.warning(
+                    f"{self.__class__.__name__} story {story.get('id')} insights "
+                    f"unavailable: {e}"
+                )
+            rows.append(row)
+        logger.info(f"{self.__class__.__name__} captured {len(rows)} live stories")
+        return rows
+
+    # Per-post insight metrics differ by media product type: Reels don't support
+    # follows / profile_visits / profile_activity.
+    IG_POST_METRICS = {
+        "FEED": [
+            "reach",
+            "views",
+            "likes",
+            "comments",
+            "shares",
+            "saved",
+            "total_interactions",
+            "follows",
+            "profile_visits",
+            "profile_activity",
+        ],
+        "REELS": [
+            "reach",
+            "views",
+            "likes",
+            "comments",
+            "shares",
+            "saved",
+            "total_interactions",
+        ],
+    }
+    IG_MEDIA_FIELDS = (
+        "id,caption,media_type,media_product_type,permalink,timestamp,"
+        "like_count,comments_count"
+    )
+
+    def ig_media_list(self, date_from, date_to):
+        """Published posts (FEED/REELS) with timestamps in an inclusive date range."""
+        url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/media"
+        params = {
+            "fields": self.IG_MEDIA_FIELDS,
+            "since": int(
+                datetime.datetime(
+                    date_from.year, date_from.month, date_from.day
+                ).timestamp()
+            ),
+            "until": int(
+                (
+                    datetime.datetime(date_to.year, date_to.month, date_to.day)
+                    + datetime.timedelta(days=1)
+                ).timestamp()
+            ),
+            "limit": 100,
+            "access_token": self.meta_token,
+        }
+        items = []
+        while url:
+            res = self._meta_get_with_retry(url, params)
+            items.extend(res["data"])
+            url = res.get("paging", {}).get("next")
+            params = None
+        # the since/until media filter is approximate; pin strictly to the range
+        return [
+            m
+            for m in items
+            if date_from <= datetime.date.fromisoformat(m["timestamp"][:10]) <= date_to
+        ]
+
+    def ig_posts_with_insights(self, date_from, date_to):
+        """Posts published in the range, each with its insights, one flat row each."""
+        media = self.ig_media_list(date_from, date_to)
+        rows = []
+        for m in media:
+            ptype = m.get("media_product_type")
+            row = {
+                "post_id": m.get("id"),
+                "timestamp": m.get("timestamp"),
+                "media_type": m.get("media_type"),
+                "media_product_type": ptype,
+                "permalink": m.get("permalink"),
+                "caption": m.get("caption"),
+                "like_count": m.get("like_count"),
+                "comments_count": m.get("comments_count"),
+            }
+            metrics = self.IG_POST_METRICS.get(ptype, self.IG_POST_METRICS["REELS"])
+            try:
+                insights = self._meta_get_with_retry(
+                    f"https://graph.facebook.com/{self.VERSION}/{m['id']}/insights",
+                    {"metric": ",".join(metrics), "access_token": self.meta_token},
+                )
+                for metric in insights.get("data", []):
+                    values = metric.get("values")
+                    row[metric["name"]] = (
+                        values[0]["value"]
+                        if values
+                        else metric.get("total_value", {}).get("value")
+                    )
+            except RuntimeError as e:
+                logger.warning(
+                    f"{self.__class__.__name__} post {m.get('id')} insights "
+                    f"unavailable: {e}"
+                )
+            rows.append(row)
+        logger.info(
+            f"{self.__class__.__name__} pulled {len(rows)} posts with insights "
+            f"({date_from} .. {date_to})"
+        )
+        return rows
+
+    def ig_published_format_counts(self, date_from, date_to):
+        """Count of published posts by product type (the 'posts' half of 概要's
+        トップコンテンツフォーマット; the stories count comes from daily capture)."""
+        media = self.ig_media_list(date_from, date_to)
+        counts = {"FEED": 0, "REELS": 0}
+        for m in media:
+            ptype = m.get("media_product_type")
+            counts[ptype] = counts.get(ptype, 0) + 1
+        return counts
+
+    @staticmethod
+    def aggregate_ig_metrics_by_month(daily_rows):
+        """Sum daily account-metric rows into monthly totals (YYYY-MM-01 keyed)."""
+        metrics = [
+            "reach",
+            "views",
+            "profile_views",
+            "website_clicks",
+            "total_interactions",
+            "follows",
+        ]
+        months = {}
+        for row in daily_rows:
+            month = row["date"][:7] + "-01"
+            bucket = months.setdefault(month, {"month": month})
+            for m in metrics:
+                value = row.get(m)
+                if value is not None:
+                    bucket[m] = bucket.get(m, 0) + int(value)
+        return [months[k] for k in sorted(months)]
 
     def _get_omni_ig_stat_value_by_key(self, d, k):
         return [dd for dd in d if dd["name"] == k][0]["total_value"]["value"]
@@ -162,14 +441,200 @@ class MetaReportingInterface:
         params = {
             "level": "account",
             "fields": "account_currency,impressions,reach,inline_link_clicks,outbound_clicks,spend",
-            # "filtering": "[{'field':'publisher_platform','operator':'IN','value':['instagram']}]",
             "time_range": f"{{'since':'{start_date:%Y-%m-%d}','until':'{end_date:%Y-%m-%d}'}}",
             "access_token": self.meta_token,
         }
+        if platform_filter := self._publisher_platform_filtering():
+            params["filtering"] = platform_filter
 
         response = requests.get(url, params=params).json()
         if res := response["data"]:
             return self.apply_exchange_rate(res[0])
+
+    # Ad-level insight fields requested in a single call. The Ads Manager
+    # "performance & clicks" and "conversion & spend" presets are just column
+    # groupings of this one dataset, so we pull everything at once.
+    AD_INSIGHT_FIELDS = [
+        "ad_id",
+        "ad_name",
+        "adset_name",
+        "campaign_name",
+        "account_currency",
+        "impressions",
+        "reach",
+        "frequency",
+        "spend",
+        "clicks",
+        "inline_link_clicks",
+        "cpc",
+        "cpm",
+        "ctr",
+        "quality_ranking",
+        "engagement_rate_ranking",
+        "conversion_rate_ranking",
+        "actions",
+        "action_values",
+        "purchase_roas",
+    ]
+
+    # Flattened conversion columns -> the action_types to look up, in priority
+    # order (omni_* spans web + app + in-store; the plain event is the fallback).
+    AD_INSIGHT_ACTION_COLUMNS = {
+        "landing_page_views": ["omni_landing_page_view", "landing_page_view"],
+        "add_to_cart": ["omni_add_to_cart", "add_to_cart"],
+        "initiate_checkout": ["omni_initiated_checkout", "initiate_checkout"],
+        "purchases": ["omni_purchase", "purchase"],
+    }
+    AD_INSIGHT_ACTION_VALUE_COLUMNS = {
+        "add_to_cart_value": ["omni_add_to_cart", "add_to_cart"],
+        "purchase_value": ["omni_purchase", "purchase"],
+    }
+
+    @staticmethod
+    def _first_action_value(items, action_types):
+        """Return the first matching action_type value from an actions/values list."""
+        by_type = {i.get("action_type"): i.get("value") for i in (items or [])}
+        for action_type in action_types:
+            if action_type in by_type:
+                return by_type[action_type]
+        return None
+
+    def _flatten_ad_insight(self, row):
+        """Flatten one raw insights row (with nested actions) into a flat dict.
+
+        Spend is normalised to JPY via apply_exchange_rate (no-op when the account
+        already bills in JPY). ROAS is recomputed as purchase_value / spend so the
+        headline figure is spend-weighted and currency-consistent, alongside Meta's
+        own reported purchase_roas.
+        """
+        row = self.apply_exchange_rate(row)
+        out = {
+            "report_start": row.get("date_start"),
+            "report_end": row.get("date_stop"),
+            "campaign_name": row.get("campaign_name"),
+            "adset_name": row.get("adset_name"),
+            "ad_name": row.get("ad_name"),
+            "ad_id": row.get("ad_id"),
+            "account_currency": row.get("account_currency"),
+            "impressions": row.get("impressions"),
+            "reach": row.get("reach"),
+            "frequency": row.get("frequency"),
+            "spend": row.get("spend"),
+            "clicks_all": row.get("clicks"),
+            "link_clicks": row.get("inline_link_clicks"),
+            "ctr": row.get("ctr"),
+            "cpc": row.get("cpc"),
+            "cpm": row.get("cpm"),
+            "quality_ranking": row.get("quality_ranking"),
+            "engagement_rate_ranking": row.get("engagement_rate_ranking"),
+            "conversion_rate_ranking": row.get("conversion_rate_ranking"),
+        }
+        actions = row.get("actions")
+        action_values = row.get("action_values")
+        for col, types in self.AD_INSIGHT_ACTION_COLUMNS.items():
+            out[col] = self._first_action_value(actions, types)
+        for col, types in self.AD_INSIGHT_ACTION_VALUE_COLUMNS.items():
+            out[col] = self._first_action_value(action_values, types)
+        out["purchase_roas_meta"] = self._first_action_value(
+            row.get("purchase_roas"), ["omni_purchase", "purchase"]
+        )
+        spend = float(row.get("spend") or 0)
+        purchase_value = out.get("purchase_value")
+        out["roas_computed"] = (
+            round(float(purchase_value) / spend, 4)
+            if purchase_value and spend
+            else None
+        )
+        return out
+
+    # Meta's transient/throttle errors worth retrying. Code 1 / subcode 99 is the
+    # generic "An unknown error occurred" that the Insights API throws on timeouts.
+    META_TRANSIENT_ERROR_CODES = {1, 2, 4, 17, 341}
+
+    def _meta_get_with_retry(self, url, params, max_retries=6):
+        for attempt in range(max_retries):
+            res = requests.get(url, params=params).json()
+            error = res.get("error")
+            if not error:
+                return res
+            transient = (
+                error.get("code") in self.META_TRANSIENT_ERROR_CODES
+                or error.get("error_subcode") == 99
+            )
+            if not transient or attempt == max_retries - 1:
+                raise RuntimeError(f"Meta insights error: {error}")
+            wait = 5 * (attempt + 1)
+            logger.info(
+                f"{self.__class__.__name__} Meta transient error "
+                f"(code {error.get('code')}), retrying in {wait}s "
+                f"({attempt + 1}/{max_retries})"
+            )
+            time.sleep(wait)
+
+    def ad_insights(self, start_date, end_date, time_increment="monthly"):
+        """All ad-level insights between two dates, one flat row per ad per period.
+
+        ``time_increment`` is ``"monthly"`` (year-over-year) or ``1`` (daily). No
+        spend filter is applied: zero-spend rows are harmless to weighted ROAS and
+        carry delayed-attribution conversions worth keeping.
+
+        Restricted to PUBLISHER_PLATFORMS (Instagram by default) via the insights
+        ``filtering`` param, so Facebook placements are excluded at the source.
+
+        Runs as an asynchronous insights job: the daily breakdown over a month is
+        too large for the synchronous endpoint (it returns a generic code 1/99
+        error), and the async job handles both small and large pulls reliably.
+        """
+        base = f"https://graph.facebook.com/{self.VERSION}/act_{self.meta_ad_account_id}/insights"
+        params = {
+            "level": "ad",
+            "fields": ",".join(self.AD_INSIGHT_FIELDS),
+            "time_range": f"{{'since':'{start_date:%Y-%m-%d}','until':'{end_date:%Y-%m-%d}'}}",
+            "time_increment": time_increment,
+            "access_token": self.meta_token,
+        }
+        if platform_filter := self._publisher_platform_filtering():
+            params["filtering"] = platform_filter
+        run = requests.post(base, params=params).json()
+        if error := run.get("error"):
+            raise RuntimeError(f"Meta insights job failed to start: {error}")
+        run_id = run["report_run_id"]
+        self._poll_meta_async_job(run_id)
+
+        url = f"https://graph.facebook.com/{self.VERSION}/{run_id}/insights"
+        result_params = {"limit": 500, "access_token": self.meta_token}
+        raw = []
+        page = 0
+        while url:
+            res = self._meta_get_with_retry(url, result_params)
+            raw.extend(res["data"])
+            page += 1
+            logger.info(
+                f"{self.__class__.__name__} ad_insights page {page}: "
+                f"{len(res['data'])} rows ({len(raw)} total)"
+            )
+            url = res.get("paging", {}).get("next")
+            result_params = None  # the 'next' url already carries the query string
+        return [self._flatten_ad_insight(row) for row in raw]
+
+    def _poll_meta_async_job(self, run_id, poll_seconds=5, max_polls=120):
+        """Block until an async insights job completes; raise on failure/timeout."""
+        status_url = f"https://graph.facebook.com/{self.VERSION}/{run_id}"
+        for _ in range(max_polls):
+            status = self._meta_get_with_retry(
+                status_url, {"access_token": self.meta_token}
+            )
+            state = status.get("async_status")
+            pct = status.get("async_percent_completion")
+            if state == "Job Completed" and pct == 100:
+                return
+            if state in ("Job Failed", "Job Skipped"):
+                raise RuntimeError(f"Meta async job {run_id} {state}")
+            logger.info(
+                f"{self.__class__.__name__} async job {run_id}: {state} ({pct}%)"
+            )
+            time.sleep(poll_seconds)
+        raise RuntimeError(f"Meta async job {run_id} timed out")
 
     def dashboard_stats_meta(self, report_date, timeseries_by="month"):
         assert timeseries_by in ["week", "month"]
