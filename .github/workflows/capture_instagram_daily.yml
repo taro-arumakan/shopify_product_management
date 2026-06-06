@@ -1,0 +1,90 @@
+name: Capture Instagram daily
+
+on:
+  schedule:
+    # Every day 16:00 UTC (01:00 JST) - captures the prior JST day, while that
+    # day's stories are still within their 24h API window.
+    - cron: "0 16 * * *"
+  workflow_dispatch:
+    inputs:
+      capture_date:
+        description: "Optional capture date (YYYY-MM-DD); defaults to yesterday JST"
+        required: false
+        default: ""
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.21"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          ssilkr-ACCESS_TOKEN=${{ secrets.SSILKR_ACCESS_TOKEN }}
+          ssilkr-GSPREAD_ID=${{ secrets.SSILKR_GSPREAD_ID }}
+          ssilkr-FB_PAGE_ID=${{ secrets.SSILKR_FB_PAGE_ID }}
+          ssilkr-IG_USER_ID=${{ secrets.SSILKR_IG_USER_ID }}
+          ssilkr-META_AD_ACCOUNT_ID=${{ secrets.SSILKR_META_AD_ACCOUNT_ID }}
+          ssilkr-META_TOKEN=${{ secrets.SSILKR_META_TOKEN }}
+          rohseoul-ACCESS_TOKEN=${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          rohseoul-GSPREAD_ID=${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          rohseoul-FB_PAGE_ID=${{ secrets.ROHSEOUL_FB_PAGE_ID }}
+          rohseoul-IG_USER_ID=${{ secrets.ROHSEOUL_IG_USER_ID }}
+          rohseoul-META_AD_ACCOUNT_ID=${{ secrets.ROHSEOUL_META_AD_ACCOUNT_ID }}
+          rohseoul-META_TOKEN=${{ secrets.ROHSEOUL_META_TOKEN }}
+          lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
+          lememek-FB_PAGE_ID=${{ secrets.LEMEMEK_FB_PAGE_ID }}
+          lememek-IG_USER_ID=${{ secrets.LEMEMEK_IG_USER_ID }}
+          lememek-META_AD_ACCOUNT_ID=${{ secrets.LEMEMEK_META_AD_ACCOUNT_ID }}
+          lememek-META_TOKEN=${{ secrets.LEMEMEK_META_TOKEN }}
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+          blossomhcompany-FB_PAGE_ID=${{ secrets.BLOSSOMHCOMPANY_FB_PAGE_ID }}
+          blossomhcompany-IG_USER_ID=${{ secrets.BLOSSOMHCOMPANY_IG_USER_ID }}
+          blossomhcompany-META_AD_ACCOUNT_ID=${{ secrets.BLOSSOMHCOMPANY_META_AD_ACCOUNT_ID }}
+          blossomhcompany-META_TOKEN=${{ secrets.BLOSSOMHCOMPANY_META_TOKEN }}
+          apricot-studios-ACCESS_TOKEN=${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          apricot-studios-FB_PAGE_ID=${{ secrets.APRICOT_STUDIOS_FB_PAGE_ID }}
+          apricot-studios-IG_USER_ID=${{ secrets.APRICOT_STUDIOS_IG_USER_ID }}
+          apricot-studios-META_AD_ACCOUNT_ID=${{ secrets.APRICOT_STUDIOS_META_AD_ACCOUNT_ID }}
+          apricot-studios-META_TOKEN=${{ secrets.APRICOT_STUDIOS_META_TOKEN }}
+          archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
+          archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+          archive-epke-FB_PAGE_ID=${{ secrets.ARCHIVE_EPKE_FB_PAGE_ID }}
+          archive-epke-IG_USER_ID=${{ secrets.ARCHIVE_EPKE_IG_USER_ID }}
+          archive-epke-META_AD_ACCOUNT_ID=${{ secrets.ARCHIVE_EPKE_META_AD_ACCOUNT_ID }}
+          archive-epke-META_TOKEN=${{ secrets.ARCHIVE_EPKE_META_TOKEN }}
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          EOF
+
+      - name: Capture Instagram daily
+        env:
+          PYTHONPATH: .
+        run: |
+          uv run brands/scripts/capture_instagram_daily.py "${{ github.event.inputs.capture_date }}"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json

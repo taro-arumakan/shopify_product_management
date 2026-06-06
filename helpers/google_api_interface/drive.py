@@ -88,9 +88,7 @@ class GoogleDriveApiInterface:
         return file_path
 
     @staticmethod
-    def resize_image_to_limit(
-        image_path, output_path, max_megapixels=15, max_mb=15
-    ):
+    def resize_image_to_limit(image_path, output_path, max_megapixels=15, max_mb=15):
         file_size_mb = os.path.getsize(image_path) / (1024 * 1024)
         with Image.open(image_path) as img:
             current_megapixels = (img.width * img.height) / 1_000_000
@@ -198,6 +196,25 @@ class GoogleDriveApiInterface:
         )
         return results["files"]
 
+    def list_files_in_folder(self, folder_id):
+        """All non-folder files directly under a folder, as [{id, name}, ...]."""
+        query = (
+            f"'{folder_id}' in parents and trashed=false "
+            "and mimeType != 'application/vnd.google-apps.folder'"
+        )
+        results = (
+            self.drive_service.files()
+            .list(
+                q=query,
+                pageSize=1000,
+                fields="files(id, name)",
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+            )
+            .execute()
+        )
+        return results.get("files", [])
+
     def upload_to_drive(self, filepath, mimetype, folder_id):
         """upload a local file to Google Drive folder"""
         media = MediaIoBaseUpload(
@@ -214,6 +231,33 @@ class GoogleDriveApiInterface:
             .execute()
         )
         logger.info(f"Uploaded: {f.get('id')}")
+
+    def replace_or_upload_to_drive(self, filepath, mimetype, folder_id):
+        """Upload a local file, replacing any existing file of the same name.
+
+        ``upload_to_drive`` always creates, so re-running an extraction would pile
+        up duplicates. When a same-named file already exists we overwrite its
+        contents in place via files().update (the service account can edit files it
+        created on the shared drive but cannot always hard-delete them), otherwise
+        we create a new one.
+        """
+        name = os.path.basename(filepath)
+        media = MediaIoBaseUpload(
+            open(filepath, "rb"), mimetype=mimetype, resumable=True
+        )
+        if existing := self.find_by_folder_id_by_name(folder_id, name):
+            self.drive_service.files().update(
+                fileId=existing["id"], media_body=media, supportsAllDrives=True
+            ).execute()
+            logger.info(f"Updated: {existing['id']} ({name})")
+        else:
+            self.drive_service.files().create(
+                body={"name": name, "parents": [folder_id]},
+                media_body=media,
+                fields="id",
+                supportsAllDrives=True,
+            ).execute()
+            logger.info(f"Uploaded: {name}")
 
     def make_public_by_file_id(self, file_id):
         self.drive_service.permissions().create(

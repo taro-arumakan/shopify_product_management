@@ -1,7 +1,9 @@
 import calendar
+import csv
 import datetime
 import logging
 import shutil
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +65,28 @@ class Analytics:
         )
         df[date_cols] = df[date_cols].apply(pd.to_datetime, errors="coerce")
         return df
+
+    def run_shopifyql_resilient(
+        self, shopifyql_query, to_dataframe=True, max_retries=8
+    ):
+        """run_shopifyql with exponential backoff on Shopify API throttling.
+
+        Bulk analytics extraction fires many heavy ShopifyQL queries in a row and
+        regularly trips the THROTTLED rate limit, so retry those transparently.
+        """
+        for attempt in range(max_retries):
+            try:
+                return self.run_shopifyql(shopifyql_query, to_dataframe=to_dataframe)
+            except RuntimeError as e:
+                throttled = "THROTTLED" in str(e) or "Rate limited" in str(e)
+                if not throttled or attempt == max_retries - 1:
+                    raise
+                wait = 2 + 2 * attempt
+                logger.info(
+                    f"{self.__class__.__name__} throttled, retrying in {wait}s "
+                    f"({attempt + 1}/{max_retries})"
+                )
+                time.sleep(wait)
 
     def report_sales_by_sku(self, date_from, date_to, to_dataframe=True):
         shopifyql_query = f"""
@@ -533,3 +557,86 @@ class Analytics:
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
         finally:
             plt.close(fig)
+
+    def analytics_export_queries(self, date_from, date_to, timeseries_by):
+        """ShopifyQL for every report card at the top of Shopify Admin -> Analytics.
+
+        Keyed by the report's English name (Shopify's own card titles). Each value
+        reproduces the report the staff exports by hand. ``timeseries_by`` is
+        ``"month"`` (year-over-year comparison) or ``"day"`` (trace a single month).
+        """
+        by = timeseries_by
+        span = f"SINCE {date_from:%Y-%m-%d} UNTIL {date_to:%Y-%m-%d}"
+        jpy = "WITH CURRENCY 'JPY'"
+        order = f"ORDER BY {by} ASC"
+        return {
+            "Total sales over time": (
+                "FROM sales SHOW orders, gross_sales, discounts, returns, net_sales, "
+                "shipping_charges, duties, additional_fees, taxes, total_sales "
+                f"TIMESERIES {by} {jpy} {span} {order}"
+            ),
+            "Average order value over time": (
+                "FROM sales SHOW gross_sales, discounts, orders, average_order_value "
+                f"TIMESERIES {by} {jpy} {span} {order}"
+            ),
+            "Sessions over time": (
+                "FROM sessions SHOW online_store_visitors, sessions "
+                f"TIMESERIES {by} {span} {order}"
+            ),
+            "Conversion rate over time": (
+                "FROM sessions SHOW sessions, sessions_with_cart_additions, "
+                "sessions_that_reached_checkout, sessions_that_completed_checkout, "
+                f"conversion_rate TIMESERIES {by} {span} {order}"
+            ),
+            "Conversion rate breakdown": (
+                "FROM sessions SHOW sessions, sessions_with_cart_additions, "
+                "sessions_that_reached_checkout, sessions_that_completed_checkout, "
+                f"conversion_rate TIMESERIES {by} {span} {order}"
+            ),
+            "New and returning customers over time": (
+                "FROM sales SHOW customers, orders, total_sales "
+                f"GROUP BY new_or_returning_customer TIMESERIES {by} {jpy} {span} {order}"
+            ),
+            "New and returning customers": (
+                "FROM sales SHOW customers "
+                f"GROUP BY new_or_returning_customer TIMESERIES {by} {span} {order}"
+            ),
+            "Total sales by product": (
+                "FROM sales SHOW net_items_sold, gross_sales, discounts, returns, "
+                "net_sales, taxes, total_sales "
+                "GROUP BY product_title, product_vendor, product_type "
+                f"TIMESERIES {by} {jpy} {span} {order}"
+            ),
+            "Total sales by referrer": (
+                "FROM sales SHOW orders, total_sales, gross_sales, net_sales "
+                "GROUP BY order_referrer_source, order_referrer_name "
+                f"TIMESERIES {by} {jpy} {span} {order}"
+            ),
+            "Sales attributed to marketing": (
+                "FROM sales SHOW orders, total_sales, gross_sales, net_sales "
+                "GROUP BY referring_channel, referring_medium "
+                f"TIMESERIES {by} {jpy} {span} {order}"
+            ),
+            "Sessions by referrer": (
+                "FROM sessions SHOW online_store_visitors, sessions "
+                "GROUP BY referrer_source, referrer_name, session_city "
+                f"TIMESERIES {by} {span} {order}"
+            ),
+        }
+
+    def write_analytics_report_csv(self, shopifyql_query, output_path):
+        """Run a ShopifyQL query and dump the raw rows to CSV.
+
+        Mirrors a genuine Shopify Analytics export: Shopify's own column display
+        names as the header, unformatted values straight from the API (no type
+        coercion or percentage scaling), UTF-8 BOM so Excel reads it cleanly.
+        """
+        res = self.run_shopifyql_resilient(shopifyql_query, to_dataframe=False)
+        columns = res["columns"]
+        headers = [c.get("displayName") or c["name"] for c in columns]
+        with open(output_path, "w", newline="", encoding="utf-8-sig") as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            for row in res["rows"]:
+                writer.writerow([row.get(c["name"]) for c in columns])
+        return output_path
