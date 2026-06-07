@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import logging
 import time
@@ -65,11 +66,23 @@ class MetaReportingInterface:
         end = start + datetime.timedelta(days=1)
         return int(start.timestamp()), int(end.timestamp())
 
-    def ig_account_metrics_for_day(self, day):
+    def ig_followers_count(self):
+        """Current total follower count (absolute audience size). A live field the
+        Graph API won't backfill, so the daily cron snapshots it forward."""
+        url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}"
+        res = self._meta_get_with_retry(
+            url, {"fields": "followers_count", "access_token": self.meta_token}
+        )
+        return res.get("followers_count")
+
+    def ig_account_metrics_for_day(self, day, with_followers=True):
         """The day's account metrics as a flat dict (one 1-day total_value call).
 
-        Includes 'follows' (follower_count) only when the day is within the API's
-        trailing-30-day window; otherwise the column is left blank.
+        Includes 'follows' (net follower_count change) only when the day is within
+        the API's trailing-30-day window; otherwise that column is left blank.
+        'followers_count' is the live absolute total (with_followers=True, as in the
+        daily cron); the per-day report-month pass skips it and overlays it from the
+        cron's combined file instead, so it isn't re-fetched once per day.
         """
         url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/insights"
         since, until = self._day_bounds_ts(day)
@@ -103,18 +116,134 @@ class MetaReportingInterface:
             row["follows"] = sum(v.get("value", 0) for v in values) if values else None
         else:
             row["follows"] = None
+        row["followers_count"] = self.ig_followers_count() if with_followers else None
         return row
 
-    def ig_account_metrics_by_day(self, date_from, date_to):
-        """Daily account-metric rows for an inclusive date range (one call per day)."""
+    def ig_account_metrics_by_day(self, date_from, date_to, with_followers=False):
+        """Daily account-metric rows for an inclusive date range (one call per day).
+
+        Used only for the report month's daily file (~30 calls). The 13-month
+        year-over-year series uses ig_account_metrics_by_month instead, which is
+        far cheaper and avoids summing daily reach. with_followers defaults False:
+        absolute followers are overlaid from the cron's combined file by the caller
+        rather than re-fetched once per day.
+        """
         rows = []
         day = date_from
         while day <= date_to:
-            rows.append(self.ig_account_metrics_for_day(day))
+            rows.append(
+                self.ig_account_metrics_for_day(day, with_followers=with_followers)
+            )
             day += datetime.timedelta(days=1)
         logger.info(
             f"{self.__class__.__name__} pulled IG account metrics for "
             f"{len(rows)} days ({date_from} .. {date_to})"
+        )
+        return rows
+
+    # The IG insights total_value window is capped at ~20 days, so a calendar
+    # month is summed from <=20-day windows. reach over one window is the unique
+    # accounts for THAT window; summing two windows double-counts anyone reached
+    # in both, so the monthly reach here is a close proximity (one dedup seam per
+    # month), not a perfectly unique monthly figure. The additive metrics
+    # (views / profile_views / website_clicks / total_interactions) sum exactly.
+    IG_ACCOUNT_RANGE_MAX_DAYS = 20
+
+    @staticmethod
+    def _chunk_days(start_day, end_day, max_days):
+        """Yield inclusive (start, end) day windows each spanning <= max_days."""
+        span = datetime.timedelta(days=max_days - 1)
+        s = start_day
+        while s <= end_day:
+            e = min(s + span, end_day)
+            yield s, e
+            s = e + datetime.timedelta(days=1)
+
+    def _ig_account_totals_for_range(self, start_day, end_day):
+        """The five total_value account metrics aggregated over an inclusive day
+        range, in a single call. The window must respect the ~20-day API cap."""
+        url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/insights"
+        since, _ = self._day_bounds_ts(start_day)
+        _, until = self._day_bounds_ts(end_day)
+        res = self._meta_get_with_retry(
+            url,
+            {
+                "metric": ",".join(self.IG_ACCOUNT_METRICS),
+                "period": "day",
+                "metric_type": "total_value",
+                "since": since,
+                "until": until,
+                "access_token": self.meta_token,
+            },
+        )
+        return {
+            m["name"]: m.get("total_value", {}).get("value")
+            for m in res.get("data", [])
+        }
+
+    def _ig_follows_for_range(self, start_day, end_day):
+        """Net follows (follower_count) summed over an inclusive day range, or None
+        when the range is entirely outside the API's trailing-30-day window. The
+        start is clamped into that window so a month straddling the boundary still
+        returns its in-window days instead of erroring."""
+        earliest = datetime.date.today() - datetime.timedelta(days=30)
+        if end_day < earliest:
+            return None
+        start_day = max(start_day, earliest)
+        url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/insights"
+        since, _ = self._day_bounds_ts(start_day)
+        _, until = self._day_bounds_ts(end_day)
+        try:
+            res = self._meta_get_with_retry(
+                url,
+                {
+                    "metric": "follower_count",
+                    "period": "day",
+                    "since": since,
+                    "until": until,
+                    "access_token": self.meta_token,
+                },
+            )
+        except RuntimeError as e:
+            logger.warning(
+                f"{self.__class__.__name__} follows {start_day}..{end_day} "
+                f"unavailable: {e}"
+            )
+            return None
+        values = (res.get("data") or [{}])[0].get("values") or []
+        return sum(v.get("value", 0) for v in values) if values else None
+
+    def ig_account_metrics_by_month(self, date_from, date_to):
+        """Monthly account-metric totals over [date_from, date_to], one row per
+        calendar month, built from <=20-day range calls instead of a per-day pass
+        (~2 calls/month vs one/day). 'follows' fills only months within the
+        trailing 30-day window (API limit); older months leave it blank."""
+        rows = []
+        month = datetime.date(date_from.year, date_from.month, 1)
+        while month <= date_to:
+            last = datetime.date(
+                month.year,
+                month.month,
+                calendar.monthrange(month.year, month.month)[1],
+            )
+            start, end = max(month, date_from), min(last, date_to)
+            totals = {}
+            for win_start, win_end in self._chunk_days(
+                start, end, self.IG_ACCOUNT_RANGE_MAX_DAYS
+            ):
+                part = self._ig_account_totals_for_range(win_start, win_end)
+                for name in self.IG_ACCOUNT_METRICS:
+                    value = part.get(name)
+                    if value is not None:
+                        totals[name] = totals.get(name, 0) + int(value)
+            row = {"month": f"{month:%Y-%m}-01"}
+            row.update(totals)
+            row["follows"] = self._ig_follows_for_range(start, end)
+            rows.append(row)
+            month = last + datetime.timedelta(days=1)
+        logger.info(
+            f"{self.__class__.__name__} pulled IG monthly account metrics for "
+            f"{len(rows)} months ({date_from} .. {date_to})"
         )
         return rows
 
@@ -284,27 +413,6 @@ class MetaReportingInterface:
             ptype = m.get("media_product_type")
             counts[ptype] = counts.get(ptype, 0) + 1
         return counts
-
-    @staticmethod
-    def aggregate_ig_metrics_by_month(daily_rows):
-        """Sum daily account-metric rows into monthly totals (YYYY-MM-01 keyed)."""
-        metrics = [
-            "reach",
-            "views",
-            "profile_views",
-            "website_clicks",
-            "total_interactions",
-            "follows",
-        ]
-        months = {}
-        for row in daily_rows:
-            month = row["date"][:7] + "-01"
-            bucket = months.setdefault(month, {"month": month})
-            for m in metrics:
-                value = row.get(m)
-                if value is not None:
-                    bucket[m] = bucket.get(m, 0) + int(value)
-        return [months[k] for k in sorted(months)]
 
     def _get_omni_ig_stat_value_by_key(self, d, k):
         return [dd for dd in d if dd["name"] == k][0]["total_value"]["value"]
