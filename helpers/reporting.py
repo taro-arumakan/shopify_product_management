@@ -438,15 +438,10 @@ class Reporting:
         ]
         posts = self.ig_posts_with_insights(month_start, month_end)
         format_counts = self.ig_published_format_counts(month_start, month_end)
-
-        # Stories can't be pulled retroactively, so fold in what the daily capture
-        # has accumulated for this month (empty for months before the daily job ran).
-        month_prefix = f"{report_year}-{report_month:02d}"
-        report_stories = [
-            s
-            for s in self.read_combined_ig_daily(brand_name, "stories")
-            if (s.get("timestamp") or "").startswith(month_prefix)
-        ]
+        # Stories are NOT produced here. The Graph API can't backfill them, so the
+        # canonical source is the monthly Meta Business Suite content export, split
+        # per brand by brands/scripts/split_instagram_stories.py into
+        # "Instagram stories - <range>.csv". Posts/account metrics stay API-driven.
         format_row = [
             {
                 "month": f"{month_start:%Y-%m}",
@@ -454,18 +449,8 @@ class Reporting:
                 "reels": format_counts.get("REELS", 0),
                 "posts_total": format_counts.get("FEED", 0)
                 + format_counts.get("REELS", 0),
-                "stories": len(report_stories),
             }
         ]
-        story_fieldnames = [
-            "capture_date",
-            "story_id",
-            "timestamp",
-            "media_type",
-            "media_product_type",
-            "permalink",
-            "caption",
-        ] + self.IG_STORY_METRICS
 
         period = f"{report_year}{report_month:02d}"
         local_dir = local_dir or os.path.join(
@@ -504,14 +489,9 @@ class Reporting:
                 self.IG_POST_COLUMNS,
             ),
             (
-                f"Instagram stories - {month_start:%Y-%m-%d} - {month_end:%Y-%m-%d}.csv",
-                report_stories,
-                story_fieldnames,
-            ),
-            (
                 f"Instagram published format counts - {month_start:%Y-%m}.csv",
                 format_row,
-                ["month", "feed_posts", "reels", "posts_total", "stories"],
+                ["month", "feed_posts", "reels", "posts_total"],
             ),
         ]
         written = []
