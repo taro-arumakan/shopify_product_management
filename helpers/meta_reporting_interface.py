@@ -52,6 +52,19 @@ class MetaReportingInterface:
         "total_interactions",
     ]
 
+    # Instagram day-level metrics are bucketed by the account's local day. Build
+    # the since/until window in this timezone so results are identical regardless
+    # of where the job runs (your Mac in JST vs GitHub Actions in UTC). JP and KR
+    # brands are both UTC+9, so Asia/Tokyo is correct for all of them.
+    REPORTING_TIMEZONE = "Asia/Tokyo"
+
+    def _day_bounds_ts(self, day):
+        """(since, until) unix timestamps for a calendar day in REPORTING_TIMEZONE."""
+        tz = zoneinfo.ZoneInfo(self.REPORTING_TIMEZONE)
+        start = datetime.datetime(day.year, day.month, day.day, tzinfo=tz)
+        end = start + datetime.timedelta(days=1)
+        return int(start.timestamp()), int(end.timestamp())
+
     def ig_account_metrics_for_day(self, day):
         """The day's account metrics as a flat dict (one 1-day total_value call).
 
@@ -59,13 +72,7 @@ class MetaReportingInterface:
         trailing-30-day window; otherwise the column is left blank.
         """
         url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/insights"
-        since = int(datetime.datetime(day.year, day.month, day.day).timestamp())
-        until = int(
-            (
-                datetime.datetime(day.year, day.month, day.day)
-                + datetime.timedelta(days=1)
-            ).timestamp()
-        )
+        since, until = self._day_bounds_ts(day)
         res = self._meta_get_with_retry(
             url,
             {
@@ -205,19 +212,12 @@ class MetaReportingInterface:
     def ig_media_list(self, date_from, date_to):
         """Published posts (FEED/REELS) with timestamps in an inclusive date range."""
         url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/media"
+        since, _ = self._day_bounds_ts(date_from)
+        _, until = self._day_bounds_ts(date_to)
         params = {
             "fields": self.IG_MEDIA_FIELDS,
-            "since": int(
-                datetime.datetime(
-                    date_from.year, date_from.month, date_from.day
-                ).timestamp()
-            ),
-            "until": int(
-                (
-                    datetime.datetime(date_to.year, date_to.month, date_to.day)
-                    + datetime.timedelta(days=1)
-                ).timestamp()
-            ),
+            "since": since,
+            "until": until,
             "limit": 100,
             "access_token": self.meta_token,
         }
