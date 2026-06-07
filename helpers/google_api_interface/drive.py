@@ -3,10 +3,30 @@ import logging
 import os
 import pathlib
 import re
+import socket
+import ssl
+import time
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+# Transient network errors worth retrying on Drive calls (long batch runs hit the
+# occasional socket timeout / 5xx that should not abort the whole job).
+_DRIVE_TRANSIENT = (
+    TimeoutError,
+    ConnectionError,
+    socket.timeout,
+    ssl.SSLError,
+    OSError,
+)
+
+
+def _is_transient_drive_error(exc):
+    if isinstance(exc, HttpError):
+        return getattr(exc.resp, "status", 0) >= 500
+    return isinstance(exc, _DRIVE_TRANSIENT)
 
 
 class GoogleDriveApiInterface:
@@ -242,22 +262,35 @@ class GoogleDriveApiInterface:
         we create a new one.
         """
         name = os.path.basename(filepath)
-        media = MediaIoBaseUpload(
-            open(filepath, "rb"), mimetype=mimetype, resumable=True
-        )
-        if existing := self.find_by_folder_id_by_name(folder_id, name):
-            self.drive_service.files().update(
-                fileId=existing["id"], media_body=media, supportsAllDrives=True
-            ).execute()
-            logger.info(f"Updated: {existing['id']} ({name})")
-        else:
-            self.drive_service.files().create(
-                body={"name": name, "parents": [folder_id]},
-                media_body=media,
-                fields="id",
-                supportsAllDrives=True,
-            ).execute()
-            logger.info(f"Uploaded: {name}")
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                media = MediaIoBaseUpload(
+                    open(filepath, "rb"), mimetype=mimetype, resumable=True
+                )
+                if existing := self.find_by_folder_id_by_name(folder_id, name):
+                    self.drive_service.files().update(
+                        fileId=existing["id"], media_body=media, supportsAllDrives=True
+                    ).execute()
+                    logger.info(f"Updated: {existing['id']} ({name})")
+                else:
+                    self.drive_service.files().create(
+                        body={"name": name, "parents": [folder_id]},
+                        media_body=media,
+                        fields="id",
+                        supportsAllDrives=True,
+                    ).execute()
+                    logger.info(f"Uploaded: {name}")
+                return
+            except Exception as e:
+                if not _is_transient_drive_error(e) or attempt == max_retries - 1:
+                    raise
+                wait = 3 * (attempt + 1)
+                logger.warning(
+                    f"Drive upload transient error for {name} ({e}); "
+                    f"retrying in {wait}s ({attempt + 1}/{max_retries})"
+                )
+                time.sleep(wait)
 
     def make_public_by_file_id(self, file_id):
         self.drive_service.permissions().create(
