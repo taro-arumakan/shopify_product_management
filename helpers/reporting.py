@@ -384,6 +384,7 @@ class Reporting:
         "website_clicks",
         "total_interactions",
         "follows",
+        "followers_count",
     ]
 
     IG_POST_COLUMNS = [
@@ -414,9 +415,10 @@ class Reporting:
 
         Replaces the six separate daily exports (reach, views, profile visits, link
         clicks, interactions, follows) with one monthly-totals file over 13 months
-        and one daily file for the report month. A single day-by-day pass over the
-        13-month window feeds both. 'follows' fills only the trailing 30 days (API
-        limit). Stories and post-level content are handled separately.
+        and one daily file for the report month. The 13-month series is built from
+        <=20-day range calls per month (ig_account_metrics_by_month); the report
+        month's daily file is a per-day pass. 'follows' fills only the trailing 30
+        days (API limit). Stories and post-level content are handled separately.
         """
         brand_name = brand_name or getattr(self, "BRAND_NAME", None)
         assert brand_name, "brand_name is required (no BRAND_NAME on this client)"
@@ -429,13 +431,25 @@ class Reporting:
         month_start = datetime.date(report_year, report_month, 1)
         yoy_start = datetime.date(report_year - 1, report_month, 1)
 
-        daily = self.ig_account_metrics_by_day(yoy_start, month_end)
-        monthly = self.aggregate_ig_metrics_by_month(daily)
-        report_month_daily = [
-            r
-            for r in daily
-            if r["date"].startswith(f"{report_year}-{report_month:02d}")
-        ]
+        monthly = self.ig_account_metrics_by_month(yoy_start, month_end)
+        report_month_daily = self.ig_account_metrics_by_day(month_start, month_end)
+        # Absolute follower count isn't in insights and can't be backfilled; the
+        # daily cron snapshots it. Overlay per-day values (and each month's latest
+        # captured day as its end-of-month total) from the combined daily account
+        # file, where the cron has them.
+        day_followers = {
+            r["date"]: r["followers_count"]
+            for r in self.read_combined_ig_daily(brand_name, "account")
+            if r.get("followers_count") not in (None, "")
+        }
+        month_followers = {}
+        for date_str in sorted(day_followers):
+            month_followers[date_str[:7]] = day_followers[date_str]
+        for row in monthly:
+            row["followers_count"] = month_followers.get(row["month"][:7])
+        for row in report_month_daily:
+            if row["date"] in day_followers:
+                row["followers_count"] = day_followers[row["date"]]
         posts = self.ig_posts_with_insights(month_start, month_end)
         format_counts = self.ig_published_format_counts(month_start, month_end)
         # Stories are NOT produced here. The Graph API can't backfill them, so the
@@ -728,8 +742,28 @@ class Reporting:
                 f"FROM sessions SHOW sessions, conversion_rate TIMESERIES month "
                 f"SINCE {yoy_start:%Y-%m-%d} UNTIL {month_end:%Y-%m-%d} ORDER BY month ASC"
             )
+            # New customers acquired per month -> CAC denominator.
+            cust = self.run_shopifyql(
+                f"FROM sales SHOW customers GROUP BY new_or_returning_customer "
+                f"TIMESERIES month SINCE {yoy_start:%Y-%m-%d} "
+                f"UNTIL {month_end:%Y-%m-%d} ORDER BY month ASC"
+            )
+            # Discount dependency = discounts / gross sales (discounts are negative).
+            disc = self.run_shopifyql(
+                f"FROM sales SHOW gross_sales, discounts TIMESERIES month "
+                f"WITH CURRENCY 'JPY' SINCE {yoy_start:%Y-%m-%d} "
+                f"UNTIL {month_end:%Y-%m-%d} ORDER BY month ASC"
+            )
             kpi["month"] = to_month_key(kpi["month"])
             sessions["month"] = to_month_key(sessions["month"])
+            cust["month"] = to_month_key(cust["month"])
+            disc["month"] = to_month_key(disc["month"])
+            new_cust = cust[cust["new_or_returning_customer"].str.lower() == "new"][
+                ["month", "customers"]
+            ].rename(columns={"customers": "new_customers"})
+            disc["discount_rate"] = (
+                disc["discounts"].abs() / disc["gross_sales"]
+            ).round(4)
             shop = pd.merge(
                 kpi[
                     [
@@ -743,6 +777,10 @@ class Reporting:
                 sessions[["month", "sessions", "conversion_rate"]],
                 on="month",
                 how="outer",
+            )
+            shop = pd.merge(shop, new_cust, on="month", how="outer")
+            shop = pd.merge(
+                shop, disc[["month", "discount_rate"]], on="month", how="outer"
             )
             frames.append(shop)
         except Exception as e:
@@ -797,6 +835,12 @@ class Reporting:
         rollup = reduce(
             lambda a, b: pd.merge(a, b, on="month", how="outer"), frames
         ).sort_values("month")
+
+        # Blended CAC: total ad spend / new customers acquired (NaN when either is
+        # missing or no new customers that month).
+        if "ad_spend" in rollup.columns and "new_customers" in rollup.columns:
+            cac = rollup["ad_spend"] / rollup["new_customers"]
+            rollup["cac"] = cac.where(rollup["new_customers"] > 0).round(0)
 
         os.makedirs(period_dir, exist_ok=True)
         out_path = os.path.join(
