@@ -1,14 +1,14 @@
-"""Daily capture of perishable Instagram data for every brand.
+"""Daily snapshot of each brand's absolute Instagram follower count.
 
-Instagram Stories vanish from the API after 24h and follows are only served for
-the trailing 30 days, so this runs daily (via GitHub Actions) to accumulate the
-history the monthly report needs. Per brand it stores, under
-MONTHLY_EXTRACTION_FOLDER_ID/_daily/<brand>/Instagram/:
-  * account/<date>.csv  - the day's account metrics (incl. follows)
-  * stories/<date>.csv  - live stories + insights
+followers_count is a live field the Graph API can't backfill, so this runs once
+daily (via GitHub Actions) to accumulate the end-of-month figures / audience
+curve the monthly report overlays. Per brand it stores, under
+MONTHLY_EXTRACTION_FOLDER_ID/_daily/<brand>/Instagram/account/<date>.csv, then
+refreshes the combined account.csv. (Account metrics like reach/views are
+re-fetched by the monthly run, and stories come from the manual Business Suite
+export, so neither is captured here.)
 
-Captures yesterday (JST) by default. Pass YYYY-MM-DD to capture a specific day
-(only useful for stories still within their 24h window).
+Captures yesterday (JST) by default. Pass YYYY-MM-DD to capture a specific day.
 
     uv run brands/scripts/capture_instagram_daily.py
     uv run brands/scripts/capture_instagram_daily.py 2026-06-05

@@ -566,14 +566,18 @@ class Reporting:
     def capture_instagram_daily(
         self, capture_date=None, brand_name=None, local_dir=None, upload=True
     ):
-        """Capture the perishable Instagram data for one day (run daily via cron).
+        """Snapshot the one perishable Instagram metric — absolute follower count —
+        for one day (run once daily via cron).
 
-        Stores, per brand under MONTHLY_EXTRACTION_FOLDER_ID/_daily/<brand>/Instagram/:
-          * account/<date>.csv  - the day's account metrics (incl. follows)
-          * stories/<date>.csv  - live stories + insights (gone from the API after 24h)
+        Stored under MONTHLY_EXTRACTION_FOLDER_ID/_daily/<brand>/Instagram/account/
+        <date>.csv. The Graph API can't backfill followers_count, so these daily
+        snapshots are what give the monthly extraction real end-of-month follower
+        figures and an audience-growth curve. Account metrics (reach, views, ...)
+        are re-fetchable by the monthly run, and stories now come from the manual
+        Business Suite export, so neither is captured here anymore. Per-day files
+        keep re-runs idempotent.
 
-        ``capture_date`` defaults to yesterday in JST. Per-day files keep re-runs
-        idempotent; the monthly extraction concatenates and de-dups them later.
+        ``capture_date`` defaults to yesterday in JST.
         """
         import zoneinfo
 
@@ -584,10 +588,10 @@ class Reporting:
                 zoneinfo.ZoneInfo("Asia/Tokyo")
             ).date() - datetime.timedelta(days=1)
 
-        account_row = self.ig_account_metrics_for_day(capture_date)
-        stories = self.ig_stories_with_insights()
-        for row in stories:
-            row["capture_date"] = f"{capture_date:%Y-%m-%d}"
+        account_row = {
+            "date": f"{capture_date:%Y-%m-%d}",
+            "followers_count": self.ig_followers_count(),
+        }
 
         local_dir = local_dir or os.path.join(
             tempfile.gettempdir(),
@@ -595,25 +599,12 @@ class Reporting:
             brand_name.replace(" ", "_"),
         )
         account_dir = os.path.join(local_dir, "account")
-        stories_dir = os.path.join(local_dir, "stories")
         os.makedirs(account_dir, exist_ok=True)
-        os.makedirs(stories_dir, exist_ok=True)
 
         account_path = os.path.join(account_dir, f"{capture_date:%Y-%m-%d}.csv")
-        stories_path = os.path.join(stories_dir, f"{capture_date:%Y-%m-%d}.csv")
         self.write_dicts_to_csv(
             [account_row], account_path, fieldnames=["date"] + self.IG_METRIC_COLUMNS
         )
-        story_fields = [
-            "capture_date",
-            "story_id",
-            "timestamp",
-            "media_type",
-            "media_product_type",
-            "permalink",
-            "caption",
-        ] + self.IG_STORY_METRICS
-        self.write_dicts_to_csv(stories, stories_path, fieldnames=story_fields)
 
         if upload:
             account_folder = self._find_or_create_folder_path(
@@ -623,21 +614,13 @@ class Reporting:
                 "Instagram",
                 "account",
             )
-            stories_folder = self._find_or_create_folder_path(
-                self.MONTHLY_EXTRACTION_FOLDER_ID,
-                "_daily",
-                brand_name,
-                "Instagram",
-                "stories",
-            )
             self.replace_or_upload_to_drive(account_path, "text/csv", account_folder)
-            self.replace_or_upload_to_drive(stories_path, "text/csv", stories_folder)
 
         logger.info(
-            f"{self.__class__.__name__} captured IG daily for {brand_name} "
-            f"{capture_date}: account + {len(stories)} stories"
+            f"{self.__class__.__name__} captured IG followers for {brand_name} "
+            f"{capture_date}: {account_row['followers_count']}"
         )
-        return [account_path, stories_path]
+        return [account_path]
 
     def combine_ig_daily_files(self, brand_name=None, local_dir=None):
         """Concatenate the per-day Instagram capture files into one file per type.
