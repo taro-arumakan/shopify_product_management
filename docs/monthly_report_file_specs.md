@@ -67,9 +67,17 @@ display names. Key ones:
 | **Total sales by referrer** | order_referrer_source/name, orders, total_sales | 売上のチャネル別 (last-click) |
 | **Sales attributed to marketing** | referring_channel/medium, orders, total_sales | チャネル寄与 |
 | **Sessions by referrer** | referrer_source/name, session_city, sessions | 参照元構成 (social/direct/search) |
+| **Sessions by landing page** | landing_page_path, sessions, conversion_rate | ランディングページ別の流入と転換（施策/コレクションページの効果） |
+| **Conversion by channel** | referring_channel, sessions, conversion_rate | チャネル別CVR（IGの「量」と「転換の質」の対比） |
+| **Sales by discount** | discount_name, net_sales, orders, discounts | 割引コード別の売上・利用（プロモ／送料無料CPの効果） |
 
 The **daily** variants are what enable a daily sales / sessions chart (May had to
 substitute daily IG reach because daily Shopify wasn't available — now it is).
+
+> **Sales by discount** note: rows with a blank `discount_name` are non-discounted
+> orders (usually the bulk of sales). Shipping discounts (e.g. 送料無料) show under
+> their own name but may carry ¥0 `net_sales`/`discounts` since they reduce shipping,
+> not item price — read them as "orders that used the code", not item-discount value.
 
 ---
 

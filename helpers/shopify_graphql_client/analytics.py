@@ -622,6 +622,21 @@ class Analytics:
                 "GROUP BY referrer_source, referrer_name, session_city "
                 f"TIMESERIES {by} {span} {order}"
             ),
+            "Sessions by landing page": (
+                "FROM sessions SHOW sessions, conversion_rate "
+                "GROUP BY landing_page_path "
+                f"TIMESERIES {by} {span} {order}"
+            ),
+            "Conversion by channel": (
+                "FROM sessions SHOW sessions, conversion_rate "
+                "GROUP BY referring_channel "
+                f"TIMESERIES {by} {span} {order}"
+            ),
+            "Sales by discount": (
+                "FROM sales SHOW net_sales, orders, discounts "
+                "GROUP BY discount_name "
+                f"TIMESERIES {by} {jpy} {span} {order}"
+            ),
         }
 
     def write_analytics_report_csv(self, shopifyql_query, output_path):
