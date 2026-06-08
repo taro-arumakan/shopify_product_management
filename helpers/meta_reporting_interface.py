@@ -566,6 +566,7 @@ class MetaReportingInterface:
     AD_INSIGHT_FIELDS = [
         "ad_id",
         "ad_name",
+        "adset_id",
         "adset_name",
         "campaign_name",
         "objective",
@@ -627,6 +628,7 @@ class MetaReportingInterface:
             "report_start": row.get("date_start"),
             "report_end": row.get("date_stop"),
             "campaign_name": row.get("campaign_name"),
+            "adset_id": row.get("adset_id"),
             "adset_name": row.get("adset_name"),
             "ad_name": row.get("ad_name"),
             "ad_id": row.get("ad_id"),
@@ -687,6 +689,29 @@ class MetaReportingInterface:
                 f"({attempt + 1}/{max_retries})"
             )
             time.sleep(wait)
+
+    def ad_set_budgets(self):
+        """Current ad-set budgets for the account (a point-in-time snapshot — budget
+        is not an insights field and the API only returns the current setting).
+
+        Each row carries the ad-set daily/lifetime budget and, for campaign-budget
+        (CBO) campaigns where the ad-set budget is null, the parent campaign's
+        budget, so planned-vs-actual is available regardless of budget level.
+        """
+        url = f"https://graph.facebook.com/{self.VERSION}/act_{self.meta_ad_account_id}/adsets"
+        params = {
+            "fields": "id,name,effective_status,daily_budget,lifetime_budget,"
+            "campaign{name,daily_budget,lifetime_budget}",
+            "limit": 200,
+            "access_token": self.meta_token,
+        }
+        out = []
+        while url:
+            res = self._meta_get_with_retry(url, params)
+            out.extend(res.get("data", []))
+            url = res.get("paging", {}).get("next")
+            params = None
+        return out
 
     def ad_insights(self, start_date, end_date, time_increment="monthly"):
         """All ad-level insights between two dates, one flat row per ad per period.

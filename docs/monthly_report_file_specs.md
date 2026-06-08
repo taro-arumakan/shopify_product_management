@@ -14,7 +14,7 @@ and LINE are added by hand. All figures are JPY unless noted.
 
 ```
 Monthly Extraction / <YYYYMM> / <brand> /
-    Shopify/      ← auto (Shopify Admin → Analytics, 11 report cards)
+    Shopify/      ← auto (Shopify Admin → Analytics, 14 report cards)
     Meta/         ← auto (Meta Ad Manager, ad-level insights)
     Instagram/    ← auto except stories (account metrics, posts, format counts)
     LINE/         ← manual (friends + broadcast exports)
@@ -52,9 +52,9 @@ Never invent missing data. If a field is absent, say so (as the May report did).
 
 ## 3. Shopify/  (folder: `Shopify/`)
 
-Eleven CSVs, each as `<Report name> - <range>.csv` (monthly) and
-`<Report name> - daily - <range>.csv` (report month). Headers are Shopify's own
-display names. Key ones:
+Fourteen reports, each written as two CSVs: `<Report name> - <range>.csv`
+(13-month monthly) and `<Report name> - daily - <range>.csv` (report month) —
+28 files in all. Headers are Shopify's own display names. Key ones:
 
 | File | Columns (key) | Feeds report section |
 |---|---|---|
@@ -67,9 +67,17 @@ display names. Key ones:
 | **Total sales by referrer** | order_referrer_source/name, orders, total_sales | 売上のチャネル別 (last-click) |
 | **Sales attributed to marketing** | referring_channel/medium, orders, total_sales | チャネル寄与 |
 | **Sessions by referrer** | referrer_source/name, session_city, sessions | 参照元構成 (social/direct/search) |
+| **Sessions by landing page** | landing_page_path, sessions, conversion_rate | ランディングページ別の流入と転換（施策/コレクションページの効果） |
+| **Conversion by channel** | referring_channel, sessions, conversion_rate | チャネル別CVR（IGの「量」と「転換の質」の対比） |
+| **Sales by discount** | discount_name, net_sales, orders, discounts | 割引コード別の売上・利用（プロモ／送料無料CPの効果） |
 
 The **daily** variants are what enable a daily sales / sessions chart (May had to
 substitute daily IG reach because daily Shopify wasn't available — now it is).
+
+> **Sales by discount** note: rows with a blank `discount_name` are non-discounted
+> orders (usually the bulk of sales). Shipping discounts (e.g. 送料無料) show under
+> their own name but may carry ¥0 `net_sales`/`discounts` since they reduce shipping,
+> not item price — read them as "orders that used the code", not item-discount value.
 
 ---
 
@@ -81,8 +89,13 @@ substitute daily IG reach because daily Shopify wasn't available — now it is).
 | **Meta ads by ad - daily - <range>.csv** | report month daily | same, per day |
 | **Meta spend by objective - <range>.csv** | 13-month monthly | month, **optimization_goal**, spend, purchases, purchase_value, roas_computed |
 | **Meta spend by placement - <range>.csv** | 13-month monthly | month, publisher_platform (instagram/facebook/…), spend, purchases, purchase_value, roas_computed |
+| **Meta ad set budgets - <month>.csv** | report-month snapshot | month, adset_id, adset_name, campaign_name, effective_status, budget_level (adset/campaign), daily_budget, lifetime_budget, **report_month_spend** |
 
-- **Currency**: spend & values already converted to JPY (handles KRW accounts).
+- **Currency**: spend, values & budgets already converted to JPY (handles KRW accounts).
+- **Budget is a current snapshot**, not historical — use it for planned-vs-actual in
+  the report month (`daily_budget`/`lifetime_budget` vs `report_month_spend`); older
+  months' budgets aren't recoverable from the API. `budget_level` says whether the
+  budget is set at the ad set (ABO) or parent campaign (CBO).
 - **roas_computed** = purchase_value / spend.
 - **ROAS (CV-only)** = the `OFFSITE_CONVERSIONS` row of *Meta spend by objective*.
   Goals map to the report's split: `OFFSITE_CONVERSIONS` → CV(購入), `REACH` → リーチ,
@@ -99,22 +112,52 @@ substitute daily IG reach because daily Shopify wasn't available — now it is).
 | **Instagram account metrics - daily - <range>.csv** | date + same | **Daily IG reach chart** |
 | **Instagram posts - <range>.csv** | post_id, timestamp, media_product_type (FEED/REELS), permalink, caption, reach, views, likes, comments, shares, saved, total_interactions | Top posts / content performance |
 | **Instagram published format counts - <month>.csv** | month, feed_posts, reels, posts_total | 投稿本数 (feed/reels) |
-| **Instagram stories - <range>.csv** | *(manual — Business Suite export, split per brand)* | ストーリーズ本数・実績 |
+| **Instagram stories - <range>.csv** | *(manual — Business Suite "Content / Stories" export, split per brand; **Japanese headers**)* | ストーリーズ本数・実績 |
 
-- `reach` here is a near-month deduplicated total (built from ≤20-day windows), not
-  a sum of daily reach — treat as a close approximation.
+- `reach` here is a near-month **deduplicated** total (built from ≤20-day windows).
+  Note: the manual Business Suite per-metric export (and the May report, ~1.54M)
+  used the **sum of daily reach**, which over-counts. Prefer this deduplicated
+  monthly figure and stay consistent; the daily file is available if a summed
+  number is needed to reconcile with old reports.
 - `follows` = net new follows (only available for months within the trailing 30 days);
   `followers_count` = absolute audience size (daily snapshot).
-- Stories count is **not** in the API files — take it from the manual stories CSV.
+- Stories count is **not** in the API files — take it (and per-story metrics) from the
+  manual stories CSV. Posts total here (= feed + reels) matches Business Suite's
+  「トップコンテンツフォーマット → 投稿」; stories = that file's 「ストーリーズ」.
+
+### ストーリーズCSVの列（日本語・Business Suite エクスポート）
+
+手動のストーリーズCSVは Business Suite の日本語列名をそのまま保持します
+（reporter_bundle が各ブランドに分割）。主な列:
+
+| 列名 | 意味 |
+|---|---|
+| 投稿ID | ストーリーズID |
+| アカウントID | IGアカウントID（ブランド振り分けに使用） |
+| 説明 | キャプション |
+| 公開時間 | 公開日時（`MM/DD/YYYY HH:MM`） |
+| リンク | パーマリンク |
+| 投稿タイプ | 種別（`Instagramストーリーズ`） |
+| ビュー / リーチ | 閲覧数 / リーチ |
+| いいね！の数 / シェア数 / 返信 | いいね / シェア / 返信 |
+| フォロー数 / プロフィールへのアクセス | フォロー / プロフィール訪問 |
+| ナビゲーション / スタンプのタップ / リンククリック | ナビゲーション / スタンプタップ / リンククリック |
+
+このファイルの**行数 = 当月のストーリーズ本数**。
 
 ---
 
 ## 6. LINE/  (folder: `LINE/`, manual)
 
-| File | Contents | Feeds |
+LINE's exports use **English** column names (download via Claude in Chrome).
+
+| File | Columns | Feeds |
 |---|---|---|
-| friends / contacts export | 友だち数, 有効リーチ (target reach), ブロック over the month | LINE friend growth, block trend |
-| broadcast export | per-broadcast: 配信数, 開封 (opens) / 開封率, クリック | 配信回数・開封率 |
+| **friend_overview_<range>.csv** (one row per day) | `date`, `contacts` (友だち数), `targetReaches` (有効リーチ), `blocks` (ブロック) | LINE friend growth, block trend |
+| **message_broadcast_<range>.csv** (one row per broadcast) | `broadcastId`, `sentDate`, `cmsUrl`, `deliveredCount` (配信数), `open` (開封), `clickUU` (クリックUU), `videoStartUU`, `videoCompleteUU`, then per-bubble `1_imp`/`1_click`/… | 配信回数・配信数・開封・クリック |
+
+- Open rate = `open` / `deliveredCount`; click rate = `clickUU` / `deliveredCount`.
+- The `N_*` columns are per-message-bubble breakdowns (usually not needed for the report).
 
 ---
 
@@ -123,12 +166,13 @@ substitute daily IG reach because daily Shopify wasn't available — now it is).
 One row per month (13 months), the cross-source summary:
 
 `month, orders, net_sales, average_order_value, returning_customer_rate, sessions,
-conversion_rate, new_customers, discount_rate, ad_spend, ad_purchase_value,
-ad_purchases, ad_roas, ig_reach, ig_views, ig_profile_views, ig_website_clicks,
-ig_total_interactions, ig_follows, ig_followers_count, cac`
+conversion_rate, new_customers, ad_spend, ad_purchase_value, ad_purchases, ad_roas,
+ig_reach, ig_views, ig_profile_views, ig_website_clicks, ig_total_interactions,
+ig_follows, ig_followers_count, cac`
 
 - `cac` = ad_spend / new_customers (blended; blank when no new customers / no Meta).
-- `discount_rate` = discounts / gross_sales (discount dependency).
+- For discount/promo analysis use **Sales by discount** (§3) — item-discount value
+  is small for these brands and free-shipping promos don't appear in `discounts`.
 - `ad_roas` here is **all-objective** (spend includes reach/awareness). For the
   headline CV ROAS, use *Meta spend by objective* (`OFFSITE_CONVERSIONS`).
 - This single file drives the **6-month KPI table** and **12-month trend** directly.
