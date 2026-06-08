@@ -14,7 +14,7 @@ and LINE are added by hand. All figures are JPY unless noted.
 
 ```
 Monthly Extraction / <YYYYMM> / <brand> /
-    Shopify/      ← auto (Shopify Admin → Analytics, 11 report cards)
+    Shopify/      ← auto (Shopify Admin → Analytics, 14 report cards)
     Meta/         ← auto (Meta Ad Manager, ad-level insights)
     Instagram/    ← auto except stories (account metrics, posts, format counts)
     LINE/         ← manual (friends + broadcast exports)
@@ -52,9 +52,9 @@ Never invent missing data. If a field is absent, say so (as the May report did).
 
 ## 3. Shopify/  (folder: `Shopify/`)
 
-Eleven CSVs, each as `<Report name> - <range>.csv` (monthly) and
-`<Report name> - daily - <range>.csv` (report month). Headers are Shopify's own
-display names. Key ones:
+Fourteen reports, each written as two CSVs: `<Report name> - <range>.csv`
+(13-month monthly) and `<Report name> - daily - <range>.csv` (report month) —
+28 files in all. Headers are Shopify's own display names. Key ones:
 
 | File | Columns (key) | Feeds report section |
 |---|---|---|
