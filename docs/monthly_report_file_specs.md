@@ -1,0 +1,144 @@
+# Monthly report — data file specifications
+
+A reference for the Claude session that drafts each brand's monthly client report.
+Read this first, then read the brand's CSVs. It explains the Google Drive layout,
+the fixed reporting methodology, and exactly what every file/column means and which
+report section it feeds.
+
+The pipeline auto-populates **Shopify, Meta, Instagram (except stories)**. Stories
+and LINE are added by hand. All figures are JPY unless noted.
+
+---
+
+## 1. Drive layout
+
+```
+Monthly Extraction / <YYYYMM> / <brand> /
+    Shopify/      ← auto (Shopify Admin → Analytics, 11 report cards)
+    Meta/         ← auto (Meta Ad Manager, ad-level insights)
+    Instagram/    ← auto except stories (account metrics, posts, format counts)
+    LINE/         ← manual (friends + broadcast exports)
+    Monthly KPI rollup - <range>.csv   ← auto (the cross-source summary — start here)
+```
+
+Each source folder holds, per report, **two granularities**:
+- a **13-month monthly** series ending in the report month (year-over-year + 12-month trend)
+- a **daily** series for the report month only (to trace the latest month / build daily charts)
+
+> **New in June 2026 onward** (May's report had to work around these — it now has them):
+> real 12-month / 6-month trends, Meta spend **history** (not just the current month),
+> **daily** Shopify sales & sessions, absolute IG **follower count**, blended **CAC**,
+> discount-dependency, and **spend/ROAS by Meta objective**. June 2026 is also the
+> **first month with true YoY** (the brands launched ~June 2025).
+
+---
+
+## 2. Fixed methodology (keep identical every month)
+
+These definitions are brand-wide policy. Pin them in the prompt so numbers stay
+comparable month to month:
+
+| Metric | Definition |
+|---|---|
+| 売上 (Revenue) | **net_sales + shipping_charges** (税抜) |
+| AOV (客単価) | based on **total_sales (税込)** ÷ orders |
+| ROAS | **CV-objective ads only** — the `OFFSITE_CONVERSIONS` row of *Meta spend by objective* (exclude reach / profile-visit / traffic from the denominator) |
+| 送料無料閾値 | ¥15,000 (context for AOV / checkout-completion reading) |
+| 月商目標 | ¥2.0M (net_sales + shipping) — per brand, confirm each month |
+
+Never invent missing data. If a field is absent, say so (as the May report did).
+
+---
+
+## 3. Shopify/  (folder: `Shopify/`)
+
+Eleven CSVs, each as `<Report name> - <range>.csv` (monthly) and
+`<Report name> - daily - <range>.csv` (report month). Headers are Shopify's own
+display names. Key ones:
+
+| File | Columns (key) | Feeds report section |
+|---|---|---|
+| **Total sales over time** | orders, gross_sales, discounts, returns, **net_sales**, **shipping_charges**, taxes, total_sales | Revenue (売上 = net_sales+shipping), monthly trend |
+| **Average order value over time** | gross_sales, discounts, orders, average_order_value | AOV |
+| **Sessions over time** | online_store_visitors, sessions | Funnel (top), sessions trend |
+| **Conversion rate over time** / **breakdown** | sessions, sessions_with_cart_additions, sessions_that_reached_checkout, sessions_that_completed_checkout, conversion_rate | Funnel decomposition (カート→到達→完了), CVR |
+| **New and returning customers (over time)** | customers, orders, total_sales BY new_or_returning_customer | 顧客構造 (new vs repeat), repeat rate |
+| **Total sales by product** | product_title, net_items_sold, net_sales, … | 商品分析 (top products, concentration) |
+| **Total sales by referrer** | order_referrer_source/name, orders, total_sales | 売上のチャネル別 (last-click) |
+| **Sales attributed to marketing** | referring_channel/medium, orders, total_sales | チャネル寄与 |
+| **Sessions by referrer** | referrer_source/name, session_city, sessions | 参照元構成 (social/direct/search) |
+
+The **daily** variants are what enable a daily sales / sessions chart (May had to
+substitute daily IG reach because daily Shopify wasn't available — now it is).
+
+---
+
+## 4. Meta/  (folder: `Meta/`)
+
+| File | Granularity | Key columns |
+|---|---|---|
+| **Meta ads by ad - <range>.csv** | 13-month monthly | report_start/end, campaign_name, adset_name, ad_name, **objective**, **optimization_goal**, spend (JPY), impressions, reach, frequency, link_clicks, ctr, cpc, cpm, add_to_cart, initiate_checkout, **purchases**, **purchase_value**, purchase_roas_meta, **roas_computed** |
+| **Meta ads by ad - daily - <range>.csv** | report month daily | same, per day |
+| **Meta spend by objective - <range>.csv** | 13-month monthly | month, **optimization_goal**, spend, purchases, purchase_value, roas_computed |
+| **Meta spend by placement - <range>.csv** | 13-month monthly | month, publisher_platform (instagram/facebook/…), spend, purchases, purchase_value, roas_computed |
+
+- **Currency**: spend & values already converted to JPY (handles KRW accounts).
+- **roas_computed** = purchase_value / spend.
+- **ROAS (CV-only)** = the `OFFSITE_CONVERSIONS` row of *Meta spend by objective*.
+  Goals map to the report's split: `OFFSITE_CONVERSIONS` → CV(購入), `REACH` → リーチ,
+  `PROFILE_VISIT` → プロフィール訪問, `LINK_CLICKS`/`LANDING_PAGE_VIEWS` → トラフィック.
+- *Meta spend by placement* separates Instagram from incidental Facebook spillover.
+
+---
+
+## 5. Instagram/  (folder: `Instagram/`)
+
+| File | Key columns | Feeds |
+|---|---|---|
+| **Instagram account metrics - <range>.csv** | month, reach, views, profile_views, website_clicks, total_interactions, follows (net), **followers_count** (absolute) | IG monthly table, 12-month trend |
+| **Instagram account metrics - daily - <range>.csv** | date + same | **Daily IG reach chart** |
+| **Instagram posts - <range>.csv** | post_id, timestamp, media_product_type (FEED/REELS), permalink, caption, reach, views, likes, comments, shares, saved, total_interactions | Top posts / content performance |
+| **Instagram published format counts - <month>.csv** | month, feed_posts, reels, posts_total | 投稿本数 (feed/reels) |
+| **Instagram stories - <range>.csv** | *(manual — Business Suite export, split per brand)* | ストーリーズ本数・実績 |
+
+- `reach` here is a near-month deduplicated total (built from ≤20-day windows), not
+  a sum of daily reach — treat as a close approximation.
+- `follows` = net new follows (only available for months within the trailing 30 days);
+  `followers_count` = absolute audience size (daily snapshot).
+- Stories count is **not** in the API files — take it from the manual stories CSV.
+
+---
+
+## 6. LINE/  (folder: `LINE/`, manual)
+
+| File | Contents | Feeds |
+|---|---|---|
+| friends / contacts export | 友だち数, 有効リーチ (target reach), ブロック over the month | LINE friend growth, block trend |
+| broadcast export | per-broadcast: 配信数, 開封 (opens) / 開封率, クリック | 配信回数・開封率 |
+
+---
+
+## 7. Monthly KPI rollup - <range>.csv  (start here)
+
+One row per month (13 months), the cross-source summary:
+
+`month, orders, net_sales, average_order_value, returning_customer_rate, sessions,
+conversion_rate, new_customers, discount_rate, ad_spend, ad_purchase_value,
+ad_purchases, ad_roas, ig_reach, ig_views, ig_profile_views, ig_website_clicks,
+ig_total_interactions, ig_follows, ig_followers_count, cac`
+
+- `cac` = ad_spend / new_customers (blended; blank when no new customers / no Meta).
+- `discount_rate` = discounts / gross_sales (discount dependency).
+- `ad_roas` here is **all-objective** (spend includes reach/awareness). For the
+  headline CV ROAS, use *Meta spend by objective* (`OFFSITE_CONVERSIONS`).
+- This single file drives the **6-month KPI table** and **12-month trend** directly.
+
+---
+
+## 8. Known gaps / notes
+
+- **損益分岐ROAS** — needs each brand's cost structure (原価率・受取率・運営費率),
+  which is not in any file. Omit unless separately provided.
+- **Stories & LINE** are manual; everything else is auto.
+- **Promo context** (popups, new-product drops, free-shipping campaigns) is NOT in
+  the data and is essential for interpreting the numbers — supply it in the prompt.
