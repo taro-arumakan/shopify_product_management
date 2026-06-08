@@ -99,13 +99,33 @@ substitute daily IG reach because daily Shopify wasn't available — now it is).
 | **Instagram account metrics - daily - <range>.csv** | date + same | **Daily IG reach chart** |
 | **Instagram posts - <range>.csv** | post_id, timestamp, media_product_type (FEED/REELS), permalink, caption, reach, views, likes, comments, shares, saved, total_interactions | Top posts / content performance |
 | **Instagram published format counts - <month>.csv** | month, feed_posts, reels, posts_total | 投稿本数 (feed/reels) |
-| **Instagram stories - <range>.csv** | *(manual — Business Suite export, split per brand)* | ストーリーズ本数・実績 |
+| **Instagram stories - <range>.csv** | *(manual — Business Suite "Content / Stories" export, split per brand; **Japanese headers**)* | ストーリーズ本数・実績 |
 
 - `reach` here is a near-month deduplicated total (built from ≤20-day windows), not
   a sum of daily reach — treat as a close approximation.
 - `follows` = net new follows (only available for months within the trailing 30 days);
   `followers_count` = absolute audience size (daily snapshot).
-- Stories count is **not** in the API files — take it from the manual stories CSV.
+- Stories count is **not** in the API files — take it (and per-story metrics) from the
+  manual stories CSV.
+
+### Stories CSV columns (Japanese — Business Suite export)
+
+The manual stories file keeps Business Suite's original Japanese headers. Key columns:
+
+| Column | Meaning |
+|---|---|
+| 投稿ID | story id |
+| アカウントID | IG account id (used to split per brand) |
+| 説明 | caption |
+| 公開時間 | publish time (`MM/DD/YYYY HH:MM`) |
+| リンク | permalink |
+| 投稿タイプ | type (`Instagramストーリーズ`) |
+| ビュー / リーチ | views / reach |
+| いいね！の数 / シェア数 / 返信 | likes / shares / replies |
+| フォロー数 / プロフィールへのアクセス | follows / profile visits |
+| ナビゲーション / スタンプのタップ / リンククリック | navigation / sticker taps / link clicks |
+
+Row count of this file = ストーリーズ本数 for the month.
 
 ---
 
