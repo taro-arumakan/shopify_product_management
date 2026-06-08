@@ -869,22 +869,12 @@ class Reporting:
                 f"TIMESERIES month SINCE {yoy_start:%Y-%m-%d} "
                 f"UNTIL {month_end:%Y-%m-%d} ORDER BY month ASC"
             )
-            # Discount dependency = discounts / gross sales (discounts are negative).
-            disc = self.run_shopifyql(
-                f"FROM sales SHOW gross_sales, discounts TIMESERIES month "
-                f"WITH CURRENCY 'JPY' SINCE {yoy_start:%Y-%m-%d} "
-                f"UNTIL {month_end:%Y-%m-%d} ORDER BY month ASC"
-            )
             kpi["month"] = to_month_key(kpi["month"])
             sessions["month"] = to_month_key(sessions["month"])
             cust["month"] = to_month_key(cust["month"])
-            disc["month"] = to_month_key(disc["month"])
             new_cust = cust[cust["new_or_returning_customer"].str.lower() == "new"][
                 ["month", "customers"]
             ].rename(columns={"customers": "new_customers"})
-            disc["discount_rate"] = (
-                disc["discounts"].abs() / disc["gross_sales"]
-            ).round(4)
             shop = pd.merge(
                 kpi[
                     [
@@ -900,9 +890,6 @@ class Reporting:
                 how="outer",
             )
             shop = pd.merge(shop, new_cust, on="month", how="outer")
-            shop = pd.merge(
-                shop, disc[["month", "discount_rate"]], on="month", how="outer"
-            )
             frames.append(shop)
         except Exception as e:
             logger.warning(f"{self.__class__.__name__} rollup: Shopify skipped ({e})")

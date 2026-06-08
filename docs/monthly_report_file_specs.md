@@ -166,12 +166,13 @@ LINE's exports use **English** column names (download via Claude in Chrome).
 One row per month (13 months), the cross-source summary:
 
 `month, orders, net_sales, average_order_value, returning_customer_rate, sessions,
-conversion_rate, new_customers, discount_rate, ad_spend, ad_purchase_value,
-ad_purchases, ad_roas, ig_reach, ig_views, ig_profile_views, ig_website_clicks,
-ig_total_interactions, ig_follows, ig_followers_count, cac`
+conversion_rate, new_customers, ad_spend, ad_purchase_value, ad_purchases, ad_roas,
+ig_reach, ig_views, ig_profile_views, ig_website_clicks, ig_total_interactions,
+ig_follows, ig_followers_count, cac`
 
 - `cac` = ad_spend / new_customers (blended; blank when no new customers / no Meta).
-- `discount_rate` = discounts / gross_sales (discount dependency).
+- For discount/promo analysis use **Sales by discount** (§3) — item-discount value
+  is small for these brands and free-shipping promos don't appear in `discounts`.
 - `ad_roas` here is **all-objective** (spend includes reach/awareness). For the
   headline CV ROAS, use *Meta spend by objective* (`OFFSITE_CONVERSIONS`).
 - This single file drives the **6-month KPI table** and **12-month trend** directly.
