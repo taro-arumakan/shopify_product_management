@@ -1,16 +1,23 @@
-name: Capture Instagram daily
+name: Export monthly seed reports
 
 on:
   schedule:
-    # Once a day, 16:00 UTC (01:00 JST) - snapshots the prior JST day's absolute
-    # follower count (the one IG metric the API can't backfill). This is the only
-    # remaining trigger: any Shopify Flow schedule for this job should be removed,
-    # since stories are now the manual Business Suite export.
-    - cron: "0 16 * * *"
+    # 19:00 UTC on the 1st = 04:00 JST on the 2nd. A full day's buffer past
+    # month-end so the last day's Shopify/Meta data has settled and the daily
+    # follower snapshot for the final day exists. Defaults to last full month.
+    - cron: "0 19 1 * *"
   workflow_dispatch:
     inputs:
-      capture_date:
-        description: "Optional capture date (YYYY-MM-DD); defaults to yesterday JST"
+      brand:
+        description: "Optional single brand (e.g. apricot); blank = all brands"
+        required: false
+        default: ""
+      year:
+        description: "Optional report year (with month); blank = last full month"
+        required: false
+        default: ""
+      month:
+        description: "Optional report month (with year); blank = last full month"
         required: false
         default: ""
 
@@ -80,11 +87,21 @@ jobs:
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
           EOF
 
-      - name: Capture Instagram daily
+      - name: Export monthly seed reports
         env:
           PYTHONPATH: .
+          BRAND: ${{ github.event.inputs.brand }}
+          YEAR: ${{ github.event.inputs.year }}
+          MONTH: ${{ github.event.inputs.month }}
         run: |
-          uv run brands/scripts/capture_instagram_daily.py "${{ github.event.inputs.capture_date }}"
+          ARGS=""
+          if [ -n "$BRAND" ]; then
+            ARGS="$BRAND"
+            if [ -n "$YEAR" ] && [ -n "$MONTH" ]; then
+              ARGS="$ARGS $YEAR $MONTH"
+            fi
+          fi
+          uv run python extract_monthly_reports.py $ARGS
 
       - name: Cleanup
         if: always()
