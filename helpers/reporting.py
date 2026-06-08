@@ -332,12 +332,15 @@ class Reporting:
             drive_folder_id = self.find_or_create_folder_by_name(brand_folder, "Meta")
 
         written = []
+        monthly_rows = []
         for label, time_increment, date_from, date_to in windows:
             logger.info(
                 f"{self.__class__.__name__} extracting Meta ad insights "
                 f"({label}) {date_from} .. {date_to}"
             )
             rows = self.ad_insights(date_from, date_to, time_increment=time_increment)
+            if label == "monthly":
+                monthly_rows = rows
             suffix = "" if label == "monthly" else " - daily"
             filename = f"Meta ads by ad{suffix} - {date_from:%Y-%m-%d} - {date_to:%Y-%m-%d}.csv"
             output_path = os.path.join(local_dir, filename)
@@ -347,6 +350,54 @@ class Reporting:
                     output_path, "text/csv", drive_folder_id
                 )
             written.append(output_path)
+
+        # Spend & ROAS by optimization goal (the report's CV-vs-reach/profile-visit/
+        # traffic split), aggregated per month from the monthly ad rows. Lets the
+        # "CV-objective-only ROAS" be computed from data instead of name-guessing.
+        by_goal = {}
+        for r in monthly_rows:
+            key = (r.get("report_start"), r.get("optimization_goal") or "UNKNOWN")
+            g = by_goal.setdefault(
+                key,
+                {
+                    "month": r.get("report_start"),
+                    "optimization_goal": key[1],
+                    "spend": 0,
+                    "purchases": 0,
+                    "purchase_value": 0,
+                },
+            )
+            g["spend"] += float(r.get("spend") or 0)
+            g["purchases"] += float(r.get("purchases") or 0)
+            g["purchase_value"] += float(r.get("purchase_value") or 0)
+        objective_rows = []
+        for g in sorted(by_goal.values(), key=lambda x: (x["month"], -x["spend"])):
+            g["spend"] = round(g["spend"])
+            g["purchases"] = round(g["purchases"])
+            g["purchase_value"] = round(g["purchase_value"])
+            g["roas_computed"] = (
+                round(g["purchase_value"] / g["spend"], 4) if g["spend"] else None
+            )
+            objective_rows.append(g)
+        objective_path = os.path.join(
+            local_dir,
+            f"Meta spend by objective - {yoy_start:%Y-%m-%d} - {month_end:%Y-%m-%d}.csv",
+        )
+        self.write_dicts_to_csv(
+            objective_rows,
+            objective_path,
+            fieldnames=[
+                "month",
+                "optimization_goal",
+                "spend",
+                "purchases",
+                "purchase_value",
+                "roas_computed",
+            ],
+        )
+        if upload:
+            self.replace_or_upload_to_drive(objective_path, "text/csv", drive_folder_id)
+        written.append(objective_path)
 
         # Placement breakdown (IG/FB/Threads/...) over the 13-month window, so the
         # all-placements headline can be reconciled and Facebook spillover is visible.
