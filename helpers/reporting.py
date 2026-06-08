@@ -422,6 +422,93 @@ class Reporting:
             self.replace_or_upload_to_drive(breakdown_path, "text/csv", drive_folder_id)
         written.append(breakdown_path)
 
+        # Ad-set budget snapshot for the report month, with that month's actual
+        # spend, so planned-vs-actual is in the data (the report's budget context).
+        # Budget is the current API setting, not historical — treat as a snapshot.
+        month_key = f"{month_start:%Y-%m}"
+        spend_by_adset = {}
+        for r in monthly_rows:
+            if (r.get("report_start") or "").startswith(month_key):
+                aid = r.get("adset_id")
+                spend_by_adset[aid] = spend_by_adset.get(aid, 0) + float(
+                    r.get("spend") or 0
+                )
+        account_currency = next(
+            (
+                r.get("account_currency")
+                for r in monthly_rows
+                if r.get("account_currency")
+            ),
+            None,
+        )
+        brate = (
+            self.jpy_rate(account_currency, f"{month_end:%Y-%m-%d}")
+            if account_currency
+            else 1
+        )
+
+        def _budget_jpy(value):
+            return round(float(value) * brate) if value not in (None, "") else None
+
+        try:
+            budgets = self.ad_set_budgets()
+        except Exception as e:
+            logger.warning(f"{self.__class__.__name__} ad set budgets unavailable: {e}")
+            budgets = []
+        budget_rows = []
+        for b in budgets:
+            camp = b.get("campaign") or {}
+            adset_daily, adset_life = b.get("daily_budget"), b.get("lifetime_budget")
+            level = (
+                "adset"
+                if (adset_daily or adset_life)
+                else (
+                    "campaign"
+                    if (camp.get("daily_budget") or camp.get("lifetime_budget"))
+                    else "none"
+                )
+            )
+            budget_rows.append(
+                {
+                    "month": f"{month_start:%Y-%m}-01",
+                    "adset_id": b.get("id"),
+                    "adset_name": b.get("name"),
+                    "campaign_name": camp.get("name"),
+                    "effective_status": b.get("effective_status"),
+                    "budget_level": level,
+                    "daily_budget": _budget_jpy(
+                        adset_daily or camp.get("daily_budget")
+                    ),
+                    "lifetime_budget": _budget_jpy(
+                        adset_life or camp.get("lifetime_budget")
+                    ),
+                    "report_month_spend": round(spend_by_adset.get(b.get("id"), 0)),
+                }
+            )
+        budget_rows.sort(key=lambda x: -(x["report_month_spend"] or 0))
+        budget_path = os.path.join(
+            local_dir,
+            f"Meta ad set budgets - {month_start:%Y-%m-%d} - {month_end:%Y-%m-%d}.csv",
+        )
+        self.write_dicts_to_csv(
+            budget_rows,
+            budget_path,
+            fieldnames=[
+                "month",
+                "adset_id",
+                "adset_name",
+                "campaign_name",
+                "effective_status",
+                "budget_level",
+                "daily_budget",
+                "lifetime_budget",
+                "report_month_spend",
+            ],
+        )
+        if upload:
+            self.replace_or_upload_to_drive(budget_path, "text/csv", drive_folder_id)
+        written.append(budget_path)
+
         logger.info(
             f"{self.__class__.__name__} extracted {len(written)} Meta reports for "
             f"{brand_name} {period}"

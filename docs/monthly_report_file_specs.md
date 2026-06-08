@@ -81,8 +81,13 @@ substitute daily IG reach because daily Shopify wasn't available — now it is).
 | **Meta ads by ad - daily - <range>.csv** | report month daily | same, per day |
 | **Meta spend by objective - <range>.csv** | 13-month monthly | month, **optimization_goal**, spend, purchases, purchase_value, roas_computed |
 | **Meta spend by placement - <range>.csv** | 13-month monthly | month, publisher_platform (instagram/facebook/…), spend, purchases, purchase_value, roas_computed |
+| **Meta ad set budgets - <month>.csv** | report-month snapshot | month, adset_id, adset_name, campaign_name, effective_status, budget_level (adset/campaign), daily_budget, lifetime_budget, **report_month_spend** |
 
-- **Currency**: spend & values already converted to JPY (handles KRW accounts).
+- **Currency**: spend, values & budgets already converted to JPY (handles KRW accounts).
+- **Budget is a current snapshot**, not historical — use it for planned-vs-actual in
+  the report month (`daily_budget`/`lifetime_budget` vs `report_month_spend`); older
+  months' budgets aren't recoverable from the API. `budget_level` says whether the
+  budget is set at the ad set (ABO) or parent campaign (CBO).
 - **roas_computed** = purchase_value / spend.
 - **ROAS (CV-only)** = the `OFFSITE_CONVERSIONS` row of *Meta spend by objective*.
   Goals map to the report's split: `OFFSITE_CONVERSIONS` → CV(購入), `REACH` → リーチ,
