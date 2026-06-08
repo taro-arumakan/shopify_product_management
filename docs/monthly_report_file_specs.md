@@ -101,40 +101,50 @@ substitute daily IG reach because daily Shopify wasn't available — now it is).
 | **Instagram published format counts - <month>.csv** | month, feed_posts, reels, posts_total | 投稿本数 (feed/reels) |
 | **Instagram stories - <range>.csv** | *(manual — Business Suite "Content / Stories" export, split per brand; **Japanese headers**)* | ストーリーズ本数・実績 |
 
-- `reach` here is a near-month deduplicated total (built from ≤20-day windows), not
-  a sum of daily reach — treat as a close approximation.
+- `reach` here is a near-month **deduplicated** total (built from ≤20-day windows).
+  Note: the manual Business Suite per-metric export (and the May report, ~1.54M)
+  used the **sum of daily reach**, which over-counts. Prefer this deduplicated
+  monthly figure and stay consistent; the daily file is available if a summed
+  number is needed to reconcile with old reports.
 - `follows` = net new follows (only available for months within the trailing 30 days);
   `followers_count` = absolute audience size (daily snapshot).
 - Stories count is **not** in the API files — take it (and per-story metrics) from the
-  manual stories CSV.
+  manual stories CSV. Posts total here (= feed + reels) matches Business Suite's
+  「トップコンテンツフォーマット → 投稿」; stories = that file's 「ストーリーズ」.
 
-### Stories CSV columns (Japanese — Business Suite export)
+### ストーリーズCSVの列（日本語・Business Suite エクスポート）
 
-The manual stories file keeps Business Suite's original Japanese headers. Key columns:
+手動のストーリーズCSVは Business Suite の日本語列名をそのまま保持します
+（reporter_bundle が各ブランドに分割）。主な列:
 
-| Column | Meaning |
+| 列名 | 意味 |
 |---|---|
-| 投稿ID | story id |
-| アカウントID | IG account id (used to split per brand) |
-| 説明 | caption |
-| 公開時間 | publish time (`MM/DD/YYYY HH:MM`) |
-| リンク | permalink |
-| 投稿タイプ | type (`Instagramストーリーズ`) |
-| ビュー / リーチ | views / reach |
-| いいね！の数 / シェア数 / 返信 | likes / shares / replies |
-| フォロー数 / プロフィールへのアクセス | follows / profile visits |
-| ナビゲーション / スタンプのタップ / リンククリック | navigation / sticker taps / link clicks |
+| 投稿ID | ストーリーズID |
+| アカウントID | IGアカウントID（ブランド振り分けに使用） |
+| 説明 | キャプション |
+| 公開時間 | 公開日時（`MM/DD/YYYY HH:MM`） |
+| リンク | パーマリンク |
+| 投稿タイプ | 種別（`Instagramストーリーズ`） |
+| ビュー / リーチ | 閲覧数 / リーチ |
+| いいね！の数 / シェア数 / 返信 | いいね / シェア / 返信 |
+| フォロー数 / プロフィールへのアクセス | フォロー / プロフィール訪問 |
+| ナビゲーション / スタンプのタップ / リンククリック | ナビゲーション / スタンプタップ / リンククリック |
 
-Row count of this file = ストーリーズ本数 for the month.
+このファイルの**行数 = 当月のストーリーズ本数**。
 
 ---
 
 ## 6. LINE/  (folder: `LINE/`, manual)
 
-| File | Contents | Feeds |
+LINE's exports use **English** column names (download via Claude in Chrome).
+
+| File | Columns | Feeds |
 |---|---|---|
-| friends / contacts export | 友だち数, 有効リーチ (target reach), ブロック over the month | LINE friend growth, block trend |
-| broadcast export | per-broadcast: 配信数, 開封 (opens) / 開封率, クリック | 配信回数・開封率 |
+| **friend_overview_<range>.csv** (one row per day) | `date`, `contacts` (友だち数), `targetReaches` (有効リーチ), `blocks` (ブロック) | LINE friend growth, block trend |
+| **message_broadcast_<range>.csv** (one row per broadcast) | `broadcastId`, `sentDate`, `cmsUrl`, `deliveredCount` (配信数), `open` (開封), `clickUU` (クリックUU), `videoStartUU`, `videoCompleteUU`, then per-bubble `1_imp`/`1_click`/… | 配信回数・配信数・開封・クリック |
+
+- Open rate = `open` / `deliveredCount`; click rate = `clickUU` / `deliveredCount`.
+- The `N_*` columns are per-message-bubble breakdowns (usually not needed for the report).
 
 ---
 
