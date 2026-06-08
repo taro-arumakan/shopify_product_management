@@ -1,0 +1,70 @@
+あなたは月次ブランドレポート用のシードファイル準備を担当するエージェントです。
+このフォルダ（reporter_bundle）にある prepare.py を使い、対象月の
+Instagram ストーリーズと LINE のデータを各ブランドの Google Drive フォルダに用意してください。
+
+対象月は、特に指定がなければ「前月（先月）」とします。今日の日付から自動で判断してください
+（例: 今日が2026年7月なら対象月は2026年6月＝YYYYMM は 202606）。違う月にしたい場合のみ指定します。
+
+────────────────────────────────────────
+前提
+────────────────────────────────────────
+・prepare.py は Python 標準ライブラリのみで動きます（インストール不要）。
+  実行は「python3 prepare.py ...」。python3 が無い場合は uv 等で用意してください
+  （例: curl -LsSf https://astral.sh/uv/install.sh | sh 後に「uv run python prepare.py ...」）。
+・アップロードは「Google Drive」コネクタを使ってください（私の Google アカウントで接続済み）。
+  ブラウザのアップロード画面は使いません。
+・LINE のダウンロードのみ「Claude in Chrome」を使います（LINE公式アカウントマネージャにログイン済み）。
+・対象6ブランド: Apricot Studios / BLOSSOM / Archivépke / LEMEME / ROH SEOUL / SSIL
+  （Shopify・Meta広告・Instagram〔ストーリーズ以外〕は自動取得済みのため作業不要です。）
+
+────────────────────────────────────────
+共通：Google Drive へのアップロード方法（コネクタ）
+────────────────────────────────────────
+保存先ルート「Monthly Extraction」フォルダ ID: 1qiX0MMtnrbF1irJX9_NXBTeQb4LpMFk4
+目的のフォルダは  ＜YYYYMM＞ / ＜ブランド名＞ / ＜カテゴリ(Instagram または LINE)＞ です。
+
+手順:
+1. search_files で各階層のフォルダ ID を解決します。例:
+     parentId = '1qiX0MMtnrbF1irJX9_NXBTeQb4LpMFk4' and title = '202606' and mimeType = 'application/vnd.google-apps.folder'
+   見つかった ID を親に、その下の ＜ブランド名＞、さらに ＜カテゴリ＞ と順に解決します。
+2. 無いフォルダは create_file で作成します（mimeType = 'application/vnd.google-apps.folder'、parentId に親フォルダ ID）。
+3. CSV を create_file でアップロード:
+     title = ファイル名, parentId = カテゴリフォルダ ID,
+     textContent = ファイルの中身, contentMimeType = 'text/csv',
+     disableConversionToGoogleType = true   ← CSVのまま保存する（Googleスプレッドシートに変換しない）ために必須
+   ※ アップロード前に search_files で同名ファイルの有無を確認してください。既にあれば「処理済み」
+     として作成をスキップ（このコネクタは上書き・削除ができないため、重複作成を避ける）。
+     やり直したい場合は、先に Drive 上で古いファイルを手動削除してください。
+
+────────────────────────────────────────
+A. Instagram ストーリーズ
+────────────────────────────────────────
+0.（事前準備）Meta Business Suite →「コンテンツ」→ 期間を当月に設定 →「ストーリーズ」で絞り込み →
+   「エクスポート」で CSV をダウンロードし、この reporter_bundle フォルダと一緒に、その CSV ファイルも
+   この Claude Cowork タスクに追加（添付）しておいてください。
+1. このタスクに追加された Business Suite ストーリーズ CSV のパスを確認してください。
+2. 分割: python3 prepare.py stories "＜そのCSVのパス＞"
+   → output/＜YYYYMM＞/＜ブランド＞/Instagram stories - 開始日 - 終了日.csv が6ブランド分作られます。
+3. 各ファイルの中身を読み、上記「共通」の方法で
+   ＜YYYYMM＞/＜ブランド＞/Instagram/ にアップロードしてください。
+
+────────────────────────────────────────
+B. LINE（友だち＆配信）
+────────────────────────────────────────
+1. URL生成: python3 prepare.py line-urls ＜YYYY＞ ＜MM＞   （例: python3 prepare.py line-urls 2026 6）
+   → 6ブランド × 2本（friends / broadcast）のURLが出力されます。
+2. Claude in Chrome で各URLを開くと CSV が ~/Downloads にダウンロードされます。
+   ※ ファイル名が重複するため、1ブランドずつ「DL → 中身を読む → アップロード →
+      ~/Downloads の当該ファイルを削除 → 次のブランド」の順で進めてください。
+3. 各ブランドの2ファイルの中身を読み、上記「共通」の方法で
+   ＜YYYYMM＞/＜ブランド＞/LINE/ にアップロードしてください。
+
+────────────────────────────────────────
+完了確認
+────────────────────────────────────────
+search_files で各ブランドの ＜YYYYMM＞ フォルダを確認し、Instagram の stories と
+LINE の friends/broadcast が揃っているか一覧で報告してください。
+
+（補足）prepare.py には各ブランドの Instagram Account ID と LINE ID が登録済みのため、
+ブランド判別やURL生成は自動です。Google Drive コネクタが使えない場合のみ、
+代わりに Claude in Chrome で Drive にアップロードしてください。
