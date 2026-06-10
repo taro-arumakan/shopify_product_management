@@ -21,9 +21,9 @@ def update_series():
         client.process_series_products(series_name, products)
 
 
-def create_products():
-    sheet_name = "clothes(SS DROP 1)"
-    drop_tag = "2026_SUMMER_DROP1"
+def create_products_ss_drop4():
+    sheet_name = "clothes(SS DROP 4)"
+    drop_tag = "2026_SUMMER_DROP4"
 
     client = BlossomClientClothes(
         product_sheet_start_row=1,
@@ -36,7 +36,7 @@ def create_products():
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 5, 22, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 6, 17, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.process_sheet_to_products(
@@ -46,9 +46,9 @@ def create_products():
     )
 
 
-def create_jp_exclusive():
-    sheet_name = "clothes(JP EXCLUSIVE)"
-    drop_tag = "2026_drop3"
+def create_products_ss_drop5():
+    sheet_name = "clothes(SS DROP 5)"
+    drop_tag = "2026_SUMMER_DROP5"
 
     client = BlossomClientClothes(
         product_sheet_start_row=1,
@@ -61,7 +61,32 @@ def create_jp_exclusive():
     import zoneinfo
 
     scheduled_time = datetime.datetime(
-        2026, 4, 3, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 6, 17, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    )
+
+    client.process_sheet_to_products(
+        sheet_name=sheet_name,
+        additional_tags=["New Arrival"],
+        scheduled_time=scheduled_time,
+    )
+
+
+def create_dun():
+    sheet_name = "DUN SERIES"
+    drop_tag = "2026_DUN_SERIES"
+
+    client = BlossomClientClothes(
+        product_sheet_start_row=1,
+        remove_existing_new_product_indicators=False,
+        products_season_tag=drop_tag,
+    )
+
+    client.sanity_check_sheet(sheet_name, pre_rewrite=False)
+
+    import zoneinfo
+
+    scheduled_time = datetime.datetime(
+        2026, 6, 17, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.process_sheet_to_products(
@@ -72,4 +97,6 @@ def create_jp_exclusive():
 
 
 if __name__ == "__main__":
-    create_products()
+    create_products_ss_drop4()
+    create_products_ss_drop5()
+    create_dun()
