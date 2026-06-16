@@ -6,14 +6,14 @@ import string
 from brands.rohseoul.client import RohseoulClient
 from brands.rohseoul.article_templates import article_template_lookbook
 
-lookbook_title = "Summer 26"
-article_title = "LOOKBOOK - 26 Summer"
+lookbook_title = "Resort 26"
+article_title = "LOOKBOOK - 26 Resort"
 
-images_dir = "/Users/taro/Downloads/LOOKBOOK - SUMMER 26"
-thumbnail_image_file_name = "LOOKBOOK_-_SUMMER_26_COVER_IMAGE.jpg"
+images_dir = "/Users/taro/Downloads/LOOKBOOK - RESORT 26"
+thumbnail_image_file_name = "LOOKBOOK_-_RESORT_26_COVER_IMAGE.jpg"
 
 LP_SHEET_ID = "17tfWLDl6rcewWnwULPEz5nA7TVLz1ShEuKgILnP7xa4"
-LP_SHEET_NAME = "LOOKBOOK - SUMMER 26"
+LP_SHEET_NAME = "LOOKBOOK - RESORT 26"
 
 lookbook_products_start_row = 3
 lookbook_look_col = string.ascii_lowercase.index("b")
@@ -108,7 +108,7 @@ def process_a_subdir(client: RohseoulClient, subdir):
     section_title = subdir  # #1, #2, ...
     section_seq = section_title.replace("#", "")
     dirpath = os.path.join(images_dir, subdir)
-    file_names = sorted(os.listdir(dirpath))
+    file_names = [f for f in sorted(os.listdir(dirpath)) if f.endswith(".jpg")]
     file_names = [client.shopify_sanitized_filename(fn) for fn in file_names]
     res = {
         f"rich_text_{section_seq}": {

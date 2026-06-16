@@ -5,15 +5,17 @@ from brands.rohseoul.article_templates import article_template_campaign
 theme_dir = "/Users/taro/sc/rohseoul/"
 theme_name = "prod"
 
-article_title = "Campaign - 26 Summer"
-campaign_title = "CAMPAIGN - SUMMER 26"
-campaign_subtitle = "Soft Pause: Where Summer Gently Settles"
-campaign_description = r"""ROH SEOULのSUMMER 26コレクションは、“とどまる時間”から始まります。やわらかな陽光が均一に差し込む空間、開かれた窓からゆっくりと行き交う空気。時間は特定の方向を持たず、静かに流れていきます。過度な動きのないひとときの中で、休息は自然と深まり、感覚は穏やかに整えられていく。SUMMER 26はその静かな余白に寄り添い、次へと続く旅のための新たな余白をそっと残します。""".replace(
+article_title = "Campaign - 26 Resort"
+campaign_title = "CAMPAIGN - RESORT 26"
+campaign_subtitle = "Slow Current : Adrift in Quiet Sunlight"
+campaign_description = r"""ROH SEOULのRESORTコレクション26は、流れるような時間の感覚から生まれました。
+風を受けながらヨットで海原を進む、そんなひとときを思わせるコレクション。波の揺れに身をゆだね、特別な予定も、急ぐ理由も必要ない——ただそこにある時間が、深い休息になっていく。
+眩しい陽射しの下で目を閉じ、ゆっくりと流れる水平線を眺めるように。RESORT 26は、動きの中にも宿る、静かなくつろぎを纏ったコレクションです。""".replace(
     "\n", "<br/>"
 )
 
-thumbnail_image_file_name = "26_SUMMER_CP_cover.jpg"
-campaign_images_dir = "/Users/taro/Downloads/CAMPAIGN - Summer 26"
+thumbnail_image_file_name = "CAMPAIGN - RESORT 26_COVER IMAGE.jpg"
+campaign_images_dir = "/Users/taro/Downloads/CAMPAIGN - RESORT 26"
 
 
 def main():
