@@ -1,3 +1,10 @@
+"""
+Expects all relevant image files uploaded already.
+Download the images dir from Google Drive.
+Rename files as required (in the format 26_report_CP_1.jpg).
+Upload the files, then run the script.
+"""
+
 import os
 from brands.rohseoul.client import RohseoulClient
 from brands.rohseoul.article_templates import article_template_campaign
