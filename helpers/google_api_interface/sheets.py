@@ -104,6 +104,7 @@ class GoogleSheetsApiInterface:
                 assert isinstance(
                     v, str
                 ), f"expected str for {column_name}, got {type(v)}: {v}"
+                v = v.replace("\u200b", "")
                 if self.should_remove_empty_characters(column_name):
                     v = " ".join(v.strip().split())
                 else:
@@ -206,7 +207,9 @@ class GoogleSheetsApiInterface:
                 for options2 in options1["options"]
             ]
         else:
-            raise ValueError(f"No variant {key} found in product info: {product_input}")
+            raise ValueError(
+                f"No variant {key} found in product input: {str(product_input)[:50]}..."
+            )
         return variants_info
 
     def populate_option_dicts(self, product_input):
