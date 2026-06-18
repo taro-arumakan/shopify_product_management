@@ -60,6 +60,11 @@ def client(shop_name: str) -> BrandClientBase:
 
         res = ApricotStudiosClient(None, None)
 
+    elif shop_name in ["asheis"]:
+        from brands.asheis.client import AsheisClient
+
+        res = AsheisClient()
+
     elif shop_name in ["blossom", "blossomhcompany"]:
         from brands.blossom.client import BlossomClient
 
