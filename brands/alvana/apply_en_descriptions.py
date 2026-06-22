@@ -36,7 +36,11 @@ def build_en(base, en_prose, en_material):
     html = base
     if en_prose:
         html = re.sub(
-            r"<p>.*?</p>", lambda m: f"<p>{en_prose}</p>", html, count=1, flags=re.S
+            r"<p[^>]*>.*?</p>",
+            lambda m: f"<p>{en_prose}</p>",
+            html,
+            count=1,
+            flags=re.S,
         )
     html = re.sub(r"<th>\s*素材\s*</th>", "<th>Material</th>", html)
     html = re.sub(r"<th>\s*原産国\s*</th>", "<th>Country of Origin</th>", html)
