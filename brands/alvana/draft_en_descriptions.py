@@ -121,7 +121,7 @@ def main():
     rows_meta = []
     for p in products:
         html = client.run_query(dq, {"id": p["id"]})["product"]["descriptionHtml"] or ""
-        mp = re.search(r"<p>(.*?)</p>", html, re.S)
+        mp = re.search(r"<p[^>]*>(.*?)</p>", html, re.S)
         if not mp:
             continue
         prose = mp.group(1).strip()
