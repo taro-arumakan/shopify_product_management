@@ -11,6 +11,7 @@ class GoogleApiInterface(GoogleDriveApiInterface, GoogleSheetsApiInterface):
         self.scopes = [
             "https://www.googleapis.com/auth/drive",
             "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/analytics.readonly",
         ]
         self.credentials = Credentials.from_service_account_file(
             self.google_credential_path, scopes=self.scopes
@@ -18,6 +19,9 @@ class GoogleApiInterface(GoogleDriveApiInterface, GoogleSheetsApiInterface):
         self.drive_service = build("drive", "v3", credentials=self.credentials)
         self.sheets_service = build("sheets", "v4", credentials=self.credentials)
         self.slides_service = build("slides", "v1", credentials=self.credentials)
+        self.analytics_data_service = build(
+            "analyticsdata", "v1beta", credentials=self.credentials
+        )
         self.gspread_client = gspread.authorize(self.credentials)
         self.sheet_id = sheet_id
         super().__init__()
