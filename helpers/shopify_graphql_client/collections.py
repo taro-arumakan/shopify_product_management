@@ -53,6 +53,7 @@ class CollectionQueries:
                         title
                         sortOrder
                         templateSuffix
+                        updatedAt
                         image {
                             id
                             url
