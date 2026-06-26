@@ -16,7 +16,7 @@ export default async function QuotePage({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">Request a quote</h1>
+      <h1 className="font-serif text-4xl tracking-tight">Request a quote</h1>
       <p className="mt-2 text-stone-600">
         Tell us what you're making. We'll reply with trade pricing, sample options, and
         lead times — and set up a trade account if you don't have one yet.

@@ -117,8 +117,41 @@ export function ButtonSwatch({
       {/* specular highlight */}
       <ellipse cx={cx - 12} cy={cy - 14} rx={10} ry={6} fill="#ffffff" opacity={isMetal ? 0.4 : 0.22} />
 
-      {/* holes or shank */}
-      {holeType === "shank" || holeType === "toggle" ? (
+      {/* holes, shank, or tack stud */}
+      {holeType === "tack" ? (
+        <>
+          {/* stamped concentric rings of a tack / jeans button */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={r - 11}
+            fill="none"
+            stroke={shade(colorHex, 0.26)}
+            strokeWidth={1.4}
+            opacity={0.85}
+          />
+          <circle
+            cx={cx}
+            cy={cy}
+            r={r - 17}
+            fill="none"
+            stroke={shade(colorHex, -0.22)}
+            strokeWidth={1}
+            opacity={0.6}
+          />
+          {/* raised center boss */}
+          <circle cx={cx} cy={cy} r={5.5} fill={shade(colorHex, 0.2)} />
+          <circle
+            cx={cx}
+            cy={cy}
+            r={5.5}
+            fill="none"
+            stroke={shade(colorHex, -0.28)}
+            strokeWidth={0.9}
+          />
+          <circle cx={cx} cy={cy} r={1.6} fill={shade(colorHex, -0.42)} />
+        </>
+      ) : holeType === "shank" || holeType === "toggle" ? (
         <>
           <circle cx={cx} cy={cy} r={6} fill={shade(colorHex, -0.18)} opacity={0.6} />
           <circle cx={cx} cy={cy} r={2.4} fill={holeFill} />

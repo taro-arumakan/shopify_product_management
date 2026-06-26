@@ -1,0 +1,97 @@
+{
+  "sku": "ENG-WRK",
+  "slug": "engraved-work-button",
+  "name": "Engraved Work Button",
+  "shortDescription": "Deep-struck tack button with a relief-engraved face — your maker's mark, built into the hardware.",
+  "longDescription": "A premium tack button with a deeply die-struck, relief-engraved face — the kind of stamped branding that turns a work garment into a signature. Supplied blank for our stock motif or tooled to your logo for production runs (one-time die setup). Hammer-set like a standard jeans button. The crisp relief holds detail far better than printed or laser-etched marks.",
+  "material": "metal",
+  "holeType": "tack",
+  "application": ["denim", "workwear", "coat"],
+  "careNotes": "Wash as the garment allows. Antique and blackened finishes are designed to highlight the relief; avoid abrasive polishing.",
+  "countryOfOrigin": "Japan",
+  "certifications": ["Nickel-release compliant (EN 1811)", "REACH compliant"],
+  "leadTimeDays": 35,
+  "moq": 15,
+  "unit": "gross",
+  "variants": [
+    {
+      "variantSku": "ENG-WRK-20-ABRS",
+      "sizeLigne": 20,
+      "sizeMm": 12.7,
+      "finish": "Antique brass",
+      "colorHex": "#9a7b3f",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 15, "unitPrice": 16.0, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 14.0, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 12.0, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 15, "unitPrice": 14.0, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 12.0, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 10.4, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 15, "unitPrice": 12.5, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 10.7, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 9.2, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "ENG-WRK-20-BLKN",
+      "sizeLigne": 20,
+      "sizeMm": 12.7,
+      "finish": "Blackened brass",
+      "colorHex": "#2b2520",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 15, "unitPrice": 16.0, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 14.0, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 12.0, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 15, "unitPrice": 14.0, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 12.0, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 10.4, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 15, "unitPrice": 12.5, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 10.7, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 9.2, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "ENG-WRK-24-ABRS",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Antique brass",
+      "colorHex": "#9a7b3f",
+      "inStockSample": false,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 15, "unitPrice": 18.4, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 16.1, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 13.8, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 15, "unitPrice": 16.1, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 13.8, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 12.0, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 15, "unitPrice": 14.4, "currency": "USD" },
+          { "minQty": 60, "unitPrice": 12.3, "currency": "USD" },
+          { "minQty": 250, "unitPrice": 10.6, "currency": "USD" }
+        ]
+      }
+    }
+  ],
+  "seo": {
+    "title": "Engraved Work Button — Custom Logo Tack Buttons Wholesale",
+    "description": "Deep-struck relief-engraved tack buttons with custom logo tooling, in antique and blackened brass. Made in Japan. Trade pricing."
+  }
+}

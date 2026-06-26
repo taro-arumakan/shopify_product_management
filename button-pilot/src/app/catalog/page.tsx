@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 export const metadata: Metadata = {
   title: "Catalog",
   description:
-    "Garment button catalog — corozo, urea resin, mother-of-pearl, and metal buttons for apparel makers.",
+    "Heritage workwear button catalog — tack, jumper-coat, overall, and engraved work buttons for apparel makers. Made in Japan.",
 };
 
 export default async function CatalogPage() {
@@ -17,9 +17,9 @@ export default async function CatalogPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">Button catalog</h1>
+      <h1 className="font-serif text-4xl tracking-tight">Button catalog</h1>
       <p className="mt-2 max-w-2xl text-stone-600">
-        Our pilot range of garment buttons. {tier
+        Our pilot range of heritage workwear buttons. {tier
           ? "Showing your trade pricing."
           : "Sign in for wholesale pricing and ordering."}
       </p>
@@ -34,7 +34,7 @@ export default async function CatalogPage() {
         </div>
       )}
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid grid-cols-2 border-t border-l border-line lg:grid-cols-3">
         {products.map((p) => (
           <ProductCard key={p.slug} product={p} tier={tier} />
         ))}

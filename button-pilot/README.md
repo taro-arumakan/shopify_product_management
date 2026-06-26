@@ -1,7 +1,8 @@
-# Atelier Buttons — B2B Trade Pilot
+# Hammond Button Works — B2B Trade Pilot
 
-A from-scratch pilot storefront for a **B2B garment-button** business. Showcases 4
-products and validates three B2B fundamentals before a full build:
+A from-scratch pilot storefront for **Hammond Button Works**, a B2B **heritage workwear
+button** maker (tack, jumper-coat, overall, and engraved work buttons — made in Japan).
+Showcases 4 products and validates three B2B fundamentals before a full build:
 
 1. **Login-gated catalog** — only approved trade accounts see prices / can order.
 2. **Wholesale tiered pricing** — per-account tiers with quantity breaks, resolved

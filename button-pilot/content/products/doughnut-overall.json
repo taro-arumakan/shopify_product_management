@@ -1,0 +1,97 @@
+{
+  "sku": "DNT-OVR",
+  "slug": "doughnut-overall-button",
+  "name": "Doughnut Overall Button",
+  "shortDescription": "Open-center 'doughnut' tack button — the unmistakable hardware of bib overalls and chore wear.",
+  "longDescription": "A ring-edged 'doughnut' tack button with an open center, hammer-set like a jeans button but with the distinctive overall silhouette. The raised rim takes a stamped maker's name cleanly and stands up to decades of laundering. Period-correct for bib overalls, carpenter pants, and chore garments. Pairs with a matching tack pin or burr.",
+  "material": "metal",
+  "holeType": "tack",
+  "application": ["denim", "workwear"],
+  "careNotes": "Industrial-wash safe. Uncoated brass and copper patina over time; nickel keeps a brighter finish.",
+  "countryOfOrigin": "Japan",
+  "certifications": ["Nickel-release compliant (EN 1811)", "REACH compliant"],
+  "leadTimeDays": 30,
+  "moq": 10,
+  "unit": "gross",
+  "variants": [
+    {
+      "variantSku": "DNT-OVR-24-BGLT",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Brass gilt",
+      "colorHex": "#b08d57",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 12.2, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.7, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.1, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 10.7, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.9, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 9.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 8.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 6.9, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "DNT-OVR-24-COPP",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Copper oxide",
+      "colorHex": "#7a4a32",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 12.2, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.7, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.1, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 10.7, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.9, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 9.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 8.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 6.9, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "DNT-OVR-27-NICK",
+      "sizeLigne": 27,
+      "sizeMm": 17.1,
+      "finish": "Nickel",
+      "colorHex": "#c8ccce",
+      "inStockSample": false,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 13.6, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 11.9, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 10.2, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 11.9, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.2, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.8, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 10.6, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.7, "currency": "USD" }
+        ]
+      }
+    }
+  ],
+  "seo": {
+    "title": "Doughnut Overall Button — Bib Overall Hardware Wholesale",
+    "description": "Open-center doughnut tack buttons for bib overalls and chore wear in brass gilt, copper oxide, and nickel. Made in Japan."
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "sku": "RGE-JMP",
+  "slug": "rigid-eye-jumper-coat",
+  "name": "Rigid-Eye Jumper Coat Button",
+  "shortDescription": "Sew-on metal button with a cast rigid eye — the classic fastening for chore coats and coveralls.",
+  "longDescription": "A heritage jumper-coat button with a one-piece cast 'rigid eye' shank that won't pull loose under heavy use. The flat, lightly domed face suits stamped branding or a plain workwear look. Sewn rather than tacked, so it works on jackets, chore coats, and coveralls where a tack press isn't used. A faithful reproduction of early-1900s work-garment hardware.",
+  "material": "metal",
+  "holeType": "shank",
+  "application": ["coat", "workwear"],
+  "careNotes": "Wipe clean. Uncoated finishes patina with wear; avoid abrasive polishes on antique-finished faces.",
+  "countryOfOrigin": "Japan",
+  "certifications": ["Nickel-release compliant (EN 1811)", "REACH compliant"],
+  "leadTimeDays": 32,
+  "moq": 10,
+  "unit": "gross",
+  "variants": [
+    {
+      "variantSku": "RGE-JMP-24-BGLT",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Brass gilt",
+      "colorHex": "#b08d57",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 13.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 11.8, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 10.1, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 11.8, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.7, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 10.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.7, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "RGE-JMP-24-BLKN",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Blackened brass",
+      "colorHex": "#2b2520",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 13.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 11.8, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 10.1, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 11.8, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.7, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 10.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.7, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "RGE-JMP-27-GUN",
+      "sizeLigne": 27,
+      "sizeMm": 17.1,
+      "finish": "Gunmetal",
+      "colorHex": "#3f4448",
+      "inStockSample": false,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 15.2, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 13.3, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 11.4, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 13.3, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 11.4, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.9, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 11.8, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.7, "currency": "USD" }
+        ]
+      }
+    }
+  ],
+  "seo": {
+    "title": "Rigid-Eye Jumper Coat Button — Workwear Wholesale",
+    "description": "Cast rigid-eye shank buttons for chore coats and coveralls in brass gilt, blackened brass, and gunmetal. Made in Japan."
+  }
+}

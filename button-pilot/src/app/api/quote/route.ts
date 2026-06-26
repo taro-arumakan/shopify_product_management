@@ -77,11 +77,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // 3. Acknowledge the requester (best-effort).
   await sendEmail({
     to: q.email,
-    subject: "We received your request — Atelier Buttons",
+    subject: "We received your request — Hammond Button Works",
     html: `<div style="font-family:system-ui,sans-serif"><p>Hi ${escapeHtml(q.name)},</p>
-      <p>Thanks for reaching out to Atelier Buttons. We've received your request and will
+      <p>Thanks for reaching out to Hammond Button Works. We've received your request and will
       reply with pricing and next steps, usually within one business day.</p>
-      <p>— Atelier Buttons</p></div>`,
+      <p>— Hammond Button Works</p></div>`,
   }).catch(() => {});
 
   // 4. Optional: append to a Google Sheet.

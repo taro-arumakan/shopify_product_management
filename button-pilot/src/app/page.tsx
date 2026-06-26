@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getAllProducts } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
+import { Logo } from "@/components/Logo";
 
 export default async function HomePage() {
   const session = await auth();
@@ -11,31 +12,36 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="border-b border-stone-200 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <p className="text-sm font-medium uppercase tracking-wider text-accent">
-            B2B button supply
-          </p>
-          <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-            Garment buttons, supplied for the trade.
-          </h1>
-          <p className="mt-4 max-w-xl text-lg text-stone-600">
-            Corozo, urea, mother-of-pearl, and metal buttons for apparel makers.
-            Wholesale tiered pricing, low minimums, and color-matched production runs.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/catalog"
-              className="rounded-md bg-accent px-5 py-3 font-medium text-white hover:opacity-90"
-            >
-              Browse the catalog
-            </Link>
-            <Link
-              href="/quote"
-              className="rounded-md border border-stone-300 px-5 py-3 font-medium hover:border-accent"
-            >
-              Request a quote
-            </Link>
+      <section className="border-b border-line bg-surface">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 md:grid-cols-[1.3fr_1fr]">
+          <div>
+            <p className="font-serif text-sm uppercase tracking-[0.2em] text-accent">
+              Heritage workwear buttons · Made in Japan
+            </p>
+            <h1 className="mt-4 max-w-2xl font-serif text-4xl leading-tight tracking-tight sm:text-5xl">
+              Buttons built for hard wear, supplied for the trade.
+            </h1>
+            <p className="mt-4 max-w-xl text-lg text-stone-600">
+              Tack, jumper-coat, overall, and engraved work buttons for apparel makers.
+              Wholesale tiered pricing, low minimums, and custom face stamping.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/catalog"
+                className="rounded-md bg-foreground px-5 py-3 font-medium text-background hover:bg-accent"
+              >
+                Browse the catalog
+              </Link>
+              <Link
+                href="/quote"
+                className="rounded-md border border-foreground/30 px-5 py-3 font-medium hover:border-accent hover:text-accent"
+              >
+                Request a quote
+              </Link>
+            </div>
+          </div>
+          <div className="hidden justify-center md:flex">
+            <Logo variant="full" className="w-full max-w-xs text-foreground" />
           </div>
         </div>
       </section>
@@ -54,11 +60,11 @@ export default async function HomePage() {
             },
             {
               t: "Made to spec",
-              d: "Color-matching, custom engraving, and certified materials (OEKO-TEX, REACH).",
+              d: "Custom face stamping, logo tooling, and certified, nickel-safe finishes.",
             },
           ].map((b) => (
             <div key={b.t}>
-              <h3 className="font-semibold">{b.t}</h3>
+              <h3 className="font-serif text-xl">{b.t}</h3>
               <p className="mt-1 text-sm text-stone-600">{b.d}</p>
             </div>
           ))}
@@ -68,12 +74,12 @@ export default async function HomePage() {
       {/* Featured products */}
       <section className="mx-auto max-w-6xl px-4 pb-20">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold tracking-tight">Pilot collection</h2>
+          <h2 className="font-serif text-3xl tracking-tight">The pilot range</h2>
           <Link href="/catalog" className="text-sm text-accent hover:underline">
             View all →
           </Link>
         </div>
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 border-t border-l border-line lg:grid-cols-4">
           {products.map((p) => (
             <ProductCard key={p.slug} product={p} tier={tier} />
           ))}

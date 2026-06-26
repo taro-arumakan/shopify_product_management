@@ -123,7 +123,7 @@ export default async function ProductPage({
 
         {/* Title, copy, pricing/order */}
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
+          <h1 className="font-serif text-4xl tracking-tight">{product.name}</h1>
           <p className="mt-1 text-sm uppercase tracking-wide text-stone-400">
             {product.sku}
           </p>

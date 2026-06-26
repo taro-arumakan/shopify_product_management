@@ -1,0 +1,97 @@
+{
+  "sku": "TACK-9",
+  "slug": "tack-button-no9",
+  "name": "No. 9 Tack Button",
+  "shortDescription": "Hammer-set tack button for denim and workwear — a solid stamped face built to outlast the garment.",
+  "longDescription": "Our workhorse jeans button: a one-piece tack (rivet-set) button struck from solid metal and hammered onto the waistband with a tack pin. The domed, lightly stamped face wears in rather than out, developing a honest patina over years of use. Backed by a burr or pin to suit your setting press. Custom face stamping available on production runs.",
+  "material": "metal",
+  "holeType": "tack",
+  "application": ["denim", "workwear"],
+  "careNotes": "Wash and dry as the garment allows. Uncoated brass and copper develop a natural patina; lacquer-sealed finishes hold their shine longer.",
+  "countryOfOrigin": "Japan",
+  "certifications": ["Nickel-release compliant (EN 1811)", "REACH compliant"],
+  "leadTimeDays": 30,
+  "moq": 10,
+  "unit": "gross",
+  "variants": [
+    {
+      "variantSku": "TACK-9-17-BGLT",
+      "sizeLigne": 17,
+      "sizeMm": 10.8,
+      "finish": "Brass gilt",
+      "colorHex": "#b08d57",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 11.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.6, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 10.0, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 8.6, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.4, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 8.9, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 7.6, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 6.5, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "TACK-9-17-COPP",
+      "sizeLigne": 17,
+      "sizeMm": 10.8,
+      "finish": "Copper oxide",
+      "colorHex": "#7a4a32",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 11.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.6, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 10.0, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 8.6, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.4, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 8.9, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 7.6, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 6.5, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "TACK-9-20-NICK",
+      "sizeLigne": 20,
+      "sizeMm": 12.7,
+      "finish": "Nickel",
+      "colorHex": "#c8ccce",
+      "inStockSample": false,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 12.8, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 11.2, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.6, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 11.2, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.6, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.3, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 9.9, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 8.5, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.3, "currency": "USD" }
+        ]
+      }
+    }
+  ],
+  "seo": {
+    "title": "No. 9 Tack Button — Denim & Workwear Wholesale",
+    "description": "Solid hammer-set tack (jeans) buttons in brass gilt, copper oxide, and nickel. Made in Japan. Trade pricing, custom stamping, samples."
+  }
+}

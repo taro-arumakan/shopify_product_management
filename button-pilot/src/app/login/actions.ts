@@ -30,7 +30,7 @@ export async function requestMagicLink(formData: FormData): Promise<void> {
 
   await sendEmail({
     to: account.email,
-    subject: "Your Atelier Buttons sign-in link",
+    subject: "Your Hammond Button Works sign-in link",
     html: magicLinkEmail(url, account.company),
   });
 
