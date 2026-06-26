@@ -1,0 +1,97 @@
+{
+  "sku": "COR-4H",
+  "slug": "corozo-4hole-classic",
+  "name": "Corozo 4-Hole Classic",
+  "shortDescription": "Natural tagua-nut (corozo) button with a fine matte grain — a refined, sustainable choice for shirting and tailoring.",
+  "longDescription": "Turned from corozo (tagua nut, 'vegetable ivory'), this 4-hole button has a dense, slightly translucent body that takes dye beautifully while keeping a natural grain. Each piece varies subtly, giving finished garments an artisanal, organic character prized by tailoring and premium shirting brands. Dry-clean friendly and biodegradable.",
+  "material": "corozo",
+  "holeType": "4-hole",
+  "application": ["shirt", "suit", "knitwear"],
+  "careNotes": "Dry-clean safe. Avoid prolonged soaking and high-heat tumble drying, which can dull the natural sheen.",
+  "countryOfOrigin": "Italy",
+  "certifications": ["OEKO-TEX Standard 100"],
+  "leadTimeDays": 21,
+  "moq": 5,
+  "unit": "gross",
+  "variants": [
+    {
+      "variantSku": "COR-4H-24-TORT",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Matte tortoiseshell",
+      "colorHex": "#5a3a1e",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 5, "unitPrice": 9.6, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 8.4, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 7.2, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 5, "unitPrice": 8.4, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 7.2, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 6.3, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 5, "unitPrice": 7.5, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 6.4, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 5.5, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "COR-4H-24-IVRY",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Natural ivory",
+      "colorHex": "#ece3cf",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 5, "unitPrice": 9.6, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 8.4, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 7.2, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 5, "unitPrice": 8.4, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 7.2, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 6.3, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 5, "unitPrice": 7.5, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 6.4, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 5.5, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "COR-4H-18-TORT",
+      "sizeLigne": 18,
+      "sizeMm": 11.4,
+      "finish": "Matte tortoiseshell",
+      "colorHex": "#5a3a1e",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 5, "unitPrice": 8.2, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 7.1, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 6.1, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 5, "unitPrice": 7.1, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 6.1, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 5.3, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 5, "unitPrice": 6.3, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 5.4, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 4.6, "currency": "USD" }
+        ]
+      }
+    }
+  ],
+  "seo": {
+    "title": "Corozo 4-Hole Classic Buttons — Wholesale",
+    "description": "Sustainable corozo (tagua nut) 4-hole buttons in 18L and 24L. OEKO-TEX certified. Trade pricing and samples."
+  }
+}

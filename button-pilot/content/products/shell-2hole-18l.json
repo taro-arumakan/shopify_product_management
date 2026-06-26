@@ -1,0 +1,97 @@
+{
+  "sku": "SHL-2H",
+  "slug": "shell-2hole-shirt",
+  "name": "Mother-of-Pearl 2-Hole — Shirt",
+  "shortDescription": "Genuine river-shell (trocas) 2-hole button with natural iridescence — the hallmark of fine shirting.",
+  "longDescription": "Cut and polished from natural trocas shell, this 2-hole button carries the soft iridescent lustre that distinguishes luxury shirting. Each button is a unique slice of shell, with subtle figure and depth that synthetic materials cannot replicate. Thicker 'thick-cut' options available for a premium hand. Sold by gross with lot-matched luster grading.",
+  "material": "shell",
+  "holeType": "2-hole",
+  "application": ["shirt"],
+  "careNotes": "Hand-wash or gentle machine cycle recommended. Avoid bleach and ultrasonic cleaning, which can micro-fracture natural shell.",
+  "countryOfOrigin": "Japan",
+  "certifications": ["OEKO-TEX Standard 100"],
+  "leadTimeDays": 35,
+  "moq": 5,
+  "unit": "gross",
+  "variants": [
+    {
+      "variantSku": "SHL-2H-18-WHT",
+      "sizeLigne": 18,
+      "sizeMm": 11.4,
+      "finish": "Natural white",
+      "colorHex": "#f4f1ea",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 5, "unitPrice": 18.0, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 15.8, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 13.5, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 5, "unitPrice": 15.8, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 13.5, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 11.7, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 5, "unitPrice": 14.0, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 12.0, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 10.3, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "SHL-2H-16-WHT",
+      "sizeLigne": 16,
+      "sizeMm": 10.2,
+      "finish": "Natural white",
+      "colorHex": "#f4f1ea",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 5, "unitPrice": 16.2, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 14.2, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 12.2, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 5, "unitPrice": 14.2, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 12.2, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 10.5, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 5, "unitPrice": 12.6, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 10.8, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 9.3, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "SHL-2H-18-SMOKE",
+      "sizeLigne": 18,
+      "sizeMm": 11.4,
+      "finish": "Smoke grey",
+      "colorHex": "#8b8a86",
+      "inStockSample": false,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 5, "unitPrice": 19.8, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 17.4, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 14.9, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 5, "unitPrice": 17.4, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 14.9, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 12.9, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 5, "unitPrice": 15.4, "currency": "USD" },
+          { "minQty": 25, "unitPrice": 13.2, "currency": "USD" },
+          { "minQty": 100, "unitPrice": 11.3, "currency": "USD" }
+        ]
+      }
+    }
+  ],
+  "seo": {
+    "title": "Mother-of-Pearl Shirt Buttons — Wholesale",
+    "description": "Genuine trocas shell 2-hole buttons in 16L and 18L. Natural iridescence, OEKO-TEX certified. Trade pricing and samples."
+  }
+}

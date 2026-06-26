@@ -1,0 +1,97 @@
+{
+  "sku": "URE-SH",
+  "slug": "urea-shank-coat",
+  "name": "Urea Resin Shank — Coat",
+  "shortDescription": "Deep-dyed urea resin shank button with a glossy domed face — a hard-wearing workhorse for coats and outerwear.",
+  "longDescription": "A domed shank button cast from urea (polyester) resin, engineered for consistency at volume. The shank lifts the button off the fabric to accommodate heavy coating cloth, while the polished, deeply pigmented face resists fading and abrasion through repeated wear and cleaning. Color-matched lots available for production runs.",
+  "material": "urea",
+  "holeType": "shank",
+  "application": ["coat", "suit"],
+  "careNotes": "Machine-wash and dry-clean stable. Colorfast under standard laundering.",
+  "countryOfOrigin": "Germany",
+  "certifications": ["OEKO-TEX Standard 100", "REACH compliant"],
+  "leadTimeDays": 28,
+  "moq": 10,
+  "unit": "gross",
+  "variants": [
+    {
+      "variantSku": "URE-SH-32-BLK",
+      "sizeLigne": 32,
+      "sizeMm": 20.3,
+      "finish": "Polished black",
+      "colorHex": "#15130f",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 12.0, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.5, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.0, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 10.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.8, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 9.4, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 8.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 6.9, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "URE-SH-32-NAVY",
+      "sizeLigne": 32,
+      "sizeMm": 20.3,
+      "finish": "Polished navy",
+      "colorHex": "#1c2740",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 12.0, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.5, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.0, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 10.5, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 7.8, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 9.4, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 8.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 6.9, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "URE-SH-40-BLK",
+      "sizeLigne": 40,
+      "sizeMm": 25.4,
+      "finish": "Polished black",
+      "colorHex": "#15130f",
+      "inStockSample": false,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 14.4, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 12.6, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 10.8, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 12.6, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.8, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.4, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 11.3, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 9.6, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.3, "currency": "USD" }
+        ]
+      }
+    }
+  ],
+  "seo": {
+    "title": "Urea Resin Shank Coat Buttons — Wholesale",
+    "description": "Hard-wearing urea resin shank buttons for coats and outerwear in 32L and 40L. Color-matched production lots."
+  }
+}

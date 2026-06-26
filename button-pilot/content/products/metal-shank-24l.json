@@ -1,0 +1,97 @@
+{
+  "sku": "MTL-SH",
+  "slug": "metal-shank-jacket",
+  "name": "Antique Brass Shank — Jacket",
+  "shortDescription": "Die-struck zinc-alloy shank button with an antique brass finish — structured weight for denim, jackets, and workwear.",
+  "longDescription": "A die-struck metal shank button finished in hand-aged antique brass. The substantial weight and crisp rim give jackets, denim, and workwear a structured, heritage feel. Plated over a zinc alloy core and lacquer-sealed for tarnish resistance. Custom logo engraving on the face is available for branded production runs.",
+  "material": "metal",
+  "holeType": "shank",
+  "application": ["denim", "coat", "suit"],
+  "careNotes": "Wipe clean. Lacquer-sealed against tarnish; avoid abrasive polishes which strike through the antique patina.",
+  "countryOfOrigin": "Japan",
+  "certifications": ["REACH compliant", "Nickel-release compliant (EN 1811)"],
+  "leadTimeDays": 30,
+  "moq": 10,
+  "unit": "gross",
+  "variants": [
+    {
+      "variantSku": "MTL-SH-24-ABRS",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Antique brass",
+      "colorHex": "#9a7b3f",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 15.0, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 13.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 11.3, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 13.1, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 11.3, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.8, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 11.7, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.6, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "MTL-SH-24-GUN",
+      "sizeLigne": 24,
+      "sizeMm": 15.2,
+      "finish": "Gunmetal",
+      "colorHex": "#3f4448",
+      "inStockSample": true,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 15.0, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 13.1, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 11.3, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 13.1, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 11.3, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 9.8, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 11.7, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 10.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 8.6, "currency": "USD" }
+        ]
+      }
+    },
+    {
+      "variantSku": "MTL-SH-30-ABRS",
+      "sizeLigne": 30,
+      "sizeMm": 19.0,
+      "finish": "Antique brass",
+      "colorHex": "#9a7b3f",
+      "inStockSample": false,
+      "priceByTier": {
+        "tier_standard": [
+          { "minQty": 10, "unitPrice": 18.0, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 15.8, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 13.5, "currency": "USD" }
+        ],
+        "tier_volume": [
+          { "minQty": 10, "unitPrice": 15.8, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 13.5, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 11.7, "currency": "USD" }
+        ],
+        "tier_partner": [
+          { "minQty": 10, "unitPrice": 14.0, "currency": "USD" },
+          { "minQty": 50, "unitPrice": 12.0, "currency": "USD" },
+          { "minQty": 200, "unitPrice": 10.3, "currency": "USD" }
+        ]
+      }
+    }
+  ],
+  "seo": {
+    "title": "Antique Brass Metal Shank Buttons — Wholesale",
+    "description": "Die-struck metal shank buttons for denim and jackets in 24L and 30L. Antique brass and gunmetal, custom engraving available."
+  }
+}
