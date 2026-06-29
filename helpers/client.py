@@ -8,12 +8,17 @@ from helpers.reporting import Reporting
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
 from helpers.meta_reporting_interface import MetaReportingInterface
+from helpers.ga_reporting_interface import GaReportingInterface
 
 logger = logging.getLogger(__name__)
 
 
 class Client(
-    ShopifyGraphqlClient, GoogleApiInterface, Reporting, MetaReportingInterface
+    ShopifyGraphqlClient,
+    GoogleApiInterface,
+    Reporting,
+    MetaReportingInterface,
+    GaReportingInterface,
 ):
     def __init__(
         self,

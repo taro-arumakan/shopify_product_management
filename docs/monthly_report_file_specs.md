@@ -17,6 +17,7 @@ Monthly Extraction / <YYYYMM> / <brand> /
     Shopify/      ← auto (Shopify Admin → Analytics, 14 report cards)
     Meta/         ← auto (Meta Ad Manager, ad-level insights)
     Instagram/    ← auto except stories (account metrics, posts, format counts)
+    GA/           ← auto (Google Analytics 4 — channel engagement, device)
     LINE/         ← manual (friends + broadcast exports)
     Monthly KPI rollup - <range>.csv   ← auto (the cross-source summary — start here)
 ```
@@ -147,7 +148,30 @@ substitute daily IG reach because daily Shopify wasn't available — now it is).
 
 ---
 
-## 6. LINE/  (folder: `LINE/`, manual)
+## 6. GA/  (folder: `GA/`)
+
+Google Analytics 4 (web), complementing Shopify with metrics it can't give —
+chiefly **engagement quality** and a clean channel grouping. Each report is a
+13-month monthly CSV + a report-month daily CSV. GA counts sessions slightly
+differently from Shopify, so treat the two as corroborating, not identical.
+
+| File | Dimensions | Metrics | Feeds |
+|---|---|---|---|
+| **GA acquisition by channel - <range>.csv** | month, sessionDefaultChannelGroup | sessions, totalUsers, newUsers, engagedSessions, **engagementRate**, **averageSessionDuration**, **keyEvents** | チャネル別の流入と「質」。**Paid Social（広告）と Organic Social（自然IG）を分離** |
+| **GA engagement overview - <range>.csv** | month | sessions, totalUsers, newUsers, engagedSessions, engagementRate, averageSessionDuration, userEngagementDuration, screenPageViews, keyEvents | エンゲージメントの月次トレンド（headline） |
+| **GA by device - <range>.csv** | month, deviceCategory | sessions, engagedSessions, engagementRate | デバイス別（mobile/desktop/tablet） |
+
+- **`engagementRate`** = engaged sessions ÷ sessions (0–1); **`averageSessionDuration`**
+  in seconds; **`keyEvents`** = GA conversions (key events).
+- The channel view is the standout: it separates **Paid Social** (Meta ads) from
+  **Organic Social** (organic IG), which Shopify lumps together — paid traffic
+  typically shows much lower engagement than organic.
+- `sessionDefaultChannelGroup` values: Direct, Organic Social, Paid Social,
+  Organic Search, Paid Search, Referral, Email, Organic Shopping, Unassigned.
+- Like the IG follower data, **history only goes back to property setup** (~the
+  brand's launch); months before that are simply absent.
+
+## 7. LINE/  (folder: `LINE/`, manual)
 
 LINE's exports use **English** column names (download via Claude in Chrome).
 
@@ -161,7 +185,7 @@ LINE's exports use **English** column names (download via Claude in Chrome).
 
 ---
 
-## 7. Monthly KPI rollup - <range>.csv  (start here)
+## 8. Monthly KPI rollup - <range>.csv  (start here)
 
 One row per month (13 months), the cross-source summary:
 
@@ -179,7 +203,7 @@ ig_follows, ig_followers_count, cac`
 
 ---
 
-## 8. Known gaps / notes
+## 9. Known gaps / notes
 
 - **損益分岐ROAS** — needs each brand's cost structure (原価率・受取率・運営費率),
   which is not in any file. Omit unless separately provided.

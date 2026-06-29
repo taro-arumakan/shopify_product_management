@@ -991,6 +991,10 @@ class Reporting:
             paths["instagram"] = self.extract_instagram_reports(
                 report_year, report_month, brand_name=brand_name, upload=upload
             )
+        if getattr(self, "ga_property_id", None) and self.ga_property_id(brand_name):
+            paths["ga"] = self.extract_ga_reports(
+                report_year, report_month, brand_name=brand_name, upload=upload
+            )
         paths["rollup"] = self.build_monthly_kpi_rollup(
             report_year, report_month, brand_name=brand_name, upload=upload
         )
