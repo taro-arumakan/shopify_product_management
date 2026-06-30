@@ -45,6 +45,24 @@ class Orders:
         res = self.run_query(query, variables)
         return res["orders"]["nodes"]
 
+    def order_add_tags(self, order_id, tags):
+        """Add one or more tags to an order. Shopify de-duplicates existing tags."""
+        if isinstance(tags, str):
+            tags = [tags]
+        order_id = self.sanitize_id(order_id, prefix="Order")
+        query = """
+        mutation orderTagsAdd($id: ID!, $tags: [String!]!) {
+            tagsAdd(id: $id, tags: $tags) {
+                node { id }
+                userErrors { field message }
+            }
+        }
+        """
+        res = self.run_query(query, {"id": order_id, "tags": tags})
+        if errors := res["tagsAdd"]["userErrors"]:
+            raise RuntimeError(f"order_add_tags failed for {order_id}: {errors}")
+        return res["tagsAdd"]
+
     def orders_by_sku(
         self,
         sku,
