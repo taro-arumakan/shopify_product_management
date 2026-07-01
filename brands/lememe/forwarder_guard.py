@@ -191,6 +191,15 @@ class ForwarderGuard:
         return matched
 
 
+def scan_forwarder_orders(dry_run=False, processed_after=None, max_pages=20):
+    logging.basicConfig(level=logging.INFO)
+    return ForwarderGuard().scan(
+        processed_after=processed_after,
+        dry_run=dry_run,
+        max_pages=max_pages,
+    )
+
+
 def main():
     import argparse
 
@@ -209,9 +218,10 @@ def main():
     )
     args = parser.parse_args()
 
-    guard = ForwarderGuard()
-    guard.scan(
-        processed_after=args.since, dry_run=not args.apply, max_pages=args.max_pages
+    scan_forwarder_orders(
+        processed_after=args.since,
+        dry_run=not args.apply,
+        max_pages=args.max_pages,
     )
 
 
