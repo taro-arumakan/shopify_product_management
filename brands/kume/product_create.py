@@ -7,17 +7,17 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    sheet_name = "pionnunal BAG 06.30"
+    sheet_name = "scrunchie 07.03"
     client = KumeClient(
         product_sheet_start_row=2,
-        remove_existing_new_product_indicators=True,
-        products_season_tag="26_pionnunal_BAG",
+        remove_existing_new_product_indicators=False,
+        products_season_tag="26_0703_scrunchie",
     )
 
     # filter_func = lambda product_input: product_input["release_date"] == "2026-04-06"
 
     scheduled_time = datetime.datetime(
-        2026, 6, 30, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 7, 3, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.sanity_check_sheet(sheet_name)
