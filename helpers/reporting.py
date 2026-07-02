@@ -555,8 +555,10 @@ class Reporting:
         clicks, interactions, follows) with one monthly-totals file over 13 months
         and one daily file for the report month. The 13-month series is built from
         <=20-day range calls per month (ig_account_metrics_by_month); the report
-        month's daily file is a per-day pass. 'follows' fills only the trailing 30
-        days (API limit). Stories and post-level content are handled separately.
+        month's daily file is a per-day pass. Net 'follows' is derived here from the
+        daily-captured followers_count series (month-over-month / day-over-day
+        deltas), falling back to the 30-day follower_count metric only where a delta
+        can't be formed. Stories and post-level content are handled separately.
         """
         brand_name = brand_name or getattr(self, "BRAND_NAME", None)
         assert brand_name, "brand_name is required (no BRAND_NAME on this client)"
@@ -588,6 +590,34 @@ class Reporting:
         for row in report_month_daily:
             if row["date"] in day_followers:
                 row["followers_count"] = day_followers[row["date"]]
+        # Net follows: prefer the delta of the daily-captured absolute
+        # followers_count (month-over-month for the monthly series, day-over-day for
+        # the daily file) — it has no API recency limit. Fall back to the 30-day
+        # follower_count metric only where a delta can't be formed yet (the first
+        # months of daily capture); from then on the fragile metric drops out.
+        prev_fc = None
+        for row in monthly:
+            fc = row.get("followers_count")
+            if fc not in (None, "") and prev_fc not in (None, ""):
+                row["follows"] = int(fc) - int(prev_fc)
+            else:
+                mstart = datetime.date(int(row["month"][:4]), int(row["month"][5:7]), 1)
+                mend = datetime.date(
+                    mstart.year,
+                    mstart.month,
+                    calendar.monthrange(mstart.year, mstart.month)[1],
+                )
+                row["follows"] = self._ig_follows_for_range(mstart, mend)
+            prev_fc = fc
+        for row in report_month_daily:
+            d = datetime.date.fromisoformat(row["date"])
+            prev = day_followers.get((d - datetime.timedelta(days=1)).isoformat())
+            cur = day_followers.get(row["date"])
+            row["follows"] = (
+                int(cur) - int(prev)
+                if cur not in (None, "") and prev not in (None, "")
+                else None
+            )
         posts = self.ig_posts_with_insights(month_start, month_end)
         format_counts = self.ig_published_format_counts(month_start, month_end)
         # Stories are NOT produced here. The Graph API can't backfill them, so the

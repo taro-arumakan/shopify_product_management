@@ -86,11 +86,11 @@ class MetaReportingInterface:
     def ig_account_metrics_for_day(self, day, with_followers=True):
         """The day's account metrics as a flat dict (one 1-day total_value call).
 
-        Includes 'follows' (net follower_count change) only when the day is within
-        the API's trailing-30-day window; otherwise that column is left blank.
-        'followers_count' is the live absolute total (with_followers=True, as in the
-        daily cron); the per-day report-month pass skips it and overlays it from the
-        cron's combined file instead, so it isn't re-fetched once per day.
+        Net 'follows' is left None here — the caller derives it from the daily
+        followers_count series. 'followers_count' is the live absolute total
+        (with_followers=True, as in the daily cron); the per-day report-month pass
+        skips it and overlays it from the cron's combined file instead, so it isn't
+        re-fetched once per day.
         """
         url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/insights"
         since, until = self._day_bounds_ts(day)
@@ -109,31 +109,10 @@ class MetaReportingInterface:
         for metric in res.get("data", []):
             row[metric["name"]] = metric.get("total_value", {}).get("value")
 
-        # follower_count is served only for the last ~30 days, judged in the
-        # account's timezone and excluding the current day. Query defensively: skip
-        # out-of-window days, and if the API still rejects a boundary day, leave
-        # 'follows' blank rather than crash the run.
+        # 'follows' (net) is derived from the daily followers_count series by the
+        # caller (extract_instagram_reports), not fetched from the 30-day-limited
+        # follower_count metric here.
         row["follows"] = None
-        if 0 < (self._reporting_today() - day).days <= 30:
-            try:
-                follows = self._meta_get_with_retry(
-                    url,
-                    {
-                        "metric": "follower_count",
-                        "period": "day",
-                        "since": since,
-                        "until": until,
-                        "access_token": self.meta_token,
-                    },
-                )
-                values = (follows.get("data") or [{}])[0].get("values") or []
-                row["follows"] = (
-                    sum(v.get("value", 0) for v in values) if values else None
-                )
-            except RuntimeError as e:
-                logger.warning(
-                    f"{self.__class__.__name__} follows {day} unavailable: {e}"
-                )
         row["followers_count"] = self.ig_followers_count() if with_followers else None
         return row
 
@@ -236,8 +215,8 @@ class MetaReportingInterface:
     def ig_account_metrics_by_month(self, date_from, date_to):
         """Monthly account-metric totals over [date_from, date_to], one row per
         calendar month, built from <=20-day range calls instead of a per-day pass
-        (~2 calls/month vs one/day). 'follows' fills only months within the
-        trailing 30-day window (API limit); older months leave it blank."""
+        (~2 calls/month vs one/day). Net 'follows' is not computed here — the caller
+        (extract_instagram_reports) derives it from the followers_count series."""
         rows = []
         month = datetime.date(date_from.year, date_from.month, 1)
         while month <= date_to:
@@ -258,7 +237,6 @@ class MetaReportingInterface:
                         totals[name] = totals.get(name, 0) + int(value)
             row = {"month": f"{month:%Y-%m}-01"}
             row.update(totals)
-            row["follows"] = self._ig_follows_for_range(start, end)
             rows.append(row)
             month = last + datetime.timedelta(days=1)
         logger.info(
