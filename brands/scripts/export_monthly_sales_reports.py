@@ -21,7 +21,7 @@ def run(brand, report_year, report_month):
         report_month=report_month,
     )
     target_folder_id = client.find_or_create_folder_by_name(
-        parent_folder_id="1bGXNkunwH99lA9Usl8dYWJJ7yoO53bun",
+        parent_folder_id="1saUkk5BMIFmIj8VSrf3wqXbroU0sFOKO",
         folder_name=f"{datetime.date(report_year, report_month, 1):%Y%m}",
     )
     logging.info(f"saving monthly sales report for {brand} to {target_folder_id}")
