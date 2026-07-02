@@ -41,7 +41,7 @@ class GaReportingInterface:
                 "engagedSessions",
                 "engagementRate",
                 "averageSessionDuration",
-                "keyEvents",
+                "ecommercePurchases",
             ],
         ),
         (
@@ -56,7 +56,7 @@ class GaReportingInterface:
                 "averageSessionDuration",
                 "userEngagementDuration",
                 "screenPageViews",
-                "keyEvents",
+                "ecommercePurchases",
             ],
         ),
         (

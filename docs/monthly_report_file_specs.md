@@ -159,12 +159,16 @@ differently from Shopify, so treat the two as corroborating, not identical.
 
 | File | Dimensions | Metrics | Feeds |
 |---|---|---|---|
-| **GA acquisition by channel - <range>.csv** | month, sessionDefaultChannelGroup | sessions, totalUsers, newUsers, engagedSessions, **engagementRate**, **averageSessionDuration**, **keyEvents** | チャネル別の流入と「質」。**Paid Social（広告）と Organic Social（自然IG）を分離** |
-| **GA engagement overview - <range>.csv** | month | sessions, totalUsers, newUsers, engagedSessions, engagementRate, averageSessionDuration, userEngagementDuration, screenPageViews, keyEvents | エンゲージメントの月次トレンド（headline） |
+| **GA acquisition by channel - <range>.csv** | month, sessionDefaultChannelGroup | sessions, totalUsers, newUsers, engagedSessions, **engagementRate**, **averageSessionDuration**, **ecommercePurchases** | チャネル別の流入と「質」。**Paid Social（広告）と Organic Social（自然IG）を分離** |
+| **GA engagement overview - <range>.csv** | month | sessions, totalUsers, newUsers, engagedSessions, engagementRate, averageSessionDuration, userEngagementDuration, screenPageViews, ecommercePurchases | エンゲージメントの月次トレンド（headline） |
 | **GA by device - <range>.csv** | month, deviceCategory | sessions, engagedSessions, engagementRate | デバイス別（mobile/desktop/tablet） |
 
 - **`engagementRate`** = engaged sessions ÷ sessions (0–1); **`averageSessionDuration`**
-  in seconds; **`keyEvents`** = GA conversions (key events).
+  in seconds; **`ecommercePurchases`** = purchase events (the conversion metric).
+- We use `ecommercePurchases`, **not** the generic `keyEvents` — each property's
+  configured "key events" differ (some brands mark `add_to_cart` / lead events as
+  key events), so `keyEvents` isn't comparable brand-to-brand. `ecommercePurchases`
+  means "purchases" everywhere.
 - The channel view is the standout: it separates **Paid Social** (Meta ads) from
   **Organic Social** (organic IG), which Shopify lumps together — paid traffic
   typically shows much lower engagement than organic.
