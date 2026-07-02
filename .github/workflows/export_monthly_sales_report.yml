@@ -1,9 +1,6 @@
 name: Export monthly sales reports
 
 on:
-  schedule:
-    # 2nd of every month at 3:30 UTC (12:30 JST)
-    - cron: "30 3 2 * *"
   workflow_dispatch:
 
 jobs:
