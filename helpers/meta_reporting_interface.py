@@ -66,6 +66,14 @@ class MetaReportingInterface:
         end = start + datetime.timedelta(days=1)
         return int(start.timestamp()), int(end.timestamp())
 
+    def _reporting_today(self):
+        """Today's date in the account's timezone (REPORTING_TIMEZONE), so the
+        follower_count 30-day recency window is judged on the same clock the API
+        uses. A naive UTC date lags JST by up to 9h and, when the monthly job runs
+        just after midnight JST, computes a floor one day too early -> the API
+        rejects it with '(#100) ... only supports ... the last 30 days'."""
+        return datetime.datetime.now(zoneinfo.ZoneInfo(self.REPORTING_TIMEZONE)).date()
+
     def ig_followers_count(self):
         """Current total follower count (absolute audience size). A live field the
         Graph API won't backfill, so the daily cron snapshots it forward."""
@@ -101,21 +109,31 @@ class MetaReportingInterface:
         for metric in res.get("data", []):
             row[metric["name"]] = metric.get("total_value", {}).get("value")
 
-        if datetime.date.today() - day <= datetime.timedelta(days=30):
-            follows = self._meta_get_with_retry(
-                url,
-                {
-                    "metric": "follower_count",
-                    "period": "day",
-                    "since": since,
-                    "until": until,
-                    "access_token": self.meta_token,
-                },
-            )
-            values = (follows.get("data") or [{}])[0].get("values") or []
-            row["follows"] = sum(v.get("value", 0) for v in values) if values else None
-        else:
-            row["follows"] = None
+        # follower_count is served only for the last ~30 days, judged in the
+        # account's timezone and excluding the current day. Query defensively: skip
+        # out-of-window days, and if the API still rejects a boundary day, leave
+        # 'follows' blank rather than crash the run.
+        row["follows"] = None
+        if 0 < (self._reporting_today() - day).days <= 30:
+            try:
+                follows = self._meta_get_with_retry(
+                    url,
+                    {
+                        "metric": "follower_count",
+                        "period": "day",
+                        "since": since,
+                        "until": until,
+                        "access_token": self.meta_token,
+                    },
+                )
+                values = (follows.get("data") or [{}])[0].get("values") or []
+                row["follows"] = (
+                    sum(v.get("value", 0) for v in values) if values else None
+                )
+            except RuntimeError as e:
+                logger.warning(
+                    f"{self.__class__.__name__} follows {day} unavailable: {e}"
+                )
         row["followers_count"] = self.ig_followers_count() if with_followers else None
         return row
 
@@ -186,8 +204,10 @@ class MetaReportingInterface:
         when the range is entirely outside the API's trailing-30-day window. The
         start is clamped into that window so a month straddling the boundary still
         returns its in-window days instead of erroring."""
-        earliest = datetime.date.today() - datetime.timedelta(days=30)
-        if end_day < earliest:
+        today = self._reporting_today()
+        earliest = today - datetime.timedelta(days=30)
+        end_day = min(end_day, today - datetime.timedelta(days=1))  # exclude today
+        if end_day < earliest or end_day < start_day:
             return None
         start_day = max(start_day, earliest)
         url = f"https://graph.facebook.com/{self.VERSION}/{self.ig_user_id}/insights"
