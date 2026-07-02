@@ -120,8 +120,10 @@ substitute daily IG reach because daily Shopify wasn't available — now it is).
   used the **sum of daily reach**, which over-counts. Prefer this deduplicated
   monthly figure and stay consistent; the daily file is available if a summed
   number is needed to reconcile with old reports.
-- `follows` = net new follows (only available for months within the trailing 30 days);
-  `followers_count` = absolute audience size (daily snapshot).
+- `follows` = net follower change, derived from the daily `followers_count` series
+  (month-over-month / day-over-day deltas), so it's not bound by the API's 30-day
+  limit; it fills from when daily capture began (~June 2026). `followers_count` =
+  absolute audience size (daily snapshot).
 - Stories count is **not** in the API files — take it (and per-story metrics) from the
   manual stories CSV. Posts total here (= feed + reels) matches Business Suite's
   「トップコンテンツフォーマット → 投稿」; stories = that file's 「ストーリーズ」.
