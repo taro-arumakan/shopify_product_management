@@ -58,7 +58,7 @@ def main():
         logging.info(f"Checking {brand}...")
         recipients = (
             os.environ.get(f"NOTIFYEES_EXPIRED_ORDERS_{brand.upper()}")
-            or os.environ["NOTIFYEES_EXPIRED_ORDERS"]
+            or os.environ["NOTIFYEES_CATAL"]
         )
         process(brand, recipients.split(","), dryrun=False)
 

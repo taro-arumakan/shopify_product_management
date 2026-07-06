@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import patch
 
@@ -200,6 +201,164 @@ class TestForwarderGuardScan(unittest.TestCase):
         client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
         ForwarderGuard(client=client).scan(dry_run=True)
         mock_add_tags.assert_not_called()
+
+    @patch.object(ShopifyGraphqlClient, "run_query")
+    def test_scan_defaults_to_active_orders_only(self, mock_run_query):
+        mock_run_query.return_value = {
+            "orders": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [],
+            }
+        }
+        client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
+        ForwarderGuard(client=client).scan()
+        variables = mock_run_query.call_args[0][1]
+        self.assertEqual(variables["q"], "status:'open'")
+
+    @patch.object(ShopifyGraphqlClient, "run_query")
+    def test_active_only_combines_with_processed_after(self, mock_run_query):
+        mock_run_query.return_value = {
+            "orders": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [],
+            }
+        }
+        client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
+        ForwarderGuard(client=client).scan(processed_after="2025-09-01")
+        variables = mock_run_query.call_args[0][1]
+        self.assertEqual(
+            variables["q"], "status:'open' AND processed_at:>='2025-09-01'"
+        )
+
+    @patch.object(ShopifyGraphqlClient, "run_query")
+    def test_active_only_false_scans_every_status(self, mock_run_query):
+        mock_run_query.return_value = {
+            "orders": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [],
+            }
+        }
+        client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
+        ForwarderGuard(client=client).scan(active_only=False)
+        variables = mock_run_query.call_args[0][1]
+        self.assertIsNone(variables["q"])
+
+    @patch("helpers.client.send_smtp_email")
+    @patch.object(ShopifyGraphqlClient, "order_add_tags")
+    @patch.object(ShopifyGraphqlClient, "run_query")
+    def test_notifies_admin_on_newly_flagged_order(
+        self, mock_run_query, mock_add_tags, mock_send_email
+    ):
+        mock_run_query.return_value = {
+            "orders": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [
+                    make_order(
+                        {
+                            "name": "Mei Kwan BSZGRXHZ",
+                            "address1": "幸神平1 C棟 BSZGRXHZ",
+                            "zip": "306-0608",
+                            "countryCodeV2": "JP",
+                        },
+                        name="#A",
+                    ),
+                ],
+            }
+        }
+        client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
+        with patch.dict(os.environ):
+            os.environ.pop("NOTIFYEES_CATAL", None)
+            ForwarderGuard(client=client).scan(dry_run=False)
+
+        mock_send_email.assert_called_once()
+        _, kwargs = mock_send_email.call_args
+        self.assertEqual(kwargs["to_addrs"], ["admin@catal.co.jp"])
+        self.assertIn("#A", kwargs["body"])
+
+    @patch("helpers.client.send_smtp_email")
+    @patch.object(ShopifyGraphqlClient, "order_add_tags")
+    @patch.object(ShopifyGraphqlClient, "run_query")
+    def test_notify_recipient_overridden_by_env_var(
+        self, mock_run_query, mock_add_tags, mock_send_email
+    ):
+        mock_run_query.return_value = {
+            "orders": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [
+                    make_order(
+                        {
+                            "name": "Mei Kwan BSZGRXHZ",
+                            "address1": "幸神平1 C棟 BSZGRXHZ",
+                            "zip": "306-0608",
+                            "countryCodeV2": "JP",
+                        },
+                        name="#A",
+                    ),
+                ],
+            }
+        }
+        client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
+        with patch.dict(os.environ, {"NOTIFYEES_CATAL": "a@example.com,b@example.com"}):
+            ForwarderGuard(client=client).scan(dry_run=False)
+
+        _, kwargs = mock_send_email.call_args
+        self.assertEqual(kwargs["to_addrs"], ["a@example.com", "b@example.com"])
+
+    @patch("helpers.client.send_smtp_email")
+    @patch.object(ShopifyGraphqlClient, "order_add_tags")
+    @patch.object(ShopifyGraphqlClient, "run_query")
+    def test_does_not_notify_on_dry_run(
+        self, mock_run_query, mock_add_tags, mock_send_email
+    ):
+        mock_run_query.return_value = {
+            "orders": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [
+                    make_order(
+                        {
+                            "name": "x BSZGRXHZ",
+                            "address1": "幸神平1 BSZGRXHZ",
+                            "zip": "306-0608",
+                            "countryCodeV2": "JP",
+                        },
+                        name="#A",
+                    )
+                ],
+            }
+        }
+        client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
+        ForwarderGuard(client=client).scan(dry_run=True)
+        mock_send_email.assert_not_called()
+
+    @patch("helpers.client.send_smtp_email")
+    @patch.object(ShopifyGraphqlClient, "order_add_tags")
+    @patch.object(ShopifyGraphqlClient, "run_query")
+    def test_does_not_renotify_already_tagged_order(
+        self, mock_run_query, mock_add_tags, mock_send_email
+    ):
+        mock_run_query.return_value = {
+            "orders": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [
+                    make_order(
+                        {
+                            "name": "x BSZGRXHZ",
+                            "address1": "幸神平1 BSZGRXHZ",
+                            "zip": "306-0608",
+                            "countryCodeV2": "JP",
+                        },
+                        name="#A",
+                        tags=["forwarder-review"],
+                    )
+                ],
+            }
+        }
+        client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
+        matched = ForwarderGuard(client=client).scan(dry_run=False)
+
+        self.assertEqual(len(matched), 1)
+        mock_add_tags.assert_not_called()
+        mock_send_email.assert_not_called()
 
 
 if __name__ == "__main__":

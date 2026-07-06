@@ -13,6 +13,25 @@ from helpers.ga_reporting_interface import GaReportingInterface
 logger = logging.getLogger(__name__)
 
 
+def send_smtp_email(subject: str, body: str, to_addrs: list[str], subtype="plain"):
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASS")
+    from_addr = os.getenv("SMTP_FROM_ADDR")
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = from_addr
+    msg["To"] = ", ".join(to_addrs)
+    msg.set_content(body, subtype=subtype)
+
+    with smtplib.SMTP(smtp_host, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_user, smtp_pass)
+        server.send_message(msg)
+
+
 class Client(
     ShopifyGraphqlClient,
     GoogleApiInterface,
@@ -281,22 +300,7 @@ class Client(
         )
 
     def send_email(self, subject: str, body: str, to_addrs: list[str], subtype="plain"):
-        smtp_host = os.getenv("SMTP_HOST")
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        smtp_user = os.getenv("SMTP_USER")
-        smtp_pass = os.getenv("SMTP_PASS")
-        from_addr = os.getenv("SMTP_FROM_ADDR")
-
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = from_addr
-        msg["To"] = ", ".join(to_addrs)
-        msg.set_content(body, subtype=subtype)
-
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_pass)
-            server.send_message(msg)
+        send_smtp_email(subject, body, to_addrs, subtype=subtype)
 
     def _nl_to_br(self, s):
         return s.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>")
