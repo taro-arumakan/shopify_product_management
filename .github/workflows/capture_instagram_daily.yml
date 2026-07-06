@@ -78,6 +78,7 @@ jobs:
           archive-epke-META_AD_ACCOUNT_ID=${{ secrets.ARCHIVE_EPKE_META_AD_ACCOUNT_ID }}
           archive-epke-META_TOKEN=${{ secrets.ARCHIVE_EPKE_META_TOKEN }}
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          NOTIFYEES_CATAL=${{ secrets.NOTIFYEES_CATAL }}
           EOF
 
       - name: Capture Instagram daily

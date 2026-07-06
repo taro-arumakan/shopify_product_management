@@ -56,6 +56,7 @@ jobs:
           apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
           archive-epke-ACCESS_TOKEN=${{ secrets.ARCHIVE_EPKE_ACCESS_TOKEN }}
           archive-epke-GSPREAD_ID=${{ secrets.ARCHIVE_EPKE_GSPREAD_ID }}
+          NOTIFYEES_CATAL=${{ secrets.NOTIFYEES_CATAL }}
           EOF
 
       - name: Export products to CSV

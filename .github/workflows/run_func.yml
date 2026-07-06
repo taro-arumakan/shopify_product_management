@@ -88,6 +88,12 @@ jobs:
           archive-epke-META_TOKEN=${{ secrets.ARCHIVE_EPKE_META_TOKEN }}
           a-and-stores-ACCESS_TOKEN=${{ secrets.A_AND_STORES_ACCESS_TOKEN }}
           quickstart-6f3c9e4c-ACCESS_TOKEN=${{ secrets.DEV_STORE_ACCESS_TOKEN }}
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
+          NOTIFYEES_CATAL=${{ secrets.NOTIFYEES_CATAL }}
 
           EOF
 
