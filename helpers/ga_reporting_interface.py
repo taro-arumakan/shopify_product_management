@@ -22,7 +22,7 @@ class GaReportingInterface:
     GA_PROPERTY_ID_BY_BRAND = {
         "Apricot Studios": "491529588",
         "BLOSSOM": "515230768",
-        "Archivépke": "449380963",
+        "KUMÉ": "457308149",
         "LEMEME": "515216277",
         "ROH SEOUL": "449401564",
         "SSIL": "515239062",

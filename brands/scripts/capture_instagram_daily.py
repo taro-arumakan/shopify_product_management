@@ -27,7 +27,7 @@ for noisy in ("googleapiclient", "urllib3", "google"):
 BRANDS = [
     "Apricot Studios",
     "BLOSSOM",
-    "Archivépke",
+    "KUMÉ",
     "LEMEME",
     "ROH SEOUL",
     "SSIL",
