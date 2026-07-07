@@ -29,7 +29,7 @@ for noisy in ("googleapiclient", "urllib3", "google"):
 DEFAULT_BRANDS = [
     "apricot",
     "blossom",
-    "archivepke",
+    "kume",
     "lememe",
     "roh",
     "ssil",
