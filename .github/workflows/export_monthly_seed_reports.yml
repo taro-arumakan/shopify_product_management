@@ -80,6 +80,8 @@ jobs:
           apricot-studios-META_TOKEN=${{ secrets.APRICOT_STUDIOS_META_TOKEN }}
           kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
           kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
+          kumej-FB_PAGE_ID=${{ secrets.KUMEJ_FB_PAGE_ID }}
+          kumej-IG_USER_ID=${{ secrets.KUMEJ_IG_USER_ID }}
           kumej-META_AD_ACCOUNT_ID=${{ secrets.KUMEJ_META_AD_ACCOUNT_ID }}
           kumej-META_TOKEN=${{ secrets.KUMEJ_META_TOKEN }}
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
