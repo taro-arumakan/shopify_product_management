@@ -260,6 +260,13 @@ class GoogleDriveApiInterface:
         contents in place via files().update (the service account can edit files it
         created on the shared drive but cannot always hard-delete them), otherwise
         we create a new one.
+
+        A transient Drive error is retried, but a create is not idempotent: if it
+        succeeded server-side before erroring, the retry can create a second copy
+        (Drive search is eventually consistent, so the new file may not be seen
+        yet). To keep the one-file-per-name invariant we look up existing copies via
+        the folder's child listing, update the first, and trash any extras — which
+        both prevents new duplicates and self-heals any left by an earlier run.
         """
         name = os.path.basename(filepath)
         max_retries = 5
@@ -268,11 +275,22 @@ class GoogleDriveApiInterface:
                 media = MediaIoBaseUpload(
                     open(filepath, "rb"), mimetype=mimetype, resumable=True
                 )
-                if existing := self.find_by_folder_id_by_name(folder_id, name):
+                existing = [
+                    f for f in self.list_files_in_folder(folder_id) if f["name"] == name
+                ]
+                if existing:
+                    keep_id = existing[0]["id"]
                     self.drive_service.files().update(
-                        fileId=existing["id"], media_body=media, supportsAllDrives=True
+                        fileId=keep_id, media_body=media, supportsAllDrives=True
                     ).execute()
-                    logger.info(f"Updated: {existing['id']} ({name})")
+                    logger.info(f"Updated: {keep_id} ({name})")
+                    for dup in existing[1:]:
+                        self.drive_service.files().update(
+                            fileId=dup["id"],
+                            body={"trashed": True},
+                            supportsAllDrives=True,
+                        ).execute()
+                        logger.info(f"Trashed duplicate: {dup['id']} ({name})")
                 else:
                     self.drive_service.files().create(
                         body={"name": name, "parents": [folder_id]},
