@@ -39,7 +39,7 @@ class AsheisClient(BrandClientBase):
     def option2_attr_column_map(self):
         option2_attrs = {"サイズ": string.ascii_lowercase.index("m")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("q"),
+            sku=string.ascii_lowercase.index("n"),
             stock=string.ascii_lowercase.index("o"),
         )
         return option2_attrs
@@ -200,11 +200,13 @@ def main():
         remove_existing_new_product_indicators=False,
         products_season_tag="opening",
     )
+    sheet_name = "【8_9デリ】Products Master"
+    client.sanity_check_sheet(sheet_name)
     client.process_sheet_to_products(
-        "Products Master"
-        # , restart_at_product_title="HIGH-NECK LACE TOP"
+        sheet_name,
+        # restart_at_product_title="OPEN COLLAR RIB CARDIGAN",
     )
 
 
 if __name__ == "__main__":
-    update_metafields()
+    main()
