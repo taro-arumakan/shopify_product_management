@@ -459,10 +459,13 @@ class MetaReportingInterface:
         return total_stats
 
     def _sum_fb_metric(self, data, metric_name):
-        """Helper to sum daily values from FB Page Insights"""
+        """Sum daily values for a FB Page Insights metric, or 0 when the page did
+        not return that metric (deprecated / low-activity pages omit it) so the
+        omni total stays numeric instead of crashing on None."""
         for item in data:
             if item["name"] == metric_name:
-                return sum(v["value"] for v in item["values"])
+                return sum((v.get("value") or 0) for v in item["values"])
+        return 0
 
     def omni_fb_stats(self, start_date, end_date):
         # 1. Exchange the System User Token for a Page Access Token
