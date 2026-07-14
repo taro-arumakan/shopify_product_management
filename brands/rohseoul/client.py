@@ -6,6 +6,15 @@ import textwrap
 
 logger = logging.getLogger(__name__)
 
+# Fixed (no per-product variables), used both in the description template below
+# and by adhoc/add_after_service_section.py to backfill existing products.
+AFTER_SERVICE_HTML = textwrap.dedent(
+    """
+    <h3>アフターサービス</h3>
+    <p>ローソウルの保証期間は6ヶ月です。製品購入後6ヶ月以内に発生した製品の不具合は無償で修理対応いたします。詳しくは<a href="https://rohseoul.jp/pages/warranty-certificate-and-after-service">こちら</a></p>
+    """
+).strip()
+
 
 class RohseoulClient(BrandClientBase):
 
@@ -13,6 +22,34 @@ class RohseoulClient(BrandClientBase):
     VENDOR = "rohseoul"
     LOCATIONS = ["Shop location"]
     BRAND_NAME = "ROH SEOUL"
+
+    @staticmethod
+    def product_description_template():
+        res = """
+            <div id="cataldesignProduct">
+                <h3>商品説明</h3>
+                <p>${DESCRIPTION}</p>
+                <h3>手入れ方法</h3>
+                <p>${PRODUCTCARE}</p>
+                ${AFTER_SERVICE}
+                <h3>サイズ・素材</h3>
+                ${SIZE_TABLE}
+                <br>
+                <table width="100%">
+                <tbody>
+                    <tr>
+                    <th>素材</th>
+                    <td>${MATERIAL}</td>
+                    </tr>
+                    <tr>
+                    <th>原産国</th>
+                    <td>${MADEIN}</td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+            """
+        return textwrap.dedent(res).replace("${AFTER_SERVICE}", AFTER_SERVICE_HTML)
 
     def product_attr_column_map(self):
         return dict(
