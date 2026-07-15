@@ -28,10 +28,10 @@ class LememeClient(BrandClientBase):
     def option1_attr_column_map(self):
         option1_attrs = {"Color": string.ascii_lowercase.index("n")}
         option1_attrs.update(
-            filter_color=string.ascii_lowercase.index("n"),
-            drive_link=string.ascii_lowercase.index("p"),
-            sku=string.ascii_lowercase.index("o"),
-            stock=string.ascii_lowercase.index("q"),
+            filter_color=string.ascii_lowercase.index("o"),
+            drive_link=string.ascii_lowercase.index("q"),
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("r"),
         )
         return option1_attrs
 
