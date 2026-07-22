@@ -31,9 +31,11 @@ This module holds two operations; pick one in main() and flip execute=True to ap
                        8/24 to drop the "(8/24より順次発送)" suffix from the
                        checkout label (final name: 通常配送).
 
-Run locally (`python -m brands.asheis.update_shipping`) or via Shopify Flow
-(run_script / run_func). main() takes no CLI args — edit the call + execute
-flag inline.
+Run locally (`python -m brands.asheis.update_shipping`), or in CI via the
+`run_script` GitHub Action with payload `brands/asheis/update_shipping.py`. The
+Action is triggered by Shopify Flow POSTing to its dispatch endpoint (GitHub's
+own cron is unreliable, so Flow owns the schedule). main() takes no CLI args —
+edit the call + execute flag inline.
 """
 
 import json
