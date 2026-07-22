@@ -21,13 +21,16 @@ definitions, and here they must be deleted outright. So this deletes all methods
 in each zone and creates one fresh unconditional flat rate, as a single atomic
 deliveryProfileUpdate.
 
-Usage:
-    python -m brands.asheis.update_shipping             # dry run (no writes)
-    python -m brands.asheis.update_shipping --execute   # apply
-    python -m brands.asheis.update_shipping --from-sheet # dry run using live sheet
+This module holds two operations; pick one in main() and flip execute=True to apply:
+  - set_rates()      : the 2026-07-22 initial setup (delete + recreate per zone).
+  - rename_methods() : rename the method only, no delete/recreate. Run ON/BEFORE
+                       8/21 to drop the "(8/21より順次発送)" suffix from the
+                       checkout label (final name: 通常配送).
+
+Run locally (`python -m brands.asheis.update_shipping`) or from a GitHub Action.
+main() takes no CLI args — edit the call + execute flag inline.
 """
 
-import argparse
 import json
 import logging
 
@@ -35,7 +38,10 @@ import utils
 
 logger = logging.getLogger(__name__)
 
+# Method name during pre-order period (initial setup) and the final name to
+# switch to on/before 8/21 (removes the expected-shipping-date suffix).
 NEW_METHOD_NAME = "通常配送 (8/21より順次発送)"
+FINAL_METHOD_NAME = "通常配送"
 
 # Confirmed rates (JPY), keyed by the SHOPIFY delivery-zone name.
 # The sheet header "沖縄" corresponds to the Shopify zone "沖縄県".
@@ -188,34 +194,35 @@ def build_profile_input(profile, rates):
     return profile["id"], profile_input, plan_rows
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--execute", action="store_true", help="apply the change (default: dry run)"
-    )
-    parser.add_argument(
-        "--from-sheet",
-        action="store_true",
-        help="re-read rates from the sheet instead of SHEET_RATES",
-    )
-    args = parser.parse_args()
-
-    logging.basicConfig(level=logging.INFO)
-    client = utils.client("asheis")
-
-    rates = rates_from_sheet(client) if args.from_sheet else dict(SHEET_RATES)
-    if args.from_sheet:
-        logger.info("rates read from sheet: %s", rates)
-        if rates != SHEET_RATES:
-            logger.warning("sheet rates differ from the recorded SHEET_RATES constant!")
-
+def fetch_profile(client):
+    """Return the single merchant delivery profile (raises unless exactly one)."""
     profiles = client.run_query(PROFILE_QUERY)["deliveryProfiles"]["nodes"]
     assert len(profiles) == 1, f"expected 1 profile, got {len(profiles)}"
-    profile_id, profile_input, plan_rows = build_profile_input(profiles[0], rates)
+    return profiles[0]
 
-    print(
-        f"PROFILE {profiles[0]['name']} ({profile_id}) | new method: {NEW_METHOD_NAME!r}"
+
+def _apply_or_dry(client, profile_id, profile_input, execute):
+    if not execute:
+        print("\nDRY RUN — no changes made. Set execute=True to apply.")
+        return
+    res = client.run_query(
+        UPDATE_MUTATION, {"id": profile_id, "profile": profile_input}
     )
+    errs = res["deliveryProfileUpdate"]["userErrors"]
+    if errs:
+        raise RuntimeError(f"userErrors: {json.dumps(errs, ensure_ascii=False)}")
+    print(
+        f"\n✅ Executed. Profile updated: {res['deliveryProfileUpdate']['profile']['name']}"
+    )
+
+
+def set_rates(client, rates, execute=False):
+    """Delete every method in each zone and create ONE unconditional flat rate
+    named NEW_METHOD_NAME at the given per-region price (the 2026-07-22 setup)."""
+    profile = fetch_profile(client)
+    profile_id, profile_input, plan_rows = build_profile_input(profile, rates)
+
+    print(f"PROFILE {profile['name']} ({profile_id}) | new method: {NEW_METHOD_NAME!r}")
     for zname, old, new_price in plan_rows:
         print(f"\n■ {zname}")
         for d in old:
@@ -226,20 +233,65 @@ def main():
         f"delete={len(profile_input['methodDefinitionsToDelete'])} "
         f"create={len(plan_rows)}"
     )
+    _apply_or_dry(client, profile_id, profile_input, execute)
 
-    if not args.execute:
-        print("\nDRY RUN — no changes made. Re-run with --execute to apply.")
+
+def rename_methods(client, new_name, execute=False):
+    """Rename the shipping method in every zone to `new_name`.
+
+    Uses methodDefinitionsToUpdate (a partial update of {id, name}), so rates,
+    conditions and active state are left untouched — no delete/recreate. Methods
+    already named `new_name` are skipped, so this is idempotent and safe to re-run.
+    Intended for dropping the "(8/21より順次発送)" suffix on/before 8/21.
+    """
+    profile = fetch_profile(client)
+    loc_group = profile["profileLocationGroups"][0]
+    loc_group_id = loc_group["locationGroup"]["id"]
+    zones = loc_group["locationGroupZones"]["nodes"]
+
+    zones_to_update = []
+    count = 0
+    print(f"PROFILE {profile['name']} ({profile['id']}) | rename -> {new_name!r}")
+    for z in zones:
+        updates = []
+        for m in z["methodDefinitions"]["nodes"]:
+            if m["name"] == new_name:
+                continue
+            price = m["rateProvider"].get("price", {}).get("amount", "?")
+            print(
+                f"  {z['zone']['name']:<8} \"{m['name']}\" (¥{float(price):.0f}) -> \"{new_name}\""
+            )
+            updates.append({"id": m["id"], "name": new_name})
+            count += 1
+        if updates:
+            zones_to_update.append(
+                {"id": z["zone"]["id"], "methodDefinitionsToUpdate": updates}
+            )
+
+    if not zones_to_update:
+        print(f"Nothing to rename — all methods already named {new_name!r}.")
         return
 
-    res = client.run_query(
-        UPDATE_MUTATION, {"id": profile_id, "profile": profile_input}
-    )
-    errs = res["deliveryProfileUpdate"]["userErrors"]
-    if errs:
-        raise RuntimeError(f"userErrors: {json.dumps(errs, ensure_ascii=False)}")
-    print(
-        f"\n✅ Executed. Profile updated: {res['deliveryProfileUpdate']['profile']['name']}"
-    )
+    profile_input = {
+        "locationGroupsToUpdate": [
+            {"id": loc_group_id, "zonesToUpdate": zones_to_update}
+        ]
+    }
+    print(f"\nmethods to rename: {count}")
+    _apply_or_dry(client, profile["id"], profile_input, execute)
+
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+    client = utils.client("asheis")
+
+    # ── Run ON/BEFORE 8/21: drop the shipping-date suffix from the checkout label.
+    #    Verify the dry run, then set execute=True.
+    rename_methods(client, new_name=FINAL_METHOD_NAME, execute=False)
+
+    # ── Historical: initial per-region rate setup (executed 2026-07-22).
+    #    Re-run only if the rates ever need resetting.
+    # set_rates(client, SHEET_RATES, execute=False)
 
 
 if __name__ == "__main__":
