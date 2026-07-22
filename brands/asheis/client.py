@@ -12,9 +12,7 @@ class AsheisClient(BrandClientBase):
 
     SHOPNAME = "asheis"
     VENDOR = "asheis"
-    LOCATIONS = [
-        "Shop location"
-    ]  # TODO: verify; the current token lacks read_locations
+    LOCATIONS = ["Shop location"]
     BRAND_NAME = "ASHEIS"
 
     def product_attr_column_map(self):
