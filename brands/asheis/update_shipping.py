@@ -2,7 +2,7 @@
 
 EXECUTED 2026-07-22 against asheis.myshopify.com. Result: the single merchant
 delivery profile ("General profile", one location group, 10 JP zones) now has
-exactly ONE unconditional method per zone named `通常配送 (8/21より順次発送)` at the
+exactly ONE unconditional method per zone named `通常配送 (8/2Xより順次発送)` at the
 confirmed per-region price below. The previous 20 methods were removed:
   - 10x `送料無料` (free when TOTAL_PRICE >= ¥10,000)
   - 10x `通常配送（地域）` (flat rate, conditioned to TOTAL_PRICE <= ¥9,999)
@@ -21,14 +21,19 @@ definitions, and here they must be deleted outright. So this deletes all methods
 in each zone and creates one fresh unconditional flat rate, as a single atomic
 deliveryProfileUpdate.
 
+The shipping-start date was initially 8/21; the owner moved it to 8/24. The live
+methods were renamed 8/21 -> 8/24 on 2026-07-22 via rename_methods(), and the
+matching theme note (※商品は8/24より順次発送) was updated in the asheis theme repo.
+
 This module holds two operations; pick one in main() and flip execute=True to apply:
   - set_rates()      : the 2026-07-22 initial setup (delete + recreate per zone).
   - rename_methods() : rename the method only, no delete/recreate. Run ON/BEFORE
-                       8/21 to drop the "(8/21より順次発送)" suffix from the
+                       8/24 to drop the "(8/24より順次発送)" suffix from the
                        checkout label (final name: 通常配送).
 
-Run locally (`python -m brands.asheis.update_shipping`) or from a GitHub Action.
-main() takes no CLI args — edit the call + execute flag inline.
+Run locally (`python -m brands.asheis.update_shipping`) or via Shopify Flow
+(run_script / run_func). main() takes no CLI args — edit the call + execute
+flag inline.
 """
 
 import json
@@ -38,9 +43,9 @@ import utils
 
 logger = logging.getLogger(__name__)
 
-# Method name during pre-order period (initial setup) and the final name to
-# switch to on/before 8/21 (removes the expected-shipping-date suffix).
-NEW_METHOD_NAME = "通常配送 (8/21より順次発送)"
+# Method name during pre-order period (currently 8/24; was 8/21) and the final
+# name to switch to on/before 8/24 (removes the expected-shipping-date suffix).
+NEW_METHOD_NAME = "通常配送 (8/24より順次発送)"
 FINAL_METHOD_NAME = "通常配送"
 
 # Confirmed rates (JPY), keyed by the SHOPIFY delivery-zone name.
@@ -242,7 +247,7 @@ def rename_methods(client, new_name, execute=False):
     Uses methodDefinitionsToUpdate (a partial update of {id, name}), so rates,
     conditions and active state are left untouched — no delete/recreate. Methods
     already named `new_name` are skipped, so this is idempotent and safe to re-run.
-    Intended for dropping the "(8/21より順次発送)" suffix on/before 8/21.
+    Intended for dropping the "(8/24より順次発送)" suffix on/before 8/24.
     """
     profile = fetch_profile(client)
     loc_group = profile["profileLocationGroups"][0]
@@ -285,7 +290,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     client = utils.client("asheis")
 
-    # ── Run ON/BEFORE 8/21: drop the shipping-date suffix from the checkout label.
+    # ── Run ON/BEFORE 8/24: drop the shipping-date suffix from the checkout label.
     #    Verify the dry run, then set execute=True.
     rename_methods(client, new_name=FINAL_METHOD_NAME, execute=False)
 
