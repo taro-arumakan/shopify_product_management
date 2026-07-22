@@ -32,10 +32,13 @@ This module holds two operations; pick one in main() and flip execute=True to ap
                        checkout label (final name: 通常配送).
 
 Run locally (`python -m brands.asheis.update_shipping`), or in CI via the
-`run_script` GitHub Action with payload `brands/asheis/update_shipping.py`. The
-Action is triggered by Shopify Flow POSTing to its dispatch endpoint (GitHub's
-own cron is unreliable, so Flow owns the schedule). main() takes no CLI args —
-edit the call + execute flag inline.
+`run_func` GitHub Action, triggered by Shopify Flow POSTing to its dispatch
+endpoint (GitHub cron is unreliable, so Flow owns the schedule). The final
+suffix-drop is invoked as:
+    script_path  brands/asheis/update_shipping.py
+    func_name    rename_shipping_methods
+    params       {"new_name": "通常配送", "execute": true}
+main() mirrors that call for local use — edit the flag inline.
 """
 
 import json
@@ -288,17 +291,28 @@ def rename_methods(client, new_name, execute=False):
     _apply_or_dry(client, profile["id"], profile_input, execute)
 
 
-def main():
+def rename_shipping_methods(new_name, execute=False):
+    """run_func entrypoint — build the asheis client and rename every zone's method.
+
+    kwargs-only (the run_func runner calls resolved_func(**params) with no client),
+    matching the repo convention. Wire from Shopify Flow -> `run_func` GitHub Action:
+        script_path  brands/asheis/update_shipping.py
+        func_name    rename_shipping_methods
+        params       {"new_name": "通常配送", "execute": true}
+    """
     logging.basicConfig(level=logging.INFO)
     client = utils.client("asheis")
+    rename_methods(client, new_name=new_name, execute=execute)
 
+
+def main():
     # ── Run ON/BEFORE 8/24: drop the shipping-date suffix from the checkout label.
-    #    Verify the dry run, then set execute=True.
-    rename_methods(client, new_name=FINAL_METHOD_NAME, execute=False)
+    #    Verify the dry run, then set execute=True (or trigger the run_func Action).
+    rename_shipping_methods(new_name=FINAL_METHOD_NAME, execute=False)
 
     # ── Historical: initial per-region rate setup (executed 2026-07-22).
     #    Re-run only if the rates ever need resetting.
-    # set_rates(client, SHEET_RATES, execute=False)
+    # set_rates(utils.client("asheis"), SHEET_RATES, execute=False)
 
 
 if __name__ == "__main__":

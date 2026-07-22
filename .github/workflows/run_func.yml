@@ -87,6 +87,7 @@ jobs:
           archive-epke-META_AD_ACCOUNT_ID=${{ secrets.ARCHIVE_EPKE_META_AD_ACCOUNT_ID }}
           archive-epke-META_TOKEN=${{ secrets.ARCHIVE_EPKE_META_TOKEN }}
           a-and-stores-ACCESS_TOKEN=${{ secrets.A_AND_STORES_ACCESS_TOKEN }}
+          asheis-ACCESS_TOKEN=${{ secrets.ASHEIS_ACCESS_TOKEN }}
           quickstart-6f3c9e4c-ACCESS_TOKEN=${{ secrets.DEV_STORE_ACCESS_TOKEN }}
           SMTP_HOST=${{ secrets.SMTP_HOST }}
           SMTP_PORT=${{ secrets.SMTP_PORT }}
