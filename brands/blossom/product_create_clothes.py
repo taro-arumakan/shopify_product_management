@@ -47,12 +47,12 @@ def create_products_ss_drop4():
 
 
 def create_products():
-    sheet_name = "clothes(SS DROP 6)"
-    drop_tag = "2026_SUMMER_DROP6"
+    sheet_name = "ELDO SERIES"
+    drop_tag = "2026_ELDO_SERIES"
 
     client = BlossomClientClothes(
         product_sheet_start_row=1,
-        remove_existing_new_product_indicators=True,
+        remove_existing_new_product_indicators=False,
         products_season_tag=drop_tag,
     )
 
@@ -60,14 +60,13 @@ def create_products():
 
     import zoneinfo
 
-    scheduled_time = datetime.datetime(
-        2026, 6, 25, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
-    )
+    # scheduled_time = datetime.datetime(
+    #     2026, 6, 25, 18, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    # )
 
     client.process_sheet_to_products(
         sheet_name=sheet_name,
         additional_tags=["New Arrival"],
-        scheduled_time=scheduled_time,
     )
 
 
