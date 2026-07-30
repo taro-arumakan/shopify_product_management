@@ -21,12 +21,20 @@ can collide with a concurrent theme-editor save. Instead we locate the value via
 parsed dict, then do a single guarded string substitution on the raw content (same
 approach as .github/actions/roh_slideshow_weekly_rotate.py).
 
-Pass new_note="" to hide the note (both templates test `!= blank`).
+Pass new_note="" to hide the note (both templates test `!= blank`). Blank is the
+confirmed target for the 8/24 cutover: the storefront note goes away entirely,
+while the checkout method label becomes 通常配送 (5営業日以内に発送) via
+update_shipping.rename_shipping_methods.
 
-Wire from Shopify Flow -> `run_func` GitHub Action:
+Wire from Shopify Flow -> `run_func` GitHub Action (a second Send HTTP request
+action alongside the one that renames the shipping methods):
     script_path  brands/asheis/update_theme_shipping_note.py
     func_name    update_theme_shipping_note
     params       {"new_note": "", "execute": true}
+
+Out of scope: templates/product.pre-order.json is unused and stores no
+shipping_note. A future per-variant note will use a variant_expected_shipping_date
+metafield with conditional text, following the KUMÉ (brands/kume) pattern.
 """
 
 import json
@@ -167,6 +175,7 @@ def update_theme_shipping_note(new_note, execute=False, theme_name=None):
 
 def main():
     # ── Run ON/BEFORE 8/24, alongside update_shipping.rename_shipping_methods.
+    #    Blank is the confirmed target: remove the storefront note entirely.
     #    Verify the dry run, then set execute=True (or trigger the run_func Action).
     update_theme_shipping_note(new_note="", execute=False)
 
