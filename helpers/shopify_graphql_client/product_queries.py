@@ -254,8 +254,17 @@ class ProductQueries:
         return res[0]
 
     def variants_by_skus(self, skus, active_only=True):
+        skus = list(skus)
+        if not skus:
+            return []
         query = " OR ".join(f"sku:'{sku}'" for sku in skus)
-        return self.product_variants_by_query(query, filter_archived=active_only)
+        res = self.product_variants_by_query(query, filter_archived=active_only)
+        missing = sorted(set(skus) - {v["sku"] for v in res})
+        if missing:
+            raise NoVariantsFoundException(
+                f"No variants found for {len(missing)} SKU(s): {missing}"
+            )
+        return res
 
     def variant_by_sku(self, sku, active_only=True):
         if len(res := self.variants_by_skus([sku], active_only=active_only)) != 1:
