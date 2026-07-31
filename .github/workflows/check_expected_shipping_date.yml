@@ -64,6 +64,7 @@ jobs:
           NOTIFYEES_KUME=${{ secrets.NOTIFYEES_KUME }}
           NOTIFYEES_LEMEME=${{ secrets.NOTIFYEES_LEMEME }}
           NOTIFYEES_ROHSEOUL=${{ secrets.NOTIFYEES_ROHSEOUL }}
+          NOTIFYEES_SSIL=${{ secrets.NOTIFYEES_SSIL }}
           NOTIFYEES_CATAL=${{ secrets.NOTIFYEES_CATAL }}
           EOF
 
