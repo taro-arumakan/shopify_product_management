@@ -143,5 +143,99 @@ def start_end_best_products_sale(testrun=True, start_or_end="end"):
         )
 
 
+def start_end_2026_0814_summer_sale(testrun=True, start_or_end="start"):
+    title_discount_map = {
+        "Clover Safety Pin Choker": 0.85,
+        "[G] CIRCLE CHAIN": 0.9,
+        "2 LINE HOOPS_S": 0.85,
+        "3 LINE HOOPS_S_C": 0.85,
+        "CLOVER BAND R": 0.85,
+        "X ROW R_M": 0.85,
+        "Volume Heart String N": 0.75,
+        "2 LINE HOOPS": 0.85,
+        "X DOT CHAIN": 0.85,
+        "X ROW R_S": 0.85,
+        "X ROW HOOPS": 0.75,
+        "X Safety Pin Choker": 0.85,
+        "X ROW PEARL COLLAR": 0.7,
+        "3 LINE HOOPS_L": 0.85,
+        "CLASSIC BAND R_L": 0.75,
+        "3 LINE HOOPS_L_C": 0.85,
+        "Navy Clover Charm": 0.75,
+        "LUCKY CLOVER LONG CHAIN": 0.7,
+        "Circle Cross Hoops": 0.85,
+        "[G] LUCKY DIA SILK BRACELET": 0.9,
+        "Black Heart Charm": 0.85,
+        "CLOVER PEARL LONG N": 0.7,
+        "3 LINE HOOPS_S": 0.85,
+        "X Safety Pin N": 0.85,
+        "TWIST BOLD R": 0.85,
+        "X ROW BRACELET": 0.85,
+        "BLACK CLOVER BAND R": 0.85,
+        "Clover Safety Pin Drop N": 0.85,
+        "X LOGO E": 0.75,
+        "RIM HOOPS": 0.85,
+        "TIED X R": 0.85,
+        "Clear Heart Charm": 0.75,
+        "SLIM CLOVER BAND R": 0.85,
+        "CLASSIC HOOPS_M": 0.75,
+        "Circle Cross Charm_S": 0.75,
+        "CLEAR CHAIN": 0.85,
+        "[G] ANNEX SAFETY PIN": 0.9,
+        "FLAT CLOVER 2 PENDANT": 0.85,
+        "CLOVER DOT COLLAR": 0.7,
+        "Two Tone Coin Pendant": 0.7,
+        "2 PENDANT N_BALL": 0.75,
+        "Square Clover Charm": 0.75,
+        "Flat Heart Charm": 0.75,
+        "LUCKY CLOVER STUDS": 0.75,
+        "TINY TWIST BOLD E": 0.7,
+        "STONE CLOVER STUDS_BLACK": 0.75,
+        "Blue Clover Charm": 0.75,
+        "CLASSIC HOOPS-S": 0.75,
+        "STONE CLOVER STUDS_GREEN": 0.75,
+        "[C] Gold Bar T-Shirt_Blue": 0.8,
+        "[C] Gold Bar T-Shirt_Charcoal": 0.8,
+        "[C] Pearl T-Shirt": 0.8,
+        "Silver Ball Charm": 0.75,
+        "[C] I H8 U T-Shirt_White": 0.8,
+        "[C] I H8 U T-Shirt_Gray": 0.8,
+        "[H] I H8 U Ball Cap": 0.8,
+        "LUCKY CLOVER BAND R": 0.85,
+        "PAVE X LINE R": 0.85,
+        "Ball Clip Chain": 0.7,
+        "TWIST BOLD E_S": 0.75,
+        "[G] SIGNATURE PENDANT": 0.9,
+        "TINY HOOPS_S": 0.5,
+        "WATER DROP E_S": 0.85,
+        "Pearl Cross Pendant_Chain": 0.85,
+        "WATER DROP E_L": 0.85,
+        "Slim X Row Chain": 0.85,
+        "X ROW LAYER R": 0.85,
+    }
+
+    client = utils.client("ssil")
+    products = []
+    discount_by_product_id = {}
+    for title, mult in title_discount_map.items():
+        product = client.product_by_title(title)
+        products.append(product)
+        discount_by_product_id[product["id"]] = mult
+
+    if start_or_end == "end":
+        client.revert_product_prices(products, testrun=testrun)
+    else:
+        new_prices_by_variant_id = {
+            v["id"]: int(
+                int(v["compareAtPrice"] or v["price"]) * discount_by_product_id[p["id"]]
+            )
+            for p in products
+            for v in p["variants"]["nodes"]
+        }
+        client.update_product_prices_by_dict(
+            products, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
+        )
+
+
 if __name__ == "__main__":
-    start_end_best_products_sale(testrun=False, start_or_end="start")
+    start_end_2026_0814_summer_sale(testrun=True, start_or_end="start")
