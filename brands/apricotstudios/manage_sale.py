@@ -2921,9 +2921,7 @@ def start_end_discounts_26ss_0821_sale(testrun=True, start_or_end="start"):
         "APLF52NGD-898OR0FR",
     ]
 
-    variants = []
-    for i in range(0, len(skus), 100):
-        variants.extend(client.variants_by_skus(skus[i : i + 100]))
+    variants = client.variants_by_skus(skus)
 
     if start_or_end == "end":
         client.revert_variant_prices(variants, testrun=testrun)
