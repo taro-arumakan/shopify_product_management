@@ -933,7 +933,16 @@ class Reporting:
             if " - daily - " not in f
         ]
         if meta_files:
-            m = pd.read_csv(meta_files[0])
+            try:
+                m = pd.read_csv(meta_files[0])
+            except pd.errors.EmptyDataError:
+                m = pd.DataFrame()
+        if meta_files and m.empty:
+            # A month with no ads at all writes a headerless, rowless file.
+            logger.warning(
+                f"{self.__class__.__name__} rollup: Meta skipped (no ad rows)"
+            )
+        elif meta_files:
             for col in ["spend", "purchase_value", "purchases"]:
                 m[col] = pd.to_numeric(m.get(col), errors="coerce")
             g = (
