@@ -1,9 +1,6 @@
 name: Export monthly brand reports
 
 on:
-  schedule:
-    # 2nd of every month at 3:45 UTC (JST 12:45)
-    - cron: "45 3 2 * *"
   workflow_dispatch:
 
 jobs:
