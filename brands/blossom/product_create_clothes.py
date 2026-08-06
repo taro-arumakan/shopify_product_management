@@ -47,12 +47,12 @@ def create_products_ss_drop4():
 
 
 def create_products():
-    sheet_name = "ELDO SERIES"
-    drop_tag = "2026_ELDO_SERIES"
+    sheet_name = "clothes(SS DROP LAST)"
+    drop_tag = "2026_SS_DROP_LAST"
 
     client = BlossomClientClothes(
         product_sheet_start_row=1,
-        remove_existing_new_product_indicators=False,
+        remove_existing_new_product_indicators=True,
         products_season_tag=drop_tag,
     )
 
