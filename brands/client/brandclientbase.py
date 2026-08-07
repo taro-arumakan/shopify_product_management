@@ -121,11 +121,13 @@ class BrandClientBase(Client, SanityChecks):
             product_title, location_names=self.LOCATIONS
         )
 
-    def merge_products_as_variants(self, products, new_product_title):
+    def merge_products_as_variants(
+        self, products, new_product_title, location_names=None
+    ):
         return super().merge_products_as_variants(
             products=products,
             new_product_title=new_product_title,
-            location_names=self.LOCATIONS,
+            location_names=location_names or self.LOCATIONS,
         )
 
     def has_open_orders(self, product_title):
