@@ -257,6 +257,16 @@ class Article:
             res.append(f["image"]["url"].rsplit("/", 1)[-1].split("?")[0])
         return res
 
+    def json_from_image_file_names_and_product_titles(
+        self,
+        image_file_names,
+        product_titles=None,
+        template_json=None,
+    ):
+        image_file_names = self.update_image_file_extensions(image_file_names)
+        sections_dict = self.to_template_sections(image_file_names, product_titles)
+        return self.sections_dict_to_json(sections_dict, template_json)
+
     def write_json_from_image_file_names_and_product_titles(
         self,
         theme_dir,
@@ -266,17 +276,14 @@ class Article:
         product_titles=None,
         template_json=None,
     ):
-        image_file_names = self.update_image_file_extensions(image_file_names)
-        sections = self.to_template_sections(image_file_names, product_titles)
         theme_file_path = self.article_template_path(
             theme_dir, blog_title, article_title
         )
-        self.write_to_json(
-            theme_file_path=theme_file_path,
-            sections_dict=sections,
-            template_json=template_json,
+        json_contents = self.json_from_image_file_names_and_product_titles(
+            image_file_names, product_titles, template_json
         )
-        return theme_file_path
+        with open(theme_file_path, "w") as of:
+            of.write(json_contents)
 
     def to_template_sections(self, file_names, product_titles):
         sections = self.to_images_list_sections_dict(file_names)
@@ -376,10 +383,6 @@ class Article:
         output_dict["sections"].update(sections_dict)
         output_dict["order"] += sections_dict.keys()
         return json.dumps(output_dict, indent=2, ensure_ascii=False)
-
-    def write_to_json(self, theme_file_path, sections_dict, template_json=None):
-        with open(theme_file_path, "w") as of:
-            of.write(self.sections_dict_to_json(sections_dict, template_json))
 
     def add_article_with_media_url(
         self, blog_title, article_title, thumbnail_media_url, theme_name

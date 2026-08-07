@@ -9,20 +9,20 @@ import os
 from brands.rohseoul.client import RohseoulClient
 from brands.rohseoul.article_templates import article_template_campaign
 
-theme_dir = "/Users/taro/sc/rohseoul/"
-theme_name = "prod"
-
-article_title = "Campaign - 26 Resort"
-campaign_title = "CAMPAIGN - RESORT 26"
-campaign_subtitle = "Slow Current : Adrift in Quiet Sunlight"
-campaign_description = r"""ROH SEOULのRESORTコレクション26は、流れるような時間の感覚から生まれました。
-風を受けながらヨットで海原を進む、そんなひとときを思わせるコレクション。波の揺れに身をゆだね、特別な予定も、急ぐ理由も必要ない——ただそこにある時間が、深い休息になっていく。
-眩しい陽射しの下で目を閉じ、ゆっくりと流れる水平線を眺めるように。RESORT 26は、動きの中にも宿る、静かなくつろぎを纏ったコレクションです。""".replace(
+season = "Pre-Fall 26"
+article_title = "Campaign - 26 Pre-Fall"
+campaign_title = f"CAMPAIGN - {season.upper()}"
+campaign_subtitle = "Measured Light : Where Form Emerges"
+campaign_description = r"""ROH SEOULのPRE-FALL 26コレクションは、光がかたちを映し出す、その一瞬から始まります。
+余白に静かに差し込む光は、線と面を鮮やかに浮かび上がらせ、視界には研ぎ澄まされたフォルムだけが穏やかに映し出されます。そうして感覚は、よりシンプルに、より明晰に研ぎ澄まされていきます。
+PRE-FALL 26では、抑制された構造の上に光が宿ることで初めて現れる、フォルムの繊細なニュアンスを表現しました。""".replace(
     "\n", "<br/>"
 )
 
-thumbnail_image_file_name = "CAMPAIGN - RESORT 26_COVER IMAGE.jpg"
-campaign_images_dir = "/Users/taro/Downloads/CAMPAIGN - RESORT 26"
+thumbnail_image_file_name = f"CAMPAIGN - {season.upper()}_COVER IMAGE.jpg"
+campaign_images_dir = f"/Users/taro/Downloads/CAMPAIGN - {season.upper()}"
+
+blog_title = "Lookbook"
 
 
 def main():
@@ -40,17 +40,29 @@ def main():
         key=client.natural_compare,
     )
     file_names = [client.shopify_sanitized_filename(fn) for fn in file_names]
-    client.article_from_image_file_names_and_product_titles(
-        theme_dir=theme_dir,
-        theme_name=theme_name,
-        template_json=template_json,
-        blog_title="Lookbook",
-        article_title=article_title,
-        thumbnail_image_file_name=client.shopify_sanitized_filename(
+    json_contents = client.json_from_image_file_names_and_product_titles(
+        image_file_names=file_names, template_json=template_json
+    )
+
+    theme = client.current_theme()
+    theme_name = theme["name"]
+    template_path = f"templates/article.{client.article_template_name(blog_title, article_title)}.json"
+
+    print(f"upsert at {template_path} to {theme_name}")
+    client.upsert_theme_file(
+        theme["id"],
+        template_path,
+        json_contents,
+    )
+
+    print(f"adding article {article_title} to {theme_name}")
+    client.add_article(
+        blog_title,
+        article_title,
+        thumbnail_image_name=client.shopify_sanitized_filename(
             thumbnail_image_file_name
         ),
-        article_image_file_names=file_names,
-        publish_article=True,
+        theme_name=theme_name,
     )
 
 

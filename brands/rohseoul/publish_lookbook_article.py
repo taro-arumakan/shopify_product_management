@@ -31,7 +31,6 @@ lookbook_item_col = string.ascii_lowercase.index("d")
 lookbook_link_col = string.ascii_lowercase.index("e")
 
 blog_title = "Lookbook"
-theme_dir = "/Users/taro/sc/rohseoul/"
 
 
 def variant_color(variant):
@@ -195,16 +194,19 @@ def main():
             print("processing", subdir)
             section_dict = process_a_subdir(client, subdir)
             sections_dict.update(section_dict)
+    json_contents = client.sections_dict_to_json(sections_dict, template_json)
 
     theme = client.current_theme()
     theme_name = theme["name"]
     template_path = f"templates/article.{client.article_template_name(blog_title, article_title)}.json"
-    print(f"upsert to at {template_path} to {theme_name}")
+
+    print(f"upsert at {template_path} to {theme_name}")
     client.upsert_theme_file(
         theme["id"],
         template_path,
-        client.sections_dict_to_json(sections_dict, template_json),
+        json_contents,
     )
+
     print(f"adding article {article_title} to {theme_name}")
     client.add_article(
         blog_title,
