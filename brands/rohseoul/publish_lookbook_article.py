@@ -13,7 +13,7 @@ import string
 from brands.rohseoul.client import RohseoulClient
 from brands.rohseoul.article_templates import article_template_lookbook
 
-lookbook_title = "Resort 26"
+lookbook_title = "Pre-Fall 26"
 article_title = f"LOOKBOOK - {lookbook_title}"
 
 images_dir = f"/Users/taro/Downloads/LOOKBOOK - {lookbook_title.upper()}"
@@ -32,7 +32,6 @@ lookbook_link_col = string.ascii_lowercase.index("e")
 
 blog_title = "Lookbook"
 theme_dir = "/Users/taro/sc/rohseoul/"
-theme_name = "prod"
 
 
 def variant_color(variant):
@@ -196,11 +195,15 @@ def main():
             print("processing", subdir)
             section_dict = process_a_subdir(client, subdir)
             sections_dict.update(section_dict)
-    theme_file_path = client.article_template_path(theme_dir, blog_title, article_title)
 
-    print("writing to", theme_file_path)
-    client.write_to_json(
-        theme_file_path, sections_dict=sections_dict, template_json=template_json
+    theme = client.current_theme()
+    theme_name = theme["name"]
+    template_path = f"templates/article.{client.article_template_name(blog_title, article_title)}.json"
+    print(f"upsert to at {template_path} to {theme_name}")
+    client.upsert_theme_file(
+        theme["id"],
+        template_path,
+        client.sections_dict_to_json(sections_dict, template_json),
     )
     print(f"adding article {article_title} to {theme_name}")
     client.add_article(
