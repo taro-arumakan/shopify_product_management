@@ -371,12 +371,15 @@ class Article:
             sections.update(section)
         return sections
 
-    def write_to_json(self, theme_file_path, sections_dict, template_json=None):
+    def sections_dict_to_json(self, sections_dict, template_json=None):
         output_dict = json.loads(template_json or article_json_template())
         output_dict["sections"].update(sections_dict)
         output_dict["order"] += sections_dict.keys()
+        return json.dumps(output_dict, indent=2, ensure_ascii=False)
+
+    def write_to_json(self, theme_file_path, sections_dict, template_json=None):
         with open(theme_file_path, "w") as of:
-            of.write(json.dumps(output_dict, indent=2, ensure_ascii=False))
+            of.write(self.sections_dict_to_json(sections_dict, template_json))
 
     def add_article_with_media_url(
         self, blog_title, article_title, thumbnail_media_url, theme_name
