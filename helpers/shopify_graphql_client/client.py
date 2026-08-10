@@ -107,3 +107,8 @@ class ShopifyGraphqlClient(
             if has_next_page:
                 vars["after"] = page_info["endCursor"]
         return all_items
+
+    def option_value_by_key(self, selected_options: list, option_key="カラー"):
+        for option in selected_options:
+            if option["name"] == option_key:
+                return option["value"]
