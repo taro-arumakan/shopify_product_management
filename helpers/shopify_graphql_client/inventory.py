@@ -218,10 +218,11 @@ class Inventory:
         query = """
         mutation inventorySetQuantities($locationId: ID!, $inventoryItemId: ID!, $quantity: Int!) {
             inventorySetQuantities(
-                input: {name: "available", ignoreCompareQuantity: true, reason: "correction",
+                input: {name: "available", reason: "correction",
                         quantities: [{inventoryItemId: $inventoryItemId,
                                     locationId: $locationId,
-                                    quantity: $quantity}]}
+                                    quantity: $quantity,
+                                    changeFromQuantity: null}]}
             ) {
                 inventoryAdjustmentGroup {
                     id

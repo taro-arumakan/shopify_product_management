@@ -56,7 +56,7 @@ class ShopifyGraphqlClient(
         self.shop_name = shop_name
         self.access_token = access_token
         self.base_url = (
-            f"https://{shop_name}.myshopify.com/admin/api/2025-10/graphql.json"
+            f"https://{shop_name}.myshopify.com/admin/api/2026-01/graphql.json"
         )
 
     def sanitize_id(self, identifier, prefix="Product"):
