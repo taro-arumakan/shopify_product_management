@@ -17,7 +17,7 @@ def main():
     client.shop_name = "quickstart-6f3c9e4c"
     client.access_token = os.environ["quickstart-6f3c9e4c-ACCESS_TOKEN"]
     client.base_url = (
-        f"https://{client.shop_name}.myshopify.com/admin/api/2025-10/graphql.json"
+        f"https://{client.shop_name}.myshopify.com/admin/api/2026-01/graphql.json"
     )
     client.LOCATIONS = ["Shop location", "My Custom Location"]
 
