@@ -1,0 +1,54 @@
+name: Staff styling article
+
+on:
+  repository_dispatch:
+    types: [staff-styling-submission]
+
+jobs:
+  process-submission:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.21"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: create a .env file
+        run: |
+          cat > .env << EOF
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          asheis-ACCESS_TOKEN=${{ secrets.ASHEIS_ACCESS_TOKEN }}
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
+          NOTIFYEES_STAFF_STYLING=${{ secrets.NOTIFYEES_STAFF_STYLING || 'yusuke@catal.co.jp,taro@sniarti.fi' }}
+          EOF
+
+      - name: Process submission
+        env:
+          PYTHONPATH: .
+          CLIENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: |
+          uv run brands/asheis/staff_styling_to_blogpost.py
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
