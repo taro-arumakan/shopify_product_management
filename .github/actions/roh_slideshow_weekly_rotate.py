@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # ROH の週次 Slideshow 画像のシーズン（キャンペーン）prefix。
 # シーズンが変わったらここを更新する（例: "26_fall", "27_spring"）。
 # ファイル名形式: {prefix}_pc_{N}w.jpg / {prefix}_m_{N}w.jpg
-ROH_SEASON_PREFIX = "26_resort"
+ROH_SEASON_PREFIX = "26_prefall"
 
 WEEK_IN_URL_RE = re.compile(r"(\d+)w\.(jpg|jpeg|png|webp)$", re.IGNORECASE)
 
@@ -173,7 +173,9 @@ def _apply_weekly_update(content: str, block: dict, target_week: int) -> str:
     if block["image_url"] not in content:
         raise RuntimeError(f"Desktop URL not found in theme file: {block['image_url']}")
     if block["mobile_image_url"] not in content:
-        raise RuntimeError(f"Mobile URL not found in theme file: {block['mobile_image_url']}")
+        raise RuntimeError(
+            f"Mobile URL not found in theme file: {block['mobile_image_url']}"
+        )
 
     new_content = content.replace(block["image_url"], new_desktop, 1)
     if new_content.count(new_desktop) != 1:
@@ -237,7 +239,9 @@ def main():
 
     client = utils.client(args.shop_name)
     theme = _resolve_theme(client, args.theme_name)
-    logger.info("Target theme: %s (%s, role=%s)", theme["name"], theme["id"], theme["role"])
+    logger.info(
+        "Target theme: %s (%s, role=%s)", theme["name"], theme["id"], theme["role"]
+    )
 
     file_nodes = client.theme_file_by_theme_name_and_file_name(
         theme["name"], args.theme_file
@@ -270,9 +274,7 @@ def main():
         )
         return
     if len(blocks) > 1:
-        details = ", ".join(
-            f"{b['section_id']}/{b['block_id']}" for b in blocks
-        )
+        details = ", ".join(f"{b['section_id']}/{b['block_id']}" for b in blocks)
         raise RuntimeError(
             f"Expected exactly 1 weekly image block, found {len(blocks)}: {details}"
         )

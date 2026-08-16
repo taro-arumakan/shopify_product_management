@@ -35,14 +35,25 @@ def run(brand, report_year, report_month):
 def main():
     rundate = datetime.date.today()
     report_date = rundate.replace(day=1) - datetime.timedelta(days=1)
-    brands = ["apricot", "blossom", "archive", "gbh", "kume", "lememe", "roh", "ssil"]
+    brands = [
+        "apricot",
+        "blossom",
+        "archive",
+        "gbh",
+        "kume",
+        "lememe",
+        "roh",
+        "ssil",
+        "asheis",
+    ]
     for brand in brands:
         run(brand, report_date.year, report_date.month)
 
 
 def adhoc():
-    year_months = [(2025, 11), (2025, 12)]
-    brands = ["apricot", "blossom", "archive", "gbh", "kume", "lememe", "roh", "ssil"]
+    year_months = [(2026, 7)]
+    # brands = ["apricot", "blossom", "archive", "gbh", "kume", "lememe", "roh", "ssil", "asheis"]
+    brands = ["asheis"]
     for brand in brands:
         for year, month in year_months:
             run(brand, year, month)
