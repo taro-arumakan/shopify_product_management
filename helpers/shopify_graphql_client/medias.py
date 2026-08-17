@@ -392,6 +392,59 @@ class Medias:
         res = self.run_query(query, variables)
         return res["stagedUploadsCreate"]["stagedTargets"]
 
+    def create_files_from_staged_targets(self, resource_urls, alts=None):
+        query = """
+        mutation fileCreate($files: [FileCreateInput!]!) {
+            fileCreate(files: $files) {
+                files {
+                    id
+                    fileStatus
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        alts = alts or [""] * len(resource_urls)
+        variables = {
+            "files": [
+                {"originalSource": url, "contentType": "IMAGE", "alt": alt}
+                for url, alt in zip(resource_urls, alts)
+            ]
+        }
+        res = self.run_query(query, variables)
+        if errors := res["fileCreate"]["userErrors"]:
+            raise RuntimeError(f"Failed to create files: {errors}")
+        return res["fileCreate"]["files"]
+
+    def wait_for_file_processing_completion(self, file_ids, timeout_minutes=5):
+        query = """
+        query fileStatus($ids: [ID!]!) {
+            nodes(ids: $ids) {
+                ... on MediaImage {
+                    id
+                    fileStatus
+                    image {
+                        url
+                    }
+                }
+            }
+        }
+        """
+        poll_interval = 1
+        for _ in range(int(timeout_minutes * 60 / poll_interval)):
+            nodes = self.run_query(query, {"ids": file_ids})["nodes"]
+            if failed := [n for n in nodes if n and n["fileStatus"] == "FAILED"]:
+                raise RuntimeError(f"file processing failed: {failed}")
+            if all(n and n["fileStatus"] == "READY" for n in nodes):
+                return {n["id"]: n["image"]["url"] for n in nodes}
+            time.sleep(poll_interval)
+        raise TimeoutError(
+            f"files not ready after {timeout_minutes} minutes: {file_ids}"
+        )
+
     def upload_and_assign_images_to_product(
         self, product_id, local_paths, remove_existings=True
     ):

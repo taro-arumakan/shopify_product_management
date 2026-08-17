@@ -100,7 +100,16 @@ class Article:
         res = self.run_query(query, variables)
         return res["articles"]["nodes"]
 
-    def article_create(self, blog_title, title, template_suffix, media_url):
+    def article_create(
+        self,
+        blog_title,
+        title,
+        template_suffix,
+        media_url=None,
+        is_published=True,
+        author_name="Taro Nakamura",
+        tags=None,
+    ):
         blog_id = self.blog_id_by_blog_title(blog_title)
         query = """
         mutation CreateArticle($article: ArticleCreateInput!) {
@@ -129,16 +138,18 @@ class Article:
             }
         }
         """
-        variables = {
-            "article": {
-                "blogId": blog_id,
-                "title": title,
-                "templateSuffix": template_suffix,
-                "isPublished": True,
-                "author": {"name": "Taro Nakamura"},
-                "image": {"url": media_url, "altText": f"{title} cover image"},
-            }
+        article = {
+            "blogId": blog_id,
+            "title": title,
+            "templateSuffix": template_suffix,
+            "isPublished": is_published,
+            "author": {"name": author_name},
         }
+        if media_url:
+            article["image"] = {"url": media_url, "altText": f"{title} cover image"}
+        if tags:
+            article["tags"] = tags
+        variables = {"article": article}
         res = self.run_query(query, variables)
         if errors := res["articleCreate"]["userErrors"]:
             raise RuntimeError(f"Failed to create an article: {errors}")

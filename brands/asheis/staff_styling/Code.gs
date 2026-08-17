@@ -245,7 +245,7 @@ function onFormSubmitHandler(e) {
       spreadsheet_id: prop_('SPREADSHEET_ID'),
     };
 
-    const dispatched = dispatchToGitHub_(submission);
+    const dispatchStatus = dispatchToGitHub_(submission);
 
     const warnings = [];
     if (submission.styling_photo_ids.length < 4) {
@@ -268,7 +268,7 @@ function onFormSubmitHandler(e) {
         .concat(warnings)
         .concat([
           '',
-          'GitHub への連携: ' + (dispatched ? '起動しました' : 'スキップ(GH_PAT 未設定)'),
+          'GitHub への連携: ' + dispatchStatus,
           '回答スプレッドシート: ' + ss.getUrl(),
         ])
         .join('\n')
@@ -285,27 +285,43 @@ function normalizeHeight_(v) {
   return /cm$/i.test(s) ? s : s + 'cm';
 }
 
+#TODO [CEC-471] comments in English
+/**
+ * repository_dispatch を送信し、結果を文字列で返す(受付メールに記載される)。
+ * 送信失敗は例外にせずメールで可視化する — 写真・回答自体は保存済みのため。
+ */
 function dispatchToGitHub_(submission) {
   const pat = prop_('GH_PAT');
   if (!pat) {
     Logger.log('GH_PAT が未設定のため repository_dispatch をスキップしました');
-    return false;
+    return 'スキップ(GH_PAT 未設定)';
   }
-  UrlFetchApp.fetch('https://api.github.com/repos/' + prop_('GH_REPO') + '/dispatches', {
-    method: 'post',
-    contentType: 'application/json',
-    headers: {
-      Authorization: 'Bearer ' + pat,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    // client_payload はトップレベル10キー制限があるため submission 1キーに集約する
-    payload: JSON.stringify({
-      event_type: 'staff-styling-submission',
-      client_payload: { submission: submission },
-    }),
-  });
-  return true;
+  try {
+    const res = UrlFetchApp.fetch('https://api.github.com/repos/' + prop_('GH_REPO') + '/dispatches', {
+      method: 'post',
+      contentType: 'application/json',
+      muteHttpExceptions: true,
+      headers: {
+        Authorization: 'Bearer ' + pat,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      // client_payload はトップレベル10キー制限があるため submission 1キーに集約する
+      payload: JSON.stringify({
+        event_type: 'staff-styling-submission',
+        client_payload: { submission: submission },
+      }),
+    });
+    const code = res.getResponseCode();
+    if (code >= 300) {
+      Logger.log('repository_dispatch failed: %s %s', code, res.getContentText());
+      return '失敗(HTTP ' + code + '): ' + res.getContentText().slice(0, 200);
+    }
+    return '起動しました';
+  } catch (err) {
+    Logger.log('repository_dispatch error: %s', err);
+    return '失敗: ' + err;
+  }
 }
 
 function notify_(subject, body) {

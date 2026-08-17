@@ -54,6 +54,38 @@ class Metafields:
 
         return self.run_query(query, variables)
 
+    def metafields_set(self, owner_id, metafields):
+        """Set metafields on any owner resource.
+
+        owner_id must be a full gid (owners are not always products).
+        metafields: list of dicts with namespace, key, type and value.
+        """
+        assert owner_id.startswith("gid://"), f"full gid required: {owner_id}"
+        query = """
+        mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+            metafieldsSet(metafields: $metafields) {
+                metafields {
+                    id
+                    namespace
+                    key
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        variables = {
+            "metafields": [
+                dict(metafield, ownerId=owner_id) for metafield in metafields
+            ]
+        }
+        res = self.run_query(query, variables)
+        if errors := res["metafieldsSet"]["userErrors"]:
+            raise RuntimeError(f"Failed to set metafields: {errors}")
+        return res["metafieldsSet"]["metafields"]
+
     def update_product_metafield(
         self, product_id, metafield_namespace, metafield_key, value
     ):
