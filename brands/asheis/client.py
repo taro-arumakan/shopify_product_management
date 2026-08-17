@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 import string
@@ -15,32 +16,184 @@ class AsheisClient(BrandClientBase):
     LOCATIONS = ["Shop location"]
     BRAND_NAME = "ASHEIS"
 
+    # JIS L 0001 / 消費者庁 care symbol numbers. The Shopify metafield definition
+    # custom.care_symbols carries the same list as a `choices` validation, so an
+    # unknown code is rejected here first and by the API second.
+    # https://www.caa.go.jp/policies/policy/representation/household_goods/guide/wash_02.html
+    CARE_SYMBOL_CODES = frozenset(
+        [
+            "100",
+            "110",
+            "111",
+            "130",
+            "131",
+            "132",
+            "140",
+            "141",
+            "142",
+            "150",
+            "151",
+            "160",
+            "161",
+            "170",
+            "190",
+            "200",
+            "210",
+            "220",
+            "300",
+            "310",
+            "320",
+            "410",
+            "415",
+            "420",
+            "425",
+            "430",
+            "435",
+            "440",
+            "445",
+            "500",
+            "510",
+            "511",
+            "520",
+            "530",
+            "600",
+            "610",
+            "611",
+            "620",
+            "621",
+            "700",
+            "710",
+            "711",
+            "712",
+        ]
+    )
+
+    # Sheet header text -> product_input key. The delivery sheets gained a
+    # 洗濯表示JISアイコン番号 column at F from the 0924 delivery onward, shifting
+    # every later column by one (【8_9デリ】 still has the old layout). Columns are
+    # therefore resolved by header text rather than fixed offsets, so both layouts
+    # import correctly and the next inserted column does not silently corrupt data.
+    PRODUCT_ATTR_HEADERS = {
+        "商品名": "title",
+        "カテゴリー/コレクション (Tags)": "tags",
+        "税込み価格": "price",
+        "商品説明": "description",
+        "手入れ方法": "product_care",
+        "洗濯表示JISアイコン番号": "care_symbols",
+        "素材": "material",
+        "寸法": "size_text",
+        "原産国": "made_in",
+    }
+    OPTION1_ATTR_HEADERS = {"カラー": "カラー", "商品画像": "drive_link"}
+    OPTION2_ATTR_HEADERS = {"サイズ": "サイズ", "品番": "sku", "在庫数": "stock"}
+    # title must stay first: to_product_inputs starts a new product on the first key.
+    REQUIRED_PRODUCT_ATTRS = ["title", "tags", "price", "description"]
+
     def product_attr_column_map(self):
+        """Fallback/static map for the current (0924 delivery onward) layout.
+
+        product_inputs_by_sheet_name resolves columns from the header row instead;
+        this stays for direct callers such as tests.golden.record.
+        """
         return dict(
             title=string.ascii_lowercase.index("a"),
             tags=string.ascii_lowercase.index("b"),
             price=string.ascii_lowercase.index("c"),
             description=string.ascii_lowercase.index("d"),
             product_care=string.ascii_lowercase.index("e"),
-            material=string.ascii_lowercase.index("f"),
-            size_text=string.ascii_lowercase.index("g"),
-            made_in=string.ascii_lowercase.index("i"),
+            care_symbols=string.ascii_lowercase.index("f"),
+            material=string.ascii_lowercase.index("g"),
+            size_text=string.ascii_lowercase.index("h"),
+            made_in=string.ascii_lowercase.index("j"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"カラー": string.ascii_lowercase.index("j")}
+        option1_attrs = {"カラー": string.ascii_lowercase.index("k")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("l"),
+            drive_link=string.ascii_lowercase.index("m"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"サイズ": string.ascii_lowercase.index("m")}
+        option2_attrs = {"サイズ": string.ascii_lowercase.index("n")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("n"),
-            stock=string.ascii_lowercase.index("o"),
+            sku=string.ascii_lowercase.index("o"),
+            stock=string.ascii_lowercase.index("p"),
         )
         return option2_attrs
+
+    def column_maps_by_header(self, sheet_name):
+        """Resolve the three column maps from the sheet's header row.
+
+        Returns (product_map, option1_map, option2_map). Raises if a required
+        product column is missing, rather than importing shifted data.
+        """
+        rows = self.worksheet_rows(self.sheet_id, sheet_name)
+        if not rows:
+            raise RuntimeError(f"{sheet_name}: empty sheet")
+        header = [str(h).strip() for h in rows[0]]
+
+        def build(spec):
+            found = {}
+            for index, text in enumerate(header):
+                if not text:
+                    continue
+                for needle, attr in spec.items():
+                    # 商品画像 carries a parenthetical second line in the header
+                    if attr not in found and text.split("\n")[0].strip() == needle:
+                        found[attr] = index
+            return found
+
+        product_map = build(self.PRODUCT_ATTR_HEADERS)
+        missing = [k for k in self.REQUIRED_PRODUCT_ATTRS if k not in product_map]
+        if missing:
+            raise RuntimeError(
+                f"{sheet_name}: missing required column(s) {missing} — header was {header}"
+            )
+        # Preserve canonical ordering; title first (grouping key for to_product_inputs).
+        ordered = {}
+        for attr in self.PRODUCT_ATTR_HEADERS.values():
+            if attr in product_map:
+                ordered[attr] = product_map[attr]
+
+        if "care_symbols" not in ordered:
+            logger.info(
+                "%s: no 洗濯表示JISアイコン番号 column (pre-0924 layout) — "
+                "care symbols will not be imported",
+                sheet_name,
+            )
+        return (
+            ordered,
+            build(self.OPTION1_ATTR_HEADERS),
+            build(self.OPTION2_ATTR_HEADERS),
+        )
+
+    def product_inputs_by_sheet_name(self, sheet_name, handle_suffix=None):
+        self.drive_link_cache = {}  # repopulate drive link cache
+        product_map, option1_map, option2_map = self.column_maps_by_header(sheet_name)
+        return self.to_product_inputs(
+            self.sheet_id,
+            sheet_name,
+            self.product_sheet_start_row,
+            product_attr_column_map=product_map,
+            option1_attr_column_map=option1_map,
+            option2_attr_column_map=option2_map,
+            handle_suffix=handle_suffix,
+        )
+
+    @classmethod
+    def parse_care_symbols(cls, value):
+        """'140, 210,320' -> ['140', '210', '320']. Raises on an unknown code."""
+        if not value:
+            return []
+        codes = [c for c in re.split(r"[,、，\s]+", str(value).strip()) if c]
+        unknown = [c for c in codes if c not in cls.CARE_SYMBOL_CODES]
+        if unknown:
+            raise ValueError(
+                f"unknown JIS care symbol code(s) {unknown} in {value!r} — "
+                "expected 3-digit numbers from the 消費者庁 table"
+            )
+        return codes
 
     @staticmethod
     def product_description_template():
@@ -175,6 +328,21 @@ class AsheisClient(BrandClientBase):
         product_care = product_input.get("product_care")
         self.update_product_care_metafield(
             product_id, self.text_to_simple_richtext(product_care)
+        )
+        self.update_care_symbols_metafield(
+            product_id, product_input.get("care_symbols")
+        )
+
+    def update_care_symbols_metafield(self, product_id, care_symbols):
+        """Write custom.care_symbols from the sheet's 洗濯表示JISアイコン番号 column.
+
+        An empty cell clears the metafield, so removing the codes from the sheet
+        removes the icons from the product page.
+        """
+        codes = self.parse_care_symbols(care_symbols)
+        logger.info(f"  care symbols: {codes or '(none)'}")
+        return self.update_product_metafield(
+            product_id, "custom", "care_symbols", json.dumps(codes) if codes else None
         )
 
 
