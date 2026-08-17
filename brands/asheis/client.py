@@ -172,23 +172,10 @@ class AsheisClient(BrandClientBase):
         self.update_size_table_html_metafield(
             product_id, self.get_size_field(product_input)
         )
-        # product_care = product_input.get("product_care")
-        # self.update_product_care_metafield(
-        #     product_id, self.text_to_simple_richtext(product_care)
-        # )
-
-
-def update_metafields():
-    logging.basicConfig(level=logging.DEBUG)
-    client = AsheisClient(
-        product_sheet_start_row=1,
-        remove_existing_new_product_indicators=False,
-        products_season_tag="opening",
-    )
-    product_inputs = client.product_inputs_by_sheet_name("Products Master")
-    for pi in product_inputs:
-        p = client.product_by_title(pi["title"])
-        client.update_metafields(p["id"], pi)
+        product_care = product_input.get("product_care")
+        self.update_product_care_metafield(
+            product_id, self.text_to_simple_richtext(product_care)
+        )
 
 
 def main():
