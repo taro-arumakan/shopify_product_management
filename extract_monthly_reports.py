@@ -28,6 +28,7 @@ for noisy in ("googleapiclient", "urllib3", "google"):
 
 DEFAULT_BRANDS = [
     "apricot",
+    "asheis",
     "blossom",
     "kume",
     "lememe",

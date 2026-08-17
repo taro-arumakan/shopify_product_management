@@ -79,6 +79,7 @@ ALL_BRANDS = [
     "alvanas",
     "apricot-studios",
     "archive-epke",
+    "asheis",
 ]
 
 

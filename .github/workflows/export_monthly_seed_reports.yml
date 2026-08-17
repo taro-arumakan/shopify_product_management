@@ -84,6 +84,12 @@ jobs:
           kumej-IG_USER_ID=${{ secrets.KUMEJ_IG_USER_ID }}
           kumej-META_AD_ACCOUNT_ID=${{ secrets.KUMEJ_META_AD_ACCOUNT_ID }}
           kumej-META_TOKEN=${{ secrets.KUMEJ_META_TOKEN }}
+          asheis-ACCESS_TOKEN=${{ secrets.ASHEIS_ACCESS_TOKEN }}
+          asheis-GSPREAD_ID=${{ secrets.ASHEIS_GSPREAD_ID }}
+          asheis-FB_PAGE_ID=${{ secrets.ASHEIS_FB_PAGE_ID }}
+          asheis-IG_USER_ID=${{ secrets.ASHEIS_IG_USER_ID }}
+          asheis-META_AD_ACCOUNT_ID=${{ secrets.ASHEIS_META_AD_ACCOUNT_ID }}
+          asheis-META_TOKEN=${{ secrets.ASHEIS_META_TOKEN }}
           GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
           NOTIFYEES_CATAL=${{ secrets.NOTIFYEES_CATAL }}
           EOF
