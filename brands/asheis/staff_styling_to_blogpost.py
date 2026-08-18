@@ -24,8 +24,9 @@ Steps:
 
 1. download price-tag photos from Drive (the form's File responses folders are
    shared with the service account) and decode barcodes with zxing-cpp
-2. resolve variants via variant_by_sku — JAN == SKU for ASHEIS — merging in
-   manual_skus
+2. resolve variants by the barcode field — JAN != SKU for ASHEIS; barcodes are
+   populated from the products sheet's JANコード column by AsheisClient —
+   falling back to SKU lookup so manual_skus may hold either code
 3. download styling photos, EXIF-orient, convert to JPEG (HEIC included) and
    cap resolution, then upload to Shopify Files
 4. create the article hidden in the Styling blog ("styling" template),
@@ -95,10 +96,12 @@ def decode_barcodes(image_path):
 
 
 def resolve_variants(client, codes):
-    """Resolve barcode values / manually entered SKUs to variants.
+    """Resolve decoded barcodes / manually entered codes to variants.
 
-    Tries the raw code first, then a digits-only variant of it. Returns
-    (resolved variants, unresolved codes), variants deduped by id.
+    Decoded JANs match the variant barcode field; manual input may be either a
+    JAN or a SKU, so barcode lookup is tried first, then SKU, raw code first
+    and digits-only second. Returns (resolved variants, unresolved codes),
+    variants deduped by id.
     """
     resolved, unresolved = [], []
     for code in codes:
@@ -108,11 +111,14 @@ def resolve_variants(client, codes):
             candidates.append(digits)
         variant = None
         for candidate in candidates:
-            try:
-                variant = client.variant_by_sku(candidate)
+            for lookup in (client.variant_by_barcode, client.variant_by_sku):
+                try:
+                    variant = lookup(candidate)
+                    break
+                except Exception:
+                    continue
+            if variant:
                 break
-            except Exception:
-                continue
         if variant is None:
             unresolved.append(code)
         elif variant["id"] not in [v["id"] for v in resolved]:

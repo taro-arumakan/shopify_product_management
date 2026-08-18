@@ -92,7 +92,8 @@ class AsheisClient(BrandClientBase):
         option2_attrs = {"サイズ": string.ascii_lowercase.index("n")}
         option2_attrs.update(
             sku=string.ascii_lowercase.index("o"),
-            stock=string.ascii_lowercase.index("p"),
+            barcode=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
 
@@ -234,6 +235,56 @@ class AsheisClient(BrandClientBase):
     def post_process_product_input(self, process_product_input_res, product_input):
         product_id = process_product_input_res["create_product"]["id"]
         self.update_metafields(product_id, product_input)
+        self.update_variant_barcodes(product_input)
+
+    @staticmethod
+    def validate_jan(barcode):
+        """13-digit JAN/EAN with a valid check digit. Returns the normalized string."""
+        s = str(barcode).strip()
+        if not (s.isdigit() and len(s) == 13):
+            raise ValueError(f"JAN must be 13 digits: {s!r}")
+        check = (
+            10 - sum(int(d) * (3 if i % 2 else 1) for i, d in enumerate(s[:12])) % 10
+        ) % 10
+        if check != int(s[-1]):
+            raise ValueError(f"JAN check digit mismatch: {s!r}")
+        return s
+
+    def update_variant_barcodes(self, product_input):
+        """Write the sheet's JANコード column to the variant barcode field.
+
+        JAN != SKU for ASHEIS; the barcode field is what maps a scanned tag
+        back to a variant (e.g. the staff styling pipeline). Variants without
+        a JAN in the sheet are skipped with a warning.
+        """
+        logger.info(f'updating variant barcodes for {product_input["title"]}')
+        res = []
+        for variant_info in self.get_variants_level_info(product_input, key="sku"):
+            barcode = str(variant_info.get("barcode") or "").strip()
+            if not barcode:
+                logger.warning(
+                    f'  no JAN for {variant_info["sku"]}, skipping barcode update'
+                )
+                continue
+            res.append(
+                self.update_variant_barcode_by_sku(
+                    variant_info["sku"], self.validate_jan(barcode)
+                )
+            )
+        return res
+
+    def check_barcodes(self, product_input):
+        res = []
+        for variant_info in self.get_variants_level_info(product_input, key="sku"):
+            if barcode := str(variant_info.get("barcode") or "").strip():
+                try:
+                    self.validate_jan(barcode)
+                except ValueError as e:
+                    res.append(
+                        f'Error validating JAN for {product_input["title"]} '
+                        f'{variant_info["sku"]}: {e}'
+                    )
+        return res
 
     def update_metafields(self, product_id, product_input):
         logger.info(f'updating metafields for {product_input["title"]}')
@@ -267,6 +318,7 @@ class AsheisClient(BrandClientBase):
                 self.parse_care_symbols(pi.get("care_symbols"))
             except ValueError as e:
                 res.append(f"Error parsing care symbols for {pi['title']}: {e}")
+            res += self.check_barcodes(pi)
         return res
 
 
