@@ -68,33 +68,7 @@ class AsheisClient(BrandClientBase):
         ]
     )
 
-    # Sheet header text -> product_input key. The delivery sheets gained a
-    # 洗濯表示JISアイコン番号 column at F from the 0924 delivery onward, shifting
-    # every later column by one (【8_9デリ】 still has the old layout). Columns are
-    # therefore resolved by header text rather than fixed offsets, so both layouts
-    # import correctly and the next inserted column does not silently corrupt data.
-    PRODUCT_ATTR_HEADERS = {
-        "商品名": "title",
-        "カテゴリー/コレクション (Tags)": "tags",
-        "税込み価格": "price",
-        "商品説明": "description",
-        "手入れ方法": "product_care",
-        "洗濯表示JISアイコン番号": "care_symbols",
-        "素材": "material",
-        "寸法": "size_text",
-        "原産国": "made_in",
-    }
-    OPTION1_ATTR_HEADERS = {"カラー": "カラー", "商品画像": "drive_link"}
-    OPTION2_ATTR_HEADERS = {"サイズ": "サイズ", "品番": "sku", "在庫数": "stock"}
-    # title must stay first: to_product_inputs starts a new product on the first key.
-    REQUIRED_PRODUCT_ATTRS = ["title", "tags", "price", "description"]
-
     def product_attr_column_map(self):
-        """Fallback/static map for the current (0924 delivery onward) layout.
-
-        product_inputs_by_sheet_name resolves columns from the header row instead;
-        this stays for direct callers such as tests.golden.record.
-        """
         return dict(
             title=string.ascii_lowercase.index("a"),
             tags=string.ascii_lowercase.index("b"),
@@ -121,65 +95,6 @@ class AsheisClient(BrandClientBase):
             stock=string.ascii_lowercase.index("p"),
         )
         return option2_attrs
-
-    def column_maps_by_header(self, sheet_name):
-        """Resolve the three column maps from the sheet's header row.
-
-        Returns (product_map, option1_map, option2_map). Raises if a required
-        product column is missing, rather than importing shifted data.
-        """
-        rows = self.worksheet_rows(self.sheet_id, sheet_name)
-        if not rows:
-            raise RuntimeError(f"{sheet_name}: empty sheet")
-        header = [str(h).strip() for h in rows[0]]
-
-        def build(spec):
-            found = {}
-            for index, text in enumerate(header):
-                if not text:
-                    continue
-                for needle, attr in spec.items():
-                    # 商品画像 carries a parenthetical second line in the header
-                    if attr not in found and text.split("\n")[0].strip() == needle:
-                        found[attr] = index
-            return found
-
-        product_map = build(self.PRODUCT_ATTR_HEADERS)
-        missing = [k for k in self.REQUIRED_PRODUCT_ATTRS if k not in product_map]
-        if missing:
-            raise RuntimeError(
-                f"{sheet_name}: missing required column(s) {missing} — header was {header}"
-            )
-        # Preserve canonical ordering; title first (grouping key for to_product_inputs).
-        ordered = {}
-        for attr in self.PRODUCT_ATTR_HEADERS.values():
-            if attr in product_map:
-                ordered[attr] = product_map[attr]
-
-        if "care_symbols" not in ordered:
-            logger.info(
-                "%s: no 洗濯表示JISアイコン番号 column (pre-0924 layout) — "
-                "care symbols will not be imported",
-                sheet_name,
-            )
-        return (
-            ordered,
-            build(self.OPTION1_ATTR_HEADERS),
-            build(self.OPTION2_ATTR_HEADERS),
-        )
-
-    def product_inputs_by_sheet_name(self, sheet_name, handle_suffix=None):
-        self.drive_link_cache = {}  # repopulate drive link cache
-        product_map, option1_map, option2_map = self.column_maps_by_header(sheet_name)
-        return self.to_product_inputs(
-            self.sheet_id,
-            sheet_name,
-            self.product_sheet_start_row,
-            product_attr_column_map=product_map,
-            option1_attr_column_map=option1_map,
-            option2_attr_column_map=option2_map,
-            handle_suffix=handle_suffix,
-        )
 
     @classmethod
     def parse_care_symbols(cls, value):
@@ -344,6 +259,15 @@ class AsheisClient(BrandClientBase):
         return self.update_product_metafield(
             product_id, "custom", "care_symbols", json.dumps(codes) if codes else None
         )
+
+    def check_metafields(self, product_inputs):
+        res = []
+        for pi in product_inputs:
+            try:
+                self.parse_care_symbols(pi.get("care_symbols"))
+            except ValueError as e:
+                res.append(f"Error parsing care symbols for {pi['title']}: {e}")
+        return res
 
 
 def main():
