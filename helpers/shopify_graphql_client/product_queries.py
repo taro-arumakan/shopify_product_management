@@ -191,6 +191,7 @@ class ProductQueries:
               title
               displayName
               sku
+              barcode
               price
               compareAtPrice
               inventoryQuantity
@@ -265,6 +266,31 @@ class ProductQueries:
                 f"No variants found for {len(missing)} SKU(s): {missing}"
             )
         return res
+
+    def variants_by_barcodes(self, barcodes, active_only=True):
+        barcodes = list(barcodes)
+        if not barcodes:
+            return []
+        query = " OR ".join(f"barcode:'{barcode}'" for barcode in barcodes)
+        res = self.product_variants_by_query(query, filter_archived=active_only)
+        missing = sorted(set(barcodes) - {v["barcode"] for v in res})
+        if missing:
+            raise NoVariantsFoundException(
+                f"No variants found for {len(missing)} barcode(s): {missing}"
+            )
+        return res
+
+    def variant_by_barcode(self, barcode, active_only=True):
+        res = self.variants_by_barcodes([barcode], active_only=active_only)
+        if len(res) != 1:
+            if res and active_only:
+                logger.info("Filtering non-active products' variants")
+                res = [r for r in res if r["product"]["status"] == "ACTIVE"]
+            if len(res) != 1:
+                raise (
+                    MultipleVariantsFoundException if res else NoVariantsFoundException
+                )(f"{'Multiple' if res else 'No'} variants found for {barcode}: {res}")
+        return res[0]
 
     def variant_by_sku(self, sku, active_only=True):
         if len(res := self.variants_by_skus([sku], active_only=active_only)) != 1:
