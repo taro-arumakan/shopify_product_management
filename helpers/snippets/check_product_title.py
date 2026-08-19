@@ -2,8 +2,8 @@ import utils
 
 
 def main():
-    shop_name = 'archive-epke'
-    sheet_name = '2025.4/10 Release'
+    shop_name = "archive-epke"
+    sheet_name = "2025.4/10 Release"
 
     client = utils.client(shop_name)
     rows = client.worksheet_rows(client.sheet_id, sheet_name)
@@ -18,5 +18,6 @@ def main():
         else:
             print(gid)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
