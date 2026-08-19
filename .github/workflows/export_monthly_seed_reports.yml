@@ -108,7 +108,7 @@ jobs:
               ARGS="$ARGS $YEAR $MONTH"
             fi
           fi
-          uv run python extract_monthly_reports.py $ARGS
+          uv run python brands/scripts/extract_monthly_seed_reports.py $ARGS
 
       - name: Cleanup
         if: always()

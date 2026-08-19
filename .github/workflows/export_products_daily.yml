@@ -65,7 +65,7 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
-          uv run export_products_to_csv.py
+          uv run brands/scripts/export_products_to_csv.py
 
       - name: Cleanup
         if: always()
