@@ -75,5 +75,17 @@ def main():
         "2026 Season Off Sale"
     )
 
+
+def create_collection_26ss_0821_sale():
+    from brands.apricotstudios.client import ApricotStudiosClient
+    from brands.apricotstudios.manage_sale import SKUS_26SS_0821_SALE
+
+    client = ApricotStudiosClient()
+    product_ids = {client.product_id_by_sku(sku) for sku in SKUS_26SS_0821_SALE}
+    logging.info(f"Creating collection from {len(product_ids)} products ({len(SKUS_26SS_0821_SALE)} SKUs)")
+    return client.collection_create_by_product_ids("26Spring~Summer Sale", product_ids)
+
+
+
 if __name__ == "__main__":
-    main()
+    create_collection_26ss_0821_sale()
