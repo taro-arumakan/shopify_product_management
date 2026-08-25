@@ -151,12 +151,34 @@ def colour_code(segment):
     return "".join(codes)
 
 
+#: The order sheet capitalises every style, but the live catalogue title-cases
+#: a collaborator's name -- ``STEREO x Eithan Osborne``, ``Reprise x Jack
+#: Freestone``. A new colourway has to match the siblings already on the store,
+#: and the store is not internally consistent about the base style, so the
+#: spellings are listed rather than derived. Keyed on the sheet's style with
+#: whitespace collapsed and upper-cased.
+STYLE_TITLES = {
+    "CANDY X FLOWERSHOP": "Candy x Flowershop NY",
+    "FREQUENCY X AUSTYN GILLETTE": "FREQUENCY x Austyn Gillette",
+    "GUILTY X THOMAS TOWNEND": "GUILTY x Thomas Townend",
+    "JACUZZI X JALEESA VINCENT": "JACUZZI x Jaleesa Vincent",
+    "REPRISE X JACK FREESTONE": "Reprise x Jack Freestone",
+    "STEREO X EITHAN OSBORNE": "STEREO x Eithan Osborne",
+}
+
+
+def style_title(style):
+    """The sheet's style as the store spells it, unchanged if it is not a collab."""
+    collapsed = " ".join(style.split())
+    return STYLE_TITLES.get(collapsed.upper(), collapsed)
+
+
 def to_shopify_product_title(style, colour):
     """``("TRINITY", "BLACK POLISHED / BLACK")`` -> ``"TRINITY BLKP/BLK"``."""
     segments = [segment.strip() for segment in colour.split("/") if segment.strip()]
     codes = [colour_code(segment) for segment in segments]
     assert codes and all(codes), f"no colour code from {colour!r} (style {style!r})"
-    return f"{' '.join(style.split())} {'/'.join(codes)}"
+    return f"{style_title(style)} {'/'.join(codes)}"
 
 
 class EpokheClient(EpokheSanityChecks, BrandClientBase):
@@ -201,6 +223,7 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
         super().__init__(*args, **kwargs)
         self._description_cache = {}
         self._brand_products = None
+        self._collections = None
 
     # ------------------------------------------------------------------
     # Sheet layout.  A=SKU B=STYLE C=COLOUR D=LENS E=REMARKS F=RRP(excl)
@@ -484,8 +507,43 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
         )
 
     # ------------------------------------------------------------------
-    # Post-create: productType and template have no place in ProductSetInput
+    # Post-create: productType, template and the two metafields every live
+    # EPOKHE product carries. None of them belong in ProductSetInput.
     # ------------------------------------------------------------------
+    #: All 143 EPOKHE products predating this batch carry both of these, so a
+    #: product created without them renders differently from its siblings:
+    #: global.title_tag is the SEO title (it backs product.seo.title), and
+    #: custom.product_collection is what the product-with-collection template
+    #: reads to show the rest of the style.
+    SEO_METAFIELD = ("global", "title_tag", "string")
+    COLLECTION_METAFIELD = ("custom", "product_collection", "collection_reference")
+
+    def seo_title(self, title, colour):
+        """``"WILSON ARMGRNP/GRN - Army Green Polished / Green"``."""
+        return f"{title} - {colour}"
+
+    def collection_gid_for(self, style):
+        """The gid of the style's collection, or None if it does not exist yet.
+
+        Collaborations sit in the base style's collection -- GUILTY x Thomas
+        Townend is in GUILTY -- so only the part before the ``x`` is looked up.
+        The collections are automated on ``TAG EQUALS <STYLE>``, so membership
+        follows from the tags; this metafield is the template's own pointer and
+        has to be set explicitly.
+        """
+        if self._collections is None:
+            self._collections = {
+                collection["title"].strip().upper(): collection["id"]
+                for collection in self.collections_by_query("")
+            }
+        base = style_title(style).split(" x ")[0].strip().upper()
+        gid = self._collections.get(base)
+        if not gid:
+            logger.warning(
+                f"no collection titled {base!r}, leaving the metafield unset"
+            )
+        return gid
+
     def post_process_product_input(self, process_product_input_res, product_input):
         product_id = process_product_input_res["create_product"]["id"]
         self.update_product_attributes(
@@ -493,6 +551,22 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
             ["productType", "templateSuffix"],
             [self.product_type_for(product_input), self.TEMPLATE_SUFFIX],
         )
+        metafields = [
+            dict(
+                zip(("namespace", "key", "type"), self.SEO_METAFIELD),
+                value=self.seo_title(
+                    product_input["title"], product_input["options"][0]["Color"]
+                ),
+            )
+        ]
+        if gid := self.collection_gid_for(product_input["style"]):
+            metafields.append(
+                dict(
+                    zip(("namespace", "key", "type"), self.COLLECTION_METAFIELD),
+                    value=gid,
+                )
+            )
+        self.metafields_set(product_id, metafields)
 
     # ------------------------------------------------------------------
     # Which rows are new: the sheet marks them with a yellow fill

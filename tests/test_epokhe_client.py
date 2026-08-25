@@ -6,7 +6,12 @@ build Google and Shopify clients -- the same trick tests/golden/manifest.py uses
 
 import pytest
 
-from brands.leisureallstars.client import EpokheClient, to_shopify_product_title
+from brands.leisureallstars.client import (
+    STYLE_TITLES,
+    EpokheClient,
+    style_title,
+    to_shopify_product_title,
+)
 
 
 @pytest.fixture
@@ -35,6 +40,53 @@ def client():
 )
 def test_to_shopify_product_title(style, colour, expected):
     assert to_shopify_product_title(style, colour) == expected
+
+
+@pytest.mark.parametrize(
+    "style, expected",
+    [
+        # The sheet shouts; the store title-cases the collaborator.
+        ("STEREO x EITHAN OSBORNE", "STEREO x Eithan Osborne"),
+        ("REPRISE  x JACK FREESTONE", "Reprise x Jack Freestone"),
+        ("GUILTY x THOMAS TOWNEND", "GUILTY x Thomas Townend"),
+        # Not a collaboration, so the sheet's own spelling stands.
+        ("WILSON", "WILSON"),
+        ("DYLAN  ZERO", "DYLAN ZERO"),
+    ],
+)
+def test_style_title(style, expected):
+    assert style_title(style) == expected
+
+
+def test_seo_title(client):
+    assert (
+        client.seo_title("WILSON ARMGRNP/GRN", "Army Green Polished / Green")
+        == "WILSON ARMGRNP/GRN - Army Green Polished / Green"
+    )
+
+
+def test_collection_gid_for_uses_the_base_style(client):
+    # A collaboration belongs in the base style's collection, so only the part
+    # before the "x" is looked up.
+    client._collections = {"GUILTY": "gid://shopify/Collection/1", "DOME": "gid://2"}
+    assert client.collection_gid_for("GUILTY x THOMAS TOWNEND") == (
+        "gid://shopify/Collection/1"
+    )
+    assert client.collection_gid_for("DOME") == "gid://2"
+
+
+def test_collection_gid_for_returns_none_when_the_collection_is_missing(client):
+    # 12 of the new styles have no collection yet; the metafield is left unset
+    # rather than pointing at the wrong one.
+    client._collections = {"GUILTY": "gid://shopify/Collection/1"}
+    assert client.collection_gid_for("CORE CAP") is None
+
+
+def test_style_titles_keys_are_normalised():
+    # style_title looks the key up upper-cased with whitespace collapsed, so a
+    # key that is not already in that form would never match.
+    for key in STYLE_TITLES:
+        assert key == " ".join(key.split()).upper()
 
 
 def test_to_shopify_product_title_ignores_a_trailing_slash():
