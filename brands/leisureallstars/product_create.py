@@ -68,6 +68,12 @@ def skus_to_create(client):
     already = (highlighted & on_store) - ALREADY_LIVE
     if already:
         logger.info(f"skipping {len(already)} already created: {sorted(already)}")
+        # This is a resumed run, so it must not strip New Arrival from the
+        # products the earlier attempt created -- they are the same drop.
+        # BrandClientBase.process_sheet_to_products does exactly this when
+        # restart_at_product_title is given; skipping by SKU needs it too.
+        client.remove_existing_new_product_indicators = False
+        logger.info("resuming, so existing New Arrival indicators are left alone")
     return highlighted - ALREADY_LIVE - no_images - on_store, no_images
 
 
