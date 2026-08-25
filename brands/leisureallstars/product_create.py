@@ -26,7 +26,7 @@ FIRST_DATA_ROW = 12
 LAST_DATA_ROW = 124
 
 SCHEDULED_TIME = datetime.datetime(
-    2026, 9, 1, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+    2026, 8, 26, 10, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
 )
 
 #: Highlighted yellow by mistake -- already live as TRINITY BP/B with this SKU.
@@ -36,9 +36,7 @@ ALREADY_LIVE = {"0993-BLKPOBLK"}
 def build_client():
     return EpokheClient(
         product_sheet_start_row=START_ROW,
-        # The store is multi-vendor (ATLAS, AFENDS, ...) and the base's cleanup
-        # is shop-wide, so it would strip "New Arrival" from other brands.
-        remove_existing_new_product_indicators=False,
+        remove_existing_new_product_indicators=True,
         products_season_tag=SEASON_TAG,
     )
 
@@ -57,7 +55,20 @@ def skus_to_create(client):
         for sku, source in image_mapping.SKU_IMAGE_SOURCE.items()
         if source[2] == image_mapping.TODO
     }
-    return highlighted - ALREADY_LIVE - no_images, no_images
+    # Anything already on the store is skipped, so an interrupted run can simply
+    # be started again rather than needing restart_at_product_title. Without
+    # this the sanity check refuses to go on, because the products created by
+    # the previous attempt collide on SKU and handle.
+    on_store = {
+        (variant["sku"] or "").strip()
+        for product in client.products_by_query(f"vendor:'{client.VENDOR}'")
+        for variant in product["variants"]["nodes"]
+        if (variant["sku"] or "").strip()
+    }
+    already = (highlighted & on_store) - ALREADY_LIVE
+    if already:
+        logger.info(f"skipping {len(already)} already created: {sorted(already)}")
+    return highlighted - ALREADY_LIVE - no_images - on_store, no_images
 
 
 def dry_run():
@@ -145,4 +156,4 @@ def main():
 
 
 if __name__ == "__main__":
-    dry_run()
+    main()

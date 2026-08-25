@@ -53,7 +53,7 @@ COLOUR_CODES = {
     "GRADIENT": "GRD",
     "GUN": "GUN",
     "METAL": "MTL",
-    "GUNPOLISHED": "GUNP",
+    "GUNMETAL": "GUNMTL",
     "CRYSTAL": "CRY",
     "COLA": "COL",
     "CAMO": "CAM",
@@ -72,6 +72,9 @@ COLOUR_CODES = {
     "TREE": "TRE",
     "TAN": "TAN",
     "TOBACCO": "TOB",
+    # SMOKE and SMOKED are both the brand's own wording on different
+    # colourways ("Beige Smoke Polished", "Smoked Crystal Polished"),
+    # so neither is a typo -- they never co-occur within one style.
     "SMOKE": "SMK",
     "SMOKED": "SMK",
     "SILVER": "SLV",
@@ -111,6 +114,10 @@ COLOUR_CODES = {
 }
 
 #: Finishes collapse to a single trailing letter so codes stay short.
+#: The misspellings below -- POLOSHED, PORALIZED, the British POLARISED, and
+#: MATT -- have been corrected at source in the order sheet. They are kept
+#: here so an older sheet, or a fresh typo, still yields the right code
+#: instead of a warning and a wrong title.
 FINISH_CODES = {
     "POLISHED": "P",
     "POLOSHED": "P",
@@ -372,6 +379,32 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
                 break
         self._description_cache[style] = match
         return match
+
+    def remove_existing_new_proudct_tags(self):
+        """Clear the New Arrival tag from THIS brand's products only.
+
+        (The misspelling is the base class's; it has to match to override.)
+
+        leisureallstars is multi-vendor -- ATLAS, AFENDS, Standard Procedure and
+        WHATYOUTH JAPAN all live here -- while the inherited implementation
+        queries the tag shop-wide and would strip it from every one of them.
+        Every other brand client runs on a single-brand store, so that has never
+        mattered before.
+        """
+        # vendor is not in the default selection, so it has to be asked for --
+        # without it every product would look like someone else's and be skipped.
+        for product in self.products_by_tag(
+            self.NEW_PRODUCT_TAG, additional_fields=["vendor"]
+        ):
+            if product["vendor"] != self.VENDOR:
+                logger.info(
+                    f"leaving {self.NEW_PRODUCT_TAG} on {product['title']} "
+                    f"({product.get('vendor')}) -- not ours to clear"
+                )
+                continue
+            logger.info(f"removing {self.NEW_PRODUCT_TAG} tag from {product['title']}")
+            tags = [t for t in product["tags"] if t != self.NEW_PRODUCT_TAG]
+            self.update_product_tags(product_id=product["id"], tags=",".join(tags))
 
     def description_source(self, product_input):
         """``("live"|"drafted", html)`` for this product, or ``(None, None)``.
