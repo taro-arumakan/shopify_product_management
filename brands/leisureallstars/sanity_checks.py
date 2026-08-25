@@ -41,7 +41,16 @@ class EpokheSanityChecks:
                     f"`python -m brands.leisureallstars.verify_local_images`"
                 )
             elif len(files) < EXPECTED_MIN_IMAGES:
-                errors.append(f"only {len(files)} local images for {label}")
+                # The threshold exists to catch a partial download of the share.
+                # A storefront-sourced folder holds exactly what the brand
+                # publishes, so a short set there is expected, not broken.
+                if image_mapping.STOREFRONT_DIR in (_path or ""):
+                    logger.warning(
+                        f"only {len(files)} images for {label}, but that is all "
+                        f"epokhe.co publishes"
+                    )
+                else:
+                    errors.append(f"only {len(files)} local images for {label}")
             if confidence == image_mapping.CHECK:
                 # A warning, not an error: sanity_check_product_inputs raises on
                 # any non-empty return, and these are eyeball items not blockers.

@@ -28,6 +28,13 @@ SHARED_LINK_ROOT = "https://www.dropbox.com/scl/fo/z0gsgmn2qasobxu8e1pdx/h"
 EYEWEAR_ROOT = "/1_EYEWEAR/1_COLLECTION"
 HEADWEAR_ROOT = "/2_OBJECTS"
 
+#: Images for four headwear SKUs are absent from the Dropbox share. They were
+#: taken instead from EPOKHE's own storefront, which serves the same 2882x3600
+#: web-res exports -- the brand and the shop owner have a standing agreement
+#: covering EPOKHE marketing in Japan. Their paths start with this prefix so it
+#: is obvious at a glance where they came from.
+STOREFRONT_DIR = "/from_epokhe_co"
+
 EXACT, HIGH, CHECK, TODO = "exact", "high", "check", "todo"
 
 #: Sheet ``スタイル`` value -> Dropbox style folder under :data:`EYEWEAR_ROOT`.
@@ -255,12 +262,12 @@ SKU_IMAGE_SOURCE.update(
             "in the S226 folder despite the -S126 SKU; files read ACORE for CORE",
         ),
         "EPK-092-OS-S126": (
+            f"{STOREFRONT_DIR}/EPK-092-OS-S126",
             None,
-            None,
-            TODO,
-            "CORE HAT WASH BROWN -- no folder found in the share. The product is"
-            "epokhe.co/products/epokhe-core-cap-wash-brown-pink-logo, which carries 3"
-            "images at the same 2882x3600 web res.",
+            HIGH,
+            "3 images, taken from"
+            "epokhe.co/products/epokhe-core-cap-wash-brown-pink-logo -- not in the"
+            "Dropbox share",
         ),
         # --- ASHFALL CAP ------------------------------------------------------
         "EPK-094-OS-S126": (
@@ -352,29 +359,28 @@ SKU_IMAGE_SOURCE.update(
             "epokhe.co/products/epokhe-thomas-townend-art-series-hat-maroon-copper",
         ),
         "EPK-021-OS": (
+            f"{STOREFRONT_DIR}/EPK-021-OS",
             None,
-            None,
-            TODO,
-            "TT ART SERIES Black / Off White -- no folder found in the share. The"
-            "product is"
-            "epokhe.co/products/epokhe-thomas-townend-art-series-hat-black-off-white,"
-            "which carries 6 images at 2882x3600.",
+            HIGH,
+            "6 images, taken from"
+            "epokhe.co/products/epokhe-thomas-townend-art-series-hat-black-off-white"
+            "-- not in the Dropbox share",
         ),
         "EPK-087-OS": (
+            f"{STOREFRONT_DIR}/EPK-087-OS",
             None,
-            None,
-            TODO,
-            "TT ART SERIES CAMO / YELLOW -- no folder found in the share. The product"
-            "is epokhe.co/products/epokhe-thomas-townend-art-series-hat-camo-yellow,"
-            "which carries 5 images at 2882x3600.",
+            HIGH,
+            "5 images, taken from"
+            "epokhe.co/products/epokhe-thomas-townend-art-series-hat-camo-yellow --"
+            "not in the Dropbox share",
         ),
         "EPK-089-OS": (
+            f"{STOREFRONT_DIR}/EPK-089-OS",
             None,
-            None,
-            TODO,
-            "TT ART SERIES KHAKI PINK -- no folder found in the share. The product is"
-            "epokhe.co/products/epokhe-thomas-townend-art-series-hat-khaki-pink, which"
-            "carries 6 images at 2882x3600.",
+            HIGH,
+            "6 images, taken from"
+            "epokhe.co/products/epokhe-thomas-townend-art-series-hat-khaki-pink -- not"
+            "in the Dropbox share",
         ),
     }
 )
