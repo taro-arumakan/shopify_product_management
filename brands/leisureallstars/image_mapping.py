@@ -76,21 +76,22 @@ SKU_IMAGE_SOURCE = {
     "9006-BLKPOBLK": (
         "42_EMBER/WEB RES JPEG (2882x3600) 2/BLACK_PO_BLK",
         None,
-        CHECK,
-        "matched on folder abbreviation, filenames carry no SKU",
+        HIGH,
+        "confirmed against epokhe.co/products/ember-black-polished-black",
     ),
     "9006-DKTORPOBRZP": (
         "42_EMBER/WEB RES JPEG (2882x3600) 2/DKTOR_PO_BRZP",
         None,
-        CHECK,
-        "matched on folder abbreviation, filenames carry no SKU",
+        HIGH,
+        "confirmed against"
+        "epokhe.co/products/ember-dark-tortoise-polished-bronze-polarized",
     ),
     "9006-BRNPOBRN": (
         "42_EMBER/WEB RES JPEG (2882x3600) 2/MAP_PO_BRN",
         None,
-        CHECK,
-        "only remaining EMBER folder, but it reads MAPLE while the sheet "
-        "says BROWN POLISHED / BROWN -- confirm with the owner",
+        HIGH,
+        "folder is misnamed MAP (maple) but holds the brown colourway -- confirmed"
+        "against epokhe.co/products/ember-brown-polished-brown",
     ),
     # --- FREQUENCY x AUSTYN GILLETTE -------------------------------------
     "1000-OLVPOJDE": (
@@ -120,15 +121,16 @@ SKU_IMAGE_SOURCE = {
     "9013-BLKPOBLK": (
         "43_JACUZZI/WEB_RES",
         "JUJU THICK BLACK",
-        CHECK,
-        "colour inferred from filename only",
+        HIGH,
+        "confirmed against"
+        "epokhe.co/products/jacuzzi-x-jalessa-vincent-black-polished-black",
     ),
     "9013-DKTORPOBRN": (
         "43_JACUZZI/WEB_RES",
         "JUJU THICK TAN",
-        CHECK,
-        "TAN assumed to be DARK TORTOISE POLISHED / BROWN -- confirm; "
-        "the unused third set is JUJU THICK PINK",
+        HIGH,
+        "TAN is the DARK TORTOISE / BROWN colourway -- confirmed against epokhe.co."
+        "The unused JUJU THICK PINK set is 9013-PIKPOPIKI, not in this order",
     ),
     # --- PANO -------------------------------------------------------------
     "9011-BLKPOBLKP": ("41_PANO/2_BLACK_PO_BLK/WEB JPEG", None, EXACT, ""),
@@ -256,7 +258,9 @@ SKU_IMAGE_SOURCE.update(
             None,
             None,
             TODO,
-            "CORE HAT WASH BROWN -- no matching folder found",
+            "CORE HAT WASH BROWN -- no folder found in the share. The product is"
+            "epokhe.co/products/epokhe-core-cap-wash-brown-pink-logo, which carries 3"
+            "images at the same 2882x3600 web res.",
         ),
         # --- ASHFALL CAP ------------------------------------------------------
         "EPK-094-OS-S126": (
@@ -272,11 +276,12 @@ SKU_IMAGE_SOURCE.update(
             "",
         ),
         "EPK-095-OS-S126": (
-            None,
-            None,
-            TODO,
-            "ASHFALL CAP WASHED / REAL TREE CAMO -- only the PINK REAL TREE "
-            "colourway exists in S126",
+            _HAT_S226,
+            "NO CODE HAT",
+            HIGH,
+            "filed under the placeholder name NO CODE HAT in the S226 folder --"
+            "confirmed against"
+            "epokhe.co/products/epokhe-ashfall-cap-washed-real-tree-camo",
         ),
         # --- INFERNO CAP ------------------------------------------------------
         "EPK-099-OS-S126": (
@@ -341,26 +346,35 @@ SKU_IMAGE_SOURCE.update(
         "EPK-023-OS": (
             f"{_HAT_S126}/Epokhe Thomas Townend Art Series Cap - CHOCOLATE COPPER",
             None,
-            CHECK,
-            "sheet says MAROON / COPPER, folder says CHOCOLATE COPPER -- confirm",
+            HIGH,
+            "folder is misnamed CHOCOLATE but holds the maroon colourway -- confirmed"
+            "against"
+            "epokhe.co/products/epokhe-thomas-townend-art-series-hat-maroon-copper",
         ),
         "EPK-021-OS": (
             None,
             None,
             TODO,
-            "TT ART SERIES Black / Off White -- no matching folder found",
+            "TT ART SERIES Black / Off White -- no folder found in the share. The"
+            "product is"
+            "epokhe.co/products/epokhe-thomas-townend-art-series-hat-black-off-white,"
+            "which carries 6 images at 2882x3600.",
         ),
         "EPK-087-OS": (
             None,
             None,
             TODO,
-            "TT ART SERIES CAMO / YELLOW -- no matching folder found",
+            "TT ART SERIES CAMO / YELLOW -- no folder found in the share. The product"
+            "is epokhe.co/products/epokhe-thomas-townend-art-series-hat-camo-yellow,"
+            "which carries 5 images at 2882x3600.",
         ),
         "EPK-089-OS": (
             None,
             None,
             TODO,
-            "TT ART SERIES KHAKI PINK -- no matching folder found",
+            "TT ART SERIES KHAKI PINK -- no folder found in the share. The product is"
+            "epokhe.co/products/epokhe-thomas-townend-art-series-hat-khaki-pink, which"
+            "carries 6 images at 2882x3600.",
         ),
     }
 )
