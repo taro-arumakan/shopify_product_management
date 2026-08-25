@@ -21,23 +21,135 @@ import os
 import string
 
 from brands.client.brandclientbase import BrandClientBase
-from brands.leisureallstars import image_mapping
+from brands.leisureallstars import descriptions, image_mapping
 from brands.leisureallstars.sanity_checks import EpokheSanityChecks
 
 logger = logging.getLogger(__name__)
 
 
-def to_shopify_product_title(style, colour):
-    """``("TRINITY", "BLACK POLISHED / BLACK")`` -> ``"TRINITY BP/B"``.
+#: Canonical code for every colour word in the EPOKHE vocabulary.
+#:
+#: A single initial cannot work: BLACK, BROWN, BRONZE, BLUE, BONE, BEIGE,
+#: BERRY, BLOOD, BURNT and BUTTER all begin with B, and the live catalogue
+#: abbreviates BLACK as B, BK and BLK on different products. Three letters per
+#: colour word is the shortest length that is unambiguous across the whole
+#: vocabulary. Dropping leading qualifiers to shorten the code is not safe --
+#: DARK TORTOISE POLISHED / GREEN POLARIZED and TORTOISE POLISHED / GREEN
+#: POLARIZED would both become TORP/GRNP.
+COLOUR_CODES = {
+    "BLACK": "BLK",
+    "BROWN": "BRN",
+    "BRONZE": "BRZ",
+    "BLUE": "BLU",
+    "BONE": "BON",
+    "BEIGE": "BEI",
+    "BERRY": "BER",
+    "BLOOD": "BLD",
+    "BURNT": "BNT",
+    "BUTTER": "BTR",
+    "GREEN": "GRN",
+    "GREY": "GRY",
+    "GOLD": "GLD",
+    "GRADIENT": "GRD",
+    "GUN": "GUN",
+    "METAL": "MTL",
+    "GUNPOLISHED": "GUNP",
+    "CRYSTAL": "CRY",
+    "COLA": "COL",
+    "CAMO": "CAM",
+    "CITRINE": "CIT",
+    "CARBON": "CRB",
+    "CHARCOAL": "CHR",
+    "CLASSIC": "CLS",
+    "CONCRETE": "CNC",
+    "CONTRAST": "CNT",
+    "COPPER": "CPR",
+    "MAPLE": "MAP",
+    "MAUVE": "MAU",
+    "MAROON": "MAR",
+    "MARBLE": "MRB",
+    "TORTOISE": "TOR",
+    "TREE": "TRE",
+    "TAN": "TAN",
+    "TOBACCO": "TOB",
+    "SMOKE": "SMK",
+    "SMOKED": "SMK",
+    "SILVER": "SLV",
+    "SCARLET": "SCR",
+    "SEPIA": "SEP",
+    "STITCH": "STC",
+    "REAL": "REA",
+    "RAINBOW": "RBW",
+    "RED": "RED",
+    "ROOTBEER": "RTB",
+    "ROSEWATER": "ROS",
+    "IRIDIUM": "IRI",
+    "IVORY": "IVY",
+    "ICED": "ICE",
+    "HAVANA": "HAV",
+    "HAVANNA": "HAV",
+    "HAZEL": "HAZ",
+    "AMBER": "AMB",
+    "ARMY": "ARM",
+    "ANTHRACITE": "ANT",
+    "OLIVE": "OLV",
+    "OFF": "OFF",
+    "WHITE": "WHT",
+    "PINK": "PNK",
+    "VELVET": "VLV",
+    "WASHED": "WSH",
+    "WASH": "WSH",
+    "DARK": "DK",
+    "LIGHT": "LT",
+    "EMERALD": "EMR",
+    "FOREST": "FST",
+    "JADE": "JDE",
+    "KHAKI": "KHK",
+    "YELLOW": "YEL",
+    "ZERO": "ZRO",
+    "DEAD": "DED",
+}
 
-    Each slash-separated colour segment collapses to the initials of its words.
-    Uses ``split()`` rather than ``split(" ")`` so a double space in a
-    hand-maintained cell yields no empty segment.
+#: Finishes collapse to a single trailing letter so codes stay short.
+FINISH_CODES = {
+    "POLISHED": "P",
+    "POLOSHED": "P",
+    "POLARIZED": "P",
+    "POLARISED": "P",
+    "PORALIZED": "P",
+    "MATTE": "M",
+    "MATT": "M",
+    "GLOSS": "G",
+}
+
+
+def colour_code(segment):
+    """One slash-separated colour segment to its code.
+
+    ``"BLACK POLISHED"`` -> ``"BLKP"``, ``"BLACK"`` -> ``"BLK"``.
+    An unrecognised word falls back to its first three letters.
     """
-    segments = [segment.strip() for segment in colour.split("/")]
-    initials = ["".join(word[0] for word in segment.split()) for segment in segments]
-    assert all(initials), f"empty colour initial from {colour!r} (style {style!r})"
-    return f"{' '.join(style.split())} {'/'.join(initials)}"
+    codes = []
+    for word in segment.split():
+        key = word.upper().strip(",-")
+        if key in FINISH_CODES and codes:
+            codes.append(FINISH_CODES[key])
+        elif key in COLOUR_CODES:
+            codes.append(COLOUR_CODES[key])
+        elif key in FINISH_CODES:
+            codes.append(FINISH_CODES[key])
+        else:
+            logger.warning(f"no colour code for {word!r}, using {key[:3]!r}")
+            codes.append(key[:3])
+    return "".join(codes)
+
+
+def to_shopify_product_title(style, colour):
+    """``("TRINITY", "BLACK POLISHED / BLACK")`` -> ``"TRINITY BLKP/BLK"``."""
+    segments = [segment.strip() for segment in colour.split("/") if segment.strip()]
+    codes = [colour_code(segment) for segment in segments]
+    assert codes and all(codes), f"no colour code from {colour!r} (style {style!r})"
+    return f"{' '.join(style.split())} {'/'.join(codes)}"
 
 
 class EpokheClient(EpokheSanityChecks, BrandClientBase):
@@ -52,8 +164,10 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
     #: Every live EPOKHE product uses this template.
     TEMPLATE_SUFFIX = "product-with-collection"
     EYEWEAR_PRODUCT_TYPE = "サングラス"
-    #: No headwear exists on the store yet, so there is no precedent to copy.
-    HEADWEAR_PRODUCT_TYPE = None
+    #: No EPOKHE headwear exists yet, but the store already carries one cap --
+    #: AFENDS "VIBRATION - ヘンプキャップ" -- typed メンズキャップ and tagged HEADWEAR.
+    #: Following it keeps the collections and theme filters working.
+    HEADWEAR_PRODUCT_TYPE = "メンズキャップ"
     #: Headwear SKUs are the EPK-* family; eyewear SKUs are numeric style codes.
     HEADWEAR_SKU_PREFIX = "EPK-"
 
@@ -62,8 +176,8 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
     BASE_TAGS = ["all"]
     #: What the 143 live eyewear products carry.
     EYEWEAR_TAGS = ["EPØKHE EYEWEAR", "sunglasses"]
-    #: No hats on the store yet, so the category tag is an owner decision.
-    HEADWEAR_TAGS = []
+    #: Matches the AFENDS cap already on the store.
+    HEADWEAR_TAGS = ["HEADWEAR"]
 
     #: Titles that the initials rule cannot make unique. Two colourways can
     #: collapse to the same initials -- BLACK POLISHED / BLACK and BROWN
@@ -79,6 +193,7 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._description_cache = {}
+        self._brand_products = None
 
     # ------------------------------------------------------------------
     # Sheet layout.  A=SKU B=STYLE C=COLOUR D=LENS E=REMARKS F=RRP(excl)
@@ -241,9 +356,12 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
         # Collaboration styles ("GUILTY x THOMAS TOWEND") sit under the base
         # style's tag on the store.
         base_style = style.split(" X ")[0].strip()
-        products = self.products_by_query(
-            f"vendor:'{self.VENDOR}'", additional_fields=["descriptionHtml"]
-        )
+        if getattr(self, "_brand_products", None) is None:
+            # One fetch for the whole run; a query per style is far too slow.
+            self._brand_products = self.products_by_query(
+                f"vendor:'{self.VENDOR}'", additional_fields=["descriptionHtml"]
+            )
+        products = self._brand_products
         match = None
         for candidate in products:
             tags = [t.upper() for t in candidate["tags"]]
@@ -255,12 +373,26 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
         self._description_cache[style] = match
         return match
 
+    def description_source(self, product_input):
+        """``("live"|"drafted", html)`` for this product, or ``(None, None)``.
+
+        A live sibling wins so colourways of one style cannot drift apart;
+        :mod:`.descriptions` covers the styles new to the store.
+        """
+        style = product_input["style"]
+        if live := self.description_html_by_style(style):
+            return "live", live
+        if drafted := descriptions.description_html(style):
+            return "drafted", drafted
+        return None, None
+
     def get_description_html(self, product_input):
-        description = self.description_html_by_style(product_input["style"])
+        style = product_input["style"]
+        _source, description = self.description_source(product_input)
         assert description, (
-            f"no live product shares the style {product_input['style']!r}, so there is "
-            f"no Japanese copy to reuse for {product_input['sku']}. Supply the "
-            f"description before creating this product."
+            f"no copy for style {style!r} ({product_input['sku']}): no live product "
+            f"shares it and brands.leisureallstars.descriptions has no entry. Add one "
+            f"before creating this product."
         )
         return description
 

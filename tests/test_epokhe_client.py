@@ -19,23 +19,42 @@ def client():
 @pytest.mark.parametrize(
     "style, colour, expected",
     [
-        ("TRINITY", "BLACK POLISHED / BLACK", "TRINITY BP/B"),
-        ("DOME", "GUN METAL POLISHED / BLACK PORALIZED", "DOME GMP/BP"),
-        ("VOID", "CRYSTAL DARK TORTOISE POLISHED / BRONZE", "VOID CDTP/B"),
-        ("CORE HAT", "WASHED BLACK", "CORE HAT WB"),
-        # A doubled space in a hand-maintained cell must not produce an empty
-        # initial -- this is why the rule uses split() rather than split(" ").
-        ("DYLAN  ZERO", "MAPLE POLISHED  / BROWN", "DYLAN ZERO MP/B"),
-        ("STEREO", "TORTOISE POLISHED / GREEN POLARIZED ", "STEREO TP/GP"),
+        ("TRINITY", "BLACK POLISHED / BLACK", "TRINITY BLKP/BLK"),
+        ("DOME", "GUN METAL POLISHED / BLACK PORALIZED", "DOME GUNMTLP/BLKP"),
+        ("VOID", "CRYSTAL DARK TORTOISE POLISHED / BRONZE", "VOID CRYDKTORP/BRZ"),
+        ("CORE HAT", "WASHED BLACK", "CORE HAT WSHBLK"),
+        # A doubled space in a hand-maintained cell must not break the split.
+        ("DYLAN  ZERO", "MAPLE POLISHED  / BROWN", "DYLAN ZERO MAPP/BRN"),
+        ("STEREO", "TORTOISE POLISHED / GREEN POLARIZED ", "STEREO TORP/GRNP"),
+        # The whole point of the codebook: these four no longer collide.
+        ("DOME", "BLACK POLISHED / BLACK", "DOME BLKP/BLK"),
+        ("DOME", "BROWN POLISHED / BROWN", "DOME BRNP/BRN"),
+        ("CORE HAT", "WASH BROWN", "CORE HAT WSHBRN"),
+        ("SUPERSTAR", "BROWN POLISHED / BROWN", "SUPERSTAR BRNP/BRN"),
     ],
 )
 def test_to_shopify_product_title(style, colour, expected):
     assert to_shopify_product_title(style, colour) == expected
 
 
-def test_to_shopify_product_title_rejects_empty_segment():
-    with pytest.raises(AssertionError):
-        to_shopify_product_title("DYLAN", "BLACK POLISHED /")
+def test_to_shopify_product_title_ignores_a_trailing_slash():
+    # A stray trailing slash carries no colour, so it is dropped rather than
+    # producing an empty code.
+    assert to_shopify_product_title("DYLAN", "BLACK POLISHED /") == "DYLAN BLKP"
+
+
+def test_colour_codes_are_unambiguous():
+    from brands.leisureallstars.client import COLOUR_CODES
+
+    # Any two colour words sharing a code must be spelling variants of the same
+    # word -- SMOKE/SMOKED, WASH/WASHED, HAVANA/HAVANNA.
+    by_code = {}
+    for word, code in COLOUR_CODES.items():
+        by_code.setdefault(code, []).append(word)
+    for code, words in by_code.items():
+        if len(words) > 1:
+            stems = {w[:4] for w in words}
+            assert len(stems) == 1, f"{code} is shared by unrelated words: {words}"
 
 
 def test_column_maps_group_by_sku(client):
@@ -76,10 +95,10 @@ def test_headwear_is_detected_by_sku_prefix(client):
     assert not client.is_headwear({"sku": "9012-BLKPOBLK"})
 
 
-def test_product_type_refuses_to_guess_for_headwear(client):
+def test_product_type_follows_the_store(client):
     assert client.product_type_for({"sku": "9012-BLKPOBLK"}) == "サングラス"
-    with pytest.raises(AssertionError, match="HEADWEAR_PRODUCT_TYPE"):
-        client.product_type_for({"sku": "EPK-090-OS-S126"})
+    # Matches the AFENDS cap already on the store.
+    assert client.product_type_for({"sku": "EPK-090-OS-S126"}) == "メンズキャップ"
 
 
 def test_tags_split_by_category_and_carry_the_lens(client):
@@ -94,4 +113,4 @@ def test_tags_split_by_category_and_carry_the_lens(client):
     headwear = client.get_tags_from_product_input(
         {"sku": "EPK-090-OS-S126", "style": "CORE HAT", "lens": ""}
     )
-    assert headwear == ["all", "CORE HAT"]
+    assert headwear == ["all", "HEADWEAR", "CORE HAT"]

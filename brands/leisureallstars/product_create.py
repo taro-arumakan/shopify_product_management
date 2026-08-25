@@ -105,18 +105,19 @@ def dry_run():
         print(f"  tags           : {client.get_tags(product_input, None)}")
         print(f"  sku -> stock   : {client.get_sku_stocks_map(product_input)}")
         print(f"  images ({len(images)})     : {[os.path.basename(p) for p in images]}")
-        if not client.description_html_by_style(product_input["style"]):
+        source, _html = client.description_source(product_input)
+        if source is None:
             missing_copy.append(product_input["sku"])
-            print(
-                "  description    : *** NONE -- no live product shares this style ***"
-            )
-        else:
+            print("  description    : *** NONE -- no copy for this style ***")
+        elif source == "live":
             print("  description    : reused from a live product of the same style")
+        else:
+            print("  description    : brands.leisureallstars.descriptions")
 
     if missing_copy:
         print(
             f"\n{len(missing_copy)} of {len(product_inputs)} products have no Japanese "
-            f"copy to reuse and would fail on create:\n  {sorted(missing_copy)}"
+            f"copy and would fail on create:\n  {sorted(missing_copy)}"
         )
     print("\nNext: client.sanity_check_sheet(...) runs queries only, no writes.")
     return client, product_inputs
