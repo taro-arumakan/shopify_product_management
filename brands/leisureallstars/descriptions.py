@@ -22,15 +22,15 @@ SOURCES = {
     "VOID": "https://epokhe.co/collections/sunglasses/products/void-black-polished-black",
     "PANO": "https://epokhe.co/collections/sunglasses/products/pano-black-polished-amber",
     "REALM": "https://epokhe.co/collections/sunglasses/products/realm-black-polished-black-polarized",
-    "JACUZZZI x JALEESSA VINCENT": "https://epokhe.co/collections/sunglasses/products/jacuzzi-x-jalessa-vincent-black-polished-black",
+    "JACUZZI x JALEESA VINCENT": "https://epokhe.co/collections/sunglasses/products/jacuzzi-x-jalessa-vincent-black-polished-black",
     "EMBER": "https://epokhe.co/collections/sunglasses/products/ember-black-polished-black",
-    "CORE HAT": None,
+    "CORE CAP": None,
     "ASHFALL CAP": None,
     "CAVE TRUCKER": None,
     "INFERNO CAP": None,
     "STELLAR CAP": None,
-    "TUNDRA TRACKER CAP": None,
-    "THOMAS TOWNEND ART SERIES HAT": None,
+    "TUNDRA TRUCKER CAP": None,
+    "THOMAS TOWNEND ART SERIES CAP": None,
 }
 
 #: Which house format each style uses.
@@ -39,15 +39,15 @@ FORMATS = {
     "VOID": "eyewear",
     "PANO": "eyewear",
     "REALM": "eyewear",
-    "JACUZZZI x JALEESSA VINCENT": "eyewear",
+    "JACUZZI x JALEESA VINCENT": "eyewear",
     "EMBER": "eyewear",
-    "CORE HAT": "headwear",
+    "CORE CAP": "headwear",
     "ASHFALL CAP": "headwear",
     "CAVE TRUCKER": "headwear",
     "INFERNO CAP": "headwear",
     "STELLAR CAP": "headwear",
-    "TUNDRA TRACKER CAP": "headwear",
-    "THOMAS TOWNEND ART SERIES HAT": "headwear",
+    "TUNDRA TRUCKER CAP": "headwear",
+    "THOMAS TOWNEND ART SERIES CAP": "headwear",
 }
 
 _RAW = {
@@ -99,7 +99,7 @@ _RAW = {
 <p data-mce-fragment="1"><br></p>
 <p data-mce-fragment="1"><strong data-mce-fragment="1">Lens / レンズ</strong></p>
 <p><span>Polarized CR39 Lens / 偏光 CR39レンズ</span><span><br> </span><span>100% UV protection / 100% UVプロテクション</span><span><br> </span><span>Scratch Resistant / スクラッチレジスタント（傷が付きにくい仕様）</span><span><br> </span><span>RX / Prescription Compatible / 度付きレンズ対応</span></p>""",
-    "JACUZZZI x JALEESSA VINCENT": """<meta charset="UTF-8">
+    "JACUZZI x JALEESA VINCENT": """<meta charset="UTF-8">
 <p data-mce-fragment="1"> </p>
 <p>ハイグロスのエネルギーを、2000年代初頭のグラマーに沈めて。</p>
 <p>Jaleesa Vincent とともにデザインされた、EPOKHE の新作フレーム JACUZZI。鮮烈な青い水のなかへ解き放たれたようなハイグロスの輝きが、2000年代初頭のグラマラスな空気を呼び起こします。ファッションを起点にした精緻な設計は、遊び心とシャープさを併せ持ち、力強く華やか。大胆で、時代の先を示すような、意図して遊び心を効かせた一本です。</p>
@@ -122,7 +122,7 @@ _RAW = {
 <p data-mce-fragment="1"><br></p>
 <p data-mce-fragment="1"><strong data-mce-fragment="1">Lens / レンズ</strong></p>
 <p><span>CR39 Lens / CR39 レンズ</span><span><br> </span><span>Scratch-Resistant / 傷がつきにくい仕様</span><span><br> </span><span>100% UVA & UVB protection / 100% UVA・UVB プロテクション</span></p>""",
-    "CORE HAT": """<p data-mce-fragment="1"><b style="font-size: 0.875rem;">丈夫なコットンツイルで仕立てた、装飾を削ぎ落としたベーシックなキャップ。コントラストカラーのステッチが、シンプルな表情にさりげない表情を添えます。あらかじめカーブをつけたプリカーブドブリムと、スナップバック仕様の後ろ留め。しっかりと収まりながら、心地よくかぶれる一頂です。ワンサイズで、幅広い方にお使いいただけます。</b></p>
+    "CORE CAP": """<p data-mce-fragment="1"><b style="font-size: 0.875rem;">丈夫なコットンツイルで仕立てた、装飾を削ぎ落としたベーシックなキャップ。コントラストカラーのステッチが、シンプルな表情にさりげない表情を添えます。あらかじめカーブをつけたプリカーブドブリムと、スナップバック仕様の後ろ留め。しっかりと収まりながら、心地よくかぶれる一頂です。ワンサイズで、幅広い方にお使いいただけます。</b></p>
 <p data-mce-fragment="1"> </p>
 <p><b>Material</b></p>
 <p data-mce-fragment="1"><span>Cotton Twill</span><br></p>
@@ -151,14 +151,14 @@ _RAW = {
 <p data-mce-fragment="1"> </p>
 <p><b>Details</b></p>
 <p data-mce-fragment="1"><span>Washed finish</span><br><span>Structured brim</span><br><span>Adjustable fit</span><br><span>One size fits most</span><br></p>""",
-    "TUNDRA TRACKER CAP": """<p data-mce-fragment="1"><b style="font-size: 0.875rem;">コットンツイルに、色味を揃えたメッシュのバックパネルを合わせたトラッカーキャップ。フロント中央に据えたオーバルロゴバッジが目を引き、ブリムとパネルに走るコントラストステッチが表情を引き締めます。余計な装飾を省いたつくりのなかに、EPOKHEらしい素っ気なさがにじむ一点。</b></p>
+    "TUNDRA TRUCKER CAP": """<p data-mce-fragment="1"><b style="font-size: 0.875rem;">コットンツイルに、色味を揃えたメッシュのバックパネルを合わせたトラッカーキャップ。フロント中央に据えたオーバルロゴバッジが目を引き、ブリムとパネルに走るコントラストステッチが表情を引き締めます。余計な装飾を省いたつくりのなかに、EPOKHEらしい素っ気なさがにじむ一点。</b></p>
 <p data-mce-fragment="1"> </p>
 <p><b>Material</b></p>
 <p data-mce-fragment="1"><span>100% Woven Cotton</span><br></p>
 <p data-mce-fragment="1"> </p>
 <p><b>Details</b></p>
 <p data-mce-fragment="1"><span>Trucker cap with tonal mesh back panels</span><br><span>Oval logo badge at centre front</span><br><span>Contrast stitching across the brim and panels</span><br></p>""",
-    "THOMAS TOWNEND ART SERIES HAT": """<p data-mce-fragment="1"><b style="font-size: 0.875rem;">オーストラリアのタトゥーアーティスト Thomas Townend とのアートシリーズ。大胆な 'Trad Style' のタトゥーワークで知られる彼のインシグニアをあしらった限定キャップです。コットン100%の6パネル構造に、コントラストステッチと刺繍アイレットをあしらいました。ウォッシュ加工と上質なトリムで仕上げた、スナップバックで調整できるリラックスフィット。</b></p>
+    "THOMAS TOWNEND ART SERIES CAP": """<p data-mce-fragment="1"><b style="font-size: 0.875rem;">オーストラリアのタトゥーアーティスト Thomas Townend とのアートシリーズ。大胆な 'Trad Style' のタトゥーワークで知られる彼のインシグニアをあしらった限定キャップです。コットン100%の6パネル構造に、コントラストステッチと刺繍アイレットをあしらいました。ウォッシュ加工と上質なトリムで仕上げた、スナップバックで調整できるリラックスフィット。</b></p>
 <p data-mce-fragment="1"> </p>
 <p><b>Material</b></p>
 <p data-mce-fragment="1"><span>100% Cotton</span><br></p>
@@ -168,7 +168,7 @@ _RAW = {
 
 
 def _normalise(style):
-    """Collapse whitespace and case so 'JACUZZZI x JALEESSA VINCENT' matches."""
+    """Collapse whitespace and case so 'JACUZZI x JALEESA VINCENT' matches."""
     return " ".join(str(style).split()).upper()
 
 

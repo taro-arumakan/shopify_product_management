@@ -46,7 +46,7 @@ STYLE_FOLDER = {
     "FREQUENCY X AUSTYN GILLETTE": "29_FREQUENCY",
     "GUILTY": "12_GUILTY",
     "GUILTY X THOMAS TOWEND": "12_GUILTY",
-    "JACUZZZI X JALEESSA VINCENT": "43_JACUZZI",
+    "JACUZZI X JALEESA VINCENT": "43_JACUZZI",
     "PANO": "41_PANO",
     "REALM": "34_REALM",
     "REPRISE X JACK FREESTONE": "23_REPRISE",
@@ -122,7 +122,7 @@ SKU_IMAGE_SOURCE = {
         "",
     ),
     "1025-MAPPOBRN": ("12_GUILTY/1_ECOMMERCE/GUILTY_MAPLE_TT/WEB RES", None, EXACT, ""),
-    # --- JACUZZZI x JALEESSA VINCENT -------------------------------------
+    # --- JACUZZI x JALEESA VINCENT -------------------------------------
     # One flat folder, files named JUJU THICK <COLOUR>-<n>.jpg, no SKU anywhere.
     # The folder holds a third colourway (PINK) that was not ordered.
     "9013-BLKPOBLK": (
@@ -238,16 +238,14 @@ SKU_IMAGE_SOURCE = {
 _HAT_S126 = "/2_OBJECTS/HATS_COLLECTION_S126/WEB RES (2882x3600)"
 _HAT_S226 = "/2_OBJECTS/HATS_COLLECTION_S226/WEB RES (2882x3600)"
 
-_NAMING = "sheet and brand folder disagree on the style name"
-
 SKU_IMAGE_SOURCE.update(
     {
-        # --- CORE HAT ---------------------------------------------------------
+        # --- CORE CAP ---------------------------------------------------------
         "EPK-090-OS-S126": (
             f"{_HAT_S126}/EPOKHE CORE CAP - WASHED BLACK",
             None,
             HIGH,
-            f"{_NAMING}: sheet CORE HAT vs folder CORE CAP",
+            "",
         ),
         "EPK-091-OS-S126": (
             _HAT_S226,
@@ -317,18 +315,18 @@ SKU_IMAGE_SOURCE.update(
             HIGH,
             "in the S226 folder; S126 only has STELLAR BEANIE, a different product",
         ),
-        # --- TUNDRA TRACKER CAP ----------------------------------------------
+        # --- TUNDRA TRUCKER CAP ----------------------------------------------
         "EPK-105-OS-S126": (
             f"{_HAT_S126}/EPOKHE TUNDRA TRUCKER CAP - WASHED BLACK",
             None,
             HIGH,
-            f"{_NAMING}: sheet TUNDRA TRACKER vs folder TUNDRA TRUCKER",
+            "",
         ),
         "EPK-106-OS-S126": (
             f"{_HAT_S126}/EPOKHE TUNDRA TRUCKER CAP - WASHED REAL TREE CAMO",
             None,
             HIGH,
-            f"{_NAMING}: sheet TUNDRA TRACKER vs folder TUNDRA TRUCKER",
+            "",
         ),
         # --- CAVE TRUCKER -----------------------------------------------------
         "EPK-110-OS-S126": (
@@ -343,7 +341,7 @@ SKU_IMAGE_SOURCE.update(
             HIGH,
             "sheet says DEAD BERRY / TAN, folder says DEAD BERRY",
         ),
-        # --- THOMAS TOWNEND ART SERIES HAT -----------------------------------
+        # --- THOMAS TOWNEND ART SERIES CAP -----------------------------------
         "EPK-060-OS": (
             f"{_HAT_S126}/Epokhe Thomas Townend Art Series Cap - CONCRETE CAMO",
             None,

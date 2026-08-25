@@ -22,14 +22,14 @@ def client():
         ("TRINITY", "BLACK POLISHED / BLACK", "TRINITY BLKP/BLK"),
         ("DOME", "GUN METAL POLISHED / BLACK PORALIZED", "DOME GUNMTLP/BLKP"),
         ("VOID", "CRYSTAL DARK TORTOISE POLISHED / BRONZE", "VOID CRYDKTORP/BRZ"),
-        ("CORE HAT", "WASHED BLACK", "CORE HAT WSHBLK"),
+        ("CORE CAP", "WASHED BLACK", "CORE CAP WSHBLK"),
         # A doubled space in a hand-maintained cell must not break the split.
         ("DYLAN  ZERO", "MAPLE POLISHED  / BROWN", "DYLAN ZERO MAPP/BRN"),
         ("STEREO", "TORTOISE POLISHED / GREEN POLARIZED ", "STEREO TORP/GRNP"),
         # The whole point of the codebook: these four no longer collide.
         ("DOME", "BLACK POLISHED / BLACK", "DOME BLKP/BLK"),
         ("DOME", "BROWN POLISHED / BROWN", "DOME BRNP/BRN"),
-        ("CORE HAT", "WASH BROWN", "CORE HAT WSHBRN"),
+        ("CORE CAP", "WASH BROWN", "CORE CAP WSHBRN"),
         ("SUPERSTAR", "BROWN POLISHED / BROWN", "SUPERSTAR BRNP/BRN"),
     ],
 )
@@ -111,6 +111,6 @@ def test_tags_split_by_category_and_carry_the_lens(client):
         {"sku": "9003-X", "style": "STEREO", "lens": "POLARISED"}
     )
     headwear = client.get_tags_from_product_input(
-        {"sku": "EPK-090-OS-S126", "style": "CORE HAT", "lens": ""}
+        {"sku": "EPK-090-OS-S126", "style": "CORE CAP", "lens": ""}
     )
-    assert headwear == ["all", "HEADWEAR", "CORE HAT"]
+    assert headwear == ["all", "HEADWEAR", "CORE CAP"]
