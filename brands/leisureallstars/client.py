@@ -356,12 +356,30 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
         )
         return self.HEADWEAR_PRODUCT_TYPE
 
+    #: A style the store files under another style's tag. DYLAN XS and DYLAN
+    #: ZERO both sit with the DYLAN colourways. Collaborations need no entry --
+    #: the "x" rule in :meth:`style_tag` already reduces them to the base style.
+    STYLE_TAGS = {"DYLAN XS": "DYLAN", "DYLAN ZERO": "DYLAN"}
+
+    @classmethod
+    def style_tag(cls, style):
+        """The tag that puts a product in its style collection.
+
+        A collaboration is tagged with the base style, not the full name --
+        GUILTY x Thomas Townend is tagged GUILTY, exactly like the plain GUILTY
+        colourways. The style collections are automated on TAG EQUALS <STYLE>,
+        so tagging the full name would leave the product out of its own
+        collection and mint a tag nothing matches.
+        """
+        collapsed = " ".join(style.split()).split(" x ")[0].strip()
+        return cls.STYLE_TAGS.get(collapsed.upper(), collapsed)
+
     def get_tags_from_product_input(self, product_input):
         tags = list(self.BASE_TAGS)
         tags += (
             self.HEADWEAR_TAGS if self.is_headwear(product_input) else self.EYEWEAR_TAGS
         )
-        tags.append(" ".join(product_input["style"].split()))
+        tags.append(self.style_tag(product_input["style"]))
         if lens := (product_input.get("lens") or "").strip():
             # The sheet spells it both POLARIZED and POLARISED; the store tag is
             # "Polarized".
@@ -383,7 +401,7 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
         style = " ".join(style.split()).upper()
         if style in self._description_cache:
             return self._description_cache[style]
-        # Collaboration styles ("GUILTY x THOMAS TOWEND") sit under the base
+        # Collaboration styles ("GUILTY x THOMAS TOWNEND") sit under the base
         # style's tag on the store.
         base_style = style.split(" X ")[0].strip()
         if getattr(self, "_brand_products", None) is None:
@@ -536,7 +554,7 @@ class EpokheClient(EpokheSanityChecks, BrandClientBase):
                 collection["title"].strip().upper(): collection["id"]
                 for collection in self.collections_by_query("")
             }
-        base = style_title(style).split(" x ")[0].strip().upper()
+        base = self.style_tag(style).upper()
         gid = self._collections.get(base)
         if not gid:
             logger.warning(

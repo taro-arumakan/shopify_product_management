@@ -58,6 +58,39 @@ def test_style_title(style, expected):
     assert style_title(style) == expected
 
 
+@pytest.mark.parametrize(
+    "style, expected",
+    [
+        # The store files a collaboration under the base style's tag, and the
+        # collections are automated on TAG EQUALS <STYLE>, so the full name
+        # would leave the product out of its own collection.
+        ("GUILTY x THOMAS TOWNEND", "GUILTY"),
+        ("JACUZZI x JALEESA VINCENT", "JACUZZI"),
+        ("REPRISE  x JACK FREESTONE", "REPRISE"),
+        # DYLAN XS and DYLAN ZERO sit with the DYLAN colourways.
+        ("DYLAN ZERO", "DYLAN"),
+        ("DYLAN XS", "DYLAN"),
+        # Everything else keeps its own name, spaces and all.
+        ("WILSON", "WILSON"),
+        ("CORE CAP", "CORE CAP"),
+        ("THOMAS TOWNEND ART SERIES CAP", "THOMAS TOWNEND ART SERIES CAP"),
+    ],
+)
+def test_style_tag(style, expected):
+    assert EpokheClient.style_tag(style) == expected
+
+
+def test_style_tag_is_what_get_tags_emits(client):
+    # The tag on the product and the collection lookup have to agree, or the
+    # product joins no collection while the metafield points at one.
+    product_input = {
+        "sku": "1025-MAPPOBRN",
+        "style": "GUILTY x THOMAS TOWNEND",
+        "lens": "",
+    }
+    assert "GUILTY" in client.get_tags_from_product_input(product_input)
+
+
 def test_seo_title(client):
     assert (
         client.seo_title("WILSON ARMGRNP/GRN", "Army Green Polished / Green")
