@@ -249,36 +249,45 @@ function onFormSubmitHandler(e) {
       spreadsheet_id: prop_('SPREADSHEET_ID'),
     };
 
-    const dispatchStatus = dispatchToGitHub_(submission);
+    const dispatch = dispatchToGitHub_(submission);
+    if (dispatch.ok) {
+      // The Action reports on every submission it receives, and its mail says
+      // everything a receipt would plus the article link. This side speaks up
+      // only when the Action will never run.
+      Logger.log('dispatched; the outcome mail is left to the Action');
+      return;
+    }
 
-    const warnings = [];
-    if (!submission.styling_photo_ids.length) {
-      warnings.push('※スタイリング写真がありません');
-    }
-    if (!submission.tag_photo_ids.length && !submission.manual_skus.length) {
-      warnings.push('※下げ札写真・SKU入力のいずれもありません(商品を特定できません)');
-    }
     notify_(
-      '【スタイリング投稿】受付: ' + staff.name,
+      '【スタイリング投稿】連携失敗: ' + staff.name,
       [
-        '投稿を受け付けました。',
+        '記事作成処理を起動できませんでした。写真と回答は保存されています。',
         '',
-        'スタッフ: ' + staff.name + ' (' + staff.display_name + ')' + (staff.is_new ? ' ※新規登録' : ''),
-        '所属店舗: ' + staff.shop,
+        '理由: ' + dispatch.detail,
+        '',
+        'スタッフ: ' +
+          staff.name +
+          ' (' +
+          staff.display_name +
+          ' / ' +
+          staff.shop +
+          ')' +
+          (staff.is_new ? ' ※新規登録' : ''),
+        '投稿者: ' + (respondentEmail || '(メール収集が無効)'),
         'スタイリング写真: ' + submission.styling_photo_ids.length + '枚',
         '下げ札写真: ' + submission.tag_photo_ids.length + '枚',
         'コード手入力: ' + (submission.manual_skus.join(', ') || 'なし'),
-      ]
-        .concat(warnings)
-        .concat([
-          '',
-          'GitHub への連携: ' + dispatchStatus,
-          '回答スプレッドシート: ' + ss.getUrl(),
-        ])
-        .join('\n')
+        '',
+        '回答スプレッドシート: ' + ss.getUrl(),
+        '',
+        'GitHub Actions 側の設定を確認してください。復旧後は投稿者に再投稿を依頼してください。',
+      ].join('\n')
     );
   } catch (err) {
-    notify_('【スタイリング投稿】処理エラー', String((err && err.stack) || err));
+    notify_(
+      '【スタイリング投稿】フォーム側エラー',
+      ['フォーム送信の処理中にエラーが発生しました。', '', String((err && err.stack) || err)].join('\n')
+    );
     throw err;
   }
 }
@@ -292,14 +301,14 @@ function normalizeHeight_(v) {
 
 /**
  * #TODO [CEC-471] comments in English
- * repository_dispatch を送信し、結果を文字列で返す(受付メールに記載される)。
+ * repository_dispatch を送信し、{ok, detail} を返す。
  * 送信失敗は例外にせずメールで可視化する — 写真・回答自体は保存済みのため。
  */
 function dispatchToGitHub_(submission) {
   const pat = prop_('GH_PAT');
   if (!pat) {
     Logger.log('GH_PAT が未設定のため repository_dispatch をスキップしました');
-    return 'スキップ(GH_PAT 未設定)';
+    return { ok: false, detail: 'GH_PAT が未設定のため連携をスキップしました' };
   }
   try {
     const res = UrlFetchApp.fetch('https://api.github.com/repos/' + prop_('GH_REPO') + '/dispatches', {
@@ -320,23 +329,24 @@ function dispatchToGitHub_(submission) {
     const code = res.getResponseCode();
     if (code >= 300) {
       Logger.log('repository_dispatch failed: %s %s', code, res.getContentText());
-      return '失敗(HTTP ' + code + '): ' + res.getContentText().slice(0, 200);
+      return { ok: false, detail: 'HTTP ' + code + ' — ' + res.getContentText().slice(0, 200) };
     }
-    return '起動しました';
+    return { ok: true, detail: '起動しました' };
   } catch (err) {
     Logger.log('repository_dispatch error: %s', err);
-    return '失敗: ' + err;
+    return { ok: false, detail: String(err) };
   }
 }
 
+/** One mail addressed to every recipient, so each can see who else was told. */
 function notify_(subject, body) {
-  prop_('NOTIFY_EMAILS')
+  const to = prop_('NOTIFY_EMAILS')
     .split(',')
     .map(function (s) {
       return s.trim();
     })
     .filter(String)
-    .forEach(function (addr) {
-      MailApp.sendEmail(addr, subject, body);
-    });
+    .join(',');
+  if (!to) return;
+  MailApp.sendEmail(to, subject, body);
 }

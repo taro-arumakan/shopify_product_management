@@ -423,7 +423,9 @@ def notify_outcome(submission, staff, title, article_id, report):
         "",
         f"確認・公開: {admin_article_url(article_id)}",
         "",
-        f"スタッフ: {staff['name']} ({staff['display_name']} / {staff['shop']})",
+        f"スタッフ: {staff['name']} ({staff['display_name']} / {staff['shop']})"
+        + ("  ※新規登録" if staff.get("is_new") else ""),
+        f"投稿者: {submission.get('respondent_email') or '(不明)'}",
         f"スタイリング写真: {report['uploaded_photos']}枚",
         "着用商品:" if report["resolved"] else "着用商品: 未特定",
         *[variant_line(v) for v in report["resolved"]],
