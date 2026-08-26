@@ -10,7 +10,6 @@ Google Form (staff, photos, tags)
   └─ Drive (photos) + Sheet (answers, スタッフマスタ)
        └─ Apps Script onFormSubmit
             ├─ appends new staff to スタッフマスタ, refreshes the dropdown
-            ├─ receipt email to NOTIFY_EMAILS
             └─ repository_dispatch: staff-styling-submission
                  └─ GitHub Action: staff_styling_article.yml
                       └─ staff_styling_to_blogpost.py
@@ -28,6 +27,18 @@ unexpected error leaves no article, and that is emailed too.
 Each article carries the form response id in `custom.styling_submission_id`, so
 re-running the Action for a submission that already produced an article skips
 it rather than leaving a second draft behind.
+
+**One mail per submission.** The Action reports every submission it receives, so
+the Apps Script side stays quiet on the happy path and mails only when the
+Action will never run — the dispatch failed, or `GH_PAT` is unset — naming the
+submitter so someone can be asked to re-submit. Both sides address the whole
+recipient list in a single mail rather than one mail each, so a recipient can
+see who else was told.
+
+The residual gap is a dispatch that GitHub accepts but that never starts a run
+(a renamed event type, or the workflow missing from the default branch): the
+Apps Script sees a 204 and stays quiet. Worth knowing when changing either
+side's event name.
 
 ## Prototype setup (Google side, personal account)
 
