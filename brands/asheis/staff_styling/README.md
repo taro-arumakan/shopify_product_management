@@ -75,15 +75,19 @@ Notes:
 - 表示名 (latin) drives the article title/URL numbering (e.g. Saki9 / saki-10)
   and the per-staff article tag.
 - **Editing Code.gs here changes nothing by itself** — the Apps Script project
-  is the deployment, so paste the file in again after every change. Text that
-  `setup()` writes (the form description, the question help texts) is only
-  applied when the form is created, so an existing form has to be edited in
-  the form editor as well.
+  is the deployment, so paste the file in again after every change. Pasting
+  updates only the script: `setup()` writes the wording when it *creates* the
+  form and refuses to run twice, so after changing any text in `TITLES`,
+  `FORM_DESCRIPTION` or `HELP_TEXTS`, run **`syncFormTexts()`** once to push it
+  to the existing form. It renames questions listed in `FORMER_TITLES`, updates
+  help texts, and logs anything it could not find. It never adds or removes
+  questions — the two file-upload questions stay as they are and never need
+  re-adding.
 - The price tag prints **no 品番** — brand, product name, colour, size, price
   and the JAN barcode, nothing else. The barcode is the only identifier on it,
   so the manual fallback asks for the 13 digits printed under the barcode
-  rather than a SKU. `manual_skus` in the payload keeps its name and still
-  accepts either code.
+  rather than a SKU — the payload calls it `manual_jan_codes`. Lookup still
+  falls back to SKU, so a code typed from anywhere else resolves too.
 - **Share the 「(File responses)」 folders with everyone in
   `NOTIFYEES_STAFF_STYLING`**, not only with the service account: a 要確認
   email links the tag photos so the operator can read the codes off them, and
