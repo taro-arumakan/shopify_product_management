@@ -18,7 +18,7 @@ def submission(**overrides):
         "response_id": "resp-1",
         "staff": STAFF,
         "caption": "",
-        "manual_skus": [],
+        "manual_jan_codes": [],
         "styling_photo_ids": ["photo-1"],
         "tag_photo_ids": ["tag-1"],
     }

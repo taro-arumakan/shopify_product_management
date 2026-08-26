@@ -24,15 +24,34 @@ const TITLES = {
   regShop: '所属店舗',
   caption: 'キャプション(任意)',
   manualCodes: 'JANコード手入力(バーコードを撮影できない場合のみ)',
-  // The question was called SKU手入力 before the tags turned out to carry no
-  // 品番 at all. Both titles are accepted so renaming the live form and
-  // re-pasting this file can happen in either order without losing answers.
-  manualCodesLegacy: 'SKU手入力(バーコードを撮影できない場合のみ)',
   stylingPhotos: 'スタイリング写真',
   tagPhotos: '下げ札写真',
   pageRegister: '新規スタッフ登録',
   pagePost: '投稿内容',
 };
+
+// 旧タイトル → 現タイトル。syncFormTexts() が作成済みフォームの改名に使う。
+// すべてのフォームが同期済みになれば空にしてよい。
+const FORMER_TITLES = {
+  'SKU手入力(バーコードを撮影できない場合のみ)': TITLES.manualCodes,
+};
+
+const FORM_DESCRIPTION =
+  '店舗スタッフ用のスタイリング投稿フォームです。\n' +
+  'スタイリング写真(1枚以上、1枚目がカバー画像になります)と、着用商品ごとの下げ札(値札)写真をアップロードしてください。';
+
+// setup() と syncFormTexts() が同じ定義を使う。文言はここだけを直せばよい。
+const HELP_TEXTS = {};
+HELP_TEXTS[TITLES.regName] = '例: 佐藤 咲';
+HELP_TEXTS[TITLES.regDisplayName] = '記事タイトル・URLに使用します。例: Saki';
+HELP_TEXTS[TITLES.regHeight] = '例: 165cm';
+HELP_TEXTS[TITLES.regInstagram] = 'アカウント名のみ。例: asheis_saki(任意)';
+HELP_TEXTS[TITLES.regShop] = '例: 本店';
+HELP_TEXTS[TITLES.stylingPhotos] = '1枚目がカバー画像になります(枚数の下限なし)';
+HELP_TEXTS[TITLES.tagPhotos] = 'バーコードと商品名の入った下げ札画像';
+HELP_TEXTS[TITLES.caption] = 'コーディネートの説明など(任意)';
+HELP_TEXTS[TITLES.manualCodes] =
+  '下げ札のバーコードを撮影できない場合のみ、バーコード下の13桁の数字を1行に1つ入力';
 
 const MASTER_SHEET_NAME = 'スタッフマスタ';
 const MASTER_HEADERS = ['氏名', '表示名', '身長', 'Instagram', '所属店舗', '登録日'];
@@ -61,10 +80,7 @@ function setup() {
   master.setFrozenRows(1);
 
   const form = FormApp.create('ASHEIS スタッフスタイリング投稿 (prototype)');
-  form.setDescription(
-    '店舗スタッフ用のスタイリング投稿フォームです。\n' +
-      'スタイリング写真(1枚以上、1枚目がカバー画像になります)と、着用商品ごとの下げ札(値札)写真をアップロードしてください。'
-  );
+  form.setDescription(FORM_DESCRIPTION);
   try {
     form.setEmailCollectionType(FormApp.EmailCollectionType.VERIFIED);
   } catch (err) {
@@ -74,11 +90,11 @@ function setup() {
   form.addListItem().setTitle(TITLES.staffSelect).setRequired(true);
 
   form.addPageBreakItem().setTitle(TITLES.pageRegister);
-  form.addTextItem().setTitle(TITLES.regName).setHelpText('例: 佐藤 咲').setRequired(true);
+  form.addTextItem().setTitle(TITLES.regName).setHelpText(HELP_TEXTS[TITLES.regName]).setRequired(true);
   form
     .addTextItem()
     .setTitle(TITLES.regDisplayName)
-    .setHelpText('記事タイトル・URLに使用します。例: Saki')
+    .setHelpText(HELP_TEXTS[TITLES.regDisplayName])
     .setRequired(true)
     .setValidation(
       FormApp.createTextValidation()
@@ -89,7 +105,7 @@ function setup() {
   form
     .addTextItem()
     .setTitle(TITLES.regHeight)
-    .setHelpText('例: 165cm')
+    .setHelpText(HELP_TEXTS[TITLES.regHeight])
     .setRequired(true)
     .setValidation(
       FormApp.createTextValidation()
@@ -97,8 +113,8 @@ function setup() {
         .setHelpText('例: 165cm')
         .build()
     );
-  form.addTextItem().setTitle(TITLES.regInstagram).setHelpText('アカウント名のみ。例: asheis_saki(任意)');
-  form.addTextItem().setTitle(TITLES.regShop).setHelpText('例: 本店').setRequired(true);
+  form.addTextItem().setTitle(TITLES.regInstagram).setHelpText(HELP_TEXTS[TITLES.regInstagram]);
+  form.addTextItem().setTitle(TITLES.regShop).setHelpText(HELP_TEXTS[TITLES.regShop]).setRequired(true);
 
   form.addPageBreakItem().setTitle(TITLES.pagePost);
   form
@@ -111,11 +127,11 @@ function setup() {
         TITLES.tagPhotos +
         '」のファイルアップロード質問を追加してください(README 参照)。追加後この案内は削除して構いません。'
     );
-  form.addParagraphTextItem().setTitle(TITLES.caption).setHelpText('コーディネートの説明など(任意)');
+  form.addParagraphTextItem().setTitle(TITLES.caption).setHelpText(HELP_TEXTS[TITLES.caption]);
   form
     .addParagraphTextItem()
     .setTitle(TITLES.manualCodes)
-    .setHelpText('下げ札のバーコードを撮影できない場合のみ、バーコード下の13桁の数字を1行に1つ入力');
+    .setHelpText(HELP_TEXTS[TITLES.manualCodes]);
 
   refreshStaffChoices_(form, master);
 
@@ -134,6 +150,43 @@ function setup() {
     TITLES.stylingPhotos,
     TITLES.tagPhotos
   );
+}
+
+/**
+ * 作成済みフォームの文言を本ファイルの定義に合わせて更新する。
+ *
+ * setup() はフォーム作成時にしか文言を書かないため、このファイルを貼り直しただけでは
+ * 既存フォームの表示は変わらない。文言を変えたら本関数を1回実行すること。
+ * 質問の追加・削除は行わない — ファイルアップロード質問は Apps Script では作成できず、
+ * 既存のものはタイトルと説明のみ更新できる。
+ */
+function syncFormTexts() {
+  const form = FormApp.openById(prop_('FORM_ID'));
+  form.setDescription(FORM_DESCRIPTION);
+
+  form.getItems().forEach(function (item) {
+    const renamed = FORMER_TITLES[item.getTitle()];
+    if (renamed) {
+      Logger.log('renaming "%s" -> "%s"', item.getTitle(), renamed);
+      item.setTitle(renamed);
+    }
+    const help = HELP_TEXTS[item.getTitle()];
+    if (help !== undefined && item.getHelpText() !== help) {
+      Logger.log('help text updated: %s', item.getTitle());
+      item.setHelpText(help);
+    }
+  });
+
+  // 想定した質問が見つからない場合は手動で直す必要があるため知らせる。
+  const titles = form.getItems().map(function (i) {
+    return i.getTitle();
+  });
+  Object.keys(HELP_TEXTS).forEach(function (title) {
+    if (titles.indexOf(title) === -1) {
+      Logger.log('!! フォームに見つかりません(手動で確認してください): %s', title);
+    }
+  });
+  Logger.log('done: %s', form.getEditUrl());
 }
 
 /** スタッフマスタを編集した後に手動で実行するとプルダウンへ反映される。 */
@@ -238,7 +291,7 @@ function onFormSubmitHandler(e) {
       respondent_email: respondentEmail,
       staff: staff,
       caption: String(answers[TITLES.caption] || ''),
-      manual_skus: String(answers[TITLES.manualCodes] || answers[TITLES.manualCodesLegacy] || '')
+      manual_jan_codes: String(answers[TITLES.manualCodes] || '')
         .split('\n')
         .map(function (s) {
           return s.trim();
@@ -249,36 +302,45 @@ function onFormSubmitHandler(e) {
       spreadsheet_id: prop_('SPREADSHEET_ID'),
     };
 
-    const dispatchStatus = dispatchToGitHub_(submission);
+    const dispatch = dispatchToGitHub_(submission);
+    if (dispatch.ok) {
+      // The Action reports on every submission it receives, and its mail says
+      // everything a receipt would plus the article link. This side speaks up
+      // only when the Action will never run.
+      Logger.log('dispatched; the outcome mail is left to the Action');
+      return;
+    }
 
-    const warnings = [];
-    if (!submission.styling_photo_ids.length) {
-      warnings.push('※スタイリング写真がありません');
-    }
-    if (!submission.tag_photo_ids.length && !submission.manual_skus.length) {
-      warnings.push('※下げ札写真・SKU入力のいずれもありません(商品を特定できません)');
-    }
     notify_(
-      '【スタイリング投稿】受付: ' + staff.name,
+      '【スタイリング投稿】連携失敗: ' + staff.name,
       [
-        '投稿を受け付けました。',
+        '記事作成処理を起動できませんでした。写真と回答は保存されています。',
         '',
-        'スタッフ: ' + staff.name + ' (' + staff.display_name + ')' + (staff.is_new ? ' ※新規登録' : ''),
-        '所属店舗: ' + staff.shop,
+        '理由: ' + dispatch.detail,
+        '',
+        'スタッフ: ' +
+          staff.name +
+          ' (' +
+          staff.display_name +
+          ' / ' +
+          staff.shop +
+          ')' +
+          (staff.is_new ? ' ※新規登録' : ''),
+        '投稿者: ' + (respondentEmail || '(メール収集が無効)'),
         'スタイリング写真: ' + submission.styling_photo_ids.length + '枚',
         '下げ札写真: ' + submission.tag_photo_ids.length + '枚',
-        'コード手入力: ' + (submission.manual_skus.join(', ') || 'なし'),
-      ]
-        .concat(warnings)
-        .concat([
-          '',
-          'GitHub への連携: ' + dispatchStatus,
-          '回答スプレッドシート: ' + ss.getUrl(),
-        ])
-        .join('\n')
+        'コード手入力: ' + (submission.manual_jan_codes.join(', ') || 'なし'),
+        '',
+        '回答スプレッドシート: ' + ss.getUrl(),
+        '',
+        'GitHub Actions 側の設定を確認してください。復旧後は投稿者に再投稿を依頼してください。',
+      ].join('\n')
     );
   } catch (err) {
-    notify_('【スタイリング投稿】処理エラー', String((err && err.stack) || err));
+    notify_(
+      '【スタイリング投稿】フォーム側エラー',
+      ['フォーム送信の処理中にエラーが発生しました。', '', String((err && err.stack) || err)].join('\n')
+    );
     throw err;
   }
 }
@@ -292,14 +354,14 @@ function normalizeHeight_(v) {
 
 /**
  * #TODO [CEC-471] comments in English
- * repository_dispatch を送信し、結果を文字列で返す(受付メールに記載される)。
+ * repository_dispatch を送信し、{ok, detail} を返す。
  * 送信失敗は例外にせずメールで可視化する — 写真・回答自体は保存済みのため。
  */
 function dispatchToGitHub_(submission) {
   const pat = prop_('GH_PAT');
   if (!pat) {
     Logger.log('GH_PAT が未設定のため repository_dispatch をスキップしました');
-    return 'スキップ(GH_PAT 未設定)';
+    return { ok: false, detail: 'GH_PAT が未設定のため連携をスキップしました' };
   }
   try {
     const res = UrlFetchApp.fetch('https://api.github.com/repos/' + prop_('GH_REPO') + '/dispatches', {
@@ -320,23 +382,24 @@ function dispatchToGitHub_(submission) {
     const code = res.getResponseCode();
     if (code >= 300) {
       Logger.log('repository_dispatch failed: %s %s', code, res.getContentText());
-      return '失敗(HTTP ' + code + '): ' + res.getContentText().slice(0, 200);
+      return { ok: false, detail: 'HTTP ' + code + ' — ' + res.getContentText().slice(0, 200) };
     }
-    return '起動しました';
+    return { ok: true, detail: '起動しました' };
   } catch (err) {
     Logger.log('repository_dispatch error: %s', err);
-    return '失敗: ' + err;
+    return { ok: false, detail: String(err) };
   }
 }
 
+/** One mail addressed to every recipient, so each can see who else was told. */
 function notify_(subject, body) {
-  prop_('NOTIFY_EMAILS')
+  const to = prop_('NOTIFY_EMAILS')
     .split(',')
     .map(function (s) {
       return s.trim();
     })
     .filter(String)
-    .forEach(function (addr) {
-      MailApp.sendEmail(addr, subject, body);
-    });
+    .join(',');
+  if (!to) return;
+  MailApp.sendEmail(to, subject, body);
 }

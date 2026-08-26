@@ -10,7 +10,6 @@ Google Form (staff, photos, tags)
   └─ Drive (photos) + Sheet (answers, スタッフマスタ)
        └─ Apps Script onFormSubmit
             ├─ appends new staff to スタッフマスタ, refreshes the dropdown
-            ├─ receipt email to NOTIFY_EMAILS
             └─ repository_dispatch: staff-styling-submission
                  └─ GitHub Action: staff_styling_article.yml
                       └─ staff_styling_to_blogpost.py
@@ -28,6 +27,18 @@ unexpected error leaves no article, and that is emailed too.
 Each article carries the form response id in `custom.styling_submission_id`, so
 re-running the Action for a submission that already produced an article skips
 it rather than leaving a second draft behind.
+
+**One mail per submission.** The Action reports every submission it receives, so
+the Apps Script side stays quiet on the happy path and mails only when the
+Action will never run — the dispatch failed, or `GH_PAT` is unset — naming the
+submitter so someone can be asked to re-submit. Both sides address the whole
+recipient list in a single mail rather than one mail each, so a recipient can
+see who else was told.
+
+The residual gap is a dispatch that GitHub accepts but that never starts a run
+(a renamed event type, or the workflow missing from the default branch): the
+Apps Script sees a 204 and stays quiet. Worth knowing when changing either
+side's event name.
 
 ## Prototype setup (Google side, personal account)
 
@@ -64,15 +75,19 @@ Notes:
 - 表示名 (latin) drives the article title/URL numbering (e.g. Saki9 / saki-10)
   and the per-staff article tag.
 - **Editing Code.gs here changes nothing by itself** — the Apps Script project
-  is the deployment, so paste the file in again after every change. Text that
-  `setup()` writes (the form description, the question help texts) is only
-  applied when the form is created, so an existing form has to be edited in
-  the form editor as well.
+  is the deployment, so paste the file in again after every change. Pasting
+  updates only the script: `setup()` writes the wording when it *creates* the
+  form and refuses to run twice, so after changing any text in `TITLES`,
+  `FORM_DESCRIPTION` or `HELP_TEXTS`, run **`syncFormTexts()`** once to push it
+  to the existing form. It renames questions listed in `FORMER_TITLES`, updates
+  help texts, and logs anything it could not find. It never adds or removes
+  questions — the two file-upload questions stay as they are and never need
+  re-adding.
 - The price tag prints **no 品番** — brand, product name, colour, size, price
   and the JAN barcode, nothing else. The barcode is the only identifier on it,
   so the manual fallback asks for the 13 digits printed under the barcode
-  rather than a SKU. `manual_skus` in the payload keeps its name and still
-  accepts either code.
+  rather than a SKU — the payload calls it `manual_jan_codes`. Lookup still
+  falls back to SKU, so a code typed from anywhere else resolves too.
 - **Share the 「(File responses)」 folders with everyone in
   `NOTIFYEES_STAFF_STYLING`**, not only with the service account: a 要確認
   email links the tag photos so the operator can read the codes off them, and
