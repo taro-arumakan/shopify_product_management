@@ -109,6 +109,7 @@ class Article:
         is_published=True,
         author_name="Taro Nakamura",
         tags=None,
+        metafields=None,
     ):
         blog_id = self.blog_id_by_blog_title(blog_title)
         query = """
@@ -149,6 +150,10 @@ class Article:
             article["image"] = {"url": media_url, "altText": f"{title} cover image"}
         if tags:
             article["tags"] = tags
+        if metafields:
+            # Written with the article so a rejected metafield cannot leave a
+            # created-but-unpopulated article behind.
+            article["metafields"] = metafields
         variables = {"article": article}
         res = self.run_query(query, variables)
         if errors := res["articleCreate"]["userErrors"]:

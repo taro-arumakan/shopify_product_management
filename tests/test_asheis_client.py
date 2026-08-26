@@ -107,5 +107,38 @@ class TestAsheisDescription(unittest.TestCase):
         self.assertNotIn("品番", html)
 
 
+class TestAsheisJan(unittest.TestCase):
+    def test_check_digit_matches_a_real_printed_tag(self):
+        # 4550351287507 was decoded off an actual ASHEIS price tag.
+        self.assertEqual(AsheisClient.ean13_check_digit("455035128750"), 7)
+        self.assertEqual(AsheisClient.validate_jan("4550351287507"), "4550351287507")
+
+    def test_accepts_an_int_and_strips_whitespace(self):
+        self.assertEqual(AsheisClient.validate_jan(4550351287507), "4550351287507")
+        self.assertEqual(AsheisClient.validate_jan(" 4550351287507 "), "4550351287507")
+
+    def test_rejects_twelve_digits_naming_the_missing_check_digit(self):
+        # What the shop staff actually entered: the JAN body without its check
+        # digit. Completing it here would make a mistyped JAN undetectable.
+        with self.assertRaises(ValueError) as ctx:
+            AsheisClient.validate_jan("455035135296")
+        self.assertIn("check digit is missing", str(ctx.exception))
+        self.assertIn("4550351352960", str(ctx.exception))
+
+    def test_rejects_bad_check_digit_and_non_jan_values(self):
+        for value in ("4550351287501", "21263620000390", "abc", "455035128750x"):
+            with self.assertRaises(ValueError):
+                AsheisClient.validate_jan(value)
+
+    def test_folds_full_width_digits_an_ime_would_produce(self):
+        self.assertEqual(
+            AsheisClient.validate_jan("４５５０３５１２８７５０７"), "4550351287507"
+        )
+
+    def test_rejects_non_ascii_digits_that_are_not_full_width(self):
+        with self.assertRaises(ValueError):
+            AsheisClient.validate_jan("٤٥٥٠٣٥١٢٨٧٥٠٧")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -22,17 +22,25 @@ CLIENT_PAYLOAD env var:
 
 Steps:
 
-1. download price-tag photos from Drive (the form's File responses folders are
+1. skip the whole run if custom.styling_submission_id already carries this
+   response id — a re-run must not leave the operator a second draft
+2. download price-tag photos from Drive (the form's File responses folders are
    shared with the service account) and decode barcodes with zxing-cpp
-2. resolve variants by the barcode field — JAN != SKU for ASHEIS; barcodes are
+3. resolve variants by the barcode field — JAN != SKU for ASHEIS; barcodes are
    populated from the products sheet's JANコード column by AsheisClient —
    falling back to SKU lookup so manual_skus may hold either code
-3. download styling photos, EXIF-orient, convert to JPEG (HEIC included) and
+4. download styling photos, EXIF-orient, convert to JPEG (HEIC included) and
    cap resolution, then upload to Shopify Files
-4. create the article hidden in the Styling blog ("styling" template),
-   author = staff name, tag = staff display name, title = display name +
-   auto-increment, and set the custom.styling_* metafields
-5. email the outcome to NOTIFYEES_STAFF_STYLING
+5. create the article hidden in the Styling blog ("styling" template) with the
+   custom.styling_* metafields in the same mutation, author = staff name,
+   tag = display name, title = display name + auto-increment
+6. email the outcome to NOTIFYEES_STAFF_STYLING
+
+The article is always created, even when no product could be identified or no
+photo came through: a hidden draft plus a 要確認 email naming what is missing
+lets the operator finish the article in the admin and publish it, which beats
+a submission that leaves nothing behind. Only an unexpected error aborts, and
+that too is emailed.
 """
 
 import json
@@ -48,6 +56,10 @@ from PIL import Image, ImageOps
 
 import utils
 from helpers.client import send_smtp_email
+from helpers.exceptions import (
+    MultipleVariantsFoundException,
+    NoVariantsFoundException,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -61,7 +73,6 @@ DEFAULT_NOTIFYEES = (
     "yusuke@catal.co.jp,taro@sniarti.fi"  # TODO [CEC-470] remove default notifyees
 )
 MAX_MEGAPIXELS = 15
-MIN_STYLING_PHOTOS = 4
 
 
 def notifyees():
@@ -74,6 +85,10 @@ def parse_submission():
     submission = payload["submission"]
     for key in ("staff", "styling_photo_ids", "tag_photo_ids"):
         assert key in submission, f"missing key in submission: {key}"
+    # Optional fields, defaulted so a hand-fired dispatch payload still runs.
+    submission.setdefault("manual_skus", [])
+    submission.setdefault("caption", "")
+    submission.setdefault("response_id", "")
     return submission
 
 
@@ -115,7 +130,9 @@ def resolve_variants(client, codes):
                 try:
                     variant = lookup(candidate)
                     break
-                except Exception:
+                except (NoVariantsFoundException, MultipleVariantsFoundException):
+                    # Anything else — a bad token, a rate limit — is a systemic
+                    # failure and must not be reported as "code not found".
                     continue
             if variant:
                 break
@@ -142,24 +159,62 @@ def prepare_image(src_path, dst_path):
     return dst_path
 
 
-def next_article_title(client, display_name):
+def blog_articles(client):
+    """Every article in the blog, with the submission marker each carries.
+
+    One paginated fetch serves both the numbering and the re-run check, and
+    scanning locally keeps a staff display name out of the search query, where
+    an unexpected character would silently match nothing.
+    """
     query = """
-    query articlesByQuery($query_string: String!) {
-        articles(first: 250, query: $query_string) {
+    query articlesByQuery($query_string: String!, $after: String, $first: Int!) {
+        articles(first: $first, query: $query_string, after: $after) {
+            pageInfo {
+                hasNextPage
+                endCursor
+            }
             nodes {
+                id
                 title
+                submissionId: metafield(
+                    namespace: "custom"
+                    key: "styling_submission_id"
+                ) {
+                    value
+                }
             }
         }
     }
     """
-    res = client.run_query(query, {"query_string": f"blog_title:'{BLOG_TITLE}'"})
-    pattern = re.compile(rf"^{re.escape(display_name)}(\d+)$")
+    return client.run_paginated_query(
+        query, {"query_string": f"blog_title:'{BLOG_TITLE}'"}, "articles"
+    )
+
+
+def next_article_title(articles, display_name):
+    """<display name><n>, one past the highest n already in the blog."""
+    # Case-insensitively: the blog holds both "Miki17" and "MIKI18", and a
+    # case-sensitive match would hand out a number that is already taken.
+    pattern = re.compile(rf"^{re.escape(display_name)}(\d+)$", re.IGNORECASE)
     numbers = [
-        int(m.group(1))
-        for node in res["articles"]["nodes"]
-        if (m := pattern.match(node["title"]))
+        int(m.group(1)) for a in articles if (m := pattern.match(a["title"] or ""))
     ]
     return f"{display_name}{max(numbers, default=0) + 1}"
+
+
+def existing_article_for_submission(articles, response_id):
+    """The article a previous run already created for this submission, if any.
+
+    A re-run of the Action, or a response processed twice, would otherwise
+    leave a second draft for the operator to notice and clean up.
+    """
+    if not response_id:
+        return None
+    for article in articles:
+        marker = article.get("submissionId")
+        if marker and marker["value"] == response_id:
+            return article
+    return None
 
 
 def caption_rich_text(caption):
@@ -175,13 +230,31 @@ def caption_rich_text(caption):
     )
 
 
-def build_metafields(staff, variant_ids, file_ids, caption):
-    entries = [
-        ("styling_model_name", "single_line_text_field", staff["display_name"]),
-        ("styling_model_height", "single_line_text_field", staff["height"]),
-        ("styling_main_images", "list.file_reference", json.dumps(file_ids)),
-        ("styling_product_variants", "list.variant_reference", json.dumps(variant_ids)),
-    ]
+def build_metafields(staff, variant_ids, file_ids, caption, response_id=""):
+    # metafieldsSet and articleCreate both reject the whole batch on one bad
+    # entry, so blank and empty values are omitted rather than sent: the
+    # operator then sees a blank field to fill in and the template renders
+    # nothing, instead of the article losing every metafield.
+    entries = [("styling_model_name", "single_line_text_field", staff["display_name"])]
+    if staff.get("height"):
+        entries.append(
+            ("styling_model_height", "single_line_text_field", staff["height"])
+        )
+    if response_id:
+        # Idempotency key: what a re-run matches on to avoid a second article.
+        entries.append(("styling_submission_id", "single_line_text_field", response_id))
+    if file_ids:
+        entries.append(
+            ("styling_main_images", "list.file_reference", json.dumps(file_ids))
+        )
+    if variant_ids:
+        entries.append(
+            (
+                "styling_product_variants",
+                "list.variant_reference",
+                json.dumps(variant_ids),
+            )
+        )
     if staff.get("instagram"):
         account = staff["instagram"].lstrip("@")
         entries.append(
@@ -191,7 +264,7 @@ def build_metafields(staff, variant_ids, file_ids, caption):
                 f"https://www.instagram.com/{account}/",
             )
         )
-    if caption:
+    if caption and caption.strip():
         entries.append(
             ("styling_caption", "rich_text_field", caption_rich_text(caption))
         )
@@ -205,85 +278,81 @@ def admin_article_url(article_gid):
     return f"https://admin.shopify.com/store/asheis/content/articles/{article_gid.rsplit('/', 1)[-1]}"
 
 
+def drive_file_url(file_id):
+    return f"https://drive.google.com/file/d/{file_id}/view"
+
+
+def spreadsheet_url(spreadsheet_id):
+    return f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+
+
+def workflow_run_url():
+    """Link to the Action run, from the variables GitHub injects into the job."""
+    server = os.environ.get("GITHUB_SERVER_URL")
+    repository = os.environ.get("GITHUB_REPOSITORY")
+    run_id = os.environ.get("GITHUB_RUN_ID")
+    if not (server and repository and run_id):
+        return ""
+    return f"{server}/{repository}/actions/runs/{run_id}"
+
+
 def notify(subject, lines):
     body = "\n".join(lines)
     logger.info("notifying %s: %s\n%s", ", ".join(notifyees()), subject, body)
     send_smtp_email(subject, body, notifyees())
 
 
-def main():
-    submission = parse_submission()
-    staff = submission["staff"]
-    logger.info(
-        "processing %s by %s (%s)",
-        submission.get("response_id"),
-        staff["name"],
-        staff["display_name"],
-    )
-    client = utils.client("asheis")
-    workdir = pathlib.Path(tempfile.mkdtemp(prefix="staff_styling_"))
+def identify_variants(client, submission, workdir):
+    """Decode the tag photos and resolve them, and any manual entry, to variants.
 
-    undecodable = 0
-    codes = []
+    Returns (resolved variants, unresolved codes, ids of unreadable tag photos)
+    — the ids, not a count, so the email can link the photo that needs a human.
+    """
+    unreadable, codes = [], []
     for i, file_id in enumerate(submission["tag_photo_ids"]):
         path = str(workdir / f"tag_{i}")
-        client.download_file_from_drive(file_id, path)
-        if decoded := decode_barcodes(path):
+        try:
+            client.download_file_from_drive(file_id, path)
+            decoded = decode_barcodes(path)
+        except Exception:
+            # A photo PIL cannot open counts as unreadable, like one whose
+            # barcode will not decode — it must not cost the whole article.
+            logger.exception("could not read tag photo %s", file_id)
+            decoded = []
+        if decoded:
             codes.extend(decoded)
         else:
-            undecodable += 1
+            unreadable.append(file_id)
     codes.extend(submission["manual_skus"])
-    codes = list(dict.fromkeys(codes))
-    resolved, unresolved = resolve_variants(client, codes)
+    resolved, unresolved = resolve_variants(client, list(dict.fromkeys(codes)))
     logger.info(
-        "variants resolved: %s, unresolved codes: %s, undecodable tag photos: %s",
+        "variants resolved: %s, unresolved codes: %s, unreadable tag photos: %s",
         [v["sku"] for v in resolved],
         unresolved,
-        undecodable,
+        unreadable,
     )
+    return resolved, unresolved, unreadable
 
-    warnings = []
-    if undecodable:
-        warnings.append(
-            f"・バーコードを読み取れない下げ札写真が{undecodable}枚ありました"
-        )
-    if unresolved:
-        warnings.append(
-            f"・商品を特定できないコードがありました: {', '.join(unresolved)}"
-        )
-    if len(submission["styling_photo_ids"]) < MIN_STYLING_PHOTOS:
-        warnings.append(
-            f"・スタイリング写真が{MIN_STYLING_PHOTOS}枚未満です"
-            f"({len(submission['styling_photo_ids'])}枚)"
-        )
 
-    if not submission["styling_photo_ids"] or not resolved:
-        reason = (
-            "スタイリング写真がありません"
-            if not submission["styling_photo_ids"]
-            else "着用商品を1点も特定できませんでした"
-        )
-        notify(
-            f"【スタイリング投稿】記事作成失敗: {staff['name']}",
-            [
-                f"記事を作成できませんでした: {reason}",
-                "",
-                *warnings,
-                "",
-                "フォームの回答内容を確認のうえ、SKU手入力での再投稿、または手動での記事作成をお願いします。",
-            ],
-        )
-        raise SystemExit(f"article not created: {reason}")
+def upload_styling_photos(client, submission, workdir, title):
+    """Normalise the styling photos and upload them.
 
-    title = next_article_title(client, staff["display_name"])
-
-    local_paths = []
+    Returns (file ids, cover url, ids of photos that could not be processed).
+    One unreadable photo costs that photo, not the whole article.
+    """
+    local_paths, failed = [], []
     for i, file_id in enumerate(submission["styling_photo_ids"]):
         raw = str(workdir / f"styling_{i}_raw")
-        client.download_file_from_drive(file_id, raw)
-        local_paths.append(
-            prepare_image(raw, str(workdir / f"{title.lower()}-{i + 1}.jpg"))
-        )
+        try:
+            client.download_file_from_drive(file_id, raw)
+            local_paths.append(
+                prepare_image(raw, str(workdir / f"{title.lower()}-{i + 1}.jpg"))
+            )
+        except Exception:
+            logger.exception("could not process styling photo %s", file_id)
+            failed.append(file_id)
+    if not local_paths:
+        return [], None, failed
 
     file_names = [pathlib.Path(p).name for p in local_paths]
     mime_types = ["image/jpeg"] * len(local_paths)
@@ -294,39 +363,193 @@ def main():
     )
     file_ids = [f["id"] for f in files]
     urls_by_id = client.wait_for_file_processing_completion(file_ids)
+    return file_ids, urls_by_id[file_ids[0]], failed
+
+
+def collect_warnings(report):
+    """What the operator has to complete by hand before publishing."""
+    warnings = []
+    if report["failed_photos"]:
+        warnings.append(
+            f"・スタイリング写真を{len(report['failed_photos'])}枚取り込めませんでした。"
+            "管理画面で追加してください"
+        )
+    if report["unreadable_tags"]:
+        warnings.append(
+            f"・下げ札写真を{len(report['unreadable_tags'])}枚読み取れませんでした"
+        )
+    if report["unresolved"]:
+        warnings.append(
+            f"・商品を特定できないコードがあります: {', '.join(report['unresolved'])}"
+        )
+    if report["unresolved"] or report["unreadable_tags"] or not report["resolved"]:
+        # Fires on a partial match too: one unidentified item still needs the
+        # operator to open the same metafield and add it.
+        warnings.append(
+            "・管理画面の「Styling - Product Variants」に"
+            "着用商品を手動で追加してください"
+        )
+    if not report["uploaded_photos"]:
+        # Keyed off what actually reached Shopify, not off what was submitted:
+        # every photo failing to import leaves the article just as bare.
+        warnings.append(
+            "・スタイリング写真がありません。"
+            "カバー画像と「Styling - Main Images」を手動で設定してください"
+        )
+    return warnings
+
+
+def variant_line(variant):
+    """Name the JAN as well: it is what is printed on the tag in the photo."""
+    codes = f"SKU: {variant['sku']}"
+    if variant.get("barcode"):
+        codes += f" / JAN: {variant['barcode']}"
+    return f"・{variant['displayName']} ({codes})"
+
+
+def notify_outcome(submission, staff, title, article_id, report):
+    warnings = report["warnings"]
+    lines = [
+        f"記事「{title}」を非公開で作成しました。"
+        + (
+            "下記の点を確認・修正のうえ公開してください。"
+            if warnings
+            else "内容を確認のうえ公開してください。"
+        ),
+        "",
+        f"確認・公開: {admin_article_url(article_id)}",
+        "",
+        f"スタッフ: {staff['name']} ({staff['display_name']} / {staff['shop']})",
+        f"スタイリング写真: {report['uploaded_photos']}枚",
+        "着用商品:" if report["resolved"] else "着用商品: 未特定",
+        *[variant_line(v) for v in report["resolved"]],
+    ]
+    if warnings:
+        lines += ["", "要確認:", *warnings]
+        # The operator reads the tags themselves to identify what is missing,
+        # so link them whenever identification came up short — but not when the
+        # only problem was, say, a photo that failed to import.
+        if submission["tag_photo_ids"] and (
+            report["unresolved"] or report["unreadable_tags"] or not report["resolved"]
+        ):
+            lines += [
+                "",
+                "下げ札写真:",
+                *[f"・{drive_file_url(i)}" for i in submission["tag_photo_ids"]],
+            ]
+        if report["failed_photos"]:
+            lines += [
+                "",
+                "取り込めなかったスタイリング写真:",
+                *[f"・{drive_file_url(i)}" for i in report["failed_photos"]],
+            ]
+        if spreadsheet_id := submission.get("spreadsheet_id"):
+            lines += ["", f"回答内容: {spreadsheet_url(spreadsheet_id)}"]
+    state = "要確認" if warnings else "完了"
+    notify(f"【スタイリング投稿】{state}: {title} ({staff['name']})", lines)
+
+
+def process_submission(submission, context):
+    staff = submission["staff"]
+    client = utils.client("asheis")
+    workdir = pathlib.Path(tempfile.mkdtemp(prefix="staff_styling_"))
+
+    articles = blog_articles(client)
+    if existing := existing_article_for_submission(
+        articles, submission.get("response_id")
+    ):
+        logger.info(
+            "submission %s already produced %s, skipping",
+            submission["response_id"],
+            existing["title"],
+        )
+        notify(
+            f"【スタイリング投稿】作成済み: {existing['title']} ({staff['name']})",
+            [
+                f"この投稿は既に記事「{existing['title']}」として作成済みのため、"
+                "重複作成を避けて処理をスキップしました。",
+                "",
+                f"確認・公開: {admin_article_url(existing['id'])}",
+                "",
+                "その記事がまだ公開されていない場合は、内容を確認のうえ公開してください。",
+            ],
+        )
+        return
+
+    resolved, unresolved, unreadable_tags = identify_variants(
+        client, submission, workdir
+    )
+
+    title = next_article_title(articles, staff["display_name"])
+    file_ids, cover_url, failed_photos = upload_styling_photos(
+        client, submission, workdir, title
+    )
+    report = {
+        "resolved": resolved,
+        "unresolved": unresolved,
+        "unreadable_tags": unreadable_tags,
+        "failed_photos": failed_photos,
+        "uploaded_photos": len(file_ids),
+    }
+    report["warnings"] = collect_warnings(report)
 
     article = client.article_create(
         BLOG_TITLE,
         title,
         TEMPLATE_SUFFIX,
-        media_url=urls_by_id[file_ids[0]],
+        media_url=cover_url,
         is_published=False,
         author_name=staff["name"],
         tags=[staff["display_name"]],
-    )
-    logger.info("created article %s: %s", article["title"], article["id"])
-
-    client.metafields_set(
-        article["id"],
-        build_metafields(
-            staff, [v["id"] for v in resolved], file_ids, submission["caption"]
+        metafields=build_metafields(
+            staff,
+            [v["id"] for v in resolved],
+            file_ids,
+            submission["caption"],
+            submission.get("response_id", ""),
         ),
     )
+    context["article_id"] = article["id"]
+    logger.info("created article %s: %s", article["title"], article["id"])
 
-    notify(
-        f"【スタイリング投稿】記事作成完了: {title} ({staff['name']})",
-        [
-            f"記事「{title}」を非公開で作成しました。内容を確認のうえ公開してください。",
-            "",
-            f"確認・公開: {admin_article_url(article['id'])}",
-            "",
-            f"スタッフ: {staff['name']} ({staff['display_name']} / {staff['shop']})",
-            f"スタイリング写真: {len(file_ids)}枚",
-            "着用商品:",
-            *[f"・{v['displayName']} (SKU: {v['sku']})" for v in resolved],
-            *(["", *warnings] if warnings else []),
-        ],
-    )
+    notify_outcome(submission, staff, title, article["id"], report)
+
+
+def notify_error(staff, context, exc):
+    lines = [
+        "スタイリング記事の作成処理でエラーが発生しました。",
+        "",
+        f"エラー: {type(exc).__name__}: {exc}",
+    ]
+    if article_id := context.get("article_id"):
+        lines += ["", f"作成途中の記事: {admin_article_url(article_id)}"]
+    lines += [
+        "",
+        f"実行ログ: {workflow_run_url() or 'GitHub Actions を確認してください'}",
+    ]
+    try:
+        notify(f"【スタイリング投稿】エラー: {staff.get('name', '')}", lines)
+    except Exception:  # the original error matters more than the notification
+        logger.exception("failed to send the error notification")
+
+
+def main():
+    # Parsing is inside the try as well: a malformed payload is exactly the
+    # case nobody is watching the Action for, so it has to reach the mailbox.
+    context, staff = {}, {}
+    try:
+        submission = parse_submission()
+        staff = submission["staff"]
+        logger.info(
+            "processing %s by %s (%s)",
+            submission.get("response_id"),
+            staff.get("name"),
+            staff.get("display_name"),
+        )
+        process_submission(submission, context)
+    except Exception as exc:
+        notify_error(staff, context, exc)
+        raise
 
 
 if __name__ == "__main__":
