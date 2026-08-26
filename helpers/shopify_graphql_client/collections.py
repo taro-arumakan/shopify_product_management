@@ -229,6 +229,38 @@ class CollectionQueries:
         }
         return self.collection_create_by_rule_set(collection_title, rule_set)
 
+    def update_collection_image(self, collection_id, src, alt_text=None):
+        """Set a collection's image from a URL. Shopify fetches and copies it."""
+        query = """
+        mutation updateCollectionImage($input: CollectionInput!) {
+            collectionUpdate(input: $input) {
+                collection {
+                    id
+                    title
+                    handle
+                    image { url altText width height }
+                }
+                userErrors {
+                    message
+                    field
+                }
+            }
+        }
+        """
+        image = {"src": src}
+        if alt_text:
+            image["altText"] = alt_text
+        variables = {
+            "input": {
+                "id": self.sanitize_id(collection_id, "Collection"),
+                "image": image,
+            }
+        }
+        res = self.run_query(query, variables)
+        if errors := res["collectionUpdate"]["userErrors"]:
+            raise RuntimeError(f"Collection image update failed: {errors}")
+        return res["collectionUpdate"]["collection"]
+
     def collection_update_rule_set(self, collection_id, rule_set):
         query = """
         mutation updateCollection($input: CollectionInput!) {
