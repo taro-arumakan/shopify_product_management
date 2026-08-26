@@ -71,6 +71,35 @@ HERO_IMAGES = {
         "https://cdn.shopify.com/s/files/1/0603/0909/files/Objects-Product-Images_3.jpg",
         "EPOKHE TUNDRA TRUCKER CAP キャップ",
     ),
+    # Collections that predate this batch and never had a hero: they were
+    # falling back to a white studio flatlay beside their neighbours' portraits.
+    # CANDY is discontinued at EPOKHE, so its shot comes from our own product
+    # media; POLARIZED is a lens filter rather than a style and takes a shot of
+    # a polarized colourway in bright sun.
+    "coil": (
+        "https://cdn.shopify.com/s/files/1/0603/0909/files/Coil-LightTortoisePolishedBronze.jpg",
+        "EPOKHE COIL サングラス",
+    ),
+    "candy": (
+        "https://cdn.shopify.com/s/files/1/0069/0782/2207/files/IMG-1550.jpg",
+        "EPOKHE CANDY サングラス",
+    ),
+    "brut": (
+        "https://cdn.shopify.com/s/files/1/0603/0909/files/Brut-army-green-mens-lifestyle_92985350-81e5-4a3a-900b-b7e3cd7edeef.jpg",
+        "EPOKHE BRUT サングラス",
+    ),
+    "mono": (
+        "https://cdn.shopify.com/s/files/1/0603/0909/files/mono.jpg",
+        "EPOKHE MONO サングラス",
+    ),
+    "realm": (
+        "https://cdn.shopify.com/s/files/1/0603/0909/files/RealmGunmetal.jpg",
+        "EPOKHE REALM サングラス",
+    ),
+    "polarized": (
+        "https://cdn.shopify.com/s/files/1/0603/0909/files/Reprise-black-bronze-womens-lifestyle.jpg",
+        "EPOKHE 偏光レンズ サングラス",
+    ),
     "thomas-townend-art-series-cap": (
         "https://cdn.shopify.com/s/files/1/0603/0909/files/EpokheThomasTownendArtSeriesHat-BlackOffWhite_1.jpg",
         "EPOKHE THOMAS TOWNEND ART SERIES CAP キャップ",
@@ -84,6 +113,7 @@ TILE_ORDER = [
     "superstar",
     "coil",
     "dylan",
+    "brut",
     "candy",
     "ceremony",
     "desire",
@@ -93,7 +123,9 @@ TILE_ORDER = [
     "frequency",
     "guilty",
     "memphis",
+    "mono",
     "pano",
+    "realm",
     "reprise",
     "stereo",
     "suede",
