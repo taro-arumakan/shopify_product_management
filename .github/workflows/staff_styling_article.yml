@@ -4,6 +4,12 @@ on:
   repository_dispatch:
     types: [staff-styling-submission]
 
+# Article numbers are read-then-written, so two submissions processed at once
+# would compute the same one.
+concurrency:
+  group: staff-styling-article
+  cancel-in-progress: false
+
 jobs:
   process-submission:
     runs-on: ubuntu-latest

@@ -3,8 +3,8 @@ import logging
 import re
 import string
 import textwrap
+import unicodedata
 from brands.client.brandclientbase import BrandClientBase
-
 
 logger = logging.getLogger(__name__)
 
@@ -238,15 +238,38 @@ class AsheisClient(BrandClientBase):
         self.update_variant_barcodes(product_input)
 
     @staticmethod
-    def validate_jan(barcode):
-        """13-digit JAN/EAN with a valid check digit. Returns the normalized string."""
-        s = str(barcode).strip()
-        if not (s.isdigit() and len(s) == 13):
-            raise ValueError(f"JAN must be 13 digits: {s!r}")
-        check = (
-            10 - sum(int(d) * (3 if i % 2 else 1) for i, d in enumerate(s[:12])) % 10
+    def ean13_check_digit(body):
+        """The 13th digit of a JAN/EAN-13, computed from its first 12 digits."""
+        return (
+            10 - sum(int(d) * (3 if i % 2 else 1) for i, d in enumerate(body[:12])) % 10
         ) % 10
-        if check != int(s[-1]):
+
+    @staticmethod
+    def validate_jan(barcode):
+        """13-digit JAN/EAN with a valid check digit. Returns the normalized string.
+
+        A 12-digit value is rejected rather than completed. A check digit
+        computed from the same keystrokes it is meant to police detects
+        nothing, and ASHEIS codes are densely sequential within one company
+        prefix, so a completed typo usually lands on a neighbouring product's
+        real JAN — which resolves to a valid but wrong variant, silently.
+        """
+        # NFKC folds the full-width digits a Japanese IME produces into ASCII;
+        # str.isdigit() alone would pass them straight through to the barcode
+        # field, where they could never match a scanned tag.
+        s = unicodedata.normalize("NFKC", str(barcode)).strip()
+        if not (s.isascii() and s.isdigit()):
+            raise ValueError(f"JAN must be digits only: {s!r}")
+        if len(s) == 12:
+            raise ValueError(
+                f"JAN is 12 digits, the check digit is missing: {s!r} "
+                f"(it would complete to {s}{AsheisClient.ean13_check_digit(s)}, "
+                "but the 13 digits have to come from the tag — completing them "
+                "here would make a mistyped JAN undetectable)"
+            )
+        if len(s) != 13:
+            raise ValueError(f"JAN must be 13 digits: {s!r}")
+        if AsheisClient.ean13_check_digit(s) != int(s[-1]):
             raise ValueError(f"JAN check digit mismatch: {s!r}")
         return s
 

@@ -14,10 +14,20 @@ Google Form (staff, photos, tags)
             └─ repository_dispatch: staff-styling-submission
                  └─ GitHub Action: staff_styling_article.yml
                       └─ staff_styling_to_blogpost.py
-                           decode JAN (== SKU) → variant_by_sku
+                           decode JAN → variant_by_barcode (SKU as fallback)
                            HEIC→JPEG, upload, hidden article + metafields
                            outcome email to NOTIFYEES_STAFF_STYLING
 ```
+
+The hidden article is created even when no product could be identified or no
+photo came through: the email then says 要確認, names what is missing and links
+both the article in the Shopify admin and the tag photos in Drive, so the
+operator can identify the items, complete the article and publish it. Only an
+unexpected error leaves no article, and that is emailed too.
+
+Each article carries the form response id in `custom.styling_submission_id`, so
+re-running the Action for a submission that already produced an article skips
+it rather than leaving a second draft behind.
 
 ## Prototype setup (Google side, personal account)
 
@@ -30,8 +40,8 @@ Google Form (staff, photos, tags)
 3. **Manual step** — Apps Script cannot create file-upload questions. Open the
    form-edit URL printed in the log and add two file-upload questions on the
    「投稿内容」 page, titles exactly as in `TITLES`:
-   - 「スタイリング写真」 — images only, max 10 files (min 4 is enforced by
-     convention/review, Forms cannot enforce a minimum)
+   - 「スタイリング写真」 — images only, max 10 files (no minimum; the first
+     photo becomes the cover image)
    - 「下げ札写真」 — images only, max 10 files
    Then delete the placeholder section header.
 4. Script Properties (プロジェクトの設定 → スクリプト プロパティ), all optional
@@ -53,6 +63,15 @@ Notes:
   the master by hand, fix the rows and run `refreshStaffChoices()`.
 - 表示名 (latin) drives the article title/URL numbering (e.g. Saki9 / saki-10)
   and the per-staff article tag.
+- **Editing Code.gs here changes nothing by itself** — the Apps Script project
+  is the deployment, so paste the file in again after every change. Text that
+  `setup()` writes (the form description, the question help texts) is only
+  applied when the form is created, so an existing form has to be edited in
+  the form editor as well.
+- **Share the 「(File responses)」 folders with everyone in
+  `NOTIFYEES_STAFF_STYLING`**, not only with the service account: a 要確認
+  email links the tag photos so the operator can read the codes off them, and
+  those links 404 for anyone the folder was never shared with.
 
 ## Repo side
 

@@ -59,7 +59,7 @@ function setup() {
   const form = FormApp.create('ASHEIS スタッフスタイリング投稿 (prototype)');
   form.setDescription(
     '店舗スタッフ用のスタイリング投稿フォームです。\n' +
-      'スタイリング写真(4枚以上、1枚目がカバー画像になります)と、着用商品ごとの下げ札(値札)写真をアップロードしてください。'
+      'スタイリング写真(1枚以上、1枚目がカバー画像になります)と、着用商品ごとの下げ札(値札)写真をアップロードしてください。'
   );
   try {
     form.setEmailCollectionType(FormApp.EmailCollectionType.VERIFIED);
@@ -248,8 +248,8 @@ function onFormSubmitHandler(e) {
     const dispatchStatus = dispatchToGitHub_(submission);
 
     const warnings = [];
-    if (submission.styling_photo_ids.length < 4) {
-      warnings.push('※スタイリング写真が4枚未満です');
+    if (!submission.styling_photo_ids.length) {
+      warnings.push('※スタイリング写真がありません');
     }
     if (!submission.tag_photo_ids.length && !submission.manual_skus.length) {
       warnings.push('※下げ札写真・SKU入力のいずれもありません(商品を特定できません)');
@@ -285,8 +285,9 @@ function normalizeHeight_(v) {
   return /cm$/i.test(s) ? s : s + 'cm';
 }
 
-#TODO [CEC-471] comments in English
+
 /**
+ * #TODO [CEC-471] comments in English
  * repository_dispatch を送信し、結果を文字列で返す(受付メールに記載される)。
  * 送信失敗は例外にせずメールで可視化する — 写真・回答自体は保存済みのため。
  */
