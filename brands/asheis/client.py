@@ -246,13 +246,21 @@ class AsheisClient(BrandClientBase):
 
     @staticmethod
     def validate_jan(barcode):
-        """13-digit JAN/EAN with a valid check digit. Returns the normalized string.
+        """A 13-digit JAN. Returns it normalized, completing a 12-digit body.
 
-        A 12-digit value is rejected rather than completed. A check digit
-        computed from the same keystrokes it is meant to police detects
-        nothing, and ASHEIS codes are densely sequential within one company
-        prefix, so a completed typo usually lands on a neighbouring product's
-        real JAN — which resolves to a valid but wrong variant, silently.
+        ISLAND's product master holds the 12-digit body and the tag printer
+        appends the check digit, so the sheet is 12 digits while a scanned tag
+        decodes to 13. Completing it here is the same arithmetic the printer
+        runs, and it adds no risk: the check digit is a pure function of the
+        other twelve, so a mistyped body misses its product either way. What
+        it buys is a barcode field holding a real GTIN, which is what Shopify
+        POS scans and what the product feeds validate.
+
+        Confirmed against a physical tag: ISLAND's 455035128750 completes to
+        4550351287507, which is what is printed on the ヘリンボーンツイードJK.
+
+        A 13-digit value is still checked, so a future sheet that carries the
+        whole JAN keeps the typo detection the check digit exists for.
         """
         # NFKC folds the full-width digits a Japanese IME produces into ASCII;
         # str.isdigit() alone would pass them straight through to the barcode
@@ -261,12 +269,9 @@ class AsheisClient(BrandClientBase):
         if not (s.isascii() and s.isdigit()):
             raise ValueError(f"JAN must be digits only: {s!r}")
         if len(s) == 12:
-            raise ValueError(
-                f"JAN is 12 digits, the check digit is missing: {s!r} "
-                f"(it would complete to {s}{AsheisClient.ean13_check_digit(s)}, "
-                "but the 13 digits have to come from the tag — completing them "
-                "here would make a mistyped JAN undetectable)"
-            )
+            completed = f"{s}{AsheisClient.ean13_check_digit(s)}"
+            logger.info(f"  completed 12-digit JAN {s} to {completed}")
+            return completed
         if len(s) != 13:
             raise ValueError(f"JAN must be 13 digits: {s!r}")
         if AsheisClient.ean13_check_digit(s) != int(s[-1]):
@@ -277,8 +282,10 @@ class AsheisClient(BrandClientBase):
         """Write the sheet's JANコード column to the variant barcode field.
 
         JAN != SKU for ASHEIS; the barcode field is what maps a scanned tag
-        back to a variant (e.g. the staff styling pipeline). Variants without
-        a JAN in the sheet are skipped with a warning.
+        back to a variant (e.g. the staff styling pipeline). The sheet holds
+        the 12-digit body, so validate_jan completes it to the 13 digits the
+        tag actually carries. Variants without a JAN are skipped with a
+        warning.
         """
         logger.info(f'updating variant barcodes for {product_input["title"]}')
         res = []

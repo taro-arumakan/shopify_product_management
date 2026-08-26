@@ -114,9 +114,11 @@ def resolve_variants(client, codes):
     """Resolve decoded barcodes / manually entered codes to variants.
 
     Decoded JANs match the variant barcode field; manual input may be either a
-    JAN or a SKU, so barcode lookup is tried first, then SKU, raw code first
-    and digits-only second. Returns (resolved variants, unresolved codes),
-    variants deduped by id.
+    JAN or a SKU, so barcode lookup is tried first, then SKU. Each code is
+    tried raw, then digits-only, then — for a 13-digit JAN — without its check
+    digit, which resolves a variant whose barcode was stored as the 12-digit
+    body before the completion in AsheisClient.validate_jan landed.
+    Returns (resolved variants, unresolved codes), variants deduped by id.
     """
     resolved, unresolved = [], []
     for code in codes:
@@ -124,6 +126,8 @@ def resolve_variants(client, codes):
         digits = re.sub(r"\D", "", code)
         if digits and digits != code:
             candidates.append(digits)
+        if len(digits) == 13:
+            candidates.append(digits[:12])
         variant = None
         for candidate in candidates:
             for lookup in (client.variant_by_barcode, client.variant_by_sku):

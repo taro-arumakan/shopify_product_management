@@ -117,13 +117,17 @@ class TestAsheisJan(unittest.TestCase):
         self.assertEqual(AsheisClient.validate_jan(4550351287507), "4550351287507")
         self.assertEqual(AsheisClient.validate_jan(" 4550351287507 "), "4550351287507")
 
-    def test_rejects_twelve_digits_naming_the_missing_check_digit(self):
-        # What the shop staff actually entered: the JAN body without its check
-        # digit. Completing it here would make a mistyped JAN undetectable.
-        with self.assertRaises(ValueError) as ctx:
-            AsheisClient.validate_jan("455035135296")
-        self.assertIn("check digit is missing", str(ctx.exception))
-        self.assertIn("4550351352960", str(ctx.exception))
+    def test_completes_the_twelve_digit_body_the_sheet_holds(self):
+        # ISLAND's master holds the body and the tag printer appends the check
+        # digit, so the sheet is 12 digits while a scanned tag decodes to 13.
+        # Confirmed against a physical tag: 455035128750 -> 4550351287507.
+        self.assertEqual(AsheisClient.validate_jan("455035128750"), "4550351287507")
+        self.assertEqual(AsheisClient.validate_jan("455035135296"), "4550351352960")
+
+    def test_a_thirteen_digit_value_is_still_check_digit_verified(self):
+        # A sheet that one day carries whole JANs keeps its typo detection.
+        with self.assertRaises(ValueError):
+            AsheisClient.validate_jan("4550351287501")
 
     def test_rejects_bad_check_digit_and_non_jan_values(self):
         for value in ("4550351287501", "21263620000390", "abc", "455035128750x"):

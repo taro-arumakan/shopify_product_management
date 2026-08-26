@@ -23,7 +23,11 @@ const TITLES = {
   regInstagram: 'Instagram',
   regShop: '所属店舗',
   caption: 'キャプション(任意)',
-  manualSkus: 'SKU手入力(バーコードを撮影できない場合のみ)',
+  manualCodes: 'JANコード手入力(バーコードを撮影できない場合のみ)',
+  // The question was called SKU手入力 before the tags turned out to carry no
+  // 品番 at all. Both titles are accepted so renaming the live form and
+  // re-pasting this file can happen in either order without losing answers.
+  manualCodesLegacy: 'SKU手入力(バーコードを撮影できない場合のみ)',
   stylingPhotos: 'スタイリング写真',
   tagPhotos: '下げ札写真',
   pageRegister: '新規スタッフ登録',
@@ -110,8 +114,8 @@ function setup() {
   form.addParagraphTextItem().setTitle(TITLES.caption).setHelpText('コーディネートの説明など(任意)');
   form
     .addParagraphTextItem()
-    .setTitle(TITLES.manualSkus)
-    .setHelpText('下げ札のバーコードを撮影できない場合のみ、SKU を1行に1つ入力');
+    .setTitle(TITLES.manualCodes)
+    .setHelpText('下げ札のバーコードを撮影できない場合のみ、バーコード下の13桁の数字を1行に1つ入力');
 
   refreshStaffChoices_(form, master);
 
@@ -234,7 +238,7 @@ function onFormSubmitHandler(e) {
       respondent_email: respondentEmail,
       staff: staff,
       caption: String(answers[TITLES.caption] || ''),
-      manual_skus: String(answers[TITLES.manualSkus] || '')
+      manual_skus: String(answers[TITLES.manualCodes] || answers[TITLES.manualCodesLegacy] || '')
         .split('\n')
         .map(function (s) {
           return s.trim();
@@ -263,7 +267,7 @@ function onFormSubmitHandler(e) {
         '所属店舗: ' + staff.shop,
         'スタイリング写真: ' + submission.styling_photo_ids.length + '枚',
         '下げ札写真: ' + submission.tag_photo_ids.length + '枚',
-        'SKU手入力: ' + (submission.manual_skus.join(', ') || 'なし'),
+        'コード手入力: ' + (submission.manual_skus.join(', ') || 'なし'),
       ]
         .concat(warnings)
         .concat([
