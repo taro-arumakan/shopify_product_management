@@ -285,8 +285,8 @@ function normalizeHeight_(v) {
   return /cm$/i.test(s) ? s : s + 'cm';
 }
 
-#TODO [CEC-471] comments in English
 /**
+ * #TODO [CEC-471] comments in English
  * repository_dispatch を送信し、結果を文字列で返す(受付メールに記載される)。
  * 送信失敗は例外にせずメールで可視化する — 写真・回答自体は保存済みのため。
  */
