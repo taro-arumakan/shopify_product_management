@@ -14,7 +14,7 @@ Google Form (staff, photos, tags)
             └─ repository_dispatch: staff-styling-submission
                  └─ GitHub Action: staff_styling_article.yml
                       └─ staff_styling_to_blogpost.py
-                           decode JAN → variant_by_barcode (SKU as fallback)
+                           decode 13-digit JAN → variant_by_barcode
                            HEIC→JPEG, upload, hidden article + metafields
                            outcome email to NOTIFYEES_STAFF_STYLING
 ```
@@ -34,7 +34,7 @@ it rather than leaving a second draft behind.
 1. Open [script.google.com](https://script.google.com) → New project → paste
    [Code.gs](Code.gs) → save.
 2. Run `setup()` once and authorize the scopes. It creates:
-   - the form (staff dropdown with 新規登録 branch, caption, manual-SKU fallback)
+   - the form (staff dropdown with 新規登録 branch, caption, manual-code fallback)
    - the spreadsheet with the スタッフマスタ tab (seeded with a sample row)
    - the `onFormSubmit` trigger, and stores ids in Script Properties.
 3. **Manual step** — Apps Script cannot create file-upload questions. Open the
@@ -68,6 +68,11 @@ Notes:
   `setup()` writes (the form description, the question help texts) is only
   applied when the form is created, so an existing form has to be edited in
   the form editor as well.
+- The price tag prints **no 品番** — brand, product name, colour, size, price
+  and the JAN barcode, nothing else. The barcode is the only identifier on it,
+  so the manual fallback asks for the 13 digits printed under the barcode
+  rather than a SKU. `manual_skus` in the payload keeps its name and still
+  accepts either code.
 - **Share the 「(File responses)」 folders with everyone in
   `NOTIFYEES_STAFF_STYLING`**, not only with the service account: a 要確認
   email links the tag photos so the operator can read the codes off them, and
