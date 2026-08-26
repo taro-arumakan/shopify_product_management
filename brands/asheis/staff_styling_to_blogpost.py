@@ -13,7 +13,7 @@ CLIENT_PAYLOAD env var:
         "staff": {"name": str, "display_name": str, "height": str,
                   "instagram": str, "shop": str, "is_new": bool},
         "caption": str,
-        "manual_skus": [str, ...],    # fallback when tag photos are unusable
+        "manual_jan_codes": [str, ...],  # typed from the tag when unreadable
         "styling_photo_ids": [str, ...],   # Drive file ids, first is the cover
         "tag_photo_ids": [str, ...],       # Drive file ids of price-tag photos
         "spreadsheet_id": str
@@ -28,7 +28,7 @@ Steps:
    shared with the service account) and decode barcodes with zxing-cpp
 3. resolve variants by the barcode field — JAN != SKU for ASHEIS; barcodes are
    populated from the products sheet's JANコード column by AsheisClient —
-   falling back to SKU lookup so manual_skus may hold either code
+   falling back to SKU lookup so a manually typed code may be either
 4. download styling photos, EXIF-orient, convert to JPEG (HEIC included) and
    cap resolution, then upload to Shopify Files
 5. create the article hidden in the Styling blog ("styling" template) with the
@@ -86,7 +86,7 @@ def parse_submission():
     for key in ("staff", "styling_photo_ids", "tag_photo_ids"):
         assert key in submission, f"missing key in submission: {key}"
     # Optional fields, defaulted so a hand-fired dispatch payload still runs.
-    submission.setdefault("manual_skus", [])
+    submission.setdefault("manual_jan_codes", [])
     submission.setdefault("caption", "")
     submission.setdefault("response_id", "")
     return submission
@@ -327,7 +327,7 @@ def identify_variants(client, submission, workdir):
             codes.extend(decoded)
         else:
             unreadable.append(file_id)
-    codes.extend(submission["manual_skus"])
+    codes.extend(submission["manual_jan_codes"])
     resolved, unresolved = resolve_variants(client, list(dict.fromkeys(codes)))
     logger.info(
         "variants resolved: %s, unresolved codes: %s, unreadable tag photos: %s",
