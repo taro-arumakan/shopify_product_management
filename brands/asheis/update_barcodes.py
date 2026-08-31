@@ -1,5 +1,8 @@
 """Backfill variant barcodes from the JANコード column (P) of products sheets.
 
+Re-runnable: it rewrites every variant it finds a JAN for, so running it again
+after ISLAND fills in a missing row or corrects one is the way to pick that up.
+
 For products already registered in Shopify before the JAN column existed.
 Going forward, new products get their barcodes during creation
 (AsheisClient.post_process_product_input).
@@ -15,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_SHEETS = [
     "【8_9デリ】Products Master",
-    "【0924デリ】Products Master",
+    # "【0924デリ】Products Master",
 ]
 
 

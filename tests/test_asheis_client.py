@@ -117,17 +117,18 @@ class TestAsheisJan(unittest.TestCase):
         self.assertEqual(AsheisClient.validate_jan(4550351287507), "4550351287507")
         self.assertEqual(AsheisClient.validate_jan(" 4550351287507 "), "4550351287507")
 
-    def test_completes_the_twelve_digit_body_the_sheet_holds(self):
-        # ISLAND's master holds the body and the tag printer appends the check
-        # digit, so the sheet is 12 digits while a scanned tag decodes to 13.
+    def test_a_supplied_thirteen_digit_jan_is_verified_not_recomputed(self):
+        # The normal path since ISLAND began supplying whole JANs: the check
+        # digit is data, and a value that fails it is a typo worth rejecting.
+        self.assertEqual(AsheisClient.validate_jan("4550351352960"), "4550351352960")
+        with self.assertRaises(ValueError):
+            AsheisClient.validate_jan("4550351287501")
+
+    def test_still_completes_a_twelve_digit_body_if_one_arrives(self):
+        # The shape the sheets held until 2026-08-26; kept as a fallback.
         # Confirmed against a physical tag: 455035128750 -> 4550351287507.
         self.assertEqual(AsheisClient.validate_jan("455035128750"), "4550351287507")
         self.assertEqual(AsheisClient.validate_jan("455035135296"), "4550351352960")
-
-    def test_a_thirteen_digit_value_is_still_check_digit_verified(self):
-        # A sheet that one day carries whole JANs keeps its typo detection.
-        with self.assertRaises(ValueError):
-            AsheisClient.validate_jan("4550351287501")
 
     def test_rejects_bad_check_digit_and_non_jan_values(self):
         for value in ("4550351287501", "21263620000390", "abc", "455035128750x"):
