@@ -246,21 +246,21 @@ class AsheisClient(BrandClientBase):
 
     @staticmethod
     def validate_jan(barcode):
-        """A 13-digit JAN. Returns it normalized, completing a 12-digit body.
+        """A 13-digit JAN, verified. Returns it normalized.
 
-        ISLAND's product master holds the 12-digit body and the tag printer
-        appends the check digit, so the sheet is 12 digits while a scanned tag
-        decodes to 13. Completing it here is the same arithmetic the printer
-        runs, and it adds no risk: the check digit is a pure function of the
-        other twelve, so a mistyped body misses its product either way. What
-        it buys is a barcode field holding a real GTIN, which is what Shopify
-        POS scans and what the product feeds validate.
+        ISLAND supplies the whole 13-digit JAN, so the check digit is data to
+        be verified rather than derived: a value that fails the check is a
+        typo, and rejecting it is the entire point of the digit existing.
 
-        Confirmed against a physical tag: ISLAND's 455035128750 completes to
-        4550351287507, which is what is printed on the ヘリンボーンツイードJK.
+        A 12-digit body is still accepted and completed, because that is what
+        the sheets held until 2026-08-26 and a stray row may yet arrive that
+        way. It logs a warning rather than passing quietly: completion is now
+        the exception, and a body computed from the same keystrokes it would
+        police cannot detect a typo the way a supplied check digit can.
 
-        A 13-digit value is still checked, so a future sheet that carries the
-        whole JAN keeps the typo detection the check digit exists for.
+        Reconciled 2026-08-26: for all 89 variants already written from the
+        old 12-digit bodies, the digit computed here equals the one ISLAND
+        went on to supply — no store barcode needed correcting.
         """
         # NFKC folds the full-width digits a Japanese IME produces into ASCII;
         # str.isdigit() alone would pass them straight through to the barcode
@@ -268,15 +268,19 @@ class AsheisClient(BrandClientBase):
         s = unicodedata.normalize("NFKC", str(barcode)).strip()
         if not (s.isascii() and s.isdigit()):
             raise ValueError(f"JAN must be digits only: {s!r}")
+        if len(s) == 13:
+            if AsheisClient.ean13_check_digit(s) != int(s[-1]):
+                raise ValueError(f"JAN check digit mismatch: {s!r}")
+            return s
         if len(s) == 12:
             completed = f"{s}{AsheisClient.ean13_check_digit(s)}"
-            logger.info(f"  completed 12-digit JAN {s} to {completed}")
+            logger.warning(
+                f"  JAN {s} is 12 digits; completed to {completed}. "
+                "The source should supply all 13 — a computed check digit "
+                "cannot catch a typo in the other twelve."
+            )
             return completed
-        if len(s) != 13:
-            raise ValueError(f"JAN must be 13 digits: {s!r}")
-        if AsheisClient.ean13_check_digit(s) != int(s[-1]):
-            raise ValueError(f"JAN check digit mismatch: {s!r}")
-        return s
+        raise ValueError(f"JAN must be 13 digits: {s!r}")
 
     def update_variant_barcodes(self, product_input):
         """Write the sheet's JANコード column to the variant barcode field.
