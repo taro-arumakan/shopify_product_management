@@ -16,11 +16,12 @@ class LememeClient(BrandClientBase):
     def product_attr_column_map(self):
         return dict(
             title=string.ascii_lowercase.index("c"),
+            release_date=string.ascii_lowercase.index("b"),
             tags=string.ascii_lowercase.index("d"),
             price=string.ascii_lowercase.index("f"),
             description=string.ascii_lowercase.index("h"),
             product_care_option=string.ascii_lowercase.index("i"),
-            material=string.ascii_lowercase.index("j"),
+            material=string.ascii_lowercase.index("k"),
             size_text=string.ascii_lowercase.index("l"),
             made_in=string.ascii_lowercase.index("m"),
         )
@@ -28,10 +29,10 @@ class LememeClient(BrandClientBase):
     def option1_attr_column_map(self):
         option1_attrs = {"Color": string.ascii_lowercase.index("n")}
         option1_attrs.update(
-            filter_color=string.ascii_lowercase.index("o"),
-            drive_link=string.ascii_lowercase.index("q"),
-            sku=string.ascii_lowercase.index("p"),
-            stock=string.ascii_lowercase.index("r"),
+            # filter_color=string.ascii_lowercase.index("o"),
+            drive_link=string.ascii_lowercase.index("p"),
+            sku=string.ascii_lowercase.index("o"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option1_attrs
 
