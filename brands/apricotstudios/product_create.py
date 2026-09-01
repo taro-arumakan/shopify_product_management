@@ -1,24 +1,24 @@
 import datetime
 import logging
+import zoneinfo
+
 from brands.apricotstudios.client import ApricotStudiosClient
 
 logging.basicConfig(level=logging.INFO)
 
 
-def main():
+def create_autumn_1st_0903():
     client = ApricotStudiosClient(
         "gid://shopify/Product/9473807679744",
-        product_detail_images_folder_id="1n0ig5E8LDpbgsG9ehd2f7s-BGtVWVOA9",
+        product_detail_images_folder_id="1l65hGmJYkE4Y9j1O0_9gUAIjmZUdiNnY",
         product_sheet_start_row=1,
-        remove_existing_new_product_indicators=True,
-        products_season_tag="26_0615_summer_2nd",
+        remove_existing_new_product_indicators=False,
+        products_season_tag="26_0903_autumn_1st",
     )
-    sheet_name = "[Summer_2nd] 6/15"
-
-    import zoneinfo
+    sheet_name = "[Autumn_1st] 9/3"
 
     scheduled_time = datetime.datetime(
-        2026, 6, 15, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 9, 3, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.sanity_check_sheet(sheet_name)
@@ -26,6 +26,7 @@ def main():
         sheet_name,
         additional_tags=["New Arrival"],
         scheduled_time=scheduled_time,
+        restart_at_product_title="Dino denim pants",
     )
 
 
@@ -37,8 +38,6 @@ def reprocess():
     )
     sheet_name = "[Spring_1st] 2/25"
     product_inputs = client.product_inputs_by_sheet_name(sheet_name)
-
-    import zoneinfo
 
     scheduled_time = datetime.datetime(
         2026, 2, 25, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
@@ -66,6 +65,6 @@ def set_price():
 
 
 if __name__ == "__main__":
-    main()
+    create_autumn_1st_0903()
     # reprocess()
     # set_price()

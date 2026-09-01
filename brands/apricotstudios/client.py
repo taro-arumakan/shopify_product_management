@@ -89,6 +89,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             "Goods",
             "Indoorwear",
             "Outer",
+            "Out-wear",
             "Set-up",
             "Top",
         ]
