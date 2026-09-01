@@ -170,7 +170,9 @@ class TestForwarderGuardScan(unittest.TestCase):
         }
         client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
         guard = ForwarderGuard(client=client)
-        matched = guard.scan(dry_run=False)
+        # A live scan needs somewhere to send its findings; there is no default.
+        with patch.dict(os.environ, {"NOTIFYEES_CATAL": "ops@example.com"}):
+            matched = guard.scan(dry_run=False)
 
         self.assertEqual(len(matched), 1)
         self.assertEqual(matched[0][0]["name"], "#A")
@@ -246,7 +248,7 @@ class TestForwarderGuardScan(unittest.TestCase):
     @patch("helpers.client.send_smtp_email")
     @patch.object(ShopifyGraphqlClient, "order_add_tags")
     @patch.object(ShopifyGraphqlClient, "run_query")
-    def test_notifies_admin_on_newly_flagged_order(
+    def test_no_notification_without_the_recipient_env_var(
         self, mock_run_query, mock_add_tags, mock_send_email
     ):
         mock_run_query.return_value = {
@@ -266,14 +268,19 @@ class TestForwarderGuardScan(unittest.TestCase):
             }
         }
         client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
-        with patch.dict(os.environ):
-            os.environ.pop("NOTIFYEES_CATAL", None)
-            ForwarderGuard(client=client).scan(dry_run=False)
+        # No hardcoded recipient to fall back on — the repository is public. A
+        # live scan refuses to start rather than tagging orders nobody hears
+        # about, and it does so before the first tag is written.
+        for value in ({}, {"NOTIFYEES_CATAL": "  ,  "}):
+            with patch.dict(os.environ, value):
+                if not value:
+                    os.environ.pop("NOTIFYEES_CATAL", None)
+                with self.assertRaises(RuntimeError) as ctx:
+                    ForwarderGuard(client=client).scan(dry_run=False)
+                self.assertIn("NOTIFYEES_CATAL", str(ctx.exception))
 
-        mock_send_email.assert_called_once()
-        _, kwargs = mock_send_email.call_args
-        self.assertEqual(kwargs["to_addrs"], ["admin@catal.co.jp"])
-        self.assertIn("#A", kwargs["body"])
+        mock_send_email.assert_not_called()
+        mock_add_tags.assert_not_called()
 
     @patch("helpers.client.send_smtp_email")
     @patch.object(ShopifyGraphqlClient, "order_add_tags")
@@ -354,7 +361,8 @@ class TestForwarderGuardScan(unittest.TestCase):
             }
         }
         client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
-        matched = ForwarderGuard(client=client).scan(dry_run=False)
+        with patch.dict(os.environ, {"NOTIFYEES_CATAL": "ops@example.com"}):
+            matched = ForwarderGuard(client=client).scan(dry_run=False)
 
         self.assertEqual(len(matched), 1)
         mock_add_tags.assert_not_called()

@@ -54,6 +54,8 @@ import pillow_heif
 import zxingcpp
 from PIL import Image, ImageOps
 
+from dotenv import load_dotenv
+
 import utils
 from helpers.client import send_smtp_email
 from helpers.exceptions import (
@@ -69,15 +71,25 @@ pillow_heif.register_heif_opener()
 BLOG_TITLE = "Styling"
 TEMPLATE_SUFFIX = "styling"
 METAFIELD_NAMESPACE = "custom"
-DEFAULT_NOTIFYEES = (
-    "yusuke@catal.co.jp,taro@sniarti.fi"  # TODO [CEC-470] remove default notifyees
-)
 MAX_MEGAPIXELS = 15
 
 
 def notifyees():
-    addrs = os.environ.get("NOTIFYEES_STAFF_STYLING", DEFAULT_NOTIFYEES)
-    return [a.strip() for a in addrs.split(",") if a.strip()]
+    """Recipients of the outcome mail, from NOTIFYEES_STAFF_STYLING.
+
+    No default on purpose: this repository is public, so the addresses live in
+    the GitHub secret and nowhere in the source.
+    """
+    # .get, not [] — the workflow writes the key into .env unconditionally, so
+    # an unset secret arrives as an empty value rather than a missing one.
+    raw = os.environ.get("NOTIFYEES_STAFF_STYLING", "")
+    addrs = [a.strip() for a in raw.split(",") if a.strip()]
+    if not addrs:
+        raise RuntimeError(
+            "NOTIFYEES_STAFF_STYLING is unset or empty — set the repository "
+            "secret, or nobody is told what happened to a submission."
+        )
+    return addrs
 
 
 def parse_submission():
@@ -538,8 +550,14 @@ def notify_error(staff, context, exc):
 def main():
     # Parsing is inside the try as well: a malformed payload is exactly the
     # case nobody is watching the Action for, so it has to reach the mailbox.
+    # The recipients live in .env, which nothing has read yet: utils.credentials
+    # loads it, and that only happens once process_submission builds the client.
+    # Load it here so the check below sees the configured value.
+    assert load_dotenv(override=True)
+
     context, staff = {}, {}
     try:
+        notifyees()  # fail before the work, not after, if it is unconfigured
         submission = parse_submission()
         staff = submission["staff"]
         logger.info(

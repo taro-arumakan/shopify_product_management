@@ -8,8 +8,9 @@ can no longer reroute, and known matches there have already been tagged by hand.
 active_only=False / --include-closed for a one-off historical audit.
 
 Newly-tagged matches (not ones that were already tagged, so repeat scans don't
-re-notify) trigger an email to the NOTIFYEES_CATAL env var (comma-separated),
-falling back to _DEFAULT_NOTIFY_ADMIN_EMAIL if unset.
+re-notify) trigger an email to the addresses in the NOTIFYEES_CATAL env var
+(comma-separated). There is no default — this repository is public — so a live
+scan checks for them before it tags anything.
 
 `evaluate_order` is a pure function so the same detection backs both the batch scan
 (`ForwarderGuard.scan`, schedulable) and a per-order Shopify Flow / webhook call.
@@ -29,9 +30,6 @@ import unicodedata
 from brands.lememe.forwarder_denylist import FORWARDER_HUBS, FORWARDER_CODE_PREFIXES
 
 logger = logging.getLogger(__name__)
-
-# Fallback if the NOTIFYEES_CATAL env var isn't set.
-_DEFAULT_NOTIFY_ADMIN_EMAIL = "admin@catal.co.jp"
 
 # Uppercase alphanumeric runs of length >= 6 (forwarder routing/member codes).
 _CODE_RE = re.compile(r"[A-Z0-9]{6,}")
@@ -181,12 +179,22 @@ class ForwarderGuard:
             tags.append(f"forwarder-{ev['service'].lower()}")
         return tags
 
+    @staticmethod
+    def _recipients():
+        """Addresses from NOTIFYEES_CATAL. No default: this repo is public."""
+        raw = os.environ.get("NOTIFYEES_CATAL", "")
+        addrs = [a.strip() for a in raw.split(",") if a.strip()]
+        if not addrs:
+            raise RuntimeError(
+                "NOTIFYEES_CATAL is unset or empty — tagging orders that nobody "
+                "is told about is worse than not scanning."
+            )
+        return addrs
+
     def _notify(self, newly_flagged):
         from helpers.client import send_smtp_email
 
-        to_addrs = os.environ.get("NOTIFYEES_CATAL", _DEFAULT_NOTIFY_ADMIN_EMAIL).split(
-            ","
-        )
+        to_addrs = self._recipients()
         lines = [
             f"{order['name']}  [{ev['service'] or 'forwarder'}]  {'; '.join(ev['reasons'])}"
             for order, ev in newly_flagged
@@ -202,6 +210,12 @@ class ForwarderGuard:
         )
 
     def scan(self, processed_after=None, dry_run=True, max_pages=20, active_only=True):
+        if not dry_run:
+            # Check before tagging: the notify call below is deliberately
+            # swallowed so a send failure cannot undo the tagging, which would
+            # also hide a missing recipient list until someone noticed the
+            # silence. A dry run tags nothing, so it needs no recipients.
+            self._recipients()
         orders = self._fetch_orders(processed_after, max_pages, active_only=active_only)
         matched = []
         newly_flagged = []

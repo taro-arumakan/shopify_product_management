@@ -15,6 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Before checkout and the toolchain: a run that creates an article and
+      # tells nobody is worse than one that never starts.
+      - name: Require notification recipients
+        run: |
+          test -n "${{ secrets.NOTIFYEES_STAFF_STYLING }}" || {
+            echo "::error::NOTIFYEES_STAFF_STYLING is not set — refusing to process a submission nobody would be told about"
+            exit 1
+          }
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -44,7 +53,7 @@ jobs:
           SMTP_USER=${{ secrets.SMTP_USER }}
           SMTP_PASS=${{ secrets.SMTP_PASS }}
           SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
-          NOTIFYEES_STAFF_STYLING=${{ secrets.NOTIFYEES_STAFF_STYLING || 'yusuke@catal.co.jp,taro@sniarti.fi' }}
+          NOTIFYEES_STAFF_STYLING=${{ secrets.NOTIFYEES_STAFF_STYLING }}
           EOF
 
       - name: Process submission

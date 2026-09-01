@@ -61,7 +61,8 @@ side's event name.
      with **Contents: Read and write** (needed by `repository_dispatch`).
      Until set, submissions are stored + emailed but not dispatched.
    - `GH_REPO` — defaults to `taro-arumakan/shopify_product_management`
-   - `NOTIFY_EMAILS` — defaults to `yusuke@catal.co.jp,taro@sniarti.fi`
+   - `NOTIFY_EMAILS` — **required**, comma-separated. No default: this repo
+     is public, so the addresses live only in the Script Properties.
 5. Test-submit from a phone. Expect: row in the sheet, photos in Drive
    (「(File responses)」 folders), receipt email, and — once `GH_PAT` is set and
    the workflow is on `main` — a run of the "Staff styling article" action
@@ -97,17 +98,18 @@ Notes:
 
 - Workflow: [.github/workflows/staff_styling_article.yml](../../../.github/workflows/staff_styling_article.yml)
   (`repository_dispatch` only fires for workflows on the default branch).
-- Secrets required beyond the existing ones: `ASHEIS_ACCESS_TOKEN`,
-  optionally `NOTIFYEES_STAFF_STYLING` (falls back to
-  `yusuke@catal.co.jp,taro@sniarti.fi`).
+- Secrets required beyond the existing ones: `ASHEIS_ACCESS_TOKEN` and
+  `NOTIFYEES_STAFF_STYLING` (comma-separated recipients). Neither has a
+  default — the job fails up front if the recipient list is unset, rather than
+  finishing and telling nobody.
 - Before the processing steps land, share the form's Drive
   「(File responses)」 folders with the service account email from
   `GOOGLE_CREDENTIALS_JSON` so the job can download the photos.
 
 ## Migration to the catal.co.jp account (after testing)
 
-Re-run the same setup under the production account (namekata@catal.co.jp as
-owner, admin@catal.co.jp group as editor): new Apps Script project, `setup()`,
+Re-run the same setup under the production account (the CEO's catal.co.jp
+account as owner, the admin group as editor): new Apps Script project, `setup()`,
 re-add the two file-upload questions, set Script Properties, share the new
 File-responses folders with the service account. Keep forms with file-upload
 questions in My Drive — they are not supported in Shared Drives. The repo side

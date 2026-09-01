@@ -1,17 +1,22 @@
 /**
- * ASHEIS 店舗スタッフ スタイリング投稿 — Google フォーム側プロトタイプ
+ * ASHEIS shop-staff styling submissions — the Google Form side.
  *
- * セットアップ手順は同ディレクトリの README.md を参照。
- * 概要:
- *   1. script.google.com で新規プロジェクトを作成し、このファイルを貼り付けて保存
- *   2. setup() を実行して認可 → フォームとスプレッドシート(スタッフマスタ含む)が生成される
- *   3. ログに出力されるフォーム編集URLを開き、「投稿内容」ページに
- *      ファイルアップロード質問を2つ手動で追加する(タイトルは TITLES と完全一致させること)
- *      ※Apps Script / Forms API ではファイルアップロード質問を作成できないため手動
- *   4. スクリプト プロパティ(プロジェクトの設定 → スクリプト プロパティ):
- *        GH_PAT        : repository_dispatch 用 PAT。未設定の間は dispatch をスキップ
- *        GH_REPO       : 省略時 taro-arumakan/shopify_product_management
- *        NOTIFY_EMAILS : 省略時 yusuke@catal.co.jp,taro@sniarti.fi
+ * Text shown to staff (form titles, help texts) and text sent to the office
+ * (mail subjects and bodies) stays Japanese; everything else here is English.
+ * Full setup instructions live in README.md next to this file.
+ *
+ *   1. Create a new project at script.google.com, paste this file in, save.
+ *   2. Run setup() and grant the scopes. It creates the form and the
+ *      spreadsheet (which also holds the staff master).
+ *   3. Open the form-edit URL from the log and add the two file-upload
+ *      questions by hand, with the exact titles in TITLES — Apps Script and
+ *      the Forms API cannot create that question type.
+ *   4. Script properties (Project settings → Script properties):
+ *        GH_PAT        : PAT for repository_dispatch. Until it is set the
+ *                        dispatch is skipped and the failure mail says so.
+ *        GH_REPO       : defaults to taro-arumakan/shopify_product_management
+ *        NOTIFY_EMAILS : required. Comma-separated recipients of the failure
+ *                        mail. No default — this repository is public.
  */
 
 const TITLES = {
@@ -30,8 +35,8 @@ const TITLES = {
   pagePost: '投稿内容',
 };
 
-// 旧タイトル → 現タイトル。syncFormTexts() が作成済みフォームの改名に使う。
-// すべてのフォームが同期済みになれば空にしてよい。
+// Former title -> current title, used by syncFormTexts() to rename a
+// question on a form that already exists. Empty it once every form is synced.
 const FORMER_TITLES = {
   'SKU手入力(バーコードを撮影できない場合のみ)': TITLES.manualCodes,
 };
@@ -40,7 +45,8 @@ const FORM_DESCRIPTION =
   '店舗スタッフ用のスタイリング投稿フォームです。\n' +
   'スタイリング写真(1枚以上、1枚目がカバー画像になります)と、着用商品ごとの下げ札(値札)写真をアップロードしてください。';
 
-// setup() と syncFormTexts() が同じ定義を使う。文言はここだけを直せばよい。
+// setup() and syncFormTexts() read the same definitions, so the wording is
+// only ever edited here.
 const HELP_TEXTS = {};
 HELP_TEXTS[TITLES.regName] = '例: 佐藤 咲';
 HELP_TEXTS[TITLES.regDisplayName] = '記事タイトル・URLに使用します。例: Saki';
@@ -58,7 +64,6 @@ const MASTER_HEADERS = ['氏名', '表示名', '身長', 'Instagram', '所属店
 
 const DEFAULTS = {
   GH_REPO: 'taro-arumakan/shopify_product_management',
-  NOTIFY_EMAILS: 'yusuke@catal.co.jp,taro@sniarti.fi',
 };
 
 function prop_(key) {
@@ -69,7 +74,9 @@ function setup() {
   const props = PropertiesService.getScriptProperties();
   if (props.getProperty('FORM_ID')) {
     throw new Error(
-      'setup 済みです。作り直す場合はスクリプト プロパティの FORM_ID / SPREADSHEET_ID を削除してから再実行してください。'
+      'Already set up. To build a new form and spreadsheet, clear the FORM_ID ' +
+        'and SPREADSHEET_ID script properties first — note that doing so leaves ' +
+        'the existing responses and staff master behind.'
     );
   }
 
@@ -141,11 +148,12 @@ function setup() {
 
   props.setProperties({ FORM_ID: form.getId(), SPREADSHEET_ID: ss.getId() });
 
-  Logger.log('フォーム編集URL: %s', form.getEditUrl());
-  Logger.log('フォーム回答URL: %s', form.getPublishedUrl());
-  Logger.log('スプレッドシート: %s', ss.getUrl());
+  Logger.log('form edit URL: %s', form.getEditUrl());
+  Logger.log('form response URL: %s', form.getPublishedUrl());
+  Logger.log('spreadsheet: %s', ss.getUrl());
   Logger.log(
-    'TODO: フォーム編集画面の「%s」ページにファイルアップロード質問を2つ追加してください: 「%s」「%s」(いずれも画像のみ・最大10ファイル)',
+    'TODO: on the "%s" page of the form editor, add two file-upload questions ' +
+      'titled "%s" and "%s" (images only, max 10 files each)',
     TITLES.pagePost,
     TITLES.stylingPhotos,
     TITLES.tagPhotos
@@ -153,12 +161,12 @@ function setup() {
 }
 
 /**
- * 作成済みフォームの文言を本ファイルの定義に合わせて更新する。
+ * Push the wording defined in this file onto the form that already exists.
  *
- * setup() はフォーム作成時にしか文言を書かないため、このファイルを貼り直しただけでは
- * 既存フォームの表示は変わらない。文言を変えたら本関数を1回実行すること。
- * 質問の追加・削除は行わない — ファイルアップロード質問は Apps Script では作成できず、
- * 既存のものはタイトルと説明のみ更新できる。
+ * setup() only writes the wording when it creates the form, so pasting this
+ * file in again changes nothing a respondent sees. Run this once after
+ * editing any text. It never adds or removes questions: Apps Script cannot
+ * create a file-upload question, but it can retitle and re-describe one.
  */
 function syncFormTexts() {
   const form = FormApp.openById(prop_('FORM_ID'));
@@ -177,19 +185,20 @@ function syncFormTexts() {
     }
   });
 
-  // 想定した質問が見つからない場合は手動で直す必要があるため知らせる。
+  // A question we expected is missing, which needs fixing by hand — say so
+  // rather than passing silently.
   const titles = form.getItems().map(function (i) {
     return i.getTitle();
   });
   Object.keys(HELP_TEXTS).forEach(function (title) {
     if (titles.indexOf(title) === -1) {
-      Logger.log('!! フォームに見つかりません(手動で確認してください): %s', title);
+      Logger.log('!! not found on the form, check by hand: %s', title);
     }
   });
   Logger.log('done: %s', form.getEditUrl());
 }
 
-/** スタッフマスタを編集した後に手動で実行するとプルダウンへ反映される。 */
+/** Run by hand after editing the staff master to refresh the dropdown. */
 function refreshStaffChoices() {
   const form = FormApp.openById(prop_('FORM_ID'));
   const master = SpreadsheetApp.openById(prop_('SPREADSHEET_ID')).getSheetByName(MASTER_SHEET_NAME);
@@ -238,7 +247,7 @@ function onFormSubmitHandler(e) {
     fr.getItemResponses().forEach(function (ir) {
       const item = ir.getItem();
       if (item.getType() === FormApp.ItemType.FILE_UPLOAD) {
-        files[item.getTitle()] = ir.getResponse(); // Drive ファイルIDの配列
+        files[item.getTitle()] = ir.getResponse(); // array of Drive file ids
       } else {
         answers[item.getTitle()] = ir.getResponse();
       }
@@ -282,7 +291,7 @@ function onFormSubmitHandler(e) {
     try {
       respondentEmail = fr.getRespondentEmail() || '';
     } catch (err) {
-      // メール収集が無効な場合は空のまま
+      // Left empty when email collection is off.
     }
 
     const submission = {
@@ -353,14 +362,16 @@ function normalizeHeight_(v) {
 
 
 /**
- * #TODO [CEC-471] comments in English
- * repository_dispatch を送信し、{ok, detail} を返す。
- * 送信失敗は例外にせずメールで可視化する — 写真・回答自体は保存済みのため。
+ * Send the repository_dispatch and return {ok, detail}.
+ *
+ * A failure is reported rather than thrown: the photos and the answers are
+ * already saved, so the submission is not lost — only its processing is. The
+ * detail is Japanese because it is quoted into the failure mail.
  */
 function dispatchToGitHub_(submission) {
   const pat = prop_('GH_PAT');
   if (!pat) {
-    Logger.log('GH_PAT が未設定のため repository_dispatch をスキップしました');
+    Logger.log('GH_PAT is not set; skipping repository_dispatch');
     return { ok: false, detail: 'GH_PAT が未設定のため連携をスキップしました' };
   }
   try {
@@ -373,7 +384,8 @@ function dispatchToGitHub_(submission) {
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
-      // client_payload はトップレベル10キー制限があるため submission 1キーに集約する
+      // client_payload allows only 10 top-level keys, so everything goes
+      // under a single `submission` key.
       payload: JSON.stringify({
         event_type: 'staff-styling-submission',
         client_payload: { submission: submission },
@@ -384,7 +396,7 @@ function dispatchToGitHub_(submission) {
       Logger.log('repository_dispatch failed: %s %s', code, res.getContentText());
       return { ok: false, detail: 'HTTP ' + code + ' — ' + res.getContentText().slice(0, 200) };
     }
-    return { ok: true, detail: '起動しました' };
+    return { ok: true, detail: 'dispatched' };
   } catch (err) {
     Logger.log('repository_dispatch error: %s', err);
     return { ok: false, detail: String(err) };
@@ -400,6 +412,11 @@ function notify_(subject, body) {
     })
     .filter(String)
     .join(',');
-  if (!to) return;
+  if (!to) {
+    // Nothing to fall back on: the addresses are a script property precisely
+    // so they stay out of a public repository. Say so loudly in the log.
+    Logger.log('NOTIFY_EMAILS script property is not set; cannot send: %s', subject);
+    return;
+  }
   MailApp.sendEmail(to, subject, body);
 }
