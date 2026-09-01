@@ -246,7 +246,7 @@ class TestForwarderGuardScan(unittest.TestCase):
     @patch("helpers.client.send_smtp_email")
     @patch.object(ShopifyGraphqlClient, "order_add_tags")
     @patch.object(ShopifyGraphqlClient, "run_query")
-    def test_notifies_admin_on_newly_flagged_order(
+    def test_no_notification_without_the_recipient_env_var(
         self, mock_run_query, mock_add_tags, mock_send_email
     ):
         mock_run_query.return_value = {
@@ -266,14 +266,17 @@ class TestForwarderGuardScan(unittest.TestCase):
             }
         }
         client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
+        # No hardcoded recipient to fall back on — the repository is public, so
+        # an unset NOTIFYEES_CATAL sends nothing. scan() deliberately swallows
+        # notification failures so the tagging still stands, which leaves the
+        # log as the only signal.
         with patch.dict(os.environ):
             os.environ.pop("NOTIFYEES_CATAL", None)
-            ForwarderGuard(client=client).scan(dry_run=False)
+            with self.assertLogs("brands.lememe.forwarder_guard", "ERROR") as logs:
+                ForwarderGuard(client=client).scan(dry_run=False)
 
-        mock_send_email.assert_called_once()
-        _, kwargs = mock_send_email.call_args
-        self.assertEqual(kwargs["to_addrs"], ["admin@catal.co.jp"])
-        self.assertIn("#A", kwargs["body"])
+        mock_send_email.assert_not_called()
+        self.assertIn("NOTIFYEES_CATAL", "\n".join(logs.output))
 
     @patch("helpers.client.send_smtp_email")
     @patch.object(ShopifyGraphqlClient, "order_add_tags")

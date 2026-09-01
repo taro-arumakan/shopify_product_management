@@ -30,9 +30,6 @@ from brands.lememe.forwarder_denylist import FORWARDER_HUBS, FORWARDER_CODE_PREF
 
 logger = logging.getLogger(__name__)
 
-# Fallback if the NOTIFYEES_CATAL env var isn't set.
-_DEFAULT_NOTIFY_ADMIN_EMAIL = "admin@catal.co.jp"
-
 # Uppercase alphanumeric runs of length >= 6 (forwarder routing/member codes).
 _CODE_RE = re.compile(r"[A-Z0-9]{6,}")
 
@@ -184,9 +181,9 @@ class ForwarderGuard:
     def _notify(self, newly_flagged):
         from helpers.client import send_smtp_email
 
-        to_addrs = os.environ.get("NOTIFYEES_CATAL", _DEFAULT_NOTIFY_ADMIN_EMAIL).split(
-            ","
-        )
+        # No default: this repository is public, so recipients come from the
+        # environment only.
+        to_addrs = os.environ["NOTIFYEES_CATAL"].split(",")
         lines = [
             f"{order['name']}  [{ev['service'] or 'forwarder'}]  {'; '.join(ev['reasons'])}"
             for order, ev in newly_flagged
