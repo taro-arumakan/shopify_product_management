@@ -15,6 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Before checkout and the toolchain: a run that creates an article and
+      # tells nobody is worse than one that never starts.
+      - name: Require notification recipients
+        run: |
+          test -n "${{ secrets.NOTIFYEES_STAFF_STYLING }}" || {
+            echo "::error::NOTIFYEES_STAFF_STYLING is not set — refusing to process a submission nobody would be told about"
+            exit 1
+          }
+
       - name: Checkout code
         uses: actions/checkout@v4
 
