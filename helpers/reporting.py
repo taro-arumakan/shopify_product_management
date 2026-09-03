@@ -4,6 +4,8 @@ import datetime
 import logging
 import os
 import tempfile
+import time
+import gspread
 import pandas as pd
 import pprint
 
@@ -1080,19 +1082,38 @@ class Reporting:
     def upsert_dashboard_row(self, report_date, timeseries_by):
         sheet_name = f"dev_{timeseries_by}ly"
         sheet_id = "14jUOdsb83EnEmQpXmmLmo3MtCK-CHiZ7bSocOLSjsFo"
-        sheet_index = self.get_sheet_index_by_title(sheet_id, sheet_name)
-        worksheet = self.gspread_client.open_by_key(sheet_id).get_worksheet(sheet_index)
         row = self.dashboard_row(report_date, timeseries_by)
-        if exising_row_index := self.find_existing_row_index(worksheet, row[0], row[1]):
-            range_label = f"A{exising_row_index}:L{exising_row_index}"
-            logger.info(f"updating an existing row {range_label}")
-            worksheet.update(range_label, [row])
-        else:
-            logger.info(f"adding a new row")
-            worksheet.insert_row(
-                values=row,
-                index=3,
-            )
+        self._write_dashboard_row(sheet_id, sheet_name, row)
+
+    def _write_dashboard_row(self, sheet_id, sheet_name, row, max_retries=5):
+        """Write one dashboard row (update in place by date+brand, else insert),
+        retrying transient Google Sheets errors (5xx / 429). The sheet write had no
+        retry, so a momentary Sheets outage failed the brand's whole run."""
+        transient = {429, 500, 502, 503, 504}
+        for attempt in range(max_retries):
+            try:
+                sheet_index = self.get_sheet_index_by_title(sheet_id, sheet_name)
+                worksheet = self.gspread_client.open_by_key(sheet_id).get_worksheet(
+                    sheet_index
+                )
+                if row_index := self.find_existing_row_index(worksheet, row[0], row[1]):
+                    range_label = f"A{row_index}:L{row_index}"
+                    logger.info(f"updating an existing row {range_label}")
+                    worksheet.update(range_name=range_label, values=[row])
+                else:
+                    logger.info("adding a new row")
+                    worksheet.insert_row(values=row, index=3)
+                return
+            except gspread.exceptions.APIError as e:
+                status = getattr(getattr(e, "response", None), "status_code", None)
+                if attempt == max_retries - 1 or status not in transient:
+                    raise
+                wait = 3 * (attempt + 1)
+                logger.warning(
+                    f"Sheets transient error ({status}) writing {row[1]} {row[0]}; "
+                    f"retrying in {wait}s ({attempt + 1}/{max_retries})"
+                )
+                time.sleep(wait)
 
 
 def main():

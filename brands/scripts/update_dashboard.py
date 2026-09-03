@@ -29,6 +29,7 @@ def main():
         "LEMEME",
         "ROH SEOUL",
         "SSIL",
+        "ASHEIS",
     ]
     report_date = get_report_date(term)
 
