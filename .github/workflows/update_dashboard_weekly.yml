@@ -1,4 +1,4 @@
-name: Update dashboard monthly
+name: Update dashboard weekly
 
 on:
   schedule:
@@ -47,8 +47,6 @@ jobs:
           rohseoul-IG_USER_ID=${{ secrets.ROHSEOUL_IG_USER_ID }}
           rohseoul-META_AD_ACCOUNT_ID=${{ secrets.ROHSEOUL_META_AD_ACCOUNT_ID }}
           rohseoul-META_TOKEN=${{ secrets.ROHSEOUL_META_TOKEN }}
-          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
-          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
           lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
           lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
           lememek-FB_PAGE_ID=${{ secrets.LEMEMEK_FB_PAGE_ID }}
