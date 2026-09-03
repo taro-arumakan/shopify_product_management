@@ -1,6 +1,5 @@
 import logging
 
-from numpy import full
 from brands.lememe.client import LememeClient, LememeClientApparel
 
 
@@ -78,7 +77,7 @@ def create_26_0901_fall_bags():
         sheet_name,
         additional_tags=["New Arrival"],
         scheduled_time=scheduled_time,
-        product_inputs_filter_func=filter_func
+        product_inputs_filter_func=filter_func,
     )
 
 
