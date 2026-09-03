@@ -422,6 +422,7 @@
   "expected": [
     {
       "title": "Fine U-Neck Cardigan",
+      "release_date": "2026-05-20",
       "tags": "INNER, CARDIGAN, 26SS,NEW",
       "price": 16500,
       "description": "立体的なテクスチャーが表情豊かな、Fine U-Neck Cardigan（ファイン Uネック カーディガン）。コットン100％素材ならではの心地よい肌触りと、さりげなく開いたUネックが、着こなしに上品な抜け感を添えます。デイリーに取り入れやすい、頼れる一着です。",
@@ -456,6 +457,7 @@
     },
     {
       "title": "Leone Draped Half-Sleeve Blouse",
+      "release_date": "2026-05-20",
       "tags": "TOP, BLOUSE, 26SS,NEW",
       "price": 15400,
       "description": "自然に流れるドレープディテールが優雅な印象を纏う、Leone Draped Half-Sleeve Blouse（レオーネ ドレープド ハーフスリーブ ブラウス）。素材の動きに合わせてしなやかに揺れるシルエットが、着るたびに洗練された表情を演出します。日常にさりげない上品さを添える一着です。",
@@ -490,6 +492,7 @@
     },
     {
       "title": "Marie Half-Sleeve Blouse",
+      "release_date": "2026-05-20",
       "tags": "TOP, BLOUSE, 26SS,NEW",
       "price": 15400,
       "description": "ラウンドネックのストリングとシャーリングがさりげないアクセントを添える、Marie Half-Sleeve Blouse（マリー ハーフスリーブ ブラウス）。薄手でありながら程よい張りとハリ感のある素材が、夏の暑い日でも肌に張り付かず、一日中快適な着心地を叶えます。軽やかでいて上品な、夏のマストな一着です。",
@@ -534,6 +537,7 @@
     },
     {
       "title": "Deux Strap Blouse",
+      "release_date": "2026-05-20",
       "tags": "TOP, BLOUSE, 26SS,NEW",
       "price": 16500,
       "description": "ほのかなシアサッカーの織り感が涼やかな表情を生み出す、Deux Strap Blouse（デュー ストラップ ブラウス）。コットン混素材の心地よい肌触りで、真夏まで快適に着用いただけます。肩のボタンでストラップの着脱が可能で、その日の気分やスタイリングに合わせて多彩なムードをお楽しみいただける一着です。",
@@ -568,6 +572,7 @@
     },
     {
       "title": "Ete Two Tuck Shorts",
+      "release_date": "2026-05-20",
       "tags": "BOTTOM, PANTS, SHORTS, 26SS,NEW",
       "price": 14300,
       "description": "クラシックなデザインと程よい丈感が幅広いコーディネートに馴染む、Ete Two Tuck Shorts（エテ ツータック ショーツ）。軽やかでさらりとした肌触りのナイロン混素材が、真夏の暑い日も涼しく快適な着心地を叶えます。夏のスタイリングに自然と溶け込む、頼れる一着です。",
@@ -612,6 +617,7 @@
     },
     {
       "title": "Marie Flare Skirt",
+      "release_date": "2026-05-20",
       "tags": "BOTTOM, SKIRT, 26SS,NEW",
       "price": 18700,
       "description": "やわらかく広がるフレアシルエットが女性らしい印象を纏う、Marie Flare Skirt（マリー フレア スカート）。薄手でありながら程よい張りとハリ感のある素材が、夏の暑い日でも肌に張り付かず、一日中快適な着心地を叶えます。ミディ丈の上品な佇まいが、日常のコーディネートに優雅さを添える一着です。",

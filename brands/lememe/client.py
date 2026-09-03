@@ -129,6 +129,15 @@ class LememeClient(BrandClientBase):
 
 class LememeClientApparel(LememeClient):
 
+    def product_attr_column_map(self):
+        # The RTW/apparel sheets keep 素材 (material) in column j; only the bag
+        # sheets (handled by the base LememeClient) moved it to k. Override here
+        # so the shared base map stays correct for bags without mis-reading the
+        # Korean measurement column (k) as material on apparel sheets.
+        column_map = super().product_attr_column_map()
+        column_map["material"] = string.ascii_lowercase.index("j")
+        return column_map
+
     def option1_attr_column_map(self):
         option1_attrs = {"Color": string.ascii_lowercase.index("n")}
         option1_attrs.update(
