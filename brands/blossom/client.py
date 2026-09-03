@@ -18,26 +18,26 @@ class BlossomClient(BrandClientBase):
             title=string.ascii_lowercase.index("a"),
             tags=string.ascii_lowercase.index("b"),
             series_name=string.ascii_lowercase.index("c"),
-            price=string.ascii_lowercase.index("f"),
-            description=string.ascii_lowercase.index("h"),
-            product_care=string.ascii_lowercase.index("j"),
-            material=string.ascii_lowercase.index("k"),
-            size_text=string.ascii_lowercase.index("l"),
-            made_in=string.ascii_lowercase.index("m"),
+            price=string.ascii_lowercase.index("e"),
+            description=string.ascii_lowercase.index("g"),
+            product_care=string.ascii_lowercase.index("i"),
+            material=string.ascii_lowercase.index("j"),
+            size_text=string.ascii_lowercase.index("k"),
+            made_in=string.ascii_lowercase.index("l"),
         )
 
     def option1_attr_column_map(self):
-        option1_attrs = {"Color": string.ascii_lowercase.index("n")}
+        option1_attrs = {"Color": string.ascii_lowercase.index("m")}
         option1_attrs.update(
-            drive_link=string.ascii_lowercase.index("o"),
+            drive_link=string.ascii_lowercase.index("n"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"Size": string.ascii_lowercase.index("p")}
+        option2_attrs = {"Size": string.ascii_lowercase.index("o")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("q"),
-            stock=string.ascii_lowercase.index("r"),
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
 
