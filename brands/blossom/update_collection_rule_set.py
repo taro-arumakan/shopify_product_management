@@ -3,16 +3,15 @@ import logging
 logging.basicConfig(level=logging.INFO)
 import utils
 
-# Category collections that should only ever surface the current season.
+# Apparel collections that should only ever surface the current season.
+# BAG / SHOES / ACC are deliberately left alone: nothing in them is tagged 26FW,
+# so a season rule would empty them out.
 collection_names = [
     "ALL",
     "OUTER",
     "TOPS",
     "PANTS",
     "SKIRT",
-    "BAG",
-    "SHOES",
-    "ACC",
 ]
 
 # Season tags a category collection may have been pinned to in an earlier season.
@@ -27,7 +26,7 @@ def is_season_rule(rule):
 
 
 def switch_categories_to_26fw():
-    """Show only 26FW products on the category collections, and move the
+    """Show only 26FW products on the apparel collections, and move the
     still-on-sale spring/summer products under the 26SS collection.
 
     Runs at open time (9/4 18:00 JST) via the Shopify Flow that dispatches
