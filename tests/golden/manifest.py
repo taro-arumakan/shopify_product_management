@@ -65,7 +65,7 @@ CASES = [
         module="brands.blossom.client",
         cls="BlossomClientClothes",
         shop_name="blossomhcompany",
-        sheet_name="clothes(SS DROP 1)",
+        sheet_name="Clothes (PF DROP 1)",
         start_row=1,
     ),
     GoldenCase(
