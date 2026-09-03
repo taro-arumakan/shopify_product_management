@@ -25,8 +25,7 @@ def rename_files(srcdir, destdir, prefix):
         target = f"{destdir}/{prefix}_{str(i).zfill(2)}_{fname}"
         os.rename(f"{srcdir}/{fname}", target)
         if target.endswith((".jpg", ".jpeg", ".png")):
-            res.append(target)
-            GoogleDriveApiInterface.resize_image_to_limit(target, target)
+            res.append(GoogleDriveApiInterface.resize_image_to_limit(target, target))
     return res
 
 
