@@ -1,9 +1,13 @@
 """Rotate the ASHEIS top-page hero banner to the next numbered image.
 
-The TOP page's first `image-with-text` section holds the hero banner, e.g.
+The TOP page's hero is a `slideshow` section, and the banner is the `image`
+block in it whose image is a numbered tb_NN file, e.g.
     "image": "shopify://shop_images/tb_00.jpg"
 Each run advances the number by one (tb_00 -> tb_01 -> ...) and wraps back to
 tb_00 when the next file is not in Content > Files, so the banners cycle.
+
+The slideshow's other blocks carry one-off announcement images, so the banner
+block is found by the tb_NN filename rather than by its position in the slides.
 
 Only the main image changes: mobile is forced to 393:762 by CSS, so there is no
 separate mobile image to keep in step.
@@ -34,20 +38,29 @@ logger = logging.getLogger(__name__)
 
 BANNER_URL_PATTERN = re.compile(r"shopify://shop_images/tb_(\d\d)\.jpg$")
 BANNER_URL_TEMPLATE = "shopify://shop_images/tb_{:02d}.jpg"
-SECTION_TYPE = "image-with-text"
+SECTION_TYPE = "slideshow"
+BLOCK_TYPE = "image"
 THEME_FILE = "templates/index.json"
 
 
 def hero_banner(data):
-    """Return (section_key, image_url) for the first image-with-text section."""
-    for key in data.get("order") or data["sections"]:
-        section = data["sections"].get(key)
-        if section and section.get("type") == SECTION_TYPE:
-            image = section.get("settings", {}).get("image")
-            if not image:
-                raise RuntimeError(f"section {key!r} has no image setting")
-            return key, image
-    raise RuntimeError(f"no {SECTION_TYPE!r} section found in {THEME_FILE}")
+    """Return (label, image_url) for the slideshow block holding the tb_NN banner."""
+    for section_key in data.get("order") or data["sections"]:
+        section = data["sections"].get(section_key)
+        if not section or section.get("type") != SECTION_TYPE:
+            continue
+        blocks = section.get("blocks") or {}
+        for block_key in section.get("block_order") or blocks:
+            block = blocks.get(block_key)
+            if not block or block.get("type") != BLOCK_TYPE:
+                continue
+            image = block.get("settings", {}).get("image") or ""
+            if BANNER_URL_PATTERN.match(image):
+                return f"{section_key}/{block_key}", image
+    raise RuntimeError(
+        f"no {BLOCK_TYPE!r} block with a tb_NN image found in a "
+        f"{SECTION_TYPE!r} section of {THEME_FILE}"
+    )
 
 
 def file_exists(client, file_name):
@@ -111,11 +124,11 @@ def rotate_topbanner(execute=False, theme_name=None):
     theme = resolve_theme(client, theme_name)
     content = index_content(client, theme)
 
-    section_key, current_url = hero_banner(client.theme_json_to_dict(content))
+    block_label, current_url = hero_banner(client.theme_json_to_dict(content))
     new_url = next_banner_url(client, current_url)
 
     print(f"THEME {theme['name']} ({theme['id']}, role={theme['role']})")
-    print(f"  section {section_key} ({SECTION_TYPE})")
+    print(f"  block {block_label} ({SECTION_TYPE}/{BLOCK_TYPE})")
     print(f"  {current_url}  ->  {new_url}")
 
     if new_url == current_url:
