@@ -69,14 +69,20 @@ class ApricotStudiosSanityChecks:
         logger.info("Checking product details image links")
         res = []
         for product_input in product_inputs:
-            folder_name = product_input["title"]
-            drive_id = self.find_folder_id_by_name(
-                self.product_detail_images_folder_id, folder_name
-            )
-            image_details = self.get_drive_image_details(drive_id)
-            if not image_details:
+            try:
+                if not self.list_dropbox_link_files(
+                    product_input["product_detail_images_link"]
+                ):
+                    res.append(
+                        f"Invalid product detail image for {product_input['title']}"
+                    )
+            except KeyError:
                 res.append(
-                    f"Missing or inaccessible drive image for {product_input['title']}: {drive_id}"
+                    f"No product detail image link for {product_input['title']}"
+                )
+            except Exception as e:
+                res.append(
+                    f"Invalid product detail image for {product_input['title']}: {e}"
                 )
         return res
 

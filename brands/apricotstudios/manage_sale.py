@@ -2848,18 +2848,23 @@ SKUS_26SS_0821_SALE = [
 ]
 
 
-def start_end_discounts_26ss_0821_sale(testrun=True, start_or_end="start"):
-    # 26SS_0821_Sale / 全SKU 20%OFF
+def start_end_discounts_castanets_backpack_0910(testrun=True, start_or_end="start"):
+    # 9/10 Castanets Backpack Sale / 全バリアント 10%OFF
     client = ApricotStudiosClient()
-
-    variants = client.variants_by_skus(SKUS_26SS_0821_SALE)
+    product_title = "Castanets Backpack"
+    product = client.product_by_title(product_title, filter_archived=False)
+    variants = product["variants"]["nodes"]
 
     if start_or_end == "end":
         client.revert_variant_prices(variants, testrun=testrun)
         return
 
+    if product["status"] != "ACTIVE":
+        if not testrun:
+            client.update_product_status(product["id"], "ACTIVE")
+
     new_prices_by_variant_id = {
-        v["id"]: int(int(v["compareAtPrice"] or v["price"]) * 0.8) for v in variants
+        v["id"]: int(int(v["compareAtPrice"] or v["price"]) * 0.9) for v in variants
     }
     client.update_variant_prices_by_dict(
         variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
@@ -2867,7 +2872,7 @@ def start_end_discounts_26ss_0821_sale(testrun=True, start_or_end="start"):
 
 
 def main():
-    start_end_discounts_26ss_0821_sale(testrun=True)
+    start_end_discounts_castanets_backpack_0910(testrun=True)
 
 
 if __name__ == "__main__":

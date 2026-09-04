@@ -21,22 +21,20 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
     def __init__(
         self,
         dummy_product_id="",
-        product_detail_images_folder_id="",
         product_sheet_start_row=None,
         remove_existing_new_product_indicators=None,
         products_season_tag=None,
+        product_detail_images_folder_id="",
     ):
         """
         dummy_product_id: a dummy product which holds product detail images
-        product_detail_images_folder_id: Google Drive folder id where translated product detail images are stored by title
         """
         self.dummy_product_id = (
             self.sanitize_id(dummy_product_id) if dummy_product_id else None
         )
-        self.product_detail_images_folder_id = product_detail_images_folder_id
-        if not all((self.dummy_product_id, self.product_detail_images_folder_id)):
+        if not self.dummy_product_id:
             logger.warning(
-                "dummy proudct id and product detail images folder id are required for product creation"
+                "dummy product id is required for product creation (description images)"
             )
         super().__init__(
             product_sheet_start_row=product_sheet_start_row,
@@ -56,6 +54,7 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             size_text=string.ascii_lowercase.index("q"),
             made_in=string.ascii_lowercase.index("r"),
             product_main_images_link=string.ascii_lowercase.index("s"),
+            product_detail_images_link=string.ascii_lowercase.index("t"),
         )
 
     def option1_attr_column_map(self):
@@ -129,6 +128,53 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             tempdir=tempdir,
         )
 
+    def add_variants_from_product_input(self, product_input):
+        """Add color/size variants to an existing product using Dropbox variant images."""
+        optionss = self.segment_options_list_by_key_option(
+            self.populate_option_dicts(product_input)
+        )
+        product_id = self.product_id_by_title(product_input["title"])
+        images_local_dir = (
+            f"{pathlib.Path.home()}/Downloads/apricotstudios_{datetime.date.today():%Y%m%d}/"
+        )
+        location_id = self.location_id_by_name(self.LOCATIONS[0])
+
+        for variant, options in zip(product_input["options"], optionss):
+            skus = [o["sku"] for o in options]
+            images_link = variant["variant_images_link"]
+            logger.info(f"  processing sku: {skus} - {images_link}")
+            local_paths = self.download_images(
+                os.path.join(
+                    images_local_dir,
+                    product_input["title"],
+                    "variant_images",
+                    skus[0],
+                ),
+                images_link,
+                skus[0],
+                tempdir=os.path.join(images_local_dir, "temp"),
+            )
+            res = self.upload_and_assign_images_to_product(
+                product_id, local_paths, remove_existings=False
+            )
+            new_media_ids = [m["id"] for m in res[-1]["productCreateMedia"]["media"]]
+            self.variants_add(
+                product_id=product_id,
+                skus=skus,
+                media_ids=[],
+                variant_media_ids=[new_media_ids[0]] * len(options),
+                option_names=options[0]["option_values"].keys(),
+                variant_option_valuess=[
+                    option["option_values"].values() for option in options
+                ],
+                prices=[option["price"] for option in options],
+                stocks=[option["stock"] for option in options],
+                location_id=location_id,
+            )
+        self.enable_and_activate_inventory_by_product_id(
+            product_id, location_names=self.LOCATIONS
+        )
+
     def process_product_images(self, product_input):
         """
         As Apricot Studios has their images in Dropbox and also its images structure differs from other brands,
@@ -180,16 +226,13 @@ class ApricotStudiosClient(ApricotStudiosSanityChecks, BrandClientBase):
             image_position += len(variant_image_paths)
 
         logger.info(f"downloading product detail images")
-        folder_name = product_input["title"]
-        folder_id = self.find_folder_id_by_name(
-            self.product_detail_images_folder_id, folder_name
-        )
-        detail_image_paths = self.drive_images_to_local(
-            folder_id,
+        detail_image_paths = self.download_images(
             os.path.join(
                 images_local_dir, product_input["title"], "product_detail_images"
             ),
-            filename_prefix=f"{self.shopify_compatible_name(product_input['title'])}_product_detail",
+            product_input["product_detail_images_link"],
+            prefix=f"{self.shopify_compatible_name(product_input['title'])}_product_detail",
+            tempdir=os.path.join(images_local_dir, "temp"),
         )
         self.upload_and_assign_description_images_to_shopify(
             product_id,
