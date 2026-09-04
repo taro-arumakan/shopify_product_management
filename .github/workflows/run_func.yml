@@ -17,7 +17,7 @@ on:
         required: false
         default: '{}'
 jobs:
-  run-script:
+  run-func:
     runs-on: ubuntu-latest
 
     steps:
