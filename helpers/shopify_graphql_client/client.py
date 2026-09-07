@@ -12,6 +12,7 @@ from helpers.shopify_graphql_client.medias import Medias
 from helpers.shopify_graphql_client.merge_products_as_variants import (
     MergeProductsAsVariants,
 )
+from helpers.shopify_graphql_client.menus import Menus
 from helpers.shopify_graphql_client.metafields import Metafields
 from helpers.shopify_graphql_client.orders import Orders
 from helpers.shopify_graphql_client.online_store import OnlineStore
@@ -39,6 +40,7 @@ class ShopifyGraphqlClient(
     Customers,
     Inventory,
     Medias,
+    Menus,
     Orders,
     OnlineStore,
     Prices,
