@@ -48,8 +48,8 @@ class TestBuildMetafields(unittest.TestCase):
             json.loads(by_key["styling_main_images"]["value"]), ["gid://f/1"]
         )
 
-    def test_omits_blank_height_and_whitespace_only_caption(self):
-        staff = dict(STAFF, height="", instagram="")
+    def test_omits_every_blank_optional_field(self):
+        staff = dict(STAFF, height="", instagram="", shop="")
         res = sut.build_metafields(staff, [], [], "   \n  ")
         self.assertEqual(keys(res), ["styling_model_name"])
 
@@ -59,6 +59,16 @@ class TestBuildMetafields(unittest.TestCase):
         self.assertEqual(
             by_key["styling_model_instagram_link"]["value"],
             "https://www.instagram.com/asheis_saki/",
+        )
+
+    def test_shop_is_snapshotted_onto_the_article(self):
+        # The blog card shows it, and it must not change when the staff member
+        # transfers to another shop.
+        by_key = {m["key"]: m for m in sut.build_metafields(STAFF, [], [], "")}
+        self.assertEqual(by_key["styling_shop_name"]["value"], "本店")
+        self.assertNotIn(
+            "styling_shop_name",
+            keys(sut.build_metafields(dict(STAFF, shop=""), [], [], "")),
         )
 
     def test_response_id_is_written_as_the_idempotency_marker(self):

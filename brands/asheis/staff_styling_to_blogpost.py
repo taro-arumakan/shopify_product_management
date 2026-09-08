@@ -252,6 +252,11 @@ def build_metafields(staff, variant_ids, file_ids, caption, response_id=""):
         entries.append(
             ("styling_model_height", "single_line_text_field", staff["height"])
         )
+    if staff.get("shop"):
+        # Snapshotted, like the height and the Instagram handle: a post made
+        # from one shop should keep naming that shop after the staff member
+        # moves to another.
+        entries.append(("styling_shop_name", "single_line_text_field", staff["shop"]))
     if response_id:
         # Idempotency key: what a re-run matches on to avoid a second article.
         entries.append(("styling_submission_id", "single_line_text_field", response_id))
