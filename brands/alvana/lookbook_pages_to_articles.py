@@ -113,6 +113,12 @@ def ensure_blog(client):
     return res["blogCreate"]["blog"]
 
 
+# Cover images come in 2:3, 3:4 and 4:5. Nothing in the theme constrains
+# .blog-post-card__image and .blog-post-list is align-items:start, so unconstrained cards
+# end up different heights with their captions at different levels. 3:4 is the middle of
+# the three ratios, so every cover loses at most 11%.
+BLOG_CARD_RATIO_CSS = ".blog-post-card__image {aspect-ratio: 3 / 4; object-fit: cover;}"
+
 # prev-next-blog-posts defaults to color scheme "scheme-3", which is background #f3f3f3
 # with text_color #ffffff -- a white heading on light grey, i.e. unreadable. It has to be
 # set explicitly to scheme-2 (#f3f3f3 background, #5c5c5c text): "" does NOT inherit, it
@@ -176,6 +182,9 @@ def build_article_template(page_template_suffix):
     sections["prev-next-blog-posts"] = {
         "type": "prev-next-blog-posts",
         "settings": dict(PREV_NEXT_SETTINGS),
+        # season covers are a mix of 2:3, 3:4 and 4:5 and nothing in the theme constrains
+        # .blog-post-card__image, so side-by-side cards end up different heights
+        "custom_css": [BLOG_CARD_RATIO_CSS],
     }
     order.append("prev-next-blog-posts")
 
