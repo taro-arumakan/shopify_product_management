@@ -52,7 +52,7 @@ import tempfile
 
 import pillow_heif
 import zxingcpp
-from PIL import Image, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 
 from dotenv import load_dotenv
 
@@ -129,13 +129,21 @@ def decode_barcodes(image_path):
             attempts.append(img.resize((width, int(img.height * width / img.width))))
     attempts.append(ImageOps.autocontrast(ImageOps.grayscale(img)))
 
+    # Sharpening rescues the other common shop photo: a tag under bright light
+    # where the bars come out pale grey instead of black, which reads as no
+    # barcode at all until the edges are pulled back.
     deskew_base = attempts[1] if len(attempts) > 1 else img
+    sharpened = ImageOps.grayscale(deskew_base).filter(
+        ImageFilter.UnsharpMask(radius=3, percent=200)
+    )
+    attempts.append(sharpened)
     for angle in (6, -6, 12, -12):
-        attempts.append(
-            deskew_base.rotate(
-                angle, expand=True, fillcolor="white", resample=Image.BICUBIC
+        for rendition in (deskew_base, sharpened):
+            attempts.append(
+                rendition.rotate(
+                    angle, expand=True, fillcolor="white", resample=Image.BICUBIC
+                )
             )
-        )
 
     found, rejected = {}, {}
     for attempt in attempts:
