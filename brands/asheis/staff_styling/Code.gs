@@ -269,14 +269,41 @@ function onFormSubmitHandler(e) {
       master.appendRow([staff.name, staff.display_name, staff.height, staff.instagram, staff.shop, new Date()]);
       refreshStaffChoices_(FormApp.openById(prop_('FORM_ID')), master);
     } else {
-      const row = master
+      const names = master
         .getDataRange()
         .getValues()
         .slice(1)
-        .find(function (r) {
-          return String(r[0]).trim() === answers[TITLES.staffSelect];
+        .filter(function (r) {
+          return String(r[0]).trim();
         });
-      if (!row) throw new Error('スタッフマスタに該当がありません: ' + answers[TITLES.staffSelect]);
+      const wanted = nameKey_(answers[TITLES.staffSelect]);
+      const row = names.find(function (r) {
+        return nameKey_(r[0]) === wanted;
+      });
+      if (!row) {
+        // The dropdown is a snapshot written into the form; the master is read
+        // live on every submission. Editing or removing a master row leaves the
+        // old name selectable, and this is where that turns up — the staff
+        // member picks a name that no longer exists. Rebuild the choices so the
+        // stale one disappears, and say what the master actually holds, because
+        // the mismatch is usually invisible at a glance.
+        try {
+          refreshStaffChoices_(FormApp.openById(prop_('FORM_ID')), master);
+        } catch (refreshErr) {
+          Logger.log('could not refresh the choices: %s', refreshErr);
+        }
+        throw new Error(
+          'スタッフマスタに該当がありません: 「' +
+            answers[TITLES.staffSelect] +
+            '」 現在のスタッフマスタ: ' +
+            names
+              .map(function (r) {
+                return '「' + String(r[0]).trim() + '」';
+              })
+              .join(' ') +
+            ' (フォームの選択肢を更新しました。再投稿をご依頼ください)'
+        );
+      }
       staff = {
         name: String(row[0]).trim(),
         display_name: String(row[1]).trim(),
@@ -352,6 +379,17 @@ function onFormSubmitHandler(e) {
     );
     throw err;
   }
+}
+
+/**
+ * Key a staff name for comparison, ignoring whitespace entirely.
+ *
+ * The registration form and a hand-edited master row disagree easily here:
+ * 「和泉　紀亜」 typed with a full-width space and 「和泉 紀亜」 retyped with a
+ * half-width one are the same person, and no two staff differ only by spacing.
+ */
+function nameKey_(value) {
+  return String(value == null ? '' : value).replace(/[\s\u3000]+/g, '');
 }
 
 function normalizeHeight_(v) {

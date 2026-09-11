@@ -72,6 +72,8 @@ BLOG_TITLE = "Styling"
 TEMPLATE_SUFFIX = "styling"
 METAFIELD_NAMESPACE = "custom"
 MAX_MEGAPIXELS = 15
+# ASHEIS's GS1 company prefix. Every JAN the shops can scan starts with it.
+JAN_PREFIX = "4550351"
 
 
 def notifyees():
@@ -105,20 +107,47 @@ def parse_submission():
 
 
 def decode_barcodes(image_path):
-    """Return every barcode value readable from the image."""
+    """Every ASHEIS JAN readable from the image.
+
+    A few downscales and a few small rotations: zxing straightens 90-degree
+    orientation but not the handful of degrees of skew a hand-held photo has,
+    and a tag shot at an angle can be unreadable flat yet read cleanly once
+    tilted back. One real submission only read at all after a 6-12 degree
+    rotation, and read wrongly without it.
+
+    A decode outside the company prefix is dropped as a misread rather than
+    reported as an unknown product. A blurred scan can return a different code
+    that still passes the check digit — EAN-13 carries its first digit in the
+    parity of the left-hand group, not in a bar, so a soft image can flip it
+    and stay self-consistent. Sending the operator hunting for 0550355353233
+    when the tag reads 4550351353233 helps nobody.
+    """
     img = ImageOps.exif_transpose(Image.open(image_path))
     attempts = [img]
     for width in (2400, 1600, 1200):
         if img.width > width:
             attempts.append(img.resize((width, int(img.height * width / img.width))))
     attempts.append(ImageOps.autocontrast(ImageOps.grayscale(img)))
-    found = {}
+
+    deskew_base = attempts[1] if len(attempts) > 1 else img
+    for angle in (6, -6, 12, -12):
+        attempts.append(
+            deskew_base.rotate(
+                angle, expand=True, fillcolor="white", resample=Image.BICUBIC
+            )
+        )
+
+    found, rejected = {}, {}
     for attempt in attempts:
         for result in zxingcpp.read_barcodes(attempt):
-            if result.text and result.text not in found:
-                found[result.text] = str(result.format)
+            if not result.text:
+                continue
+            target = found if result.text.startswith(JAN_PREFIX) else rejected
+            target.setdefault(result.text, str(result.format))
     for text, fmt in found.items():
         logger.info("decoded %s: %s", fmt, text)
+    for text in rejected:
+        logger.warning("ignoring %s: not an ASHEIS JAN, so a misread", text)
     return list(found)
 
 
