@@ -458,8 +458,157 @@ def start_end_discounts_26fw1_0909(testrun=True, start_or_end="start"):
     )
 
 
+def start_end_discounts_26fw2_0916(testrun=True, start_or_end="start"):
+    """
+    26FW2 09.16 Sale (10% OFF)
+    """
+    client = KumeClient()
+
+    sku_discount_map = {
+        "KM-26FW-JK03-BE-F": 0.9,
+        "KM-26FW-JK03-MGR-F": 0.9,
+        "M-KM-26FW-BL02-RD-M": 0.9,
+        "M-KM-26FW-BL02-RD-L": 0.9,
+        "M-KM-26FW-BL02-RD-XL": 0.9,
+        "M-KM-26FW-BL02-BL-M": 0.9,
+        "M-KM-26FW-BL02-BL-L": 0.9,
+        "M-KM-26FW-BL02-BL-XL": 0.9,
+        "KM-26FW-TS01-IV-S": 0.9,
+        "KM-26FW-TS01-IV-M": 0.9,
+        "KM-26FW-TS01-MT-S": 0.9,
+        "KM-26FW-TS01-MT-M": 0.9,
+        "KM-26FW-TS01-MBE-S": 0.9,
+        "KM-26FW-TS01-MBE-M": 0.9,
+        "KM-26FW-TS01-BK-S": 0.9,
+        "KM-26FW-TS01-BK-M": 0.9,
+        "KM-26FW-TS04-BK-S": 0.9,
+        "KM-26FW-TS04-BK-M": 0.9,
+        "KM-26FW-TS04-WH-S": 0.9,
+        "KM-26FW-TS04-WH-M": 0.9,
+        "KM-26FW-TS04-GR-S": 0.9,
+        "KM-26FW-TS04-GR-M": 0.9,
+        "KM-26FW-TS04-BL-S": 0.9,
+        "KM-26FW-TS04-BL-M": 0.9,
+        "M-KM-26FW-SW01CHL": 0.9,
+        "M-KM-26FW-SW01CHXL": 0.9,
+        "M-KM-26FW-SW01LBLL": 0.9,
+        "M-KM-26FW-SW01LBLXL": 0.9,
+        "M-KM-26FW-SW01BKL": 0.9,
+        "M-KM-26FW-SW01BKXL": 0.9,
+        "KM-26FW-SK03BRS": 0.9,
+        "KM-26FW-SK03BRM": 0.9,
+        "KM-26FW-PT06BRS": 0.9,
+        "KM-26FW-PT06BRM": 0.9,
+        "KM-26FW-PT06BRL": 0.9,
+        "KM-26FW-PT06CHS": 0.9,
+        "KM-26FW-PT06CHM": 0.9,
+        "KM-26FW-PT06CHL": 0.9,
+        "KM-26FW-PT07BKS": 0.9,
+        "KM-26FW-PT07BKM": 0.9,
+        "KM-26FW-PT07BKL": 0.9,
+        "M-KM-26FW-PT02BKM": 0.9,
+        "M-KM-26FW-PT02BKL": 0.9,
+        "M-KM-26FW-PT02BKXL": 0.9,
+    }
+
+    variants = client.variants_by_skus(sku_discount_map.keys())
+
+    if start_or_end == "end":
+        client.revert_variant_prices(variants, testrun=testrun)
+        return
+
+    new_prices_by_variant_id = {
+        v["id"]: int(
+            int(v["compareAtPrice"] or v["price"]) * sku_discount_map[v["sku"]]
+        )
+        for v in variants
+    }
+    client.update_variant_prices_by_dict(
+        variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
+    )
+
+
+def start_end_discounts_26fw3_0923(testrun=True, start_or_end="start"):
+    """
+    26FW3 09.23 Sale (10% OFF)
+    """
+    client = KumeClient()
+
+    sku_discount_map = {
+        "M-KM-26FW-JP01-BK-L": 0.9,
+        "M-KM-26FW-JP01-BK-XL": 0.9,
+        "M-KM-26FW-JP01-BR-L": 0.9,
+        "M-KM-26FW-JP01-BR-XL": 0.9,
+        "M-KM-26FW-JP01-BK-F": 0.9,
+        "M-KM-26FW-JP01-BR-F": 0.9,
+        "KM-26FW-JK04-BK-S": 0.9,
+        "KM-26FW-JK04-BK-M": 0.9,
+        "M-KM-26FW-BL03-BR-M": 0.9,
+        "M-KM-26FW-BL0-BR-L": 0.9,
+        "M-KM-26FW-BL03-BR-XL": 0.9,
+        "KM-26FW-SW04BKS": 0.9,
+        "KM-26FW-SW04BKM": 0.9,
+        "KM-26FW-SW04IVS": 0.9,
+        "KM-26FW-SW04IVM": 0.9,
+        "KM-26FW-SW04DBNS": 0.9,
+        "KM-26FW-SW04DBNM": 0.9,
+        "KM-26FW-SW04BES": 0.9,
+        "KM-26FW-SW04BEM": 0.9,
+        "KM-26FW-SW10BKS": 0.9,
+        "KM-26FW-SW10BKM": 0.9,
+        "KM-26FW-SW10BKL": 0.9,
+        "KM-26FW-SW10IVS": 0.9,
+        "KM-26FW-SW10IVM": 0.9,
+        "KM-26FW-SW10IVL": 0.9,
+        "KM-26FW-SW10DBNS": 0.9,
+        "KM-26FW-SW10DBNM": 0.9,
+        "KM-26FW-SW10DBNL": 0.9,
+        "KM-26FW-SW10BES": 0.9,
+        "KM-26FW-SW10BEM": 0.9,
+        "KM-26FW-SW10BEL": 0.9,
+        "KM-26FW-SW05BKS": 0.9,
+        "KM-26FW-SW05BKM": 0.9,
+        "KM-26FW-SW05BKL": 0.9,
+        "KM-26FW-SW05IVS": 0.9,
+        "KM-26FW-SW05IVM": 0.9,
+        "KM-26FW-SW05IVL": 0.9,
+        "KM-26FW-SW05BRS": 0.9,
+        "KM-26FW-SW05BRM": 0.9,
+        "KM-26FW-SW05BRL": 0.9,
+        "KM-26FW-SW05BLS": 0.9,
+        "KM-26FW-SW05BLM": 0.9,
+        "KM-26FW-SW05BLL": 0.9,
+        "KM-26FW-SK04BKS": 0.9,
+        "KM-26FW-SK04BKM": 0.9,
+        "KM-26FW-SK04BKL": 0.9,
+        "KM-26FW-PT05BES": 0.9,
+        "KM-26FW-PT05BEM": 0.9,
+        "KM-26FW-PT05BEL": 0.9,
+        "KM-26FW-PT05GRS": 0.9,
+        "KM-26FW-PT05GRM": 0.9,
+        "KM-26FW-PT05GRL": 0.9,
+    }
+
+    variants = client.variants_by_skus(sku_discount_map.keys())
+
+    if start_or_end == "end":
+        client.revert_variant_prices(variants, testrun=testrun)
+        return
+
+    new_prices_by_variant_id = {
+        v["id"]: int(
+            int(v["compareAtPrice"] or v["price"]) * sku_discount_map[v["sku"]]
+        )
+        for v in variants
+    }
+    client.update_variant_prices_by_dict(
+        variants, new_prices_by_variant_id=new_prices_by_variant_id, testrun=testrun
+    )
+
+
 def main():
-    start_end_discounts_26fw1_0909(testrun=False, start_or_end="start")
+    start_end_discounts_26fw2_0916(testrun=True, start_or_end="start")
+    start_end_discounts_26fw3_0923(testrun=True, start_or_end="start")
 
 
 if __name__ == "__main__":
