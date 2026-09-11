@@ -259,24 +259,51 @@ function onFormSubmitHandler(e) {
     let staff;
     if (answers[TITLES.staffSelect] === TITLES.newStaffChoice) {
       staff = {
-        name: String(answers[TITLES.regName] || '').trim(),
-        display_name: String(answers[TITLES.regDisplayName] || '').trim(),
+        name: normalizeSpaces_(answers[TITLES.regName]),
+        display_name: normalizeSpaces_(answers[TITLES.regDisplayName]),
         height: normalizeHeight_(answers[TITLES.regHeight]),
-        instagram: String(answers[TITLES.regInstagram] || '').trim(),
-        shop: String(answers[TITLES.regShop] || '').trim(),
+        instagram: normalizeSpaces_(answers[TITLES.regInstagram]),
+        shop: normalizeSpaces_(answers[TITLES.regShop]),
         is_new: true,
       };
       master.appendRow([staff.name, staff.display_name, staff.height, staff.instagram, staff.shop, new Date()]);
       refreshStaffChoices_(FormApp.openById(prop_('FORM_ID')), master);
     } else {
-      const row = master
+      const names = master
         .getDataRange()
         .getValues()
         .slice(1)
-        .find(function (r) {
-          return String(r[0]).trim() === answers[TITLES.staffSelect];
+        .filter(function (r) {
+          return String(r[0]).trim();
         });
-      if (!row) throw new Error('スタッフマスタに該当がありません: ' + answers[TITLES.staffSelect]);
+      const wanted = nameKey_(answers[TITLES.staffSelect]);
+      const row = names.find(function (r) {
+        return nameKey_(r[0]) === wanted;
+      });
+      if (!row) {
+        // The dropdown is a snapshot written into the form; the master is read
+        // live on every submission. Editing or removing a master row leaves the
+        // old name selectable, and this is where that turns up — the staff
+        // member picks a name that no longer exists. Rebuild the choices so the
+        // stale one disappears, and say what the master actually holds, because
+        // the mismatch is usually invisible at a glance.
+        try {
+          refreshStaffChoices_(FormApp.openById(prop_('FORM_ID')), master);
+        } catch (refreshErr) {
+          Logger.log('could not refresh the choices: %s', refreshErr);
+        }
+        throw new Error(
+          'スタッフマスタに該当がありません: 「' +
+            answers[TITLES.staffSelect] +
+            '」 現在のスタッフマスタ: ' +
+            names
+              .map(function (r) {
+                return '「' + String(r[0]).trim() + '」';
+              })
+              .join(' ') +
+            ' (フォームの選択肢を更新しました。再投稿をご依頼ください)'
+        );
+      }
       staff = {
         name: String(row[0]).trim(),
         display_name: String(row[1]).trim(),
@@ -352,6 +379,33 @@ function onFormSubmitHandler(e) {
     );
     throw err;
   }
+}
+
+/**
+ * Collapse any run of whitespace, full-width included, to one plain space.
+ *
+ * Forms does this to a choice value on its own: a name registered as
+ * 「和泉　紀亜」 with a full-width space is stored on the form as 「和泉 紀亜」
+ * with a half-width one, and that is what comes back in the response. Writing
+ * the master in the same shape keeps the master, the choice and the answer
+ * identical instead of leaving the master the odd one out.
+ */
+function normalizeSpaces_(value) {
+  return String(value == null ? '' : value)
+    .replace(/[\s\u3000]+/g, ' ')
+    .trim();
+}
+
+/**
+ * Key a staff name for comparison, ignoring whitespace entirely.
+ *
+ * normalizeSpaces_ keeps new registrations consistent, but rows written before
+ * it, or edited by hand since, can still differ by a space. Names do not
+ * collide on spacing alone, so matching on the spaceless form costs nothing
+ * and spares a staff member a submission that fails for an invisible reason.
+ */
+function nameKey_(value) {
+  return String(value == null ? '' : value).replace(/[\s\u3000]+/g, '');
 }
 
 function normalizeHeight_(v) {
