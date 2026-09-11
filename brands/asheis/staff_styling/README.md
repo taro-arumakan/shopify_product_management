@@ -73,6 +73,17 @@ Notes:
 - Submitting requires being signed in to any Google account (file upload).
 - New-staff registrations are appended to スタッフマスタ automatically; to edit
   the master by hand, fix the rows and run `refreshStaffChoices()`.
+- **The staff dropdown is a snapshot, and a page already open keeps the old
+  one.** The choices are baked into the form page when it loads, and a
+  registration reaches them only through the `onFormSubmit` trigger, which
+  starts once the respondent is already on the confirmation screen — so
+  nothing here can refresh the page they are looking at. Two things make that
+  harmless instead of fixing the unfixable: the built-in 「別の回答を送信」
+  link is off in favour of the form URL in the confirmation message, so going
+  round again is a fresh page load; and 新規登録 is idempotent — registering a
+  name the master already holds overwrites that row rather than adding a
+  second one. Someone who cannot find themselves in the list can just register
+  again, and the master, the dropdown and the article all stay single.
 - 表示名 (latin) drives the article title/URL numbering (e.g. Saki9 / saki-10)
   and the per-staff article tag.
 - **Editing Code.gs here changes nothing by itself** — the Apps Script project
@@ -81,7 +92,8 @@ Notes:
   form and refuses to run twice, so after changing any text in `TITLES`,
   `FORM_DESCRIPTION` or `HELP_TEXTS`, run **`syncFormTexts()`** once to push it
   to the existing form. It renames questions listed in `FORMER_TITLES`, updates
-  help texts, and logs anything it could not find. It never adds or removes
+  help texts, sets the confirmation message, and logs anything it could not
+  find. It never adds or removes
   questions — the two file-upload questions stay as they are and never need
   re-adding.
 - The price tag prints **no 品番** — brand, product name, colour, size, price

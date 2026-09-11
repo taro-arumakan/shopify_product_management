@@ -141,6 +141,7 @@ function setup() {
     .setHelpText(HELP_TEXTS[TITLES.manualCodes]);
 
   refreshStaffChoices_(form, master);
+  applyConfirmation_(form);
 
   form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
 
@@ -171,6 +172,7 @@ function setup() {
 function syncFormTexts() {
   const form = FormApp.openById(prop_('FORM_ID'));
   form.setDescription(FORM_DESCRIPTION);
+  applyConfirmation_(form);
 
   form.getItems().forEach(function (item) {
     const renamed = FORMER_TITLES[item.getTitle()];
@@ -198,11 +200,62 @@ function syncFormTexts() {
   Logger.log('done: %s', form.getEditUrl());
 }
 
+/**
+ * Send the respondent back through a fresh page load.
+ *
+ * The staff dropdown is a snapshot baked into the page the respondent already
+ * has open; a registration is written to it by the onFormSubmit trigger, which
+ * only starts once that respondent is already looking at the confirmation
+ * screen. Nothing here can reach into that open page, so the built-in
+ * 「別の回答を送信」 link is turned off and the form URL is offered instead —
+ * a plain navigation, which fetches the choices again.
+ */
+function applyConfirmation_(form) {
+  form.setShowLinkToRespondAgain(false);
+  form.setConfirmationMessage(
+    '投稿ありがとうございました。\n' +
+      '内容を確認のうえ、記事を作成します。\n\n' +
+      '続けて投稿する場合はこちらから:\n' +
+      form.getPublishedUrl() +
+      '\n(新規登録された方は、このリンクから開き直すとスタッフ名の一覧に反映されます)'
+  );
+}
+
 /** Run by hand after editing the staff master to refresh the dropdown. */
 function refreshStaffChoices() {
   const form = FormApp.openById(prop_('FORM_ID'));
   const master = SpreadsheetApp.openById(prop_('SPREADSHEET_ID')).getSheetByName(MASTER_SHEET_NAME);
   refreshStaffChoices_(form, master);
+}
+
+/** Master rows that carry a name, each with its 1-based sheet row number. */
+function masterRows_(masterSheet) {
+  return masterSheet
+    .getDataRange()
+    .getValues()
+    .map(function (values, i) {
+      return { row: i + 1, values: values };
+    })
+    .slice(1)
+    .filter(function (r) {
+      return String(r.values[0]).trim();
+    });
+}
+
+/**
+ * The master row for a name, or null.
+ *
+ * Compared with every space removed: the master is hand-editable, and Forms
+ * rewrites a full-width space in a choice value as a plain one, so the two
+ * spellings of one name have to meet somewhere.
+ */
+function masterRowFor_(masterSheet, name) {
+  const wanted = nameKey_(name);
+  return (
+    masterRows_(masterSheet).find(function (r) {
+      return nameKey_(r.values[0]) === wanted;
+    }) || null
+  );
 }
 
 function refreshStaffChoices_(form, masterSheet) {
@@ -266,21 +319,25 @@ function onFormSubmitHandler(e) {
         shop: normalizeSpaces_(answers[TITLES.regShop]),
         is_new: true,
       };
-      master.appendRow([staff.name, staff.display_name, staff.height, staff.instagram, staff.shop, new Date()]);
+      // Registering is also what a staff member does when the dropdown they
+      // are looking at predates their own registration, so the same name can
+      // arrive twice. Overwrite that row instead of appending a second one:
+      // two rows with one name would put the name in the dropdown twice and
+      // make which record wins depend on sheet order.
+      const existing = masterRowFor_(master, staff.name);
+      if (existing) {
+        master
+          .getRange(existing.row, 1, 1, 5)
+          .setValues([[staff.name, staff.display_name, staff.height, staff.instagram, staff.shop]]);
+        staff.is_new = false;
+        Logger.log('re-registration of %s: updated master row %s', staff.name, existing.row);
+      } else {
+        master.appendRow([staff.name, staff.display_name, staff.height, staff.instagram, staff.shop, new Date()]);
+      }
       refreshStaffChoices_(FormApp.openById(prop_('FORM_ID')), master);
     } else {
-      const names = master
-        .getDataRange()
-        .getValues()
-        .slice(1)
-        .filter(function (r) {
-          return String(r[0]).trim();
-        });
-      const wanted = nameKey_(answers[TITLES.staffSelect]);
-      const row = names.find(function (r) {
-        return nameKey_(r[0]) === wanted;
-      });
-      if (!row) {
+      const found = masterRowFor_(master, answers[TITLES.staffSelect]);
+      if (!found) {
         // The dropdown is a snapshot written into the form; the master is read
         // live on every submission. Editing or removing a master row leaves the
         // old name selectable, and this is where that turns up — the staff
@@ -296,14 +353,15 @@ function onFormSubmitHandler(e) {
           'スタッフマスタに該当がありません: 「' +
             answers[TITLES.staffSelect] +
             '」 現在のスタッフマスタ: ' +
-            names
+            masterRows_(master)
               .map(function (r) {
-                return '「' + String(r[0]).trim() + '」';
+                return '「' + String(r.values[0]).trim() + '」';
               })
               .join(' ') +
             ' (フォームの選択肢を更新しました。再投稿をご依頼ください)'
         );
       }
+      const row = found.values;
       staff = {
         name: String(row[0]).trim(),
         display_name: String(row[1]).trim(),
