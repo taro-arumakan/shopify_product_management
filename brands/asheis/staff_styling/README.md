@@ -63,6 +63,18 @@ side's event name.
    - `GH_REPO` — defaults to `taro-arumakan/shopify_product_management`
    - `NOTIFY_EMAILS` — **required**, comma-separated. No default: this repo
      is public, so the addresses live only in the Script Properties.
+     **Do not list only a group address that the script's own account belongs
+     to.** Gmail does not deliver a message back to the account that sent it,
+     including via a group it is a member of, so the one person most likely to
+     be watching the prototype is the one person who never sees the mail — and
+     it is not recoverable, the inbound copy is dropped rather than archived.
+     There is no Groups or admin setting that overrides this, and Apps Script
+     cannot send it from anywhere else: `MailApp.sendEmail` has no `from`
+     option, `GmailApp` has one but only for verified 「Send mail as」 aliases
+     of the same account, and the suppression follows the account rather than
+     the From header. List at least one address outside the sending account's
+     own reach alongside the group. This disappears once the script runs under
+     the catal.co.jp account rather than a personal one.
 5. Test-submit from a phone. Expect: row in the sheet, photos in Drive
    (「(File responses)」 folders), receipt email, and — once `GH_PAT` is set and
    the workflow is on `main` — a run of the "Staff styling article" action
@@ -127,3 +139,9 @@ File-responses folders with the service account. Keep forms with file-upload
 questions in My Drive — they are not supported in Shared Drives. The repo side
 needs no change beyond rotating `GH_PAT` if it should stop being tied to a
 personal token.
+
+Two things get better on their own once the sender is a catal.co.jp account:
+mail to the admin group reaches everyone in it including the outside members,
+and `noReply: true` becomes available on `MailApp.sendEmail` (it is refused for
+consumer gmail.com accounts). The MailApp send quota also goes from 100
+recipients a day to 1,500.
