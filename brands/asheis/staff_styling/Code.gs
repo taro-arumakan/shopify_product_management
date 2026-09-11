@@ -259,11 +259,11 @@ function onFormSubmitHandler(e) {
     let staff;
     if (answers[TITLES.staffSelect] === TITLES.newStaffChoice) {
       staff = {
-        name: String(answers[TITLES.regName] || '').trim(),
-        display_name: String(answers[TITLES.regDisplayName] || '').trim(),
+        name: normalizeSpaces_(answers[TITLES.regName]),
+        display_name: normalizeSpaces_(answers[TITLES.regDisplayName]),
         height: normalizeHeight_(answers[TITLES.regHeight]),
-        instagram: String(answers[TITLES.regInstagram] || '').trim(),
-        shop: String(answers[TITLES.regShop] || '').trim(),
+        instagram: normalizeSpaces_(answers[TITLES.regInstagram]),
+        shop: normalizeSpaces_(answers[TITLES.regShop]),
         is_new: true,
       };
       master.appendRow([staff.name, staff.display_name, staff.height, staff.instagram, staff.shop, new Date()]);
@@ -382,11 +382,27 @@ function onFormSubmitHandler(e) {
 }
 
 /**
+ * Collapse any run of whitespace, full-width included, to one plain space.
+ *
+ * Forms does this to a choice value on its own: a name registered as
+ * 「和泉　紀亜」 with a full-width space is stored on the form as 「和泉 紀亜」
+ * with a half-width one, and that is what comes back in the response. Writing
+ * the master in the same shape keeps the master, the choice and the answer
+ * identical instead of leaving the master the odd one out.
+ */
+function normalizeSpaces_(value) {
+  return String(value == null ? '' : value)
+    .replace(/[\s\u3000]+/g, ' ')
+    .trim();
+}
+
+/**
  * Key a staff name for comparison, ignoring whitespace entirely.
  *
- * The registration form and a hand-edited master row disagree easily here:
- * 「和泉　紀亜」 typed with a full-width space and 「和泉 紀亜」 retyped with a
- * half-width one are the same person, and no two staff differ only by spacing.
+ * normalizeSpaces_ keeps new registrations consistent, but rows written before
+ * it, or edited by hand since, can still differ by a space. Names do not
+ * collide on spacing alone, so matching on the spaceless form costs nothing
+ * and spares a staff member a submission that fails for an invisible reason.
  */
 function nameKey_(value) {
   return String(value == null ? '' : value).replace(/[\s\u3000]+/g, '');
