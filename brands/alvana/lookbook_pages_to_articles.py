@@ -115,9 +115,12 @@ def ensure_blog(client):
 
 # Cover images come in 2:3, 3:4 and 4:5. Nothing in the theme constrains
 # .blog-post-card__image and .blog-post-list is align-items:start, so unconstrained cards
-# end up different heights with their captions at different levels. 3:4 is the middle of
-# the three ratios, so every cover loses at most 11%.
-BLOG_CARD_RATIO_CSS = ".blog-post-card__image {aspect-ratio: 3 / 4; object-fit: cover;}"
+# end up different heights with their captions at different levels.
+# 2:3 rather than the middle ratio 3:4: four of the seven covers are natively 2:3, so this
+# leaves the majority uncropped. 3:4 crops those four vertically, which on a full-body
+# lookbook shot cuts the models' feet off -- the worst thing to lose. The three covers 2:3
+# does crop lose width off empty floor and wall, with no subject clipped.
+BLOG_CARD_RATIO_CSS = ".blog-post-card__image {aspect-ratio: 2 / 3; object-fit: cover;}"
 
 # prev-next-blog-posts defaults to color scheme "scheme-3", which is background #f3f3f3
 # with text_color #ffffff -- a white heading on light grey, i.e. unreadable. It has to be
