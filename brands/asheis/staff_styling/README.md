@@ -63,6 +63,17 @@ side's event name.
    - `GH_REPO` — defaults to `taro-arumakan/shopify_product_management`
    - `NOTIFY_EMAILS` — **required**, comma-separated. No default: this repo
      is public, so the addresses live only in the Script Properties.
+   - `MAIL_FROM` — optional, but set it. A 「Send mail as」 alias verified on
+     the sending account, used as the From address. **Without it the mail
+     never reaches the script owner's own inbox**: Gmail does not deliver a
+     message to the account that sent it, a group that account belongs to
+     included, and it drops the copy rather than filing it, so no filter
+     brings it back. Setting From to an alias is enough — the Action's mail
+     goes from the same account to the same group and arrives, differing only
+     in that header. Run `showMailAliases()` to see what may be used here.
+     Since `MailApp` has no `from` option this goes through `GmailApp`, so the
+     script asks for the wider Gmail scope and needs re-authorising after the
+     paste that introduces it.
 5. Test-submit from a phone. Expect: row in the sheet, photos in Drive
    (「(File responses)」 folders), receipt email, and — once `GH_PAT` is set and
    the workflow is on `main` — a run of the "Staff styling article" action
@@ -73,6 +84,17 @@ Notes:
 - Submitting requires being signed in to any Google account (file upload).
 - New-staff registrations are appended to スタッフマスタ automatically; to edit
   the master by hand, fix the rows and run `refreshStaffChoices()`.
+- **The staff dropdown is a snapshot, and a page already open keeps the old
+  one.** The choices are baked into the form page when it loads, and a
+  registration reaches them only through the `onFormSubmit` trigger, which
+  starts once the respondent is already on the confirmation screen — so
+  nothing here can refresh the page they are looking at. Two things make that
+  harmless instead of fixing the unfixable: the built-in 「別の回答を送信」
+  link is off in favour of the form URL in the confirmation message, so going
+  round again is a fresh page load; and 新規登録 is idempotent — registering a
+  name the master already holds overwrites that row rather than adding a
+  second one. Someone who cannot find themselves in the list can just register
+  again, and the master, the dropdown and the article all stay single.
 - 表示名 (latin) drives the article title/URL numbering (e.g. Saki9 / saki-10)
   and the per-staff article tag.
 - **Editing Code.gs here changes nothing by itself** — the Apps Script project
@@ -81,7 +103,8 @@ Notes:
   form and refuses to run twice, so after changing any text in `TITLES`,
   `FORM_DESCRIPTION` or `HELP_TEXTS`, run **`syncFormTexts()`** once to push it
   to the existing form. It renames questions listed in `FORMER_TITLES`, updates
-  help texts, and logs anything it could not find. It never adds or removes
+  help texts, sets the confirmation message, and logs anything it could not
+  find. It never adds or removes
   questions — the two file-upload questions stay as they are and never need
   re-adding.
 - The price tag prints **no 品番** — brand, product name, colour, size, price
@@ -115,3 +138,9 @@ File-responses folders with the service account. Keep forms with file-upload
 questions in My Drive — they are not supported in Shared Drives. The repo side
 needs no change beyond rotating `GH_PAT` if it should stop being tied to a
 personal token.
+
+Set `MAIL_FROM` again on the new project — the alias is per-account, so the
+production account needs its own 「Send mail as」 entry for it. Two things also
+get better on their own: `noReply: true` becomes available (it is refused for
+consumer gmail.com accounts), and the send quota goes from 100 recipients a day
+to 1,500.

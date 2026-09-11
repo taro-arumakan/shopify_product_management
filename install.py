@@ -19,7 +19,8 @@ SCOPES += "read_files,write_files,read_metaobjects,write_metaobjects,read_metaob
 SCOPES += "read_publications,write_publications,read_themes,write_themes,read_content,write_content,"
 SCOPES += "read_online_store_navigation,write_online_store_navigation,read_reports,"
 SCOPES += "read_shipping,write_shipping,read_locations,"
-SCOPES += "read_discounts,write_discounts,read_discounts_allocator_functions,write_discounts_allocator_functions"
+SCOPES += "read_discounts,write_discounts,read_discounts_allocator_functions,write_discounts_allocator_functions,"
+SCOPES += "read_pixels,write_pixels"
 
 PORT = 8080
 REDIRECT_URI = f"http://localhost:{PORT}"

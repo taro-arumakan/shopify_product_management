@@ -17,6 +17,9 @@
  *        GH_REPO       : defaults to taro-arumakan/shopify_product_management
  *        NOTIFY_EMAILS : required. Comma-separated recipients of the failure
  *                        mail. No default — this repository is public.
+ *        MAIL_FROM     : optional but wanted. A 「Send mail as」 alias verified
+ *                        on this account, used as the From address. See
+ *                        notify_ for why it is not cosmetic.
  */
 
 const TITLES = {
@@ -141,6 +144,7 @@ function setup() {
     .setHelpText(HELP_TEXTS[TITLES.manualCodes]);
 
   refreshStaffChoices_(form, master);
+  applyConfirmation_(form);
 
   form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
 
@@ -171,6 +175,7 @@ function setup() {
 function syncFormTexts() {
   const form = FormApp.openById(prop_('FORM_ID'));
   form.setDescription(FORM_DESCRIPTION);
+  applyConfirmation_(form);
 
   form.getItems().forEach(function (item) {
     const renamed = FORMER_TITLES[item.getTitle()];
@@ -198,11 +203,62 @@ function syncFormTexts() {
   Logger.log('done: %s', form.getEditUrl());
 }
 
+/**
+ * Send the respondent back through a fresh page load.
+ *
+ * The staff dropdown is a snapshot baked into the page the respondent already
+ * has open; a registration is written to it by the onFormSubmit trigger, which
+ * only starts once that respondent is already looking at the confirmation
+ * screen. Nothing here can reach into that open page, so the built-in
+ * 「別の回答を送信」 link is turned off and the form URL is offered instead —
+ * a plain navigation, which fetches the choices again.
+ */
+function applyConfirmation_(form) {
+  form.setShowLinkToRespondAgain(false);
+  form.setConfirmationMessage(
+    '投稿ありがとうございました。\n' +
+      '内容を確認のうえ、記事を作成します。\n\n' +
+      '続けて投稿する場合はこちらから:\n' +
+      form.getPublishedUrl() +
+      '\n(新規登録された方は、このリンクから開き直すとスタッフ名の一覧に反映されます)'
+  );
+}
+
 /** Run by hand after editing the staff master to refresh the dropdown. */
 function refreshStaffChoices() {
   const form = FormApp.openById(prop_('FORM_ID'));
   const master = SpreadsheetApp.openById(prop_('SPREADSHEET_ID')).getSheetByName(MASTER_SHEET_NAME);
   refreshStaffChoices_(form, master);
+}
+
+/** Master rows that carry a name, each with its 1-based sheet row number. */
+function masterRows_(masterSheet) {
+  return masterSheet
+    .getDataRange()
+    .getValues()
+    .map(function (values, i) {
+      return { row: i + 1, values: values };
+    })
+    .slice(1)
+    .filter(function (r) {
+      return String(r.values[0]).trim();
+    });
+}
+
+/**
+ * The master row for a name, or null.
+ *
+ * Compared with every space removed: the master is hand-editable, and Forms
+ * rewrites a full-width space in a choice value as a plain one, so the two
+ * spellings of one name have to meet somewhere.
+ */
+function masterRowFor_(masterSheet, name) {
+  const wanted = nameKey_(name);
+  return (
+    masterRows_(masterSheet).find(function (r) {
+      return nameKey_(r.values[0]) === wanted;
+    }) || null
+  );
 }
 
 function refreshStaffChoices_(form, masterSheet) {
@@ -259,24 +315,56 @@ function onFormSubmitHandler(e) {
     let staff;
     if (answers[TITLES.staffSelect] === TITLES.newStaffChoice) {
       staff = {
-        name: String(answers[TITLES.regName] || '').trim(),
-        display_name: String(answers[TITLES.regDisplayName] || '').trim(),
+        name: normalizeSpaces_(answers[TITLES.regName]),
+        display_name: normalizeSpaces_(answers[TITLES.regDisplayName]),
         height: normalizeHeight_(answers[TITLES.regHeight]),
-        instagram: String(answers[TITLES.regInstagram] || '').trim(),
-        shop: String(answers[TITLES.regShop] || '').trim(),
+        instagram: normalizeSpaces_(answers[TITLES.regInstagram]),
+        shop: normalizeSpaces_(answers[TITLES.regShop]),
         is_new: true,
       };
-      master.appendRow([staff.name, staff.display_name, staff.height, staff.instagram, staff.shop, new Date()]);
+      // Registering is also what a staff member does when the dropdown they
+      // are looking at predates their own registration, so the same name can
+      // arrive twice. Overwrite that row instead of appending a second one:
+      // two rows with one name would put the name in the dropdown twice and
+      // make which record wins depend on sheet order.
+      const existing = masterRowFor_(master, staff.name);
+      if (existing) {
+        master
+          .getRange(existing.row, 1, 1, 5)
+          .setValues([[staff.name, staff.display_name, staff.height, staff.instagram, staff.shop]]);
+        staff.is_new = false;
+        Logger.log('re-registration of %s: updated master row %s', staff.name, existing.row);
+      } else {
+        master.appendRow([staff.name, staff.display_name, staff.height, staff.instagram, staff.shop, new Date()]);
+      }
       refreshStaffChoices_(FormApp.openById(prop_('FORM_ID')), master);
     } else {
-      const row = master
-        .getDataRange()
-        .getValues()
-        .slice(1)
-        .find(function (r) {
-          return String(r[0]).trim() === answers[TITLES.staffSelect];
-        });
-      if (!row) throw new Error('スタッフマスタに該当がありません: ' + answers[TITLES.staffSelect]);
+      const found = masterRowFor_(master, answers[TITLES.staffSelect]);
+      if (!found) {
+        // The dropdown is a snapshot written into the form; the master is read
+        // live on every submission. Editing or removing a master row leaves the
+        // old name selectable, and this is where that turns up — the staff
+        // member picks a name that no longer exists. Rebuild the choices so the
+        // stale one disappears, and say what the master actually holds, because
+        // the mismatch is usually invisible at a glance.
+        try {
+          refreshStaffChoices_(FormApp.openById(prop_('FORM_ID')), master);
+        } catch (refreshErr) {
+          Logger.log('could not refresh the choices: %s', refreshErr);
+        }
+        throw new Error(
+          'スタッフマスタに該当がありません: 「' +
+            answers[TITLES.staffSelect] +
+            '」 現在のスタッフマスタ: ' +
+            masterRows_(master)
+              .map(function (r) {
+                return '「' + String(r.values[0]).trim() + '」';
+              })
+              .join(' ') +
+            ' (フォームの選択肢を更新しました。再投稿をご依頼ください)'
+        );
+      }
+      const row = found.values;
       staff = {
         name: String(row[0]).trim(),
         display_name: String(row[1]).trim(),
@@ -354,6 +442,33 @@ function onFormSubmitHandler(e) {
   }
 }
 
+/**
+ * Collapse any run of whitespace, full-width included, to one plain space.
+ *
+ * Forms does this to a choice value on its own: a name registered as
+ * 「和泉　紀亜」 with a full-width space is stored on the form as 「和泉 紀亜」
+ * with a half-width one, and that is what comes back in the response. Writing
+ * the master in the same shape keeps the master, the choice and the answer
+ * identical instead of leaving the master the odd one out.
+ */
+function normalizeSpaces_(value) {
+  return String(value == null ? '' : value)
+    .replace(/[\s\u3000]+/g, ' ')
+    .trim();
+}
+
+/**
+ * Key a staff name for comparison, ignoring whitespace entirely.
+ *
+ * normalizeSpaces_ keeps new registrations consistent, but rows written before
+ * it, or edited by hand since, can still differ by a space. Names do not
+ * collide on spacing alone, so matching on the spaceless form costs nothing
+ * and spares a staff member a submission that fails for an invisible reason.
+ */
+function nameKey_(value) {
+  return String(value == null ? '' : value).replace(/[\s\u3000]+/g, '');
+}
+
 function normalizeHeight_(v) {
   const s = String(v || '').trim();
   if (!s) return '';
@@ -404,6 +519,25 @@ function dispatchToGitHub_(submission) {
 }
 
 /** One mail addressed to every recipient, so each can see who else was told. */
+/**
+ * Mail the office, as the MAIL_FROM alias rather than as this account.
+ *
+ * That is not cosmetic. Gmail does not deliver a message to the inbox of the
+ * account that sent it — a group that account belongs to included — so a
+ * notification addressed only to the admin group never reaches whoever owns
+ * the script, who is usually the person watching it most closely. The copy is
+ * dropped rather than filed, so no filter brings it back.
+ *
+ * Setting From to a verified 「Send mail as」 alias is enough: the Action's
+ * mail already does exactly this over SMTP, from this same account, to this
+ * same group, and it arrives. Only the From header differs.
+ *
+ * MailApp has no from option, so this goes through GmailApp — which is why the
+ * script asks for the wider Gmail scope and needs re-authorising after a paste.
+ * An alias that is not verified on the account would be ignored silently and
+ * the mail would go out as the account again, which is the failure we are
+ * trying to avoid, so check it and say so rather than sending it blind.
+ */
 function notify_(subject, body) {
   const to = prop_('NOTIFY_EMAILS')
     .split(',')
@@ -418,5 +552,30 @@ function notify_(subject, body) {
     Logger.log('NOTIFY_EMAILS script property is not set; cannot send: %s', subject);
     return;
   }
-  MailApp.sendEmail(to, subject, body);
+
+  const from = prop_('MAIL_FROM');
+  if (!from) {
+    Logger.log('MAIL_FROM is not set; sending as this account, which will not reach its own inbox');
+    MailApp.sendEmail(to, subject, body);
+    return;
+  }
+
+  const aliases = GmailApp.getAliases();
+  if (aliases.indexOf(from) === -1) {
+    Logger.log(
+      'MAIL_FROM %s is not a verified alias on this account, so it would be ignored; ' +
+        'sending as the account instead. Verified aliases: %s',
+      from,
+      aliases.join(', ') || '(none)'
+    );
+    MailApp.sendEmail(to, subject, body);
+    return;
+  }
+
+  GmailApp.sendEmail(to, subject, body, { from: from });
+}
+
+/** Run by hand to see what MAIL_FROM may be set to. */
+function showMailAliases() {
+  Logger.log('verified 「Send mail as」 aliases: %s', GmailApp.getAliases().join(', ') || '(none)');
 }

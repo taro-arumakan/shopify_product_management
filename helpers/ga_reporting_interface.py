@@ -21,6 +21,7 @@ class GaReportingInterface:
     # account map rather than per-brand env vars.
     GA_PROPERTY_ID_BY_BRAND = {
         "Apricot Studios": "491529588",
+        "ASHEIS": "548001323",
         "BLOSSOM": "515230768",
         "KUMÉ": "457308149",
         "LEMEME": "515216277",
