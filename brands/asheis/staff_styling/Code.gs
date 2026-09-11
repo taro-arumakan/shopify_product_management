@@ -17,6 +17,9 @@
  *        GH_REPO       : defaults to taro-arumakan/shopify_product_management
  *        NOTIFY_EMAILS : required. Comma-separated recipients of the failure
  *                        mail. No default — this repository is public.
+ *        MAIL_FROM     : optional but wanted. A 「Send mail as」 alias verified
+ *                        on this account, used as the From address. See
+ *                        notify_ for why it is not cosmetic.
  */
 
 const TITLES = {
@@ -516,6 +519,25 @@ function dispatchToGitHub_(submission) {
 }
 
 /** One mail addressed to every recipient, so each can see who else was told. */
+/**
+ * Mail the office, as the MAIL_FROM alias rather than as this account.
+ *
+ * That is not cosmetic. Gmail does not deliver a message to the inbox of the
+ * account that sent it — a group that account belongs to included — so a
+ * notification addressed only to the admin group never reaches whoever owns
+ * the script, who is usually the person watching it most closely. The copy is
+ * dropped rather than filed, so no filter brings it back.
+ *
+ * Setting From to a verified 「Send mail as」 alias is enough: the Action's
+ * mail already does exactly this over SMTP, from this same account, to this
+ * same group, and it arrives. Only the From header differs.
+ *
+ * MailApp has no from option, so this goes through GmailApp — which is why the
+ * script asks for the wider Gmail scope and needs re-authorising after a paste.
+ * An alias that is not verified on the account would be ignored silently and
+ * the mail would go out as the account again, which is the failure we are
+ * trying to avoid, so check it and say so rather than sending it blind.
+ */
 function notify_(subject, body) {
   const to = prop_('NOTIFY_EMAILS')
     .split(',')
@@ -530,5 +552,30 @@ function notify_(subject, body) {
     Logger.log('NOTIFY_EMAILS script property is not set; cannot send: %s', subject);
     return;
   }
-  MailApp.sendEmail(to, subject, body);
+
+  const from = prop_('MAIL_FROM');
+  if (!from) {
+    Logger.log('MAIL_FROM is not set; sending as this account, which will not reach its own inbox');
+    MailApp.sendEmail(to, subject, body);
+    return;
+  }
+
+  const aliases = GmailApp.getAliases();
+  if (aliases.indexOf(from) === -1) {
+    Logger.log(
+      'MAIL_FROM %s is not a verified alias on this account, so it would be ignored; ' +
+        'sending as the account instead. Verified aliases: %s',
+      from,
+      aliases.join(', ') || '(none)'
+    );
+    MailApp.sendEmail(to, subject, body);
+    return;
+  }
+
+  GmailApp.sendEmail(to, subject, body, { from: from });
+}
+
+/** Run by hand to see what MAIL_FROM may be set to. */
+function showMailAliases() {
+  Logger.log('verified 「Send mail as」 aliases: %s', GmailApp.getAliases().join(', ') || '(none)');
 }

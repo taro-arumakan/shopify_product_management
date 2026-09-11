@@ -63,6 +63,17 @@ side's event name.
    - `GH_REPO` — defaults to `taro-arumakan/shopify_product_management`
    - `NOTIFY_EMAILS` — **required**, comma-separated. No default: this repo
      is public, so the addresses live only in the Script Properties.
+   - `MAIL_FROM` — optional, but set it. A 「Send mail as」 alias verified on
+     the sending account, used as the From address. **Without it the mail
+     never reaches the script owner's own inbox**: Gmail does not deliver a
+     message to the account that sent it, a group that account belongs to
+     included, and it drops the copy rather than filing it, so no filter
+     brings it back. Setting From to an alias is enough — the Action's mail
+     goes from the same account to the same group and arrives, differing only
+     in that header. Run `showMailAliases()` to see what may be used here.
+     Since `MailApp` has no `from` option this goes through `GmailApp`, so the
+     script asks for the wider Gmail scope and needs re-authorising after the
+     paste that introduces it.
 5. Test-submit from a phone. Expect: row in the sheet, photos in Drive
    (「(File responses)」 folders), receipt email, and — once `GH_PAT` is set and
    the workflow is on `main` — a run of the "Staff styling article" action
@@ -127,3 +138,9 @@ File-responses folders with the service account. Keep forms with file-upload
 questions in My Drive — they are not supported in Shared Drives. The repo side
 needs no change beyond rotating `GH_PAT` if it should stop being tied to a
 personal token.
+
+Set `MAIL_FROM` again on the new project — the alias is per-account, so the
+production account needs its own 「Send mail as」 entry for it. Two things also
+get better on their own: `noReply: true` becomes available (it is refused for
+consumer gmail.com accounts), and the send quota goes from 100 recipients a day
+to 1,500.
