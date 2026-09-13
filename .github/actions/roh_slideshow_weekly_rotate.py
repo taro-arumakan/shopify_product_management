@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # ROH の週次 Slideshow 画像のシーズン（キャンペーン）prefix。
 # シーズンが変わったらここを更新する（例: "26_fall", "27_spring"）。
 # ファイル名形式: {prefix}_pc_{N}w.jpg / {prefix}_m_{N}w.jpg
-ROH_SEASON_PREFIX = "26_prefall"
+ROH_SEASON_PREFIX = "26_fall"
 
 WEEK_IN_URL_RE = re.compile(r"(\d+)w\.(jpg|jpeg|png|webp)$", re.IGNORECASE)
 
