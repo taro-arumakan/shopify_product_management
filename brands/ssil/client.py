@@ -39,6 +39,7 @@ class SsilClient(BrandClientBase):
             sku=string.ascii_lowercase.index("o"),
             hs_code=string.ascii_lowercase.index("p"),
             stock=string.ascii_lowercase.index("q"),
+            # XXX move this to product_attr_column_map if all varaiants are at the same price.
             price=string.ascii_lowercase.index("d"),
         )
         return option2_attrs
