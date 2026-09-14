@@ -2,49 +2,13 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-import pandas as pd
 import utils
 
 
-def end_2026_gold_line(testrun=True):
-    client = utils.client("ssil")
-    products = client.products_by_query("tag:'26_gold_line'")
-    client.revert_product_prices(products, testrun=testrun)
-
-
-def start_2026_new_year_sale(testrun=True):
-    client = utils.client("ssil")
-    rows = client.worksheet_rows(
-        sheet_id="1uYE0j-LZxRzkXbe1Hlp8eB1J02mKFdFirtogytSmfcY", sheet_title="シート1"
-    )
-    df = pd.DataFrame(columns=["title", "sku"], data=rows)
-    skus = df["sku"].tolist()
-    variants = client.variants_by_skus(skus)
-    discounted_prices_by_variant_id = {
-        v["id"]: int(int(v["price"]) * 0.85) for v in variants
-    }
-    client.update_variant_prices_by_dict(
-        variants=variants,
-        new_prices_by_variant_id=discounted_prices_by_variant_id,
-        testrun=testrun,
-    )
-
-
-def end_2026_new_year_sale(testrun=True):
-    client = utils.client("ssil")
-    rows = client.worksheet_rows(
-        sheet_id="1uYE0j-LZxRzkXbe1Hlp8eB1J02mKFdFirtogytSmfcY", sheet_title="シート1"
-    )
-    df = pd.DataFrame(columns=["title", "sku"], data=rows)
-    skus = df["sku"].tolist()
-    variants = client.variants_by_skus(skus)
-    client.revert_variant_prices(variants, testrun=testrun)
-
-
-def start_end_new_clover_sale(testrun=True, start_or_end="end"):
+def start_end_2026_sep_essential_line(testrun=True, start_or_end="end"):
     client = utils.client("ssil")
     # Collection: 3/12 NEW CLOVER
-    products = client.products_by_collection_id("309971845213")
+    products = client.products_by_collection_id("315973730397")
 
     if start_or_end == "end":
         client.revert_product_prices(products, testrun=testrun)
@@ -238,4 +202,7 @@ def start_end_2026_0814_summer_sale(testrun=True, start_or_end="start"):
 
 
 if __name__ == "__main__":
-    start_end_2026_0814_summer_sale(testrun=True, start_or_end="start")
+    start_end_2026_sep_essential_line(
+        # testrun=False,
+        start_or_end="start"
+    )
