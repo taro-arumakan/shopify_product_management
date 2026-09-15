@@ -7,18 +7,17 @@ from brands.apricotstudios.client import ApricotStudiosClient
 logging.basicConfig(level=logging.INFO)
 
 
-def create_autumn_1st_0903():
+def create_autumn_2nd_0917():
     client = ApricotStudiosClient(
-        "gid://shopify/Product/9473807679744",
-        product_detail_images_folder_id="1l65hGmJYkE4Y9j1O0_9gUAIjmZUdiNnY",
+        "gid://shopify/Product/9675925160192",
         product_sheet_start_row=1,
         remove_existing_new_product_indicators=False,
-        products_season_tag="26_0903_autumn_1st",
+        products_season_tag="26_0917_autumn_2nd",
     )
-    sheet_name = "[Autumn_1st] 9/3"
+    sheet_name = "[Autumn_2nd] 9/17"
 
     scheduled_time = datetime.datetime(
-        2026, 9, 3, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
+        2026, 9, 17, 10, 0, 0, tzinfo=zoneinfo.ZoneInfo("Asia/Tokyo")
     )
 
     client.sanity_check_sheet(sheet_name)
@@ -26,7 +25,7 @@ def create_autumn_1st_0903():
         sheet_name,
         additional_tags=["New Arrival"],
         scheduled_time=scheduled_time,
-        restart_at_product_title="Dino denim pants",
+        restart_at_product_title="Babycot Grenny Dumble Vest",
     )
 
 
@@ -65,6 +64,6 @@ def set_price():
 
 
 if __name__ == "__main__":
-    create_autumn_1st_0903()
+    create_autumn_2nd_0917()
     # reprocess()
     # set_price()
