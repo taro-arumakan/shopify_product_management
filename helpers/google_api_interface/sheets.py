@@ -223,10 +223,10 @@ class GoogleSheetsApiInterface:
          {'option_values': {'カラー': 'INK BLACK', 'サイズ': '4'}, 'price': 35200, 'sku': 'ALV-90154-BK-4', 'stock': 2}]
         """
         option1_key, option2_key = None, None
-        if option1 := product_input.get("options"):
-            option1_key = list(option1[0].keys())[0]
-            if option2 := option1[0].get("options"):
-                option2_key = list(option2[0].keys())[0]
+        if option1s := product_input.get("options"):
+            option1_key = list(option1s[0].keys())[0]
+            if option2s := option1s[0].get("options"):
+                option2_key = list(option2s[0].keys())[0]
         if option2_key:
             return [
                 dict(
