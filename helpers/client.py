@@ -4,6 +4,7 @@ import os
 import pathlib
 import smtplib
 from email.message import EmailMessage
+from helpers.favorites_reporting import FavoritesReporting
 from helpers.reporting import Reporting
 from helpers.shopify_graphql_client import ShopifyGraphqlClient
 from helpers.google_api_interface.interface import GoogleApiInterface
@@ -38,6 +39,7 @@ class Client(
     Reporting,
     MetaReportingInterface,
     GaReportingInterface,
+    FavoritesReporting,
 ):
     def __init__(
         self,

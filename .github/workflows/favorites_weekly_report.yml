@@ -1,0 +1,91 @@
+name: Favorites weekly report
+
+# Writes the ASHEIS favorites (wishlist) weekly stats into the Google Sheet.
+#
+# Runs Tuesday 09:00 JST rather than Monday: GA4 can take up to ~48h to finish
+# processing, so reporting Sunday's data immediately would undercount it. The
+# default args re-write the previous two complete weeks as well as the week in
+# progress — rows are keyed on the week's Monday and replaced, so a re-run
+# simply refreshes late-arriving data rather than duplicating it.
+#
+# Trigger by HTTP POST:
+#   curl -X POST \
+#     -H "Accept: application/vnd.github+json" \
+#     -H "Authorization: Bearer $GITHUB_TOKEN" \
+#     https://api.github.com/repos/taro-arumakan/shopify_product_management/dispatches \
+#     -d '{"event_type":"favorites-weekly-report","client_payload":{"weeks":2,"include_current":"true"}}'
+
+on:
+  schedule:
+    # Tuesday 00:00 UTC == Tuesday 09:00 JST
+    - cron: "0 0 * * 2"
+  workflow_dispatch:
+    inputs:
+      weeks:
+        description: "how many complete weeks to (re)write, counting back"
+        required: false
+        default: "2"
+        type: string
+      include_current:
+        description: "also write the in-progress week"
+        required: false
+        default: "true"
+        type: string
+  repository_dispatch:
+    types: [favorites-weekly-report]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.21"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          asheis-ACCESS_TOKEN=${{ secrets.ASHEIS_ACCESS_TOKEN }}
+          asheis-GSPREAD_ID=${{ secrets.ASHEIS_GSPREAD_ID }}
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          EOF
+
+      - name: Run favorites weekly report
+        # Inputs arrive via env rather than direct interpolation so a dispatch
+        # payload can never be spliced into the shell command.
+        env:
+          PYTHONPATH: .
+          WEEKS: ${{ github.event.inputs.weeks || github.event.client_payload.weeks || '2' }}
+          INCLUDE_CURRENT: ${{ github.event.inputs.include_current || github.event.client_payload.include_current || 'true' }}
+        run: |
+          set -euo pipefail
+          case "${WEEKS}" in
+            ''|*[!0-9]*) echo "weeks must be a positive integer, got '${WEEKS}'" >&2; exit 1 ;;
+          esac
+          ARGS="--weeks ${WEEKS}"
+          if [ "${INCLUDE_CURRENT}" = "true" ]; then
+            ARGS="${ARGS} --include-current"
+          fi
+          echo "running with ${ARGS}"
+          uv run brands/scripts/favorites_weekly_report.py ${ARGS}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/google-credentials.json
