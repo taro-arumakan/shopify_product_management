@@ -18,6 +18,7 @@ See ANALYTICS.md in the shopify_favorites_service repo for the full chain.
 """
 
 import datetime
+import json
 import logging
 import re
 import time
@@ -39,6 +40,14 @@ TAB_GUIDE = "指標の説明"
 
 ADD_EVENT = "add_to_wishlist"
 REMOVE_EVENT = "remove_from_wishlist"
+
+# Persistence-check states. "OK" is reserved for a check that actually ran:
+# with no member activity there is nothing to verify, and saying OK would
+# claim a green light nobody earned.
+HEALTH_OK = "OK"
+HEALTH_SUSPECT = "要確認"
+HEALTH_NO_MEMBER = "会員利用なし"
+HEALTH_UNKNOWN = "判定不可"
 
 # The Google & YouTube channel reports ecommerce items as
 # "shopify_ZZ_<productId>_<variantId>"; our own favorites carry the bare
@@ -179,6 +188,7 @@ class FavoritesReporting:
             "removes": 0,
             "guest_adds": 0,
             "member_adds": 0,
+            "member_removes": 0,
             "add_users": 0,
         }
         for (event, logged_in), (count, users) in rows:
@@ -192,6 +202,8 @@ class FavoritesReporting:
                     out["guest_adds"] += count
             elif event == REMOVE_EVENT:
                 out["removes"] += count
+                if logged_in == "yes":
+                    out["member_removes"] += count
         return out
 
     def _favorites_by_item(self):
@@ -262,25 +274,49 @@ class FavoritesReporting:
         return {n["id"]: n for n in res["nodes"] if n}
 
     def _stored_favorites_count(self):
-        """How many favorites are actually persisted on customer metafields.
+        """Favorites actually persisted on customer metafields, counted item by item.
 
-        The health check: GA4 can say members favorited things while the write
-        path is broken. That happened for five weeks after launch and nobody
-        noticed, so the report carries it explicitly.
+        Deliberately not `metafieldDefinitions.metafieldsCount`: that counts the
+        customers who hold a metafield, not the favorites inside it. A returning
+        member adding a second favorite would leave it unchanged, and the
+        persistence check below would cry wolf.
         """
         query = """
-        {
-            metafieldDefinitions(first: 10, ownerType: CUSTOMER) {
-                nodes { namespace key metafieldsCount }
+        query StoredFavorites($cursor: String) {
+            customers(first: 250, after: $cursor) {
+                pageInfo { hasNextPage endCursor }
+                nodes {
+                    products: metafield(
+                        namespace: "custom", key: "favorite_products"
+                    ) { value }
+                    articles: metafield(
+                        namespace: "custom", key: "favorite_articles"
+                    ) { value }
+                }
             }
         }
         """
-        res = self.run_query(query)
-        total = 0
-        for node in res["metafieldDefinitions"]["nodes"]:
-            if node["key"] in ("favorite_products", "favorite_articles"):
-                total += int(node["metafieldsCount"])
-        return total
+        total, cursor = 0, None
+        while True:
+            page = self.run_query(query, {"cursor": cursor})["customers"]
+            for node in page["nodes"]:
+                for key in ("products", "articles"):
+                    total += self._gid_list_length((node.get(key) or {}).get("value"))
+            if not page["pageInfo"]["hasNextPage"]:
+                return total
+            cursor = page["pageInfo"]["endCursor"]
+
+    @staticmethod
+    def _gid_list_length(raw):
+        """list.* metafields store a JSON array of GIDs as their string value."""
+        if not raw:
+            return 0
+        try:
+            value = json.loads(raw)
+        except json.JSONDecodeError:
+            logger.warning(f"unparsable favorites metafield value: {raw!r}")
+            return 0
+        return len(value) if isinstance(value, list) else 0
 
     # --- assembling the rows ---------------------------------------------
 
@@ -406,7 +442,7 @@ class FavoritesReporting:
 
         prev = self._previous_summary(spreadsheet, key)
         summary["wow"] = self._wow(summary["adds"], prev)
-        summary["health"] = self._health(summary, prev)
+        summary["health"] = self._health(summary, prev, now)
 
         self._with_sheet_retry(self._upsert_summary, spreadsheet, summary, key, now)
         self._with_sheet_retry(
@@ -438,17 +474,33 @@ class FavoritesReporting:
         return round(100 * (adds - before) / before, 1)
 
     @staticmethod
-    def _health(summary, prev):
-        """Members favorited but nothing new persisted → the write path is suspect."""
+    def _health(summary, prev, now):
+        """Whether member favorites demonstrably persisted this week.
+
+        Members favoriting while the stored total does not grow means the write
+        path is suspect -- exactly the failure that ran unnoticed for five weeks
+        after launch.
+
+        The stored total is a live reading, not history, so it can only be
+        compared against a row written on an earlier day. Backfilling several
+        weeks in one run gives every row the same reading, and a flat delta
+        there says nothing at all.
+        """
         if not summary["member_adds"]:
-            return "OK"
-        if not prev:
-            return "OK（初回）"
+            return HEALTH_NO_MEMBER
+        if prev is None:
+            return HEALTH_UNKNOWN
         try:
             before = int(prev[16])
+            written = prev[18][:10]
         except (ValueError, IndexError):
-            return "OK"
-        return "OK" if summary["stored"] > before else "要確認"
+            return HEALTH_UNKNOWN
+        if written == now[:10]:
+            return HEALTH_UNKNOWN
+        if summary["member_adds"] - summary["member_removes"] <= 0:
+            # Adds cancelled out by removes, so a flat stored total is expected.
+            return HEALTH_OK
+        return HEALTH_OK if summary["stored"] > before else HEALTH_SUSPECT
 
     def _summary_row(self, s, now):
         return [
@@ -808,16 +860,23 @@ GUIDE_ROWS = [
     ],
     [
         "会員保存件数",
-        "Shopifyの顧客メタフィールドにお気に入りを保持している顧客数。",
-        "会員分のみ。ゲストは含まれません。",
+        "Shopifyの顧客メタフィールドに保存されているお気に入りの総件数（全顧客の合計）。"
+        "ゲストのお気に入りはブラウザ内にしか存在しないため含まれません。",
+        "会員が1件追加すればこの数も1増えるはずです。次の「保存整合」の判定材料です。",
     ],
     [
         "保存整合",
-        "GA4で会員の追加が記録されているのに、Shopify側の保存件数が増えて"
-        "いない場合に「要確認」となります。",
+        "会員のお気に入りが実際に保存されたかの判定。4つの状態があります。\n"
+        "OK＝会員の追加が記録され、保存件数も増えた。\n"
+        "要確認＝会員の追加が記録されたのに保存件数が増えていない。\n"
+        "会員利用なし＝その週は会員による追加がなく、確認する対象がなかった。\n"
+        "判定不可＝比較できる前週の記録がない、または前週分と同じ日にまとめて"
+        "書き込まれたため差分が意味を持たない。",
         "「要確認」が出たら保存処理が壊れている可能性があります。"
         "実際に公開直後の約5週間、保存が全く機能しておらず気づけませんでした。"
-        "この欄はその再発を検知するためのものです。",
+        "この欄はその再発を検知するためのものです。\n"
+        "「会員利用なし」は異常ではありませんが、正常だと確認できたわけでもありません。"
+        "現在ほぼ全てのお気に入りがゲストによるものため、この状態が続くのが通常です。",
     ],
     ["", "", ""],
     ["■ アイテム別", "", ""],
