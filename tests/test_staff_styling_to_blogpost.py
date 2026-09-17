@@ -158,6 +158,64 @@ class TestArticleLookup(unittest.TestCase):
         self.assertIsNone(sut.existing_article_for_submission(self.ARTICLES, ""))
 
 
+class TestShouldPublish(unittest.TestCase):
+    def test_one_product_and_one_photo_is_enough(self):
+        self.assertTrue(sut.should_publish(report(uploaded_photos=1)))
+
+    def test_an_unidentified_extra_item_does_not_hold_it_back(self):
+        # A warning, not a reason to hide a post that already has a product.
+        self.assertTrue(
+            sut.should_publish(report(unresolved=["999"], unreadable_tags=["t2"]))
+        )
+
+    def test_no_identified_product_stays_hidden(self):
+        self.assertFalse(sut.should_publish(report(resolved=[], unresolved=["999"])))
+
+    def test_counts_photos_that_reached_shopify_not_photos_submitted(self):
+        self.assertFalse(
+            sut.should_publish(report(failed_photos=["p1", "p2"], uploaded_photos=0))
+        )
+
+
+SUBMISSION = submission(spreadsheet_id="sheet-1")
+VARIANT = {"displayName": "COAT - BEIGE / F", "sku": "2126", "barcode": "4550351287507"}
+
+
+def outcome(**overrides):
+    r = report(resolved=[VARIANT], **overrides)
+    r["warnings"] = sut.collect_warnings(r)
+    r["published"] = sut.should_publish(r)
+    return sut.outcome_mail(SUBMISSION, STAFF, "Saki20", "gid://shopify/Article/1", r)
+
+
+class TestOutcomeMail(unittest.TestCase):
+    def test_clean_submission_says_it_is_live(self):
+        subject, lines = outcome()
+        self.assertEqual(subject, "【スタイリング投稿】公開: Saki20 (佐藤 咲)")
+        self.assertIn("公開しました", lines[0])
+        self.assertNotIn("要確認:", lines)
+
+    def test_published_with_a_problem_still_asks_for_a_look(self):
+        subject, lines = outcome(unresolved=["999"])
+        self.assertEqual(subject, "【スタイリング投稿】公開・要確認: Saki20 (佐藤 咲)")
+        self.assertIn("公開しました", lines[0])
+        self.assertIn("999", "\n".join(lines))
+
+    def test_below_the_threshold_it_says_why_it_is_hidden(self):
+        r = report(resolved=[], unresolved=["999"])
+        r["warnings"] = sut.collect_warnings(r)
+        r["published"] = sut.should_publish(r)
+        subject, lines = sut.outcome_mail(
+            SUBMISSION, STAFF, "Saki20", "gid://shopify/Article/1", r
+        )
+        self.assertEqual(
+            subject, "【スタイリング投稿】非公開・要確認: Saki20 (佐藤 咲)"
+        )
+        self.assertIn("非公開で作成しました", lines[0])
+        self.assertIn("着用商品1点以上", lines[0])
+        self.assertTrue(any(l.startswith("確認・公開: ") for l in lines))
+
+
 class TestVariantLine(unittest.TestCase):
     def test_names_the_jan_because_that_is_what_is_on_the_tag(self):
         line = sut.variant_line(

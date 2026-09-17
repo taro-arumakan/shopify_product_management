@@ -1,4 +1,4 @@
-"""Process a staff styling submission into a hidden Styling blog article.
+"""Process a staff styling submission into a Styling blog article.
 
 Triggered by .github/workflows/staff_styling_article.yml on a
 ``repository_dispatch`` event of type ``staff-styling-submission``, sent by the
@@ -23,7 +23,7 @@ CLIENT_PAYLOAD env var:
 Steps:
 
 1. skip the whole run if custom.styling_submission_id already carries this
-   response id — a re-run must not leave the operator a second draft
+   response id — a re-run must not publish the same post twice
 2. download price-tag photos from Drive (the form's File responses folders are
    shared with the service account) and decode barcodes with zxing-cpp
 3. resolve variants by the barcode field — JAN != SKU for ASHEIS; barcodes are
@@ -31,16 +31,20 @@ Steps:
    falling back to SKU lookup so a manually typed code may be either
 4. download styling photos, EXIF-orient, convert to JPEG (HEIC included) and
    cap resolution, then upload to Shopify Files
-5. create the article hidden in the Styling blog ("styling" template) with the
+5. create the article in the Styling blog ("styling" template) with the
    custom.styling_* metafields in the same mutation, author = staff name,
-   tag = display name, title = display name + auto-increment
+   tag = display name, title = display name + auto-increment — published
+   straight away when it has at least one identified product and one photo,
+   hidden otherwise
 6. email the outcome to NOTIFYEES_STAFF_STYLING
 
 The article is always created, even when no product could be identified or no
 photo came through: a hidden draft plus a 要確認 email naming what is missing
 lets the operator finish the article in the admin and publish it, which beats
-a submission that leaves nothing behind. Only an unexpected error aborts, and
-that too is emailed.
+a submission that leaves nothing behind. Past the publishing threshold a
+problem no longer holds the article back — a second item whose tag would not
+read still gets a 要確認 email, but the post is already live. Only an
+unexpected error aborts, and that too is emailed.
 """
 
 import json
@@ -420,8 +424,26 @@ def upload_styling_photos(client, submission, workdir, title):
     return file_ids, urls_by_id[file_ids[0]], failed
 
 
+# Below either of these the post would be a card with nothing to show or
+# nothing to buy, so it stays hidden until the operator completes it.
+PUBLISH_MIN_PRODUCTS = 1
+PUBLISH_MIN_PHOTOS = 1
+
+
+def should_publish(report):
+    """Whether the article can go live without anyone looking at it first.
+
+    Counts what actually reached Shopify, not what was submitted: five photos
+    that all failed to import leave the article just as bare as none.
+    """
+    return (
+        len(report["resolved"]) >= PUBLISH_MIN_PRODUCTS
+        and report["uploaded_photos"] >= PUBLISH_MIN_PHOTOS
+    )
+
+
 def collect_warnings(report):
-    """What the operator has to complete by hand before publishing."""
+    """What the operator has to complete by hand in the admin."""
     warnings = []
     if report["failed_photos"]:
         warnings.append(
@@ -461,17 +483,30 @@ def variant_line(variant):
     return f"・{variant['displayName']} ({codes})"
 
 
-def notify_outcome(submission, staff, title, article_id, report):
+def outcome_mail(submission, staff, title, article_id, report):
+    """Subject and body lines of the mail reporting a created article."""
     warnings = report["warnings"]
-    lines = [
-        f"記事「{title}」を非公開で作成しました。"
-        + (
-            "下記の点を確認・修正のうえ公開してください。"
+    if report["published"]:
+        opening = f"記事「{title}」を公開しました。" + (
+            "下記の点を確認し、必要に応じて管理画面で修正してください。"
             if warnings
-            else "内容を確認のうえ公開してください。"
-        ),
+            else ""
+        )
+        link_label = "確認・編集"
+        state = "公開・要確認" if warnings else "公開"
+    else:
+        opening = (
+            f"記事「{title}」を非公開で作成しました。"
+            f"公開の条件(着用商品{PUBLISH_MIN_PRODUCTS}点以上・"
+            f"スタイリング写真{PUBLISH_MIN_PHOTOS}枚以上)を満たさないため、"
+            "下記の点を修正のうえ公開してください。"
+        )
+        link_label = "確認・公開"
+        state = "非公開・要確認"
+    lines = [
+        opening,
         "",
-        f"確認・公開: {admin_article_url(article_id)}",
+        f"{link_label}: {admin_article_url(article_id)}",
         "",
         f"スタッフ: {staff['name']} ({staff['display_name']} / {staff['shop']})"
         + ("  ※新規登録" if staff.get("is_new") else ""),
@@ -501,8 +536,11 @@ def notify_outcome(submission, staff, title, article_id, report):
             ]
         if spreadsheet_id := submission.get("spreadsheet_id"):
             lines += ["", f"回答内容: {spreadsheet_url(spreadsheet_id)}"]
-    state = "要確認" if warnings else "完了"
-    notify(f"【スタイリング投稿】{state}: {title} ({staff['name']})", lines)
+    return f"【スタイリング投稿】{state}: {title} ({staff['name']})", lines
+
+
+def notify_outcome(submission, staff, title, article_id, report):
+    notify(*outcome_mail(submission, staff, title, article_id, report))
 
 
 def process_submission(submission, context):
@@ -548,13 +586,14 @@ def process_submission(submission, context):
         "uploaded_photos": len(file_ids),
     }
     report["warnings"] = collect_warnings(report)
+    report["published"] = should_publish(report)
 
     article = client.article_create(
         BLOG_TITLE,
         title,
         TEMPLATE_SUFFIX,
         media_url=cover_url,
-        is_published=False,
+        is_published=report["published"],
         author_name=staff["name"],
         tags=[staff["display_name"]],
         metafields=build_metafields(
@@ -566,7 +605,12 @@ def process_submission(submission, context):
         ),
     )
     context["article_id"] = article["id"]
-    logger.info("created article %s: %s", article["title"], article["id"])
+    logger.info(
+        "created article %s (%s): %s",
+        article["title"],
+        "published" if report["published"] else "hidden",
+        article["id"],
+    )
 
     notify_outcome(submission, staff, title, article["id"], report)
 

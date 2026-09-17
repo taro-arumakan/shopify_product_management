@@ -3,7 +3,7 @@
 Shop staff submit styling photos + price-tag photos through a Google Form.
 An Apps Script trigger forwards each submission to GitHub via
 `repository_dispatch`, and [staff_styling_to_blogpost.py](../staff_styling_to_blogpost.py)
-turns it into a hidden article in the Styling blog for review and publishing.
+turns it into an article in the Styling blog.
 
 ```
 Google Form (staff, photos, tags)
@@ -14,19 +14,28 @@ Google Form (staff, photos, tags)
                  └─ GitHub Action: staff_styling_article.yml
                       └─ staff_styling_to_blogpost.py
                            decode 13-digit JAN → variant_by_barcode
-                           HEIC→JPEG, upload, hidden article + metafields
+                           HEIC→JPEG, upload, article + metafields
                            outcome email to NOTIFYEES_STAFF_STYLING
 ```
 
-The hidden article is created even when no product could be identified or no
-photo came through: the email then says 要確認, names what is missing and links
-both the article in the Shopify admin and the tag photos in Drive, so the
-operator can identify the items, complete the article and publish it. Only an
-unexpected error leaves no article, and that is emailed too.
+**The article is published straight away once it has at least one identified
+product and one photo** (`PUBLISH_MIN_PRODUCTS` / `PUBLISH_MIN_PHOTOS`).
+Anything wrong past that point — a second tag that would not read, a photo that
+failed to import — still gets a 公開・要確認 email, but no longer holds the post
+back.
+
+Below the threshold the article is still created, hidden: the email says
+非公開・要確認, names what is missing and links both the article in the Shopify
+admin and the tag photos in Drive, so the operator can identify the items,
+complete the article and publish it. Only an unexpected error leaves no
+article, and that is emailed too.
+
+Subjects after 【スタイリング投稿】: 公開 / 公開・要確認 / 非公開・要確認 /
+作成済み (a re-run, skipped) / エラー.
 
 Each article carries the form response id in `custom.styling_submission_id`, so
 re-running the Action for a submission that already produced an article skips
-it rather than leaving a second draft behind.
+it rather than publishing the same post twice.
 
 **One mail per submission.** The Action reports every submission it receives, so
 the Apps Script side stays quiet on the happy path and mails only when the
