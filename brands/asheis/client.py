@@ -318,6 +318,8 @@ class AsheisClient(BrandClientBase):
                         f'Error validating JAN for {product_input["title"]} '
                         f'{variant_info["sku"]}: {e}'
                     )
+            else:
+                res.append(f"{variant_info['sku']}: No barcode")
         return res
 
     def update_metafields(self, product_id, product_input):
@@ -361,14 +363,18 @@ def main():
     client = AsheisClient(
         product_sheet_start_row=1,
         remove_existing_new_product_indicators=False,
-        products_season_tag="opening",
+        products_season_tag="26_fall",
     )
-    sheet_name = "【8_9デリ】Products Master"
-    client.sanity_check_sheet(sheet_name)
-    client.process_sheet_to_products(
-        sheet_name,
-        # restart_at_product_title="OPEN COLLAR RIB CARDIGAN",
-    )
+    sheet_names = ["【10デリ_1】Products Master", "【10デリ_2】Products Master"]
+
+    for sheet_name in sheet_names:
+        client.sanity_check_sheet(sheet_name)
+
+    # client.process_sheet_to_products(
+    #     sheet_name,
+    #     # restart_at_product_title="OPEN COLLAR RIB CARDIGAN",
+    #     additional_tags=['26_oct_']
+    # )
 
 
 if __name__ == "__main__":
