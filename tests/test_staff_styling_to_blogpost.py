@@ -1,7 +1,11 @@
 import json
+import pathlib
+import tempfile
 import unittest
+from unittest import mock
 
 from brands.asheis import staff_styling_to_blogpost as sut
+from helpers.exceptions import NoVariantsFoundException
 
 STAFF = {
     "name": "佐藤 咲",
@@ -84,6 +88,7 @@ def report(**overrides):
     base = {
         "resolved": [{"sku": "1"}],
         "unresolved": [],
+        "tags": [],
         "unreadable_tags": [],
         "failed_photos": [],
         "uploaded_photos": 3,
@@ -214,6 +219,97 @@ class TestOutcomeMail(unittest.TestCase):
         self.assertIn("非公開で作成しました", lines[0])
         self.assertIn("着用商品1点以上", lines[0])
         self.assertTrue(any(l.startswith("確認・公開: ") for l in lines))
+
+
+DENIM = {"id": "v1", "sku": "S1", "displayName": "DENIM - BLACK (27) / 0"}
+TOP = {"id": "v2", "sku": "S2", "displayName": "TOP - BROWN (21) / F"}
+
+
+class FakeClient:
+    BARCODES = {"4550351354568": DENIM, "4550351353615": TOP}
+
+    def download_file_from_drive(self, file_id, path):
+        pass
+
+    def variant_by_barcode(self, code):
+        if code not in self.BARCODES:
+            raise NoVariantsFoundException(code)
+        return self.BARCODES[code]
+
+    def variant_by_sku(self, code):
+        raise NoVariantsFoundException(code)
+
+
+class TestIdentifyVariants(unittest.TestCase):
+    def test_each_tag_photo_keeps_its_own_outcome(self):
+        decoded = {
+            "tag_0": ["4550351354568"],
+            "tag_1": [],
+            "tag_2": ["4550351999999"],
+            "tag_3": ["4550351353615"],
+        }
+        sub_ = submission(tag_photo_ids=["good", "blank", "unknown", "manual-dupe"])
+        sub_["manual_jan_codes"] = ["4550351353615"]
+        with (
+            tempfile.TemporaryDirectory() as d,
+            mock.patch.object(
+                sut,
+                "decode_barcodes",
+                side_effect=lambda p: decoded[p.rsplit("/", 1)[-1]],
+            ),
+        ):
+            resolved, unresolved, tags = sut.identify_variants(
+                FakeClient(), sub_, pathlib.Path(d)
+            )
+
+        self.assertEqual([v["id"] for v in resolved], ["v1", "v2"])
+        self.assertEqual(unresolved, ["4550351999999"])
+        by_id = {t["file_id"]: t for t in tags}
+        self.assertEqual(by_id["good"]["variants"], [DENIM])
+        self.assertEqual(by_id["blank"]["codes"], [])
+        self.assertEqual(by_id["unknown"]["unresolved"], ["4550351999999"])
+        # A code also typed by hand is looked up once but still credited to
+        # the photo it was read from.
+        self.assertEqual(by_id["manual-dupe"]["variants"], [TOP])
+        self.assertEqual(sut.unreadable_tag_ids(tags), ["blank"])
+
+
+def tag(file_id, codes=(), variants=(), unresolved=()):
+    return {
+        "file_id": file_id,
+        "codes": list(codes),
+        "variants": list(variants),
+        "unresolved": list(unresolved),
+    }
+
+
+class TestTagPhotoLines(unittest.TestCase):
+    def test_nothing_to_point_at_when_every_tag_matched(self):
+        self.assertEqual(
+            sut.tag_photo_lines([tag("a", ["1"], [DENIM]), tag("b", ["2"], [TOP])]),
+            [],
+        )
+
+    def test_splits_the_photo_that_needs_a_human_from_the_one_that_read(self):
+        lines = sut.tag_photo_lines([tag("good", ["1"], [DENIM]), tag("bad")])
+        text = "\n".join(lines)
+        attention = text.index("要確認の下げ札写真:")
+        read = text.index("読み取り済みの下げ札写真:")
+        self.assertLess(attention, text.index("file/d/bad/"))
+        self.assertLess(text.index("file/d/bad/"), read)
+        self.assertLess(read, text.index("file/d/good/"))
+        self.assertIn("バーコードを読み取れませんでした", text[attention:read])
+        # What the good one matched, so it need not be opened.
+        self.assertIn(DENIM["displayName"], text[read:])
+
+    def test_a_code_with_no_product_is_named_against_its_photo(self):
+        text = "\n".join(
+            sut.tag_photo_lines(
+                [tag("unknown", ["4550351999999"], [], ["4550351999999"])]
+            )
+        )
+        self.assertIn("該当する商品がありません: 4550351999999", text)
+        self.assertNotIn("読み取り済み", text)
 
 
 class TestVariantLine(unittest.TestCase):

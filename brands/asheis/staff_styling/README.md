@@ -27,7 +27,12 @@ back.
 Below the threshold the article is still created, hidden: the email says
 非公開・要確認, names what is missing and links both the article in the Shopify
 admin and the tag photos in Drive, so the operator can identify the items,
-complete the article and publish it. Only an unexpected error leaves no
+complete the article and publish it.
+
+Whenever a tag photo did not work out, the mail lists the tag photos in two
+groups: 要確認 — each with why, either no barcode read or the code it read
+and found no product for — and 読み取り済み, each with the product it
+matched, so nobody re-opens a photo that was fine. Only an unexpected error leaves no
 article, and that is emailed too.
 
 Subjects after 【スタイリング投稿】: 公開 / 公開・要確認 / 非公開・要確認 /

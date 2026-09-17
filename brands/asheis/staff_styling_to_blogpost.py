@@ -168,10 +168,11 @@ def resolve_variants(client, codes):
 
     Decoded JANs match the variant barcode field; manual input may be either a
     JAN or a SKU, so barcode lookup is tried first, then SKU, raw code first
-    and digits-only second. Returns (resolved variants, unresolved codes),
-    variants deduped by id.
+    and digits-only second. Returns (resolved variants deduped by id,
+    unresolved codes, the variant each resolved code matched) — the last so a
+    tag photo can be reported against what its own barcode found.
     """
-    resolved, unresolved = [], []
+    resolved, unresolved, matched = [], [], {}
     for code in codes:
         candidates = [code]
         digits = re.sub(r"\D", "", code)
@@ -191,9 +192,11 @@ def resolve_variants(client, codes):
                 break
         if variant is None:
             unresolved.append(code)
-        elif variant["id"] not in [v["id"] for v in resolved]:
+            continue
+        matched[code] = variant
+        if variant["id"] not in [v["id"] for v in resolved]:
             resolved.append(variant)
-    return resolved, unresolved
+    return resolved, unresolved, matched
 
 
 def prepare_image(src_path, dst_path):
@@ -363,10 +366,12 @@ def notify(subject, lines):
 def identify_variants(client, submission, workdir):
     """Decode the tag photos and resolve them, and any manual entry, to variants.
 
-    Returns (resolved variants, unresolved codes, ids of unreadable tag photos)
-    — the ids, not a count, so the email can link the photo that needs a human.
+    Returns (resolved variants, unresolved codes, one record per tag photo).
+    Each record carries the photo's file id, the codes read off it, the
+    variants they matched and the codes that matched nothing, so the email can
+    say which photo needs a human and why rather than listing them all.
     """
-    unreadable, codes = [], []
+    tags, codes = [], []
     for i, file_id in enumerate(submission["tag_photo_ids"]):
         path = str(workdir / f"tag_{i}")
         try:
@@ -377,19 +382,24 @@ def identify_variants(client, submission, workdir):
             # barcode will not decode — it must not cost the whole article.
             logger.exception("could not read tag photo %s", file_id)
             decoded = []
-        if decoded:
-            codes.extend(decoded)
-        else:
-            unreadable.append(file_id)
+        tags.append({"file_id": file_id, "codes": decoded})
+        codes.extend(decoded)
     codes.extend(submission["manual_jan_codes"])
-    resolved, unresolved = resolve_variants(client, list(dict.fromkeys(codes)))
+    resolved, unresolved, matched = resolve_variants(client, list(dict.fromkeys(codes)))
+    for tag in tags:
+        tag["variants"] = [matched[c] for c in tag["codes"] if c in matched]
+        tag["unresolved"] = [c for c in tag["codes"] if c not in matched]
     logger.info(
         "variants resolved: %s, unresolved codes: %s, unreadable tag photos: %s",
         [v["sku"] for v in resolved],
         unresolved,
-        unreadable,
+        unreadable_tag_ids(tags),
     )
-    return resolved, unresolved, unreadable
+    return resolved, unresolved, tags
+
+
+def unreadable_tag_ids(tags):
+    return [t["file_id"] for t in tags if not t["codes"]]
 
 
 def upload_styling_photos(client, submission, workdir, title):
@@ -483,6 +493,38 @@ def variant_line(variant):
     return f"・{variant['displayName']} ({codes})"
 
 
+def tag_photo_lines(tags):
+    """The tag photos, split into those that need a human and those that read.
+
+    Empty when every tag read and matched: there is nothing to point at. When
+    one did not, the ones that did are listed too, with what they matched, so
+    whoever completes the post can see which items are already on it and does
+    not re-check a photo that was fine.
+    """
+    needs_attention = [t for t in tags if not t["codes"] or t["unresolved"]]
+    if not needs_attention:
+        return []
+    read = [t for t in tags if t not in needs_attention]
+
+    def entry(tag):
+        lines = [f"・{drive_file_url(tag['file_id'])}"]
+        if not tag["codes"]:
+            lines.append("  バーコードを読み取れませんでした")
+        elif tag["unresolved"]:
+            lines.append(f"  該当する商品がありません: {', '.join(tag['unresolved'])}")
+        lines += [f"  {v['displayName']}" for v in tag["variants"]]
+        return lines
+
+    lines = ["", "要確認の下げ札写真:"]
+    for tag in needs_attention:
+        lines += entry(tag)
+    if read:
+        lines += ["", "読み取り済みの下げ札写真:"]
+        for tag in read:
+            lines += entry(tag)
+    return lines
+
+
 def outcome_mail(submission, staff, title, article_id, report):
     """Subject and body lines of the mail reporting a created article."""
     warnings = report["warnings"]
@@ -517,17 +559,7 @@ def outcome_mail(submission, staff, title, article_id, report):
     ]
     if warnings:
         lines += ["", "要確認:", *warnings]
-        # The operator reads the tags themselves to identify what is missing,
-        # so link them whenever identification came up short — but not when the
-        # only problem was, say, a photo that failed to import.
-        if submission["tag_photo_ids"] and (
-            report["unresolved"] or report["unreadable_tags"] or not report["resolved"]
-        ):
-            lines += [
-                "",
-                "下げ札写真:",
-                *[f"・{drive_file_url(i)}" for i in submission["tag_photo_ids"]],
-            ]
+        lines += tag_photo_lines(report["tags"])
         if report["failed_photos"]:
             lines += [
                 "",
@@ -570,9 +602,7 @@ def process_submission(submission, context):
         )
         return
 
-    resolved, unresolved, unreadable_tags = identify_variants(
-        client, submission, workdir
-    )
+    resolved, unresolved, tags = identify_variants(client, submission, workdir)
 
     title = next_article_title(articles, staff["display_name"])
     file_ids, cover_url, failed_photos = upload_styling_photos(
@@ -581,7 +611,8 @@ def process_submission(submission, context):
     report = {
         "resolved": resolved,
         "unresolved": unresolved,
-        "unreadable_tags": unreadable_tags,
+        "tags": tags,
+        "unreadable_tags": unreadable_tag_ids(tags),
         "failed_photos": failed_photos,
         "uploaded_photos": len(file_ids),
     }
