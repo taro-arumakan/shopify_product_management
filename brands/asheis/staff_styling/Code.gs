@@ -217,7 +217,8 @@ function applyConfirmation_(form) {
   form.setShowLinkToRespondAgain(false);
   form.setConfirmationMessage(
     '投稿ありがとうございました。\n' +
-      '内容を確認のうえ、記事を作成します。\n\n' +
+      '記事は自動で作成され、そのまま公開されます。\n' +
+      '着用商品や写真を確認できなかった場合は非公開で作成し、担当者が確認のうえ公開します。\n\n' +
       '続けて投稿する場合はこちらから:\n' +
       form.getPublishedUrl() +
       '\n(新規登録された方は、このリンクから開き直すとスタッフ名の一覧に反映されます)'
