@@ -89,6 +89,8 @@ class GoogleSheetsApiInterface:
                 v = str(v).strip()
             elif column_name == "drive_link":
                 v = str(v).strip()
+                if v == "なし":
+                    v = "no image"
                 if all([v, v != "no image", not v.startswith("http")]):
                     v = self.get_richtext_link(sheet_title, row_num, column_index)
             elif column_name in ["weight"]:
@@ -198,9 +200,11 @@ class GoogleSheetsApiInterface:
     def get_variants_level_info(self, product_input, key="sku"):
         if key in product_input:
             variants_info = [product_input]
-        elif (o1 := product_input["options"]) and key in o1[0]:
+        elif (o1 := product_input["options"]) and any(key in o for o in o1):
             variants_info = product_input["options"]
-        elif (o2 := product_input["options"][0]["options"]) and key in o2[0]:
+        elif (o2 := product_input["options"][0]["options"]) and any(
+            key in o for o in o2
+        ):
             variants_info = [
                 options2
                 for options1 in product_input["options"]
@@ -211,6 +215,9 @@ class GoogleSheetsApiInterface:
                 f"No variant {key} found in product input: {str(product_input)[:50]}..."
             )
         return variants_info
+
+    def _get_stock(self, op):
+        return op["stock"]
 
     def populate_option_dicts(self, product_input):
         """
@@ -238,7 +245,7 @@ class GoogleSheetsApiInterface:
                     or option1.get("price")
                     or product_input["price"],
                     sku=option2["sku"],
-                    stock=option2["stock"],
+                    stock=self._get_stock(option2),
                 )
                 for option1 in product_input["options"]
                 for option2 in option1["options"]
@@ -249,7 +256,7 @@ class GoogleSheetsApiInterface:
                     option_values={option1_key: option1[option1_key]},
                     price=option1.get("price") or product_input["price"],
                     sku=option1["sku"],
-                    stock=option1.get("stock", 0),
+                    stock=self._get_stock(option1),
                 )
                 for option1 in product_input["options"]
             ]

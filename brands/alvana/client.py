@@ -32,16 +32,16 @@ class AlvanaClient(BrandClientBase):
         option1_attrs = {"カラー": string.ascii_lowercase.index("l")}
         option1_attrs.update(
             filter_color=string.ascii_lowercase.index("m"),
-            drive_link=string.ascii_lowercase.index("o"),
-            remarks=string.ascii_lowercase.index("u"),
+            drive_link=string.ascii_lowercase.index("n"),
+            remarks=string.ascii_lowercase.index("t"),
         )
         return option1_attrs
 
     def option2_attr_column_map(self):
-        option2_attrs = {"サイズ": string.ascii_lowercase.index("p")}
+        option2_attrs = {"サイズ": string.ascii_lowercase.index("o")}
         option2_attrs.update(
-            sku=string.ascii_lowercase.index("q"),
-            stock=string.ascii_lowercase.index("r"),
+            sku=string.ascii_lowercase.index("p"),
+            stock=string.ascii_lowercase.index("q"),
         )
         return option2_attrs
 
@@ -132,6 +132,9 @@ class AlvanaClient(BrandClientBase):
                 self.update_variant_metafield(
                     product_id, variant_id, "custom", "filter_color", filter_color
                 )
+
+    def _get_stock(self, op):
+        return op.get("stock", 0)
 
 
 def main():

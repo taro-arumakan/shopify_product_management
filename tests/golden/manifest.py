@@ -40,7 +40,7 @@ CASES = [
         module="brands.alvana.client",
         cls="AlvanaClient",
         shop_name="alvanas",
-        sheet_name="26SS Product Master",
+        sheet_name="26AW Product Master",
         start_row=1,
     ),
     GoldenCase(
