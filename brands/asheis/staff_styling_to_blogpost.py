@@ -1,4 +1,4 @@
-"""Process a staff styling submission into a hidden Styling blog article.
+"""Process a staff styling submission into a Styling blog article.
 
 Triggered by .github/workflows/staff_styling_article.yml on a
 ``repository_dispatch`` event of type ``staff-styling-submission``, sent by the
@@ -23,7 +23,7 @@ CLIENT_PAYLOAD env var:
 Steps:
 
 1. skip the whole run if custom.styling_submission_id already carries this
-   response id — a re-run must not leave the operator a second draft
+   response id — a re-run must not publish the same post twice
 2. download price-tag photos from Drive (the form's File responses folders are
    shared with the service account) and decode barcodes with zxing-cpp
 3. resolve variants by the barcode field — JAN != SKU for ASHEIS; barcodes are
@@ -31,16 +31,20 @@ Steps:
    falling back to SKU lookup so a manually typed code may be either
 4. download styling photos, EXIF-orient, convert to JPEG (HEIC included) and
    cap resolution, then upload to Shopify Files
-5. create the article hidden in the Styling blog ("styling" template) with the
+5. create the article in the Styling blog ("styling" template) with the
    custom.styling_* metafields in the same mutation, author = staff name,
-   tag = display name, title = display name + auto-increment
+   tag = display name, title = display name + auto-increment — published
+   straight away when it has at least one identified product and one photo,
+   hidden otherwise
 6. email the outcome to NOTIFYEES_STAFF_STYLING
 
 The article is always created, even when no product could be identified or no
 photo came through: a hidden draft plus a 要確認 email naming what is missing
 lets the operator finish the article in the admin and publish it, which beats
-a submission that leaves nothing behind. Only an unexpected error aborts, and
-that too is emailed.
+a submission that leaves nothing behind. Past the publishing threshold a
+problem no longer holds the article back — a second item whose tag would not
+read still gets a 要確認 email, but the post is already live. Only an
+unexpected error aborts, and that too is emailed.
 """
 
 import json
@@ -164,10 +168,11 @@ def resolve_variants(client, codes):
 
     Decoded JANs match the variant barcode field; manual input may be either a
     JAN or a SKU, so barcode lookup is tried first, then SKU, raw code first
-    and digits-only second. Returns (resolved variants, unresolved codes),
-    variants deduped by id.
+    and digits-only second. Returns (resolved variants deduped by id,
+    unresolved codes, the variant each resolved code matched) — the last so a
+    tag photo can be reported against what its own barcode found.
     """
-    resolved, unresolved = [], []
+    resolved, unresolved, matched = [], [], {}
     for code in codes:
         candidates = [code]
         digits = re.sub(r"\D", "", code)
@@ -187,9 +192,11 @@ def resolve_variants(client, codes):
                 break
         if variant is None:
             unresolved.append(code)
-        elif variant["id"] not in [v["id"] for v in resolved]:
+            continue
+        matched[code] = variant
+        if variant["id"] not in [v["id"] for v in resolved]:
             resolved.append(variant)
-    return resolved, unresolved
+    return resolved, unresolved, matched
 
 
 def prepare_image(src_path, dst_path):
@@ -359,10 +366,12 @@ def notify(subject, lines):
 def identify_variants(client, submission, workdir):
     """Decode the tag photos and resolve them, and any manual entry, to variants.
 
-    Returns (resolved variants, unresolved codes, ids of unreadable tag photos)
-    — the ids, not a count, so the email can link the photo that needs a human.
+    Returns (resolved variants, unresolved codes, one record per tag photo).
+    Each record carries the photo's file id, the codes read off it, the
+    variants they matched and the codes that matched nothing, so the email can
+    say which photo needs a human and why rather than listing them all.
     """
-    unreadable, codes = [], []
+    tags, codes = [], []
     for i, file_id in enumerate(submission["tag_photo_ids"]):
         path = str(workdir / f"tag_{i}")
         try:
@@ -373,19 +382,24 @@ def identify_variants(client, submission, workdir):
             # barcode will not decode — it must not cost the whole article.
             logger.exception("could not read tag photo %s", file_id)
             decoded = []
-        if decoded:
-            codes.extend(decoded)
-        else:
-            unreadable.append(file_id)
+        tags.append({"file_id": file_id, "codes": decoded})
+        codes.extend(decoded)
     codes.extend(submission["manual_jan_codes"])
-    resolved, unresolved = resolve_variants(client, list(dict.fromkeys(codes)))
+    resolved, unresolved, matched = resolve_variants(client, list(dict.fromkeys(codes)))
+    for tag in tags:
+        tag["variants"] = [matched[c] for c in tag["codes"] if c in matched]
+        tag["unresolved"] = [c for c in tag["codes"] if c not in matched]
     logger.info(
         "variants resolved: %s, unresolved codes: %s, unreadable tag photos: %s",
         [v["sku"] for v in resolved],
         unresolved,
-        unreadable,
+        unreadable_tag_ids(tags),
     )
-    return resolved, unresolved, unreadable
+    return resolved, unresolved, tags
+
+
+def unreadable_tag_ids(tags):
+    return [t["file_id"] for t in tags if not t["codes"]]
 
 
 def upload_styling_photos(client, submission, workdir, title):
@@ -420,8 +434,26 @@ def upload_styling_photos(client, submission, workdir, title):
     return file_ids, urls_by_id[file_ids[0]], failed
 
 
+# Below either of these the post would be a card with nothing to show or
+# nothing to buy, so it stays hidden until the operator completes it.
+PUBLISH_MIN_PRODUCTS = 1
+PUBLISH_MIN_PHOTOS = 1
+
+
+def should_publish(report):
+    """Whether the article can go live without anyone looking at it first.
+
+    Counts what actually reached Shopify, not what was submitted: five photos
+    that all failed to import leave the article just as bare as none.
+    """
+    return (
+        len(report["resolved"]) >= PUBLISH_MIN_PRODUCTS
+        and report["uploaded_photos"] >= PUBLISH_MIN_PHOTOS
+    )
+
+
 def collect_warnings(report):
-    """What the operator has to complete by hand before publishing."""
+    """What the operator has to complete by hand in the admin."""
     warnings = []
     if report["failed_photos"]:
         warnings.append(
@@ -461,17 +493,62 @@ def variant_line(variant):
     return f"・{variant['displayName']} ({codes})"
 
 
-def notify_outcome(submission, staff, title, article_id, report):
+def tag_photo_lines(tags):
+    """The tag photos, split into those that need a human and those that read.
+
+    Empty when every tag read and matched: there is nothing to point at. When
+    one did not, the ones that did are listed too, with what they matched, so
+    whoever completes the post can see which items are already on it and does
+    not re-check a photo that was fine.
+    """
+    needs_attention = [t for t in tags if not t["codes"] or t["unresolved"]]
+    if not needs_attention:
+        return []
+    read = [t for t in tags if t not in needs_attention]
+
+    def entry(tag):
+        lines = [f"・{drive_file_url(tag['file_id'])}"]
+        if not tag["codes"]:
+            lines.append("  バーコードを読み取れませんでした")
+        elif tag["unresolved"]:
+            lines.append(f"  該当する商品がありません: {', '.join(tag['unresolved'])}")
+        lines += [f"  {v['displayName']}" for v in tag["variants"]]
+        return lines
+
+    lines = ["", "要確認の下げ札写真:"]
+    for tag in needs_attention:
+        lines += entry(tag)
+    if read:
+        lines += ["", "読み取り済みの下げ札写真:"]
+        for tag in read:
+            lines += entry(tag)
+    return lines
+
+
+def outcome_mail(submission, staff, title, article_id, report):
+    """Subject and body lines of the mail reporting a created article."""
     warnings = report["warnings"]
-    lines = [
-        f"記事「{title}」を非公開で作成しました。"
-        + (
-            "下記の点を確認・修正のうえ公開してください。"
+    if report["published"]:
+        opening = f"記事「{title}」を公開しました。" + (
+            "下記の点を確認し、必要に応じて管理画面で修正してください。"
             if warnings
-            else "内容を確認のうえ公開してください。"
-        ),
+            else ""
+        )
+        link_label = "確認・編集"
+        state = "公開・要確認" if warnings else "公開"
+    else:
+        opening = (
+            f"記事「{title}」を非公開で作成しました。"
+            f"公開の条件(着用商品{PUBLISH_MIN_PRODUCTS}点以上・"
+            f"スタイリング写真{PUBLISH_MIN_PHOTOS}枚以上)を満たさないため、"
+            "下記の点を修正のうえ公開してください。"
+        )
+        link_label = "確認・公開"
+        state = "非公開・要確認"
+    lines = [
+        opening,
         "",
-        f"確認・公開: {admin_article_url(article_id)}",
+        f"{link_label}: {admin_article_url(article_id)}",
         "",
         f"スタッフ: {staff['name']} ({staff['display_name']} / {staff['shop']})"
         + ("  ※新規登録" if staff.get("is_new") else ""),
@@ -482,17 +559,7 @@ def notify_outcome(submission, staff, title, article_id, report):
     ]
     if warnings:
         lines += ["", "要確認:", *warnings]
-        # The operator reads the tags themselves to identify what is missing,
-        # so link them whenever identification came up short — but not when the
-        # only problem was, say, a photo that failed to import.
-        if submission["tag_photo_ids"] and (
-            report["unresolved"] or report["unreadable_tags"] or not report["resolved"]
-        ):
-            lines += [
-                "",
-                "下げ札写真:",
-                *[f"・{drive_file_url(i)}" for i in submission["tag_photo_ids"]],
-            ]
+        lines += tag_photo_lines(report["tags"])
         if report["failed_photos"]:
             lines += [
                 "",
@@ -501,8 +568,11 @@ def notify_outcome(submission, staff, title, article_id, report):
             ]
         if spreadsheet_id := submission.get("spreadsheet_id"):
             lines += ["", f"回答内容: {spreadsheet_url(spreadsheet_id)}"]
-    state = "要確認" if warnings else "完了"
-    notify(f"【スタイリング投稿】{state}: {title} ({staff['name']})", lines)
+    return f"【スタイリング投稿】{state}: {title} ({staff['name']})", lines
+
+
+def notify_outcome(submission, staff, title, article_id, report):
+    notify(*outcome_mail(submission, staff, title, article_id, report))
 
 
 def process_submission(submission, context):
@@ -532,9 +602,7 @@ def process_submission(submission, context):
         )
         return
 
-    resolved, unresolved, unreadable_tags = identify_variants(
-        client, submission, workdir
-    )
+    resolved, unresolved, tags = identify_variants(client, submission, workdir)
 
     title = next_article_title(articles, staff["display_name"])
     file_ids, cover_url, failed_photos = upload_styling_photos(
@@ -543,18 +611,20 @@ def process_submission(submission, context):
     report = {
         "resolved": resolved,
         "unresolved": unresolved,
-        "unreadable_tags": unreadable_tags,
+        "tags": tags,
+        "unreadable_tags": unreadable_tag_ids(tags),
         "failed_photos": failed_photos,
         "uploaded_photos": len(file_ids),
     }
     report["warnings"] = collect_warnings(report)
+    report["published"] = should_publish(report)
 
     article = client.article_create(
         BLOG_TITLE,
         title,
         TEMPLATE_SUFFIX,
         media_url=cover_url,
-        is_published=False,
+        is_published=report["published"],
         author_name=staff["name"],
         tags=[staff["display_name"]],
         metafields=build_metafields(
@@ -566,7 +636,12 @@ def process_submission(submission, context):
         ),
     )
     context["article_id"] = article["id"]
-    logger.info("created article %s: %s", article["title"], article["id"])
+    logger.info(
+        "created article %s (%s): %s",
+        article["title"],
+        "published" if report["published"] else "hidden",
+        article["id"],
+    )
 
     notify_outcome(submission, staff, title, article["id"], report)
 
