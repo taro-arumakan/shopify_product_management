@@ -95,6 +95,7 @@ jobs:
           SMTP_PASS=${{ secrets.SMTP_PASS }}
           SMTP_FROM_ADDR=${{ secrets.SMTP_FROM_ADDR }}
           NOTIFYEES_CATAL=${{ secrets.NOTIFYEES_CATAL }}
+          NOTIFYEES_LEMEME_ORDER_GUARDS=${{ secrets.NOTIFYEES_LEMEME_ORDER_GUARDS }}
 
           EOF
 

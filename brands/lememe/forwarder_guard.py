@@ -8,9 +8,10 @@ can no longer reroute, and known matches there have already been tagged by hand.
 active_only=False / --include-closed for a one-off historical audit.
 
 Newly-tagged matches (not ones that were already tagged, so repeat scans don't
-re-notify) trigger an email to the addresses in the NOTIFYEES_CATAL env var
-(comma-separated). There is no default — this repository is public — so a live
-scan checks for them before it tags anything.
+re-notify) trigger an email to the addresses in the NOTIFYEES_LEMEME_ORDER_GUARDS env
+var (comma-separated), shared by every order guard — see order_guards, which also runs
+this scan from the Shopify Flow 'Order created' trigger. There is no default — this
+repository is public — so a live scan checks for them before it tags anything.
 
 `evaluate_order` is a pure function so the same detection backs both the batch scan
 (`ForwarderGuard.scan`, schedulable) and a per-order Shopify Flow / webhook call.
@@ -23,11 +24,11 @@ Run (from repo root):
 """
 
 import logging
-import os
 import re
 import unicodedata
 
 from brands.lememe.forwarder_denylist import FORWARDER_HUBS, FORWARDER_CODE_PREFIXES
+from brands.lememe.order_guards import recipients
 
 logger = logging.getLogger(__name__)
 
@@ -179,17 +180,7 @@ class ForwarderGuard:
             tags.append(f"forwarder-{ev['service'].lower()}")
         return tags
 
-    @staticmethod
-    def _recipients():
-        """Addresses from NOTIFYEES_CATAL. No default: this repo is public."""
-        raw = os.environ.get("NOTIFYEES_CATAL", "")
-        addrs = [a.strip() for a in raw.split(",") if a.strip()]
-        if not addrs:
-            raise RuntimeError(
-                "NOTIFYEES_CATAL is unset or empty — tagging orders that nobody "
-                "is told about is worse than not scanning."
-            )
-        return addrs
+    _recipients = staticmethod(recipients)
 
     def _notify(self, newly_flagged):
         from helpers.client import send_smtp_email
