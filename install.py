@@ -8,19 +8,29 @@ import dotenv
 
 
 # --- CONFIGURATION ---
+# The app to install: AST, ASHEIS, HBW, BIZESM
+BRAND = "BIZESM"
+
 # Use the 'Client ID' and 'Client Secret' from Settings -> Credentials
 dotenv.load_dotenv(override=True)
-CLIENT_ID = os.environ["APP_CLIENT_ID"]
-API_SECRET = os.environ["APP_SECRET"]
+CLIENT_ID = os.environ[f"{BRAND}_APP_CLIENT_ID"]
+API_SECRET = os.environ[f"{BRAND}_APP_SECRET"]
 
 # Add the permissions your script needs (comma-separated)
-SCOPES = "read_products,write_products,read_inventory,write_inventory,read_orders,write_orders,write_draft_orders,read_customers,write_customers,"
-SCOPES += "read_files,write_files,read_metaobjects,write_metaobjects,read_metaobject_definitions,write_metaobject_definitions,"
-SCOPES += "read_publications,write_publications,read_themes,write_themes,read_content,write_content,"
-SCOPES += "read_online_store_navigation,write_online_store_navigation,read_reports,"
-SCOPES += "read_shipping,write_shipping,read_locations,"
-SCOPES += "read_discounts,write_discounts,read_discounts_allocator_functions,write_discounts_allocator_functions,"
-SCOPES += "read_pixels,write_pixels"
+if BRAND == "BIZESM":
+    # SSIL's 비젬 integration: collect orders for the Korean 3PL and send tracking numbers back.
+    # Keep in sync with the scopes on the app version in the Dev Dashboard.
+    SCOPES = "read_fulfillments,write_fulfillments,"
+    SCOPES += "read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders,"
+    SCOPES += "read_orders,read_products"
+else:
+    SCOPES = "read_products,write_products,read_inventory,write_inventory,read_orders,write_orders,write_draft_orders,read_customers,write_customers,"
+    SCOPES += "read_files,write_files,read_metaobjects,write_metaobjects,read_metaobject_definitions,write_metaobject_definitions,"
+    SCOPES += "read_publications,write_publications,read_themes,write_themes,read_content,write_content,"
+    SCOPES += "read_online_store_navigation,write_online_store_navigation,read_reports,"
+    SCOPES += "read_shipping,write_shipping,read_locations,"
+    SCOPES += "read_discounts,write_discounts,read_discounts_allocator_functions,write_discounts_allocator_functions,"
+    SCOPES += "read_pixels,write_pixels"
 
 PORT = 8080
 REDIRECT_URI = f"http://localhost:{PORT}"
