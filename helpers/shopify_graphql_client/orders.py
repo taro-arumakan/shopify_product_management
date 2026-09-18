@@ -63,6 +63,50 @@ class Orders:
             raise RuntimeError(f"order_add_tags failed for {order_id}: {errors}")
         return res["tagsAdd"]
 
+    def order_fulfillment_orders(self, order_id):
+        order_id = self.sanitize_id(order_id, prefix="Order")
+        query = """
+        query orderFulfillmentOrders($id: ID!) {
+            order(id: $id) {
+                fulfillmentOrders(first: 20) {
+                    nodes { id status }
+                }
+            }
+        }
+        """
+        res = self.run_query(query, {"id": order_id})
+        return res["order"]["fulfillmentOrders"]["nodes"]
+
+    def fulfillment_order_hold(
+        self, fulfillment_order_id, reason="OTHER", reason_notes=None, handle=None
+    ):
+        """Put a fulfillment order on hold so it cannot be fulfilled until released.
+        `reason` is a FulfillmentHoldReason; `handle` distinguishes this app's holds."""
+        fulfillment_order_id = self.sanitize_id(
+            fulfillment_order_id, prefix="FulfillmentOrder"
+        )
+        query = """
+        mutation fulfillmentOrderHold($id: ID!, $fulfillmentHold: FulfillmentOrderHoldInput!) {
+            fulfillmentOrderHold(id: $id, fulfillmentHold: $fulfillmentHold) {
+                fulfillmentOrder { id status }
+                userErrors { field message }
+            }
+        }
+        """
+        fulfillment_hold = {"reason": reason}
+        if reason_notes:
+            fulfillment_hold["reasonNotes"] = reason_notes
+        if handle:
+            fulfillment_hold["handle"] = handle
+        res = self.run_query(
+            query, {"id": fulfillment_order_id, "fulfillmentHold": fulfillment_hold}
+        )
+        if errors := res["fulfillmentOrderHold"]["userErrors"]:
+            raise RuntimeError(
+                f"fulfillment_order_hold failed for {fulfillment_order_id}: {errors}"
+            )
+        return res["fulfillmentOrderHold"]
+
     def orders_by_sku(
         self,
         sku,

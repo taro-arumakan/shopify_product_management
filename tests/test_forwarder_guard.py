@@ -171,7 +171,9 @@ class TestForwarderGuardScan(unittest.TestCase):
         client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
         guard = ForwarderGuard(client=client)
         # A live scan needs somewhere to send its findings; there is no default.
-        with patch.dict(os.environ, {"NOTIFYEES_CATAL": "ops@example.com"}):
+        with patch.dict(
+            os.environ, {"NOTIFYEES_LEMEME_ORDER_GUARDS": "ops@example.com"}
+        ):
             matched = guard.scan(dry_run=False)
 
         self.assertEqual(len(matched), 1)
@@ -271,13 +273,13 @@ class TestForwarderGuardScan(unittest.TestCase):
         # No hardcoded recipient to fall back on — the repository is public. A
         # live scan refuses to start rather than tagging orders nobody hears
         # about, and it does so before the first tag is written.
-        for value in ({}, {"NOTIFYEES_CATAL": "  ,  "}):
+        for value in ({}, {"NOTIFYEES_LEMEME_ORDER_GUARDS": "  ,  "}):
             with patch.dict(os.environ, value):
                 if not value:
-                    os.environ.pop("NOTIFYEES_CATAL", None)
+                    os.environ.pop("NOTIFYEES_LEMEME_ORDER_GUARDS", None)
                 with self.assertRaises(RuntimeError) as ctx:
                     ForwarderGuard(client=client).scan(dry_run=False)
-                self.assertIn("NOTIFYEES_CATAL", str(ctx.exception))
+                self.assertIn("NOTIFYEES_LEMEME_ORDER_GUARDS", str(ctx.exception))
 
         mock_send_email.assert_not_called()
         mock_add_tags.assert_not_called()
@@ -305,7 +307,9 @@ class TestForwarderGuardScan(unittest.TestCase):
             }
         }
         client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
-        with patch.dict(os.environ, {"NOTIFYEES_CATAL": "a@example.com,b@example.com"}):
+        with patch.dict(
+            os.environ, {"NOTIFYEES_LEMEME_ORDER_GUARDS": "a@example.com,b@example.com"}
+        ):
             ForwarderGuard(client=client).scan(dry_run=False)
 
         _, kwargs = mock_send_email.call_args
@@ -361,7 +365,9 @@ class TestForwarderGuardScan(unittest.TestCase):
             }
         }
         client = ShopifyGraphqlClient(shop_name="dummy", access_token="dummy")
-        with patch.dict(os.environ, {"NOTIFYEES_CATAL": "ops@example.com"}):
+        with patch.dict(
+            os.environ, {"NOTIFYEES_LEMEME_ORDER_GUARDS": "ops@example.com"}
+        ):
             matched = ForwarderGuard(client=client).scan(dry_run=False)
 
         self.assertEqual(len(matched), 1)
