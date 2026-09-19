@@ -15,6 +15,9 @@ class AsheisClient(BrandClientBase):
     VENDOR = "asheis"
     LOCATIONS = ["Shop location"]
     BRAND_NAME = "ASHEIS"
+    # product_care feeds the Product Care metafield via text_to_simple_richtext,
+    # which can't take a blank.
+    REQUIRED_PRODUCT_INPUT_FIELDS = ("product_care",)
 
     # JIS L 0001 / 消費者庁 care symbol numbers. The Shopify metafield definition
     # custom.care_symbols carries the same list as a `choices` validation, so an
@@ -219,7 +222,7 @@ class AsheisClient(BrandClientBase):
     def get_size_field(self, product_input):
         size_text = product_input.get("size_text")
         if not size_text:
-            return ""
+            raise RuntimeError(f"empty size text: {product_input['title']}")
         rows = self.parse_size_rows(size_text, self.sole_size(product_input))
         headers = ["Size"]
         for _, pairs in rows:

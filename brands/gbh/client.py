@@ -16,6 +16,8 @@ class GbhClient(BrandClientBase):
     VENDOR = "GBH"
     LOCATIONS = ["Shop location"]
     BRAND_NAME = "GBH"
+    # The description template reads product_input["product_care"].
+    REQUIRED_PRODUCT_INPUT_FIELDS = ("product_care",)
 
     def __init__(
         self,
@@ -409,6 +411,9 @@ class GbhCosmeticClient(GbhClient):
 
 
 class GbhClientNoOptions(GbhClient):
+    # Still maps product_care, but its description template has no care section.
+    REQUIRED_PRODUCT_INPUT_FIELDS = ()
+
     def product_attr_column_map(self):
         return dict(
             title=string.ascii_lowercase.index("a"),

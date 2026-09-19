@@ -9,6 +9,20 @@ logger = logging.getLogger(__name__)
 
 
 class SanityChecks:
+    # Sheet fields a client reads unconditionally while creating a product. A
+    # blank cell drops the key from the product input, so a missing one only
+    # surfaces once the product already exists — the run then stops partway
+    # through it. Declared per client; checked up front in the sanity check.
+    REQUIRED_PRODUCT_INPUT_FIELDS = ()
+
+    def check_required_fields(self, product_inputs):
+        res = []
+        for product_input in product_inputs:
+            for field in self.REQUIRED_PRODUCT_INPUT_FIELDS:
+                value = product_input.get(field)
+                if value is None or not str(value).strip():
+                    res.append(f"Blank {field} for {product_input['title']}")
+        return res
 
     def check_size_field(self, product_inputs, raise_on_error=True):
         res = []
@@ -121,6 +135,7 @@ class SanityChecks:
         res += self.check_existing_skus(product_inputs)
         res += self.check_existing_products(product_inputs)
         res += self.check_images_link(product_inputs)
+        res += self.check_required_fields(product_inputs)
         res += self.check_size_field(product_inputs, raise_on_error=False)
         res += self.check_metafields(product_inputs)
         if not pre_rewrite:

@@ -11,6 +11,8 @@ class KumeClient(BrandClientBase):
     VENDOR = "KUME"
     LOCATIONS = ["KUME Warehouse", "Envycube Warehouse"]
     BRAND_NAME = "KUMÉ"
+    # The description template reads product_input["product_care"].
+    REQUIRED_PRODUCT_INPUT_FIELDS = ("product_care",)
 
     def product_attr_column_map(self):
         return dict(

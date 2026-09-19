@@ -69,11 +69,11 @@ class TestAsheisSizeField(unittest.TestCase):
         )
         self.assertEqual(rows[1], ["F", "32", "80", "57", "32"])
 
-    def test_no_size_text_returns_empty(self):
-        self.assertEqual(self.client.get_size_field({"title": "T"}), "")
-        self.assertEqual(
-            self.client.get_size_field({"title": "T", "size_text": ""}), ""
-        )
+    def test_blank_size_text_raises(self):
+        # A blank cell must fail the sanity check, not ship an empty Size tab.
+        for product_input in ({"title": "T"}, {"title": "T", "size_text": ""}):
+            with self.assertRaisesRegex(RuntimeError, "empty size text: T"):
+                self.client.get_size_field(product_input)
 
     def test_sole_size_blank_when_ambiguous(self):
         product_input = {

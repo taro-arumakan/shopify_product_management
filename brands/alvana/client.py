@@ -13,6 +13,8 @@ class AlvanaClient(BrandClientBase):
     VENDOR = "alvana"
     LOCATIONS = ["Jingumae"]
     BRAND_NAME = "alvana"
+    # update_metafields reads product_input["product_care"] after the product exists.
+    REQUIRED_PRODUCT_INPUT_FIELDS = ("product_care",)
 
     def product_attr_column_map(self):
         return dict(
