@@ -12,16 +12,30 @@ class SanityChecks:
     # Sheet fields a client reads unconditionally while creating a product. A
     # blank cell drops the key from the product input, so a missing one only
     # surfaces once the product already exists — the run then stops partway
-    # through it. Declared per client; checked up front in the sanity check.
+    # through it. Declared per client; fails the sanity check up front.
     REQUIRED_PRODUCT_INPUT_FIELDS = ()
 
-    def check_required_fields(self, product_inputs):
+    # Same idea, for fields the creation path skips over when they are blank:
+    # a missing one is usually an oversight, but it can also be a product that
+    # legitimately has nothing to say, so it only gets a warning.
+    EXPECTED_PRODUCT_INPUT_FIELDS = ()
+
+    def blank_fields(self, product_inputs, fields):
         res = []
         for product_input in product_inputs:
-            for field in self.REQUIRED_PRODUCT_INPUT_FIELDS:
+            for field in fields:
                 value = product_input.get(field)
                 if value is None or not str(value).strip():
                     res.append(f"Blank {field} for {product_input['title']}")
+        return res
+
+    def check_required_fields(self, product_inputs):
+        return self.blank_fields(product_inputs, self.REQUIRED_PRODUCT_INPUT_FIELDS)
+
+    def check_expected_fields(self, product_inputs):
+        res = self.blank_fields(product_inputs, self.EXPECTED_PRODUCT_INPUT_FIELDS)
+        for r in res:
+            logger.warning(r)
         return res
 
     def check_size_field(self, product_inputs, raise_on_error=True):
@@ -136,6 +150,8 @@ class SanityChecks:
         res += self.check_existing_products(product_inputs)
         res += self.check_images_link(product_inputs)
         res += self.check_required_fields(product_inputs)
+        # Warning only: the check logs these, they never reach res.
+        self.check_expected_fields(product_inputs)
         res += self.check_size_field(product_inputs, raise_on_error=False)
         res += self.check_metafields(product_inputs)
         if not pre_rewrite:

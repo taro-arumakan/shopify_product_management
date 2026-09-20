@@ -15,9 +15,9 @@ class AsheisClient(BrandClientBase):
     VENDOR = "asheis"
     LOCATIONS = ["Shop location"]
     BRAND_NAME = "ASHEIS"
-    # product_care feeds the Product Care metafield via text_to_simple_richtext,
-    # which can't take a blank.
-    REQUIRED_PRODUCT_INPUT_FIELDS = ("product_care",)
+    # Some ASHEIS products carry no care text at all, so a blank is only worth
+    # a warning: update_metafields skips the metafield instead of writing one.
+    EXPECTED_PRODUCT_INPUT_FIELDS = ("product_care",)
 
     # JIS L 0001 / 消費者庁 care symbol numbers. The Shopify metafield definition
     # custom.care_symbols carries the same list as a `choices` validation, so an
@@ -330,10 +330,10 @@ class AsheisClient(BrandClientBase):
         self.update_size_table_html_metafield(
             product_id, self.get_size_field(product_input)
         )
-        product_care = product_input.get("product_care")
-        self.update_product_care_metafield(
-            product_id, self.text_to_simple_richtext(product_care)
-        )
+        if product_care := product_input.get("product_care"):
+            self.update_product_care_metafield(
+                product_id, self.text_to_simple_richtext(product_care)
+            )
         self.update_care_symbols_metafield(
             product_id, product_input.get("care_symbols")
         )
