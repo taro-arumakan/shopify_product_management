@@ -240,6 +240,18 @@ class FakeClient:
         raise NoVariantsFoundException(code)
 
 
+class TestUnsharpRadius(unittest.TestCase):
+    def test_the_radius_follows_the_width(self):
+        # A tag is blurred by a fraction of itself, not by a pixel count, so
+        # sharpening every rendition at one radius works at one scale only.
+        self.assertEqual(
+            [sut.unsharp_radius(w) for w in (3024, 2400, 1600, 1200)], [5, 4, 3, 2]
+        )
+
+    def test_never_drops_below_one(self):
+        self.assertEqual(sut.unsharp_radius(100), 1)
+
+
 class TestIdentifyVariants(unittest.TestCase):
     def test_each_tag_photo_keeps_its_own_outcome(self):
         decoded = {

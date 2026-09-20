@@ -110,6 +110,24 @@ def parse_submission():
     return submission
 
 
+def unsharp_radius(width):
+    """Sharpening radius for an image this wide.
+
+    Blur is a fixed fraction of the tag, not a fixed number of pixels, so the
+    radius that pulls the bar edges back at one scale is the wrong grain at
+    another: it blurs detail away below that scale and does nothing above it.
+    A tag that read at 1200px wide with radius 2 read at nothing else, and the
+    ratio behind that holds across the tags we have.
+    """
+    return max(1, round(width / 550))
+
+
+def sharpen(image, percent=200):
+    return ImageOps.grayscale(image).filter(
+        ImageFilter.UnsharpMask(radius=unsharp_radius(image.width), percent=percent)
+    )
+
+
 def decode_barcodes(image_path):
     """Every ASHEIS JAN readable from the image.
 
@@ -127,22 +145,26 @@ def decode_barcodes(image_path):
     when the tag reads 4550351353233 helps nobody.
     """
     img = ImageOps.exif_transpose(Image.open(image_path))
-    attempts = [img]
-    for width in (2400, 1600, 1200):
-        if img.width > width:
-            attempts.append(img.resize((width, int(img.height * width / img.width))))
-    attempts.append(ImageOps.autocontrast(ImageOps.grayscale(img)))
+    downscales = [
+        img.resize((width, int(img.height * width / img.width)))
+        for width in (2400, 1600, 1200)
+        if img.width > width
+    ]
+    attempts = [img, *downscales, ImageOps.autocontrast(ImageOps.grayscale(img))]
 
-    # Sharpening rescues the other common shop photo: a tag under bright light
-    # where the bars come out pale grey instead of black, which reads as no
-    # barcode at all until the edges are pulled back.
-    deskew_base = attempts[1] if len(attempts) > 1 else img
-    sharpened = ImageOps.grayscale(deskew_base).filter(
-        ImageFilter.UnsharpMask(radius=3, percent=200)
-    )
-    attempts.append(sharpened)
+    # Sharpening rescues the other common shop photo: a tag whose bars come out
+    # pale and soft, under bright light or slightly out of focus, which reads as
+    # no barcode at all until the edges are pulled back. Every rendition gets
+    # its own, because the radius only works at the scale it was picked for —
+    # see unsharp_radius.
+    bases = [img, *downscales]
+    sharpened = [sharpen(base) for base in bases]
+    attempts += sharpened
+
+    # Deskew from a downscale: full resolution is slow and no more readable.
+    i = 1 if downscales else 0
     for angle in (6, -6, 12, -12):
-        for rendition in (deskew_base, sharpened):
+        for rendition in (bases[i], sharpened[i]):
             attempts.append(
                 rendition.rotate(
                     angle, expand=True, fillcolor="white", resample=Image.BICUBIC
