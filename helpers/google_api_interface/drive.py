@@ -87,14 +87,51 @@ class GoogleDriveApiInterface:
             local_path = self.resize_image_to_limit(local_path, local_path)
         return local_path
 
-    def download_file_from_drive(self, file_id, destination_path):
+    def download_file_from_drive(self, file_id, destination_path, max_retries=5):
+        """Download a Drive file, writing to `<destination_path>.part` first.
+
+        download_and_process_image skips any path that already exists, so a
+        half-written file left at destination_path by a timeout would be taken
+        for a finished download on the next run and uploaded as-is. The bytes
+        only get their real name once the transfer completed, and a failed
+        attempt takes its `.part` with it.
+        """
         request = self.drive_service.files().get_media(fileId=file_id)
-        fh = io.FileIO(destination_path, "wb")
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while done is False:
-            status, done = downloader.next_chunk()
-            logger.debug(f"Download {int(status.progress() * 100)}%.")
+        partial_path = f"{destination_path}.part"
+        try:
+            with io.FileIO(partial_path, "wb") as fh:
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while done is False:
+                    for attempt in range(max_retries):
+                        try:
+                            # next_chunk backs off internally on a transient
+                            # error; the loop around it covers the rest.
+                            status, done = downloader.next_chunk(
+                                num_retries=max_retries
+                            )
+                        except Exception as e:
+                            if (
+                                not _is_transient_drive_error(e)
+                                or attempt == max_retries - 1
+                            ):
+                                raise
+                            wait = 3 * (attempt + 1)
+                            logger.warning(
+                                f"Drive download transient error for {file_id} ({e}); "
+                                f"retrying in {wait}s ({attempt + 1}/{max_retries})"
+                            )
+                            time.sleep(wait)
+                        else:
+                            # Asking for a range past the end of a finished
+                            # download earns a 416, so stop at the first
+                            # chunk that comes back.
+                            logger.debug(f"Download {int(status.progress() * 100)}%.")
+                            break
+            os.replace(partial_path, destination_path)
+        except BaseException:
+            pathlib.Path(partial_path).unlink(missing_ok=True)
+            raise
 
     @staticmethod
     def rename_file_extension(file_path, image_mode):
