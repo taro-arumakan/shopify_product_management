@@ -72,6 +72,47 @@ class ProductAttributes:
             tags = ",".join(tags)
         return self.update_product_attribute(product_id, "tags", tags)
 
+    def add_product_tags(self, product_id, tags):
+        """Add tags without disturbing the others.
+
+        Not update_product_tags: that goes through productUpdate, which replaces
+        the whole tag list, so using it to add one would drop every season and
+        category tag the product already carries. Shopify de-duplicates.
+        """
+        if isinstance(tags, str):
+            tags = [tags]
+        query = """
+        mutation productTagsAdd($id: ID!, $tags: [String!]!) {
+            tagsAdd(id: $id, tags: $tags) {
+                node { id }
+                userErrors { field message }
+            }
+        }
+        """
+        product_id = self.sanitize_id(product_id)
+        res = self.run_query(query, {"id": product_id, "tags": tags})
+        if errors := res["tagsAdd"]["userErrors"]:
+            raise RuntimeError(f"add_product_tags failed for {product_id}: {errors}")
+        return res["tagsAdd"]
+
+    def remove_product_tags(self, product_id, tags):
+        """Remove tags, leaving the rest of the product's tags alone."""
+        if isinstance(tags, str):
+            tags = [tags]
+        query = """
+        mutation productTagsRemove($id: ID!, $tags: [String!]!) {
+            tagsRemove(id: $id, tags: $tags) {
+                node { id }
+                userErrors { field message }
+            }
+        }
+        """
+        product_id = self.sanitize_id(product_id)
+        res = self.run_query(query, {"id": product_id, "tags": tags})
+        if errors := res["tagsRemove"]["userErrors"]:
+            raise RuntimeError(f"remove_product_tags failed for {product_id}: {errors}")
+        return res["tagsRemove"]
+
     def update_product_description(self, product_id, desc):
         return self.update_product_attribute(product_id, "descriptionHtml", desc)
 

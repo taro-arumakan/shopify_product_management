@@ -5,6 +5,7 @@ from helpers.publication_catch_up import (
     catch_up_other_channels,
     online_store_is_live,
     other_channels,
+    sweep_pending_channel_publishes,
     unpublish_other_channels,
 )
 
@@ -30,6 +31,7 @@ class FakeClient:
         self.states_by_id = states_by_id
         self.published = []
         self.unpublished = []
+        self.untagged = []
 
     def products_by_tag(self, tag):
         return self.products
@@ -46,6 +48,9 @@ class FakeClient:
         self, product_or_collection_id, publication_id
     ):
         self.unpublished.append((product_or_collection_id, publication_id))
+
+    def remove_product_tags(self, product_id, tags):
+        self.untagged.append((product_id, tags))
 
 
 def client_for(states, product_id="gid://shopify/Product/1", title="JACKET"):
@@ -220,3 +225,70 @@ class TestUnpublishOtherChannels(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSweepPendingChannelPublishes(unittest.TestCase):
+    """The recurring worker: publish what is due, leave what is not, and take
+    finished products out of the queue."""
+
+    def test_a_product_still_waiting_is_left_alone_and_stays_queued(self):
+        client = client_for(
+            [
+                state(ONLINE_STORE, False, "2026-10-20T03:00:00Z"),
+                state(SHOP, False),
+            ]
+        )
+        res = sweep_pending_channel_publishes("asheis", client=client, now=NOW)
+
+        self.assertEqual(client.published, [])
+        # Still queued: dropping the tag now would lose the drop entirely.
+        self.assertEqual(client.untagged, [])
+        self.assertIn("JACKET", res["waiting"])
+
+    def test_a_launched_product_is_published_then_dequeued(self):
+        client = client_for(
+            [
+                state(ONLINE_STORE, True, "2026-10-14T02:00:00Z"),
+                state(SHOP, False),
+                state(GOOGLE, False),
+            ]
+        )
+        res = sweep_pending_channel_publishes("asheis", client=client, now=NOW)
+
+        self.assertEqual(
+            [pid for _, pid in client.published], [SHOP["id"], GOOGLE["id"]]
+        )
+        self.assertEqual(len(client.untagged), 1)
+        self.assertEqual(res["published"]["JACKET"], ["Shop", "Google & YouTube"])
+        self.assertEqual(res["cleared"], ["JACKET"])
+
+    def test_a_product_already_everywhere_is_just_dequeued(self):
+        client = client_for(
+            [
+                state(ONLINE_STORE, True, "2026-10-14T02:00:00Z"),
+                state(SHOP, True),
+            ]
+        )
+        res = sweep_pending_channel_publishes("asheis", client=client, now=NOW)
+
+        self.assertEqual(client.published, [])
+        self.assertEqual(len(client.untagged), 1)
+        self.assertEqual(res["cleared"], ["JACKET"])
+
+    def test_an_empty_queue_is_a_success_not_a_failure(self):
+        # Between drops this is the normal state; the per-drop catch-up raises
+        # here, and a recurring worker must not.
+        client = FakeClient(products=[], states_by_id={})
+        res = sweep_pending_channel_publishes("asheis", client=client, now=NOW)
+        self.assertEqual(res, {"published": {}, "waiting": {}, "cleared": []})
+
+    def test_a_dry_run_neither_publishes_nor_dequeues(self):
+        client = client_for(
+            [
+                state(ONLINE_STORE, True, "2026-10-14T02:00:00Z"),
+                state(SHOP, False),
+            ]
+        )
+        sweep_pending_channel_publishes("asheis", dry_run=True, client=client, now=NOW)
+        self.assertEqual(client.published, [])
+        self.assertEqual(client.untagged, [])

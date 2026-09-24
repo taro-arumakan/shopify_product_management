@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from helpers.exceptions import NoProductsFoundException
 from helpers.shopify_graphql_client.client import ShopifyGraphqlClient
+from helpers.shopify_graphql_client.publications import PENDING_CHANNEL_PUBLISH
 
 PUBLICATIONS = [
     {"id": "gid://shopify/Publication/1", "name": "Online Store"},
@@ -41,6 +42,9 @@ class TestPublishSkipsOtherChannels(PublicationsTestCase):
             if "publishablePublish" in query
         ]
 
+    def tag_calls(self):
+        return [variables for query, variables in self.queries if "tagsAdd" in query]
+
     def test_a_scheduled_publish_touches_the_online_store_only(self):
         with patch.object(
             self.client,
@@ -51,6 +55,7 @@ class TestPublishSkipsOtherChannels(PublicationsTestCase):
                     "publishablePublish": {
                         "publishablePublish": {"publishable": {}, "userErrors": []}
                     },
+                    "tagsAdd": {"tagsAdd": {"node": {}, "userErrors": []}},
                 }
             ),
         ):
@@ -72,6 +77,31 @@ class TestPublishSkipsOtherChannels(PublicationsTestCase):
             any("not publishing to Point of Sale, Shop" in m for m in messages),
             messages,
         )
+
+        # The product joins the sweeper's queue, so nobody has to remember to
+        # schedule a catch-up for this drop.
+        self.assertEqual(
+            self.tag_calls(),
+            [{"id": PRODUCT_ID, "tags": [PENDING_CHANNEL_PUBLISH]}],
+        )
+
+    def test_an_immediate_publish_is_not_queued_for_catch_up(self):
+        with patch.object(
+            self.client,
+            "run_query",
+            self.recording_run_query(
+                {
+                    "query publications": {"publications": {"nodes": PUBLICATIONS}},
+                    "publishablePublish": {
+                        "publishablePublish": {"publishable": {}, "userErrors": []}
+                    },
+                }
+            ),
+        ):
+            self.client.publish_by_product_or_collection_id(PRODUCT_ID)
+
+        # Nothing was left behind, so there is nothing to sweep up later.
+        self.assertEqual(self.tag_calls(), [])
 
     def test_an_immediate_publish_still_reaches_every_channel(self):
         with patch.object(

@@ -31,7 +31,10 @@ that reached those channels early:
 import datetime
 import logging
 
-from helpers.shopify_graphql_client.publications import ONLINE_STORE
+from helpers.shopify_graphql_client.publications import (
+    ONLINE_STORE,
+    PENDING_CHANNEL_PUBLISH,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +138,76 @@ def catch_up_other_channels(shop_name, tag, dry_run=False, client=None, now=None
             f"{skipped}"
         )
     return {"published": published, "up_to_date": up_to_date, "skipped": skipped}
+
+
+def sweep_pending_channel_publishes(shop_name, dry_run=False, client=None, now=None):
+    """Drain the queue of drops whose launch left other channels behind.
+
+    Same decision as catch_up_other_channels, but driven by a fixed tag that
+    publish_by_product_or_collection_id applies, so no one has to schedule a
+    catch-up per drop. Run it on an interval.
+
+    Two differences from the per-drop catch-up, both because this is a worker
+    rather than a one-shot:
+
+      - a product still waiting for its launch is normal, not a warning, and an
+        empty sweep is a success. The per-drop version fails when everything is
+        skipped because a Flow that fired early should go red; here that is just
+        the usual state between drops.
+      - the tag is removed once the product is on every channel, which is what
+        takes it out of the queue. It comes off only after the publishes
+        succeed, so a failure mid-way leaves the product queued for the next run.
+    """
+    logging.basicConfig(level=logging.INFO)
+    client = _client(shop_name, client)
+
+    products = client.products_by_tag(PENDING_CHANNEL_PUBLISH)
+    if not products:
+        logger.info(f"{shop_name}: nothing queued")
+        return {"published": {}, "waiting": {}, "cleared": []}
+
+    published, waiting, cleared = {}, {}, []
+    for product in products:
+        title = product["title"]
+        states = client.product_publication_states(product["id"])
+        live, reason = online_store_is_live(states, now=now)
+        if not live:
+            logger.info(f"{shop_name}: {title} still waiting - {reason}")
+            waiting[title] = reason
+            continue
+
+        pending = other_channels(states, published=False)
+        if pending:
+            names = [p["name"] for p in pending]
+            logger.info(
+                f"{shop_name}: {'would publish' if dry_run else 'publishing'} "
+                f"{title} to {', '.join(names)}"
+            )
+            if not dry_run:
+                for publication in pending:
+                    client.publish_by_product_or_collection_id_and_publication_id(
+                        product_or_collection_id=product["id"],
+                        publication_id=publication["id"],
+                    )
+            published[title] = names
+
+        # Reached every channel, so it leaves the queue. Done after the
+        # publishes above, never before: a product that drops out of the queue
+        # without being published is one nobody will notice is missing.
+        logger.info(
+            f"{shop_name}: {'would clear' if dry_run else 'clearing'} "
+            f"{PENDING_CHANNEL_PUBLISH!r} from {title}"
+        )
+        if not dry_run:
+            client.remove_product_tags(product["id"], PENDING_CHANNEL_PUBLISH)
+        cleared.append(title)
+
+    logger.info(
+        f"{shop_name}: sweep {'(dry run) ' if dry_run else ''}done - "
+        f"{len(published)} published, {len(cleared)} cleared, "
+        f"{len(waiting)} still waiting"
+    )
+    return {"published": published, "waiting": waiting, "cleared": cleared}
 
 
 def unpublish_other_channels(shop_name, tag, dry_run=False, client=None):
