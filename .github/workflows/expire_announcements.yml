@@ -1,0 +1,117 @@
+name: Expire announcement bar notices
+
+# Hides holiday notices in each Korean brand's announcement bar once the date in
+# EXPIRIES has passed. See brands/scripts/expire_announcements.py.
+#
+# Two triggers on purpose:
+#
+#   repository_dispatch — the one that matters. Fired by a Shopify Flow HTTP
+#     request at the intended moment. GitHub's own cron is queued best-effort
+#     and routinely runs late, which is unacceptable for anything a customer is
+#     looking at.
+#
+#   schedule — a backstop, not the primary trigger. If the Flow is ever
+#     disabled, edited during brand work, or quietly stops firing, nothing would
+#     happen and nothing would say so. The script is idempotent and driven by
+#     date rather than by the trigger, so a late run simply does the same work.
+#     Punctuality comes from Flow; this only guarantees it happens at all.
+#
+# Trigger by HTTP POST (this is what the Flow action sends):
+#   curl -X POST \
+#     -H "Accept: application/vnd.github+json" \
+#     -H "Authorization: Bearer $GITHUB_TOKEN" \
+#     https://api.github.com/repos/taro-arumakan/shopify_product_management/dispatches \
+#     -d '{"event_type":"expire-announcements"}'
+#
+# The token the Flow holds lives outside GitHub secrets, so scope it to this one
+# repository with only the permission needed to fire a dispatch.
+
+on:
+  repository_dispatch:
+    types: [expire-announcements]
+  schedule:
+    # 18:30 UTC == 03:30 JST next day. Offset from the other daily jobs so a
+    # backstop run does not queue behind them.
+    - cron: "30 18 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Shopify に書き込まず実行内容だけ確認する"
+        required: false
+        default: true
+        type: boolean
+      today:
+        description: "日付を固定して判定する (YYYY-MM-DD, JST)。空欄 = 本日"
+        required: false
+        type: string
+
+# Read-modify-write on one theme file per store: two overlapping runs could
+# read the same content and the later write would drop the earlier change.
+concurrency:
+  group: expire-announcements
+  cancel-in-progress: false
+
+jobs:
+  expire-announcements:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.21"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Create Google credentials file
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > /tmp/google-credentials.json
+          chmod 600 /tmp/google-credentials.json
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          GOOGLE_CREDENTIAL_PATH=/tmp/google-credentials.json
+          ssilkr-ACCESS_TOKEN=${{ secrets.SSILKR_ACCESS_TOKEN }}
+          ssilkr-GSPREAD_ID=${{ secrets.SSILKR_GSPREAD_ID }}
+          rohseoul-ACCESS_TOKEN=${{ secrets.ROHSEOUL_ACCESS_TOKEN }}
+          rohseoul-GSPREAD_ID=${{ secrets.ROHSEOUL_GSPREAD_ID }}
+          kumej-ACCESS_TOKEN=${{ secrets.KUMEJ_ACCESS_TOKEN }}
+          kumej-GSPREAD_ID=${{ secrets.KUMEJ_GSPREAD_ID }}
+          lememek-ACCESS_TOKEN=${{ secrets.LEMEMEK_ACCESS_TOKEN }}
+          lememek-GSPREAD_ID=${{ secrets.LEMEMEK_GSPREAD_ID }}
+          blossomhcompany-ACCESS_TOKEN=${{ secrets.BLOSSOMHCOMPANY_ACCESS_TOKEN }}
+          blossomhcompany-GSPREAD_ID=${{ secrets.BLOSSOMHCOMPANY_GSPREAD_ID }}
+          apricot-studios-ACCESS_TOKEN=${{ secrets.APRICOT_STUDIOS_ACCESS_TOKEN }}
+          apricot-studios-GSPREAD_ID=${{ secrets.APRICOT_STUDIOS_GSPREAD_ID }}
+          EOF
+
+      - name: Expire due announcements
+        env:
+          PYTHONPATH: .
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
+          INPUT_TODAY: ${{ github.event.inputs.today }}
+        run: |
+          ARGS=""
+
+          # Flow and the backstop both mean business; only a manual run defaults
+          # to looking rather than writing.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "$INPUT_TODAY" ]; then
+              ARGS="$ARGS --today $INPUT_TODAY"
+            fi
+            if [ "$INPUT_DRY_RUN" != "true" ]; then
+              ARGS="$ARGS --apply"
+            fi
+          else
+            ARGS="--apply"
+          fi
+
+          uv run brands/scripts/expire_announcements.py $ARGS
