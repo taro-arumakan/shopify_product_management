@@ -141,6 +141,54 @@ class OnlineStore:
             raise RuntimeError(f"Error getting page id for {page_title}: {res}")
         return res[0]["id"]
 
+    def page_create(
+        self,
+        title,
+        body,
+        handle=None,
+        is_published=True,
+        template_suffix=None,
+        metafields=None,
+    ):
+        """
+        Create an Online Store page. `body` is HTML, not plain text.
+
+        `handle` is optional — Shopify derives one from the title if it is
+        omitted, which for a Japanese title gives an unusable URL-escaped slug,
+        so pass it explicitly for anything customers will link to.
+        """
+        query = """
+        mutation CreatePage($page: PageCreateInput!) {
+            pageCreate(page: $page) {
+                page {
+                    id
+                    title
+                    handle
+                    isPublished
+                    publishedAt
+                    templateSuffix
+                }
+                userErrors {
+                    code
+                    field
+                    message
+                }
+            }
+        }
+        """
+        page = {"title": title, "body": body, "isPublished": is_published}
+        if handle:
+            page["handle"] = handle
+        if template_suffix:
+            page["templateSuffix"] = template_suffix
+        if metafields:
+            page["metafields"] = metafields
+        variables = {"page": page}
+        res = self.run_query(query, variables)
+        if errors := res["pageCreate"]["userErrors"]:
+            raise RuntimeError(f"Failed to create a page: {errors}")
+        return res["pageCreate"]["page"]
+
     def url_redirects_by_query(self, query_string):
         query = """
         query urlRedirectsByQuery($query_string: String!) {
