@@ -6,9 +6,14 @@ are no longer managed here, so all three are out of scope.
 
 The copy is CEC-509's, with the opening and closing lines these stores have used
 for every previous holiday notice (年末年始 / 韓国旧正月 / GW / お盆) so it reads
-the way customers are used to. The brand name in those lines is the form the
-earlier notices actually used, which is not always BRAND_NAME — the KUME notices
-say KUME rather than KUMÉ, and Blossom rather than BLOSSOM.
+the way customers are used to. The brand name comes from each client's
+BRAND_NAME. The earlier notices disagree with it in three places — they say
+KUME, Blossom and APRICOT STUDIOS where BRAND_NAME has KUMÉ, BLOSSOM and Apricot
+Studios — and BRAND_NAME is the correct form, so this does not follow them.
+
+Re-running is safe: an existing /pages/shipping-notice is updated in place
+rather than duplicated, which is also how the wording above was corrected after
+the first run.
 
 The handle is the English `shipping-notice` that CEC-509 asks for, rather than
 the descriptive Japanese handle the earlier notices use, so the announcement bar
@@ -30,15 +35,7 @@ for noisy in ("googleapiclient", "urllib3", "google"):
 
 logger = logging.getLogger(__name__)
 
-# shop key -> the brand name as the earlier notices address the customer.
-BRANDS = {
-    "ssil": "SSIL",
-    "rohseoul": "ROH SEOUL",
-    "lememe": "LEMEME",
-    "kume": "KUME",
-    "blossom": "Blossom",
-    "apricotstudios": "APRICOT STUDIOS",
-}
+BRANDS = ["ssil", "rohseoul", "lememe", "kume", "blossom", "apricotstudios"]
 
 HANDLE = "shipping-notice"
 TITLE = "韓国の秋夕（チュソク）連休に伴う配送・お問い合わせ対応のお知らせ"
@@ -70,20 +67,18 @@ def body_for(brand_name):
 
 
 def main(apply_changes):
-    for shop_key, brand_name in BRANDS.items():
+    for shop_key in BRANDS:
         client = utils.client(shop_key)
+        brand_name = client.BRAND_NAME
         body = body_for(brand_name)
 
         # Creating over an existing handle silently gets a -1 suffix, which is
-        # how KUME ended up with two 年末年始 pages. Refuse instead.
-        if existing := client.pages_by_query(f"handle:{HANDLE}"):
-            logger.warning(
-                f"{shop_key}: /pages/{HANDLE} already exists ({existing[0]['id']}), skipping"
-            )
-            continue
+        # how KUME ended up with two 年末年始 pages. Update in place instead.
+        existing = client.pages_by_query(f"handle:{HANDLE}")
+        action = "update" if existing else "create"
 
         if not apply_changes:
-            print(f"===== {shop_key} ({brand_name}) =====")
+            print(f"===== {shop_key} ({brand_name}) — would {action} =====")
             print(f"  title  : {TITLE}")
             print(f"  handle : {HANDLE}")
             print(f"  suffix : {TEMPLATE_SUFFIX}")
@@ -91,15 +86,24 @@ def main(apply_changes):
             print()
             continue
 
-        page = client.page_create(
-            title=TITLE,
-            body=body,
-            handle=HANDLE,
-            is_published=True,
-            template_suffix=TEMPLATE_SUFFIX,
-        )
+        if existing:
+            page = client.page_update(
+                existing[0]["id"],
+                title=TITLE,
+                body=body,
+                is_published=True,
+                template_suffix=TEMPLATE_SUFFIX,
+            )
+        else:
+            page = client.page_create(
+                title=TITLE,
+                body=body,
+                handle=HANDLE,
+                is_published=True,
+                template_suffix=TEMPLATE_SUFFIX,
+            )
         logger.info(
-            f"{shop_key}: created {page['id']} /pages/{page['handle']} "
+            f"{shop_key}: {action}d {page['id']} /pages/{page['handle']} "
             f"published={page['isPublished']}"
         )
 

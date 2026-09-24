@@ -189,6 +189,62 @@ class OnlineStore:
             raise RuntimeError(f"Failed to create a page: {errors}")
         return res["pageCreate"]["page"]
 
+    def page_update(
+        self,
+        page_id,
+        title=None,
+        body=None,
+        handle=None,
+        is_published=None,
+        template_suffix=None,
+        metafields=None,
+        redirect_new_handle=None,
+    ):
+        """
+        Update an Online Store page. Only the arguments passed are sent, so a
+        field left out keeps its current value rather than being cleared.
+
+        `redirect_new_handle` asks Shopify to leave a redirect behind when the
+        handle changes, so existing links to the old URL keep working.
+        """
+        query = """
+        mutation UpdatePage($id: ID!, $page: PageUpdateInput!) {
+            pageUpdate(id: $id, page: $page) {
+                page {
+                    id
+                    title
+                    handle
+                    isPublished
+                    publishedAt
+                    templateSuffix
+                }
+                userErrors {
+                    code
+                    field
+                    message
+                }
+            }
+        }
+        """
+        page = {}
+        for key, value in (
+            ("title", title),
+            ("body", body),
+            ("handle", handle),
+            ("isPublished", is_published),
+            ("templateSuffix", template_suffix),
+            ("metafields", metafields),
+            ("redirectNewHandle", redirect_new_handle),
+        ):
+            if value is not None:
+                page[key] = value
+        assert page, "page_update called with nothing to update"
+        variables = {"id": self.sanitize_id(page_id, prefix="Page"), "page": page}
+        res = self.run_query(query, variables)
+        if errors := res["pageUpdate"]["userErrors"]:
+            raise RuntimeError(f"Failed to update a page: {errors}")
+        return res["pageUpdate"]["page"]
+
     def url_redirects_by_query(self, query_string):
         query = """
         query urlRedirectsByQuery($query_string: String!) {
