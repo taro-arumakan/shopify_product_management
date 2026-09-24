@@ -58,10 +58,10 @@ EXPIRIES = [
     {
         "note": "CEC-509 Chuseok shipping notice",
         "block_id": "message_chuseok2026",
-        # Shipping resumes on 9/28, but the backlog is worst in the days right
-        # after, and that is exactly when a customer benefits from being told
-        # delivery may be slow. So it stays up through 9/30 and goes on 10/1.
-        "hide_on_or_after": "2026-10-01",
+        # Shipping resumes on 9/28, but CATAL expect the backlog to delay
+        # orders placed from the 28th too, so the notice stays up for as long as
+        # that is true: through Saturday 10/3, hidden on Sunday 10/4.
+        "hide_on_or_after": "2026-10-04",
         "brands": KOREAN_BRANDS,
     },
 ]
