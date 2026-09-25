@@ -47,7 +47,6 @@ REMOVE_EVENT = "remove_from_wishlist"
 HEALTH_OK = "OK"
 HEALTH_SUSPECT = "要確認"
 HEALTH_NO_MEMBER = "会員利用なし"
-HEALTH_UNKNOWN = "判定不可"
 
 # The Google & YouTube channel reports ecommerce items as
 # "shopify_ZZ_<productId>_<variantId>"; our own favorites carry the bare
@@ -64,6 +63,8 @@ SUMMARY_HEADERS = [
     "利用者数",
     "ゲスト追加",
     "会員追加",
+    "引継ぎ",
+    "会員書込",
     "ゲスト比率",
     "商品お気に入り",
     "記事お気に入り",
@@ -273,13 +274,21 @@ class FavoritesReporting:
         res = self.run_query(query, {"ids": gids})
         return {n["id"]: n for n in res["nodes"] if n}
 
-    def _stored_favorites_count(self):
-        """Favorites actually persisted on customer metafields, counted item by item.
+    def _stored_favorites_state(self):
+        """What Shopify can prove about member favorites for this week.
 
-        Deliberately not `metafieldDefinitions.metafieldsCount`: that counts the
-        customers who hold a metafield, not the favorites inside it. A returning
-        member adding a second favorite would leave it unchanged, and the
-        persistence check below would cry wolf.
+        Three things, all exact -- no ad blocker sits between us and the Admin
+        API, unlike the GA4 numbers everything else here is built on:
+
+        * ``items``     total favorites persisted across all customers;
+        * ``handovers`` customers whose favorites metafield was *created* this
+          week, i.e. guests who logged in and brought a backlog with them;
+        * ``writes``    customers whose favorites metafield was created or
+          updated this week, i.e. proof that the write path works.
+
+        Caveat on ``writes``: a metafield stores only its latest updatedAt, so a
+        customer active in several weeks is only counted in the last of them.
+        Exact for the week just gone, a lower bound when backfilling older ones.
         """
         query = """
         query StoredFavorites($cursor: String) {
@@ -288,23 +297,44 @@ class FavoritesReporting:
                 nodes {
                     products: metafield(
                         namespace: "custom", key: "favorite_products"
-                    ) { value }
+                    ) { value createdAt updatedAt }
                     articles: metafield(
                         namespace: "custom", key: "favorite_articles"
-                    ) { value }
+                    ) { value createdAt updatedAt }
                 }
             }
         }
         """
-        total, cursor = 0, None
+        items = handovers = writes = 0
+        cursor = None
         while True:
             page = self.run_query(query, {"cursor": cursor})["customers"]
             for node in page["nodes"]:
-                for key in ("products", "articles"):
-                    total += self._gid_list_length((node.get(key) or {}).get("value"))
+                metafields = [node.get("products"), node.get("articles")]
+                metafields = [m for m in metafields if m]
+                if not metafields:
+                    continue
+                items += sum(self._gid_list_length(m.get("value")) for m in metafields)
+                if any(self._in_week(m.get("createdAt")) for m in metafields):
+                    handovers += 1
+                if any(
+                    self._in_week(m.get("createdAt"))
+                    or self._in_week(m.get("updatedAt"))
+                    for m in metafields
+                ):
+                    writes += 1
             if not page["pageInfo"]["hasNextPage"]:
-                return total
+                return {"items": items, "handovers": handovers, "writes": writes}
             cursor = page["pageInfo"]["endCursor"]
+
+    def _in_week(self, timestamp):
+        """Is this UTC ISO timestamp inside the week being reported, in JST?"""
+        if not timestamp:
+            return False
+        moment = datetime.datetime.fromisoformat(
+            timestamp.replace("Z", "+00:00")
+        ).astimezone(JST)
+        return self._fav_week_start <= moment.date() <= self._fav_week_end
 
     @staticmethod
     def _gid_list_length(raw):
@@ -325,6 +355,7 @@ class FavoritesReporting:
         monday, sunday = week_bounds(week_start)
         today = datetime.datetime.now(JST).date()
         self._fav_start, self._fav_end = monday, min(sunday, today)
+        self._fav_week_start, self._fav_week_end = monday, sunday
 
         totals = self._favorites_totals()
         items = self._favorites_by_item()
@@ -371,6 +402,7 @@ class FavoritesReporting:
         item_rows.sort(key=lambda r: (-r["total"], -(r["rate"] or 0)))
 
         product_pv = sum(product_views.values())
+        shopify = self._stored_favorites_state()
         summary = {
             "week_start": monday,
             "week_end": sunday,
@@ -397,7 +429,11 @@ class FavoritesReporting:
                 round(100 * totals["adds"] / product_pv, 2) if product_pv else None
             ),
             "top3": "、".join(r["title"] for r in item_rows[:3]),
-            "stored": self._stored_favorites_count(),
+            **{
+                "stored": shopify["items"],
+                "handovers": shopify["handovers"],
+                "member_writes": shopify["writes"],
+            },
         }
         return summary, item_rows
 
@@ -442,7 +478,7 @@ class FavoritesReporting:
 
         prev = self._previous_summary(spreadsheet, key)
         summary["wow"] = self._wow(summary["adds"], prev)
-        summary["health"] = self._health(summary, prev, now)
+        summary["health"] = self._health(summary)
 
         self._with_sheet_retry(self._upsert_summary, spreadsheet, summary, key, now)
         self._with_sheet_retry(
@@ -474,33 +510,21 @@ class FavoritesReporting:
         return round(100 * (adds - before) / before, 1)
 
     @staticmethod
-    def _health(summary, prev, now):
+    def _health(summary):
         """Whether member favorites demonstrably persisted this week.
 
-        Members favoriting while the stored total does not grow means the write
-        path is suspect -- exactly the failure that ran unnoticed for five weeks
-        after launch.
-
-        The stored total is a live reading, not history, so it can only be
-        compared against a row written on an earlier day. Backfilling several
-        weeks in one run gives every row the same reading, and a flat delta
-        there says nothing at all.
+        Shopify is the witness, not GA4: a favorites metafield created or
+        updated inside the week *is* proof the write path worked, and no ad
+        blocker can hide it. GA4 only decides whether silence is suspicious --
+        if it saw members favoriting while Shopify recorded no write at all,
+        nothing persisted. That is exactly the failure that ran unnoticed for
+        five weeks after launch.
         """
-        if not summary["member_adds"]:
-            return HEALTH_NO_MEMBER
-        if prev is None:
-            return HEALTH_UNKNOWN
-        try:
-            before = int(prev[16])
-            written = prev[18][:10]
-        except (ValueError, IndexError):
-            return HEALTH_UNKNOWN
-        if written == now[:10]:
-            return HEALTH_UNKNOWN
-        if summary["member_adds"] - summary["member_removes"] <= 0:
-            # Adds cancelled out by removes, so a flat stored total is expected.
+        if summary["member_writes"]:
             return HEALTH_OK
-        return HEALTH_OK if summary["stored"] > before else HEALTH_SUSPECT
+        if summary["member_adds"]:
+            return HEALTH_SUSPECT
+        return HEALTH_NO_MEMBER
 
     def _summary_row(self, s, now):
         return [
@@ -513,6 +537,8 @@ class FavoritesReporting:
             s["users"],
             s["guest_adds"],
             s["member_adds"],
+            s["handovers"],
+            s["member_writes"],
             "" if s["guest_share"] is None else s["guest_share"] / 100,
             s["product_favs"],
             s["article_favs"],
@@ -525,6 +551,10 @@ class FavoritesReporting:
             now,
         ]
 
+    # Written RAW on purpose. USER_ENTERED parses "2026-09-21" into a date
+    # serial, which both renders as a bare number once the column's inherited
+    # format is cleared and, worse, stops the week key matching on the next run
+    # -- the upsert then appends a duplicate instead of replacing the row.
     def _upsert_summary(self, spreadsheet, summary, key, now):
         ws = spreadsheet.worksheet(TAB_SUMMARY)
         row = self._summary_row(summary, now)
@@ -532,12 +562,12 @@ class FavoritesReporting:
         if key in existing[1:]:
             index = existing.index(key, 1) + 1
             ws.update(
-                range_name=f"A{index}:S{index}",
+                range_name=f"A{index}:U{index}",
                 values=[row],
-                value_input_option="USER_ENTERED",
+                value_input_option="RAW",
             )
         else:
-            ws.insert_row(row, index=2, value_input_option="USER_ENTERED")
+            ws.insert_row(row, index=2, value_input_option="RAW")
 
     def _replace_item_rows(self, spreadsheet, item_rows, key, now):
         """Delete this week's item rows, then insert the fresh set under the header."""
@@ -566,7 +596,7 @@ class FavoritesReporting:
             for r in item_rows
         ]
         if rows:
-            ws.insert_rows(rows, row=2, value_input_option="USER_ENTERED")
+            ws.insert_rows(rows, row=2, value_input_option="RAW")
 
     # --- sheet setup -----------------------------------------------------
 
@@ -709,19 +739,43 @@ class FavoritesReporting:
             }
         }
 
+    @staticmethod
+    def _clear_number_formats(tab_id, width):
+        """Drop any number format left on the data range.
+
+        repeatCell only sets the formats it names, so a column that changes
+        meaning keeps the old one: after two columns were inserted, 引継ぎ
+        inherited a percent format and 会員保存件数 a date format, rendering 10
+        as 1900-01-10. Clearing first makes the layout below authoritative.
+        """
+        return {
+            "repeatCell": {
+                "range": {
+                    "sheetId": tab_id,
+                    "startRowIndex": 1,
+                    "startColumnIndex": 0,
+                    "endColumnIndex": width,
+                },
+                "cell": {},
+                "fields": "userEnteredFormat.numberFormat",
+            }
+        }
+
     def _summary_format_requests(self, tab_id):
         return [
-            self._number_format(tab_id, 9, 10, "0.0%", "PERCENT"),  # ゲスト比率
-            self._number_format(tab_id, 14, 15, "+0.0%;-0.0%", "PERCENT"),  # 前週比
-            self._number_format(tab_id, 13, 14, "0.00"),  # 100PVあたり
+            self._clear_number_formats(tab_id, len(SUMMARY_HEADERS)),
+            self._number_format(tab_id, 11, 12, "0.0%", "PERCENT"),  # ゲスト比率
+            self._number_format(tab_id, 16, 17, "+0.0%;-0.0%", "PERCENT"),  # 前週比
+            self._number_format(tab_id, 15, 16, "0.00"),  # 100PVあたり
             self._column_width(tab_id, 0, 1, 95),
             self._column_width(tab_id, 1, 2, 110),
-            self._column_width(tab_id, 15, 16, 300),  # トップ3
-            self._column_width(tab_id, 18, 19, 130),
+            self._column_width(tab_id, 17, 18, 300),  # トップ3
+            self._column_width(tab_id, 20, 21, 130),
         ]
 
     def _items_format_requests(self, tab_id):
         return [
+            self._clear_number_formats(tab_id, len(ITEM_HEADERS)),
             self._number_format(tab_id, 8, 9, "0.0"),  # 100閲覧あたり
             self._column_width(tab_id, 0, 1, 95),
             self._column_width(tab_id, 2, 3, 130),
@@ -841,6 +895,25 @@ GUIDE_ROWS = [
         "状態。ログイン誘導や会員登録特典の価値を測る指標です。",
     ],
     [
+        "引継ぎ",
+        "その週に初めてお気に入りが保存された顧客数。"
+        "ゲストとして貯めたお気に入りを持ったままログインし、"
+        "アカウントに引き継がれた件数です。",
+        "「ログインしてお気に入りを保存」の導線が実際に機能しているかを表す唯一の指標です。"
+        "GA4側ではこの変換は見えません（ハートを押した時点ではまだゲストで、"
+        "引き継ぎ自体はイベントを送らないため）。"
+        "ここが増えていれば、ログイン誘導に投資する価値があります。",
+    ],
+    [
+        "会員書込",
+        "その週にお気に入りがShopifyに書き込まれた顧客数（新規・更新の合計）。",
+        "広告ブロッカーの影響を受けない実測値です。"
+        "GA4の「会員追加」が0でもこちらが1以上なら、GA4が取りこぼしているだけで"
+        "機能は正常です。\n"
+        "メタフィールドは最終更新日時しか持たないため、過去週を遡って集計した場合は"
+        "実際より少なく出ることがあります。直近の週については正確です。",
+    ],
+    [
         "商品お気に入り / 記事お気に入り",
         "商品ページとスタイリング記事、それぞれの追加数。",
         "記事が多いなら、コンテンツが接点として機能しています。",
@@ -862,21 +935,20 @@ GUIDE_ROWS = [
         "会員保存件数",
         "Shopifyの顧客メタフィールドに保存されているお気に入りの総件数（全顧客の合計）。"
         "ゲストのお気に入りはブラウザ内にしか存在しないため含まれません。",
-        "会員が1件追加すればこの数も1増えるはずです。次の「保存整合」の判定材料です。",
+        "会員が1件追加すればこの数も1増えます。",
     ],
     [
         "保存整合",
-        "会員のお気に入りが実際に保存されたかの判定。4つの状態があります。\n"
-        "OK＝会員の追加が記録され、保存件数も増えた。\n"
-        "要確認＝会員の追加が記録されたのに保存件数が増えていない。\n"
-        "会員利用なし＝その週は会員による追加がなく、確認する対象がなかった。\n"
-        "判定不可＝比較できる前週の記録がない、または前週分と同じ日にまとめて"
-        "書き込まれたため差分が意味を持たない。",
+        "会員のお気に入りが実際に保存されたかの判定。3つの状態があります。\n"
+        "OK＝その週にShopify側への書き込みが実際に発生した（保存は正常）。\n"
+        "要確認＝GA4では会員の追加が記録されているのに、Shopify側に書き込みが"
+        "一件もない。\n"
+        "会員利用なし＝その週は会員の書き込みも記録もなかった。",
         "「要確認」が出たら保存処理が壊れている可能性があります。"
         "実際に公開直後の約5週間、保存が全く機能しておらず気づけませんでした。"
         "この欄はその再発を検知するためのものです。\n"
-        "「会員利用なし」は異常ではありませんが、正常だと確認できたわけでもありません。"
-        "現在ほぼ全てのお気に入りがゲストによるものため、この状態が続くのが通常です。",
+        "判定はGA4ではなくShopifyの記録を根拠にしています。"
+        "広告ブロッカーの影響を受けないためです。",
     ],
     ["", "", ""],
     ["■ アイテム別", "", ""],
