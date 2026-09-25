@@ -118,6 +118,34 @@ class Medias:
     def medias_by_sku(self, sku):
         return self.medias_by_variant_id(self.variant_id_by_sku(sku))
 
+    def reorder_product_medias(self, product_id, media_ids_in_order):
+        """Move the given medias to the positions they hold in media_ids_in_order.
+
+        Shopify has no insert: an upload always lands at the end, so putting images in the
+        middle means uploading and then moving them. Pass every media of the product, in
+        the order you want; the mutation runs as a job, so it is waited on before
+        returning, otherwise a following read still sees the old order.
+        """
+        query = """
+        mutation reorderProductMedia($id: ID!, $moves: [MoveInput!]!) {
+            productReorderMedia(id: $id, moves: $moves) {
+                job { id done }
+                mediaUserErrors { code field message }
+            }
+        }
+        """
+        moves = [
+            {"id": media_id, "newPosition": str(position)}
+            for position, media_id in enumerate(media_ids_in_order)
+        ]
+        res = self.run_query(
+            query, {"id": self.sanitize_id(product_id), "moves": moves}
+        )
+        if errors := res["productReorderMedia"]["mediaUserErrors"]:
+            raise RuntimeError(f"Failed to reorder medias: {errors}")
+        self.wait_for_job(res["productReorderMedia"]["job"]["id"])
+        return res
+
     def media_by_product_id_by_file_name(self, product_id, name):
         medias = self.medias_by_product_id(self.sanitize_id(product_id))
         for media in medias:
