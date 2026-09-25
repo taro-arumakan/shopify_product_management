@@ -33,15 +33,18 @@ for noisy in ("googleapiclient", "urllib3", "google"):
 
 logger = logging.getLogger(__name__)
 
-# Every shop whose products can be created with a scheduled launch. A shop with
-# nothing queued costs one query, so it is cheaper to include one than to find
-# out later that a drop sat waiting on a shop nobody added.
+# Shops CATAL manages whose products can be created with a scheduled launch. A
+# shop with nothing queued costs one query, so it is cheaper to include one than
+# to find out later that a drop sat waiting on a shop nobody added.
+#
+# GBH and Archivépke are deliberately absent: their storefronts are no longer
+# managed here. Nothing stops publish_by_product_or_collection_id from tagging a
+# product on them, so a scheduled launch run against either would queue and
+# never drain — add the shop back rather than reaching for the tag by hand.
 SHOPS = [
     "apricotstudios",
-    "archivepke",
     "asheis",
     "blossom",
-    "gbh",
     "kume",
     "lememe",
     "rohseoul",
