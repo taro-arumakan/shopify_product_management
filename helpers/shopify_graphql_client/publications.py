@@ -8,6 +8,12 @@ logger = logging.getLogger(__name__)
 # publish_by_product_or_collection_id.
 ONLINE_STORE = "Online Store"
 
+# Marks a product whose launch left channels behind, so the sweeper can find it
+# without being told a per-drop tag. The queue lives in Shopify rather than in a
+# scheduler: the tag goes on here and comes off once the other channels are
+# published, so a missed or late sweep loses nothing.
+PENDING_CHANNEL_PUBLISH = "pending-channel-publish"
+
 
 class Publications:
     def publications(self):
@@ -79,9 +85,19 @@ class Publications:
             # these now would put the product live ahead of the launch.
             logger.info(
                 f"  not publishing to {', '.join(skipped)}: only the {ONLINE_STORE} "
-                f"honours a publish date. Run helpers/publication_catch_up.py "
-                f"after {scheduled_time} to publish them."
+                f"honours a publish date. Tagging {PENDING_CHANNEL_PUBLISH!r} for "
+                f"the sweeper to pick up once {scheduled_time} has passed."
             )
+            if "/Product/" in product_or_collection_id:
+                self.add_product_tags(product_or_collection_id, PENDING_CHANNEL_PUBLISH)
+            else:
+                # Collections cannot carry tags, so there is nothing for the
+                # sweeper to find. Say so rather than leave it to be discovered
+                # when the drop is missing from half its channels.
+                logger.warning(
+                    f"  {product_or_collection_id} is not a product: catch it up "
+                    f"by hand after {scheduled_time}"
+                )
 
     def activate_and_publish_by_product_id(
         self, product_id, scheduled_time: datetime.datetime = None
