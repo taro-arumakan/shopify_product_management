@@ -36,12 +36,12 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Shopify に書き込まず実行内容だけ確認する"
+        description: "Report what would change without writing to Shopify"
         required: false
         default: true
         type: boolean
       today:
-        description: "日付を固定して判定する (YYYY-MM-DD, JST)。空欄 = 本日"
+        description: "Evaluate against this date instead of today (YYYY-MM-DD, JST)"
         required: false
         type: string
 
