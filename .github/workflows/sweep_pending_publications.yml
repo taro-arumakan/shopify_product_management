@@ -31,12 +31,12 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Shopify に書き込まず実行内容だけ確認する"
+        description: "Report what would change without writing to Shopify"
         required: false
         default: true
         type: boolean
       shop:
-        description: "1 店舗だけ処理する (例: kume)。空欄 = 全店舗"
+        description: "Sweep a single shop (e.g. kume). Empty sweeps every shop"
         required: false
         type: string
 
