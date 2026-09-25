@@ -55,10 +55,21 @@ ON_HOLD = {}
 # Single colourways held back, where the rest of the product is fine.
 ON_HOLD_COLOURS = {}
 
-# The sheet spells khaki KAHKI; the shop has said KHAKI since 25FW, and the storefront
-# filter vocabulary only knows KHAKI and GRAY.
+# The sheet spells khaki KAHKI where the shop has said KHAKI since 25FW. Only the colour
+# name shown to the customer is corrected here; the 品番 keeps whatever the sheet says.
 COLOUR_ALIASES = {"KAHKI": "KHAKI"}
-FILTER_COLOUR_ALIASES = {"KAHKI": "KHAKI", "TOP GRAY": "GRAY"}
+
+# The storefront filter offers 13 colours (BEIGE BLACK BLUE BROWN GRAY GREEN KHAKI ORANGE
+# PINK PURPLE RED WHITE YELLOW), so a shade has to filter as one of them or it drops out
+# of the colour filter entirely. The sheet's own フィルターカラー column is right for most
+# rows -- TOP KHAKI already filters as KHAKI and MIX GRAY as GRAY -- and these are the
+# ones where it names the shade instead, against the shop's established mapping.
+FILTER_COLOUR_ALIASES = {
+    "KAHKI": "KHAKI",
+    "TOP GRAY": "GRAY",
+    "NAVY": "BLUE",  # every live NAVY variant filters as BLUE
+    "OLD BLACK": "BLACK",  # likewise every live OLD BLACK
+}
 
 # What can happen to one colourway.
 CREATE_LIVE = "create live product"
