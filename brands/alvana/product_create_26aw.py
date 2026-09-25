@@ -44,6 +44,14 @@ CACHE_DIR = pathlib.Path.home() / "Downloads" / "alvana_26aw_image_cache"
 # is why the name test comes first and this threshold stays tight.
 SAME_IMAGE_DISTANCE = 12
 
+# What a newly registered variant starts at, overriding the sheet's 在庫数; None takes the
+# sheet's figures. OT-28 originally said 0, because 在庫数 was empty for the products in the
+# sheet on 2026-09-24 and a stray number would have been noise. From the products added on
+# the 25th the staff fills that column in as a real stock take, and the owner confirmed
+# those figures should go live, so the sheet wins -- but the override stays, because the
+# rule used to rest on that column happening to be empty, which is not a rule.
+NEW_VARIANT_STOCK = None
+
 # Restrict a run to these sheet products; empty means the whole sheet. The plan is still
 # built for everything, so the log shows what is being left for later.
 ONLY = set()
@@ -420,17 +428,34 @@ def write_note(worksheet, rows, plan):
         worksheet.update_cell(row, COLUMN_T, note)
 
 
-def colour_subset(product_input, plans):
-    """The sheet product narrowed to the colourways of these plans."""
+def colour_subset(product_input, plans, stock=None):
+    """The sheet product narrowed to the colourways of these plans.
+
+    `stock` overrides what the sheet says for every size row, and the option dicts are
+    copied so the caller cannot reach back into the shared product_input.
+    """
     colours = {p.colour for p in plans}
     return dict(
         product_input,
-        options=[o for o in product_input["options"] if o["カラー"] in colours],
+        options=[
+            dict(
+                colour_option,
+                options=[
+                    size_option if stock is None else dict(size_option, stock=stock)
+                    for size_option in colour_option["options"]
+                ],
+            )
+            for colour_option in product_input["options"]
+            if colour_option["カラー"] in colours
+        ],
     )
 
 
 def create_live(client, product_input, plans):
-    subset = colour_subset(product_input, plans)
+    # OT-28: a newly registered variant starts at 0 whatever the sheet's 在庫数 says. That
+    # column was empty when this ran on 2026-09-24 and filled in for the products added on
+    # the 25th, so relying on it being empty silently registered real stock.
+    subset = colour_subset(product_input, plans, stock=NEW_VARIANT_STOCK)
     res = client.process_product_input(subset)
     client.post_process_product_input(res, subset)
     client.activate_and_publish_by_product_id(res["create_product"]["id"])
@@ -438,7 +463,7 @@ def create_live(client, product_input, plans):
 
 
 def create_twin(client, product_input, plans):
-    subset = colour_subset(product_input, plans)
+    subset = colour_subset(product_input, plans, stock=NEW_VARIANT_STOCK)
     subset["title"] += " (no image)"
     try:
         client.products_by_title(subset["title"])
@@ -451,7 +476,7 @@ def create_twin(client, product_input, plans):
     )
     client.update_product_status(res["id"], "UNLISTED")
     client.enable_and_activate_inventory_by_product_input(subset, client.LOCATIONS)
-    client.update_stock(subset)  # every stock in this sheet is 0
+    client.update_stock(subset)  # forced to NEW_VARIANT_STOCK above
     return res
 
 

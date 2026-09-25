@@ -1,3 +1,4 @@
+import http.client
 import io
 import logging
 import os
@@ -13,13 +14,16 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 # Transient network errors worth retrying on Drive calls (long batch runs hit the
-# occasional socket timeout / 5xx that should not abort the whole job).
+# occasional socket timeout / 5xx that should not abort the whole job). HTTPException
+# covers IncompleteRead, which is what a download truncated mid-body raises and is not an
+# OSError -- one of those aborted a 26AW registration run partway through a product.
 _DRIVE_TRANSIENT = (
     TimeoutError,
     ConnectionError,
     socket.timeout,
     ssl.SSLError,
     OSError,
+    http.client.HTTPException,
 )
 
 
