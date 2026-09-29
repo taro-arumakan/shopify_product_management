@@ -36,6 +36,9 @@ from helpers.shopify_graphql_client.publications import (
     PENDING_CHANNEL_PUBLISH,
 )
 
+LAUNCH_DATETIME_NAMESPACE = "custom"
+LAUNCH_DATETIME_KEY = "launch_datetime"
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,13 +49,29 @@ def _parse_publish_date(value):
     return datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def online_store_is_live(states, now=None):
+def product_launch_datetime(client, product_id):
+    """The product's gated launch time, or None when it isn't gated."""
+    metafield = client.product_metafield_by_product_id(
+        product_id, LAUNCH_DATETIME_NAMESPACE, LAUNCH_DATETIME_KEY
+    )
+    return metafield["value"] if metafield else None
+
+
+def online_store_is_live(states, launch_datetime=None, now=None):
     """Has the Online Store launch already happened for this product?
 
     Returns (True, "") once it has, and (False, reason) while it has not, so
     the caller can log why a product was left alone.
     """
     now = now or datetime.datetime.now(datetime.timezone.utc)
+    # A drop can sit published on the Online Store before it opens, gated by
+    # the theme on custom.launch_datetime: in stock, but with no add-to-cart
+    # button. Nothing in the publication state says so, so check the gate
+    # first - otherwise the other channels start selling it at the moment the
+    # Online Store publication flips, which is days before the drop opens.
+    launch = _parse_publish_date(launch_datetime)
+    if launch and launch > now:
+        return False, f"launch_datetime is {launch}"
     state = next((s for s in states if s["publication"]["name"] == ONLINE_STORE), None)
     if state is None:
         return False, f"not on the {ONLINE_STORE} at all"
@@ -102,7 +121,11 @@ def catch_up_other_channels(shop_name, tag, dry_run=False, client=None, now=None
     for product in _products(client, shop_name, tag):
         title = product["title"]
         states = client.product_publication_states(product["id"])
-        live, reason = online_store_is_live(states, now=now)
+        live, reason = online_store_is_live(
+            states,
+            launch_datetime=product_launch_datetime(client, product["id"]),
+            now=now,
+        )
         if not live:
             logger.warning(f"skipping {title}: {reason}")
             skipped[title] = reason
@@ -170,7 +193,11 @@ def sweep_pending_channel_publishes(shop_name, dry_run=False, client=None, now=N
     for product in products:
         title = product["title"]
         states = client.product_publication_states(product["id"])
-        live, reason = online_store_is_live(states, now=now)
+        live, reason = online_store_is_live(
+            states,
+            launch_datetime=product_launch_datetime(client, product["id"]),
+            now=now,
+        )
         if not live:
             logger.info(f"{shop_name}: {title} still waiting - {reason}")
             waiting[title] = reason

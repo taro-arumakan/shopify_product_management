@@ -26,9 +26,10 @@ def state(publication, is_published, publish_date=None):
 
 
 class FakeClient:
-    def __init__(self, products, states_by_id):
+    def __init__(self, products, states_by_id, launch_datetime=None):
         self.products = products
         self.states_by_id = states_by_id
+        self.launch_datetime = launch_datetime
         self.published = []
         self.unpublished = []
         self.untagged = []
@@ -38,6 +39,11 @@ class FakeClient:
 
     def product_publication_states(self, product_id):
         return self.states_by_id[product_id]
+
+    def product_metafield_by_product_id(self, product_id, namespace, key):
+        if self.launch_datetime is None:
+            return None
+        return {"id": "gid://shopify/Metafield/1", "value": self.launch_datetime}
 
     def publish_by_product_or_collection_id_and_publication_id(
         self, product_or_collection_id, publication_id
@@ -53,10 +59,13 @@ class FakeClient:
         self.untagged.append((product_id, tags))
 
 
-def client_for(states, product_id="gid://shopify/Product/1", title="JACKET"):
+def client_for(
+    states, product_id="gid://shopify/Product/1", title="JACKET", launch_datetime=None
+):
     return FakeClient(
         products=[{"id": product_id, "title": title}],
         states_by_id={product_id: states},
+        launch_datetime=launch_datetime,
     )
 
 
@@ -89,6 +98,34 @@ class TestOnlineStoreIsLive(unittest.TestCase):
         live, reason = online_store_is_live([state(ONLINE_STORE, False)], now=NOW)
         self.assertFalse(live)
         self.assertIn("not live yet", reason)
+
+    def test_not_live_while_the_launch_datetime_is_in_the_future(self):
+        # Published on the Online Store, but the theme is still gating it.
+        live, reason = online_store_is_live(
+            [state(ONLINE_STORE, True)],
+            launch_datetime="2026-10-20T03:00:00Z",
+            now=NOW,
+        )
+        self.assertFalse(live)
+        self.assertIn("launch_datetime", reason)
+
+    def test_live_once_the_launch_datetime_has_passed(self):
+        live, reason = online_store_is_live(
+            [state(ONLINE_STORE, True)],
+            launch_datetime="2026-10-14T02:00:00Z",
+            now=NOW,
+        )
+        self.assertTrue(live)
+        self.assertEqual(reason, "")
+
+    def test_a_launch_datetime_with_an_offset_is_understood(self):
+        # What the metafield actually holds: JST rather than a Z suffix.
+        live, _ = online_store_is_live(
+            [state(ONLINE_STORE, True)],
+            launch_datetime="2026-10-20T12:00:00+09:00",
+            now=NOW,
+        )
+        self.assertFalse(live)
 
     def test_not_live_when_absent(self):
         live, reason = online_store_is_live([state(SHOP, True)], now=NOW)
@@ -242,6 +279,20 @@ class TestSweepPendingChannelPublishes(unittest.TestCase):
 
         self.assertEqual(client.published, [])
         # Still queued: dropping the tag now would lose the drop entirely.
+        self.assertEqual(client.untagged, [])
+        self.assertIn("JACKET", res["waiting"])
+
+    def test_a_product_gated_by_launch_datetime_stays_queued(self):
+        # The case the Online Store publish date cannot express: live on the
+        # Online Store ahead of the drop, with the theme hiding the buy button.
+        # Publishing the other channels here would put it on sale early.
+        client = client_for(
+            [state(ONLINE_STORE, True), state(SHOP, False)],
+            launch_datetime="2026-10-20T12:00:00+09:00",
+        )
+        res = sweep_pending_channel_publishes("asheis", client=client, now=NOW)
+
+        self.assertEqual(client.published, [])
         self.assertEqual(client.untagged, [])
         self.assertIn("JACKET", res["waiting"])
 
