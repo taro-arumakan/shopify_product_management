@@ -24,7 +24,7 @@ from helpers.publication_catch_up import (
 logger = logging.getLogger(__name__)
 
 TAG = "26_oct_1"
-LAUNCH_AT = "2026-09-30T12:00:00+09:00"  # noon JST
+LAUNCH_AT = "2026-10-01T12:00:00+09:00"  # noon JST
 
 
 def _products(client, tag):
