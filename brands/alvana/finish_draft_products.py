@@ -24,7 +24,7 @@ from brands.alvana.product_create_26aw import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DRY_RUN = False
+DRY_RUN = True
 
 PRODUCTS_QUERY = """query($after:String){ products(first:100, after:$after){
   pageInfo{hasNextPage endCursor}
