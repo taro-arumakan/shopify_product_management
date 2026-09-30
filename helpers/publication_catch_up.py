@@ -83,12 +83,41 @@ def online_store_is_live(states, launch_datetime=None, now=None):
     return True, ""
 
 
-def other_channels(states, published):
-    """Publications besides the Online Store, filtered by publish state."""
+def other_channels(states, published, all_publications=None):
+    """Publications besides the Online Store, filtered by publish state.
+
+    `published=True` reads straight off `states`, which is exactly what those
+    records describe.
+
+    `published=False` cannot, and needs `all_publications`. A product's
+    publication states only carry the channels it has a record for: Shopify
+    deletes the ResourcePublication on unpublish, so a channel the product was
+    taken off is absent from `states` altogether rather than present with
+    isPublished false. Read naively, a product that was unpublished from every
+    channel looks like one that is already on all of them - and the sweeper
+    then dequeues it having published nothing, silently. The channels it is
+    missing from are the shop's publications minus the ones it is published
+    to, so that list has to be passed in.
+
+    A record with isPublished false is real too - a publication scheduled and
+    not yet live - and counts as pending just the same.
+    """
+    if published:
+        return [
+            s["publication"]
+            for s in states
+            if s["publication"]["name"] != ONLINE_STORE and s["isPublished"]
+        ]
+    if all_publications is None:
+        raise ValueError(
+            "all_publications is required to find the channels a product is "
+            "not on: absent channels leave no record in its publication states"
+        )
+    live_names = {s["publication"]["name"] for s in states if s["isPublished"]}
     return [
-        s["publication"]
-        for s in states
-        if s["publication"]["name"] != ONLINE_STORE and s["isPublished"] is published
+        publication
+        for publication in all_publications
+        if publication["name"] != ONLINE_STORE and publication["name"] not in live_names
     ]
 
 
@@ -116,6 +145,7 @@ def catch_up_other_channels(shop_name, tag, dry_run=False, client=None, now=None
     """
     logging.basicConfig(level=logging.INFO)
     client = _client(shop_name, client)
+    all_publications = client.publications(include_products=False)
     published, skipped, up_to_date = {}, {}, []
 
     for product in _products(client, shop_name, tag):
@@ -130,7 +160,9 @@ def catch_up_other_channels(shop_name, tag, dry_run=False, client=None, now=None
             logger.warning(f"skipping {title}: {reason}")
             skipped[title] = reason
             continue
-        pending = other_channels(states, published=False)
+        pending = other_channels(
+            states, published=False, all_publications=all_publications
+        )
         if not pending:
             logger.info(f"{title} is already on every channel")
             up_to_date.append(title)
@@ -184,6 +216,7 @@ def sweep_pending_channel_publishes(shop_name, dry_run=False, client=None, now=N
     logging.basicConfig(level=logging.INFO)
     client = _client(shop_name, client)
 
+    all_publications = client.publications(include_products=False)
     products = client.products_by_tag(PENDING_CHANNEL_PUBLISH)
     if not products:
         logger.info(f"{shop_name}: nothing queued")
@@ -203,7 +236,9 @@ def sweep_pending_channel_publishes(shop_name, dry_run=False, client=None, now=N
             waiting[title] = reason
             continue
 
-        pending = other_channels(states, published=False)
+        pending = other_channels(
+            states, published=False, all_publications=all_publications
+        )
         if pending:
             names = [p["name"] for p in pending]
             logger.info(

@@ -26,16 +26,32 @@ def state(publication, is_published, publish_date=None):
 
 
 class FakeClient:
-    def __init__(self, products, states_by_id, launch_datetime=None):
+    def __init__(
+        self, products, states_by_id, launch_datetime=None, all_publications=None
+    ):
         self.products = products
         self.states_by_id = states_by_id
         self.launch_datetime = launch_datetime
+        # Default to exactly the publications the fixture names, so a test that
+        # spells out every channel in its states keeps its original meaning.
+        # A test about channels the product has NO record for passes its own.
+        if all_publications is None:
+            seen, all_publications = set(), []
+            for states in states_by_id.values():
+                for s in states:
+                    if s["publication"]["name"] not in seen:
+                        seen.add(s["publication"]["name"])
+                        all_publications.append(s["publication"])
+        self.all_publications = all_publications
         self.published = []
         self.unpublished = []
         self.untagged = []
 
     def products_by_tag(self, tag):
         return self.products
+
+    def publications(self, include_products=True):
+        return self.all_publications
 
     def product_publication_states(self, product_id):
         return self.states_by_id[product_id]
@@ -60,12 +76,17 @@ class FakeClient:
 
 
 def client_for(
-    states, product_id="gid://shopify/Product/1", title="JACKET", launch_datetime=None
+    states,
+    product_id="gid://shopify/Product/1",
+    title="JACKET",
+    launch_datetime=None,
+    all_publications=None,
 ):
     return FakeClient(
         products=[{"id": product_id, "title": title}],
         states_by_id={product_id: states},
         launch_datetime=launch_datetime,
+        all_publications=all_publications,
     )
 
 
@@ -140,9 +161,32 @@ class TestOtherChannels(unittest.TestCase):
         state(SHOP, True),
     ]
 
+    ALL = [ONLINE_STORE, POS, SHOP]
+
     def test_excludes_the_online_store_either_way(self):
-        self.assertEqual(other_channels(self.STATES, published=False), [POS])
+        self.assertEqual(
+            other_channels(self.STATES, published=False, all_publications=self.ALL),
+            [POS],
+        )
         self.assertEqual(other_channels(self.STATES, published=True), [SHOP])
+
+    def test_a_channel_with_no_record_at_all_is_pending(self):
+        # Shopify deletes the ResourcePublication on unpublish, so a product
+        # taken off a channel carries no state for it - not one saying false.
+        self.assertEqual(
+            other_channels(
+                [state(ONLINE_STORE, True)],
+                published=False,
+                all_publications=[ONLINE_STORE, POS, SHOP, GOOGLE],
+            ),
+            [POS, SHOP, GOOGLE],
+        )
+
+    def test_asking_what_is_unpublished_without_the_shop_list_is_refused(self):
+        # Answering from `states` alone is what silently loses a drop.
+        with self.assertRaises(ValueError) as ctx:
+            other_channels(self.STATES, published=False)
+        self.assertIn("all_publications is required", str(ctx.exception))
 
 
 class TestCatchUpOtherChannels(unittest.TestCase):
@@ -260,10 +304,6 @@ class TestUnpublishOtherChannels(unittest.TestCase):
         self.assertEqual(res, {"JACKET": ["Shop"]})
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestSweepPendingChannelPublishes(unittest.TestCase):
     """The recurring worker: publish what is due, leave what is not, and take
     finished products out of the queue."""
@@ -343,3 +383,65 @@ class TestSweepPendingChannelPublishes(unittest.TestCase):
         sweep_pending_channel_publishes("asheis", dry_run=True, client=client, now=NOW)
         self.assertEqual(client.published, [])
         self.assertEqual(client.untagged, [])
+
+    def test_a_product_with_no_record_on_any_other_channel_is_published(self):
+        # The regression. After unpublish_other_channels repairs an early
+        # publish, the product's states carry only the Online Store. Reading
+        # what is pending off those states alone finds nothing, so the sweeper
+        # published nothing and then cleared the tag - dropping the product out
+        # of the queue that was the only record it still needed publishing.
+        client = client_for(
+            [state(ONLINE_STORE, True, "2026-10-14T02:00:00Z")],
+            all_publications=[ONLINE_STORE, POS, SHOP, GOOGLE],
+        )
+        res = sweep_pending_channel_publishes("asheis", client=client, now=NOW)
+
+        self.assertEqual(
+            client.published,
+            [
+                ("gid://shopify/Product/1", POS["id"]),
+                ("gid://shopify/Product/1", SHOP["id"]),
+                ("gid://shopify/Product/1", GOOGLE["id"]),
+            ],
+        )
+        self.assertEqual(
+            res["published"],
+            {"JACKET": ["Point of Sale", "Shop", "Google & YouTube"]},
+        )
+        # Only now is it safe to dequeue.
+        self.assertEqual(res["cleared"], ["JACKET"])
+
+    def test_a_product_still_waiting_keeps_its_missing_channels_queued(self):
+        # Same shape, but before the launch: nothing is published and the tag
+        # stays, so the next sweep after the launch still finds the work.
+        client = client_for(
+            [state(ONLINE_STORE, True)],
+            launch_datetime="2026-10-20T12:00:00+09:00",
+            all_publications=[ONLINE_STORE, POS, SHOP, GOOGLE],
+        )
+        res = sweep_pending_channel_publishes("asheis", client=client, now=NOW)
+
+        self.assertEqual(client.published, [])
+        self.assertEqual(client.untagged, [])
+        self.assertIn("JACKET", res["waiting"])
+
+
+class TestCatchUpWithNoOtherChannelRecords(unittest.TestCase):
+    """The same blind spot on the per-drop entry point."""
+
+    def test_publishes_channels_the_product_has_no_record_for(self):
+        client = client_for(
+            [state(ONLINE_STORE, True, "2026-10-14T02:00:00Z")],
+            all_publications=[ONLINE_STORE, POS, SHOP, GOOGLE],
+        )
+        res = catch_up_other_channels("asheis", "26_oct_1", client=client, now=NOW)
+
+        self.assertEqual(
+            res["published"],
+            {"JACKET": ["Point of Sale", "Shop", "Google & YouTube"]},
+        )
+        self.assertEqual(res["up_to_date"], [])
+
+
+if __name__ == "__main__":
+    unittest.main()

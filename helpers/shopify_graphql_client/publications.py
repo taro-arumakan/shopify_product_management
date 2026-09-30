@@ -16,7 +16,15 @@ PENDING_CHANNEL_PUBLISH = "pending-channel-publish"
 
 
 class Publications:
-    def publications(self):
+    def publications(self, include_products=True):
+        """Every publication on the shop.
+
+        `include_products=False` leaves out the 250 products per publication,
+        which is all most callers want: the set of channels that exist. That
+        set is also the only way to tell which channels a product is *not* on,
+        since those leave no record in the product's own publication states -
+        see helpers.publication_catch_up.other_channels.
+        """
         query = """
         query publications{
             publications(first:100) {
@@ -27,23 +35,28 @@ class Publications:
                         title
                         status
                     }
-                    products(first:250) {
-                        nodes {
-                            id
-                            title
-                            variants(first:30) {
-                                nodes {
-                                    id
-                                    title
-                                    sku
-                                }
-                            }
-                        }
-                    }
+                    %s
                 }
             }
         }
-        """
+        """ % (
+            """
+            products(first:250) {
+                nodes {
+                    id
+                    title
+                    variants(first:30) {
+                        nodes {
+                            id
+                            title
+                            sku
+                        }
+                    }
+                }
+            }"""
+            if include_products
+            else ""
+        )
         res = self.run_query(query)
         return res["publications"]["nodes"]
 
@@ -70,7 +83,7 @@ class Publications:
         logger.info(
             f"Publishing {product_or_collection_id} {f'at {scheduled_time}' if scheduled_time else 'immediately'}"
         )
-        publications = self.publications()
+        publications = self.publications(include_products=False)
         params = {"product_or_collection_id": product_or_collection_id}
         skipped = []
         for publication in publications:
@@ -200,7 +213,7 @@ class Publications:
             f"{', '.join(sorted(publication_names))}"
         )
         res = []
-        for publication in self.publications():
+        for publication in self.publications(include_products=False):
             if publication["name"] in publication_names:
                 res.append(
                     self.unpublish_by_product_or_collection_id_and_publication_id(
@@ -215,12 +228,19 @@ class Publications:
         return res
 
     def product_publication_states(self, product_id):
-        """Every sales channel this product could be on, with its publish state.
+        """The sales channels this product has a publication record for.
 
-        `onlyPublished: false` also returns the channels it is not on, and a
-        publication still waiting for its publishDate comes back with
-        isPublished false and that date - which is how the catch-up tells a
-        scheduled launch from one that has already happened.
+        NOT every channel that exists. `onlyPublished: false` returns the
+        record for a publication that is scheduled but not yet live, with
+        isPublished false and its publishDate - which is how the catch-up
+        tells a scheduled launch from one that has already happened. It does
+        not invent records for channels the product was never on or has been
+        unpublished from: Shopify deletes the ResourcePublication, and the
+        channel then disappears from this response entirely.
+
+        So this answers "where is it published", never "where is it missing".
+        For that, diff against `publications(include_products=False)` - see
+        helpers.publication_catch_up.other_channels.
         """
         query = """
         query productPublications($id: ID!) {
