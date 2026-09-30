@@ -62,7 +62,10 @@ class Publications:
         return publication
 
     def publish_by_product_or_collection_id(
-        self, product_or_collection_id, scheduled_time: datetime.datetime = None
+        self,
+        product_or_collection_id,
+        scheduled_time: datetime.datetime = None,
+        online_store_only=False,
     ):
         logger.info(
             f"Publishing {product_or_collection_id} {f'at {scheduled_time}' if scheduled_time else 'immediately'}"
@@ -72,11 +75,12 @@ class Publications:
         skipped = []
         for publication in publications:
             params["publication_id"] = publication["id"]
-            if scheduled_time and publication["name"] == ONLINE_STORE:
+            is_online_store = publication["name"] == ONLINE_STORE
+            if scheduled_time and is_online_store:
                 self.publish_by_product_or_collection_id_and_publication_id(
                     scheduled_time=scheduled_time, **params
                 )
-            elif not scheduled_time:
+            elif is_online_store or not (scheduled_time or online_store_only):
                 self.publish_by_product_or_collection_id_and_publication_id(**params)
             else:
                 skipped.append(publication["name"])

@@ -200,7 +200,7 @@ class Metafields:
             product_id, "custom", "product_care_page", page_id
         )
 
-    def metafield_id_by_namespace_and_key(self, namespace, key, owner_type="PRODUCT"):
+    def metafield_by_namespace_and_key(self, namespace, key, owner_type="PRODUCT"):
         query = """
         query {
             metafieldDefinitions(first:10, ownerType:%s, namespace:"%s", key:"%s") {
@@ -219,7 +219,10 @@ class Metafields:
         assert (
             len(res) == 1
         ), f'{"Multiple" if res else "No"} metafields found for {namespace}:{key}: {res}'
-        return res[0]["id"]
+        return res[0]
+
+    def metafield_id_by_namespace_and_key(self, namespace, key, owner_type="PRODUCT"):
+        return self.metafield_by_namespace_and_key(namespace, key, owner_type)["id"]
 
     def product_metafield_by_product_id(
         self, product_id, namespace="custom", key="product_description"
@@ -242,6 +245,17 @@ class Metafields:
         self, product_id, namespace="custom", key="product_description"
     ):
         return self.product_metafield_by_product_id(product_id, namespace, key)["value"]
+
+    def metafield_value_from_item(self, item, namespace, key):
+        res = [
+            m
+            for m in item["metafields"]["nodes"]
+            if m["namespace"] == namespace and m["key"] == key
+        ]
+        assert (
+            len(res) == 1
+        ), f'{"Multiple" if res else "No"} metafields found for {namespace}:{key}: {res}'
+        return res[0]["value"]
 
     def update_variant_metafield(
         self, product_id, variant_id, metafield_namespace, metafield_key, value

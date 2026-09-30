@@ -300,6 +300,6 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    unpublish_other_channels(shop_name="asheis", tag="26_oct_1", dry_run=False)
-    unpublish_other_channels(shop_name="asheis", tag="26_oct_2", dry_run=False)
+    main()
+    # unpublish_other_channels(shop_name="asheis", tag="26_oct_1", dry_run=False)
+    # unpublish_other_channels(shop_name="asheis", tag="26_oct_2", dry_run=False)
