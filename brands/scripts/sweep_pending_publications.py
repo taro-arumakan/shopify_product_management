@@ -4,7 +4,8 @@ Shopify honours `PublicationInput.publishDate` on the Online Store only — "Onl
 online store channels support future publishing" — so a scheduled launch can
 publish the store and nothing else, or every channel goes live days early.
 `publish_by_product_or_collection_id` therefore publishes the store alone and
-tags the product `pending-channel-publish`. This drains that queue.
+tags the product `pending-channel-publish`. This drains that queue, calling
+`client.sweep_pending_channel_publishes` once per shop.
 
 Run it on an interval. There is nothing to schedule per drop: the queue is the
 tag, which lives in Shopify next to the thing it describes, so it cannot drift
@@ -25,7 +26,7 @@ that it runs, and keeps running.
 import logging
 import sys
 
-from helpers.publication_catch_up import sweep_pending_channel_publishes
+import utils
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 for noisy in ("googleapiclient", "urllib3", "google"):
@@ -64,9 +65,14 @@ def main(argv):
 
     for shop in shops:
         try:
-            res = sweep_pending_channel_publishes(shop, dry_run=not apply_changes)
+            # Built inside the try with the sweep it feeds: a shop whose
+            # credentials are missing fails here, not at import, and takes
+            # only itself down.
+            res = utils.client(shop).sweep_pending_channel_publishes(
+                dry_run=not apply_changes
+            )
         except Exception:
-            # One shop with a bad token must not strand the other eight; a drop
+            # One shop with a bad token must not strand the others; a drop
             # left unpublished is the failure this job exists to prevent.
             logger.exception(f"{shop}: failed")
             failures.append(shop)

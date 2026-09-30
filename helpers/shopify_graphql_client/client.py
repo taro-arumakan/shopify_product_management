@@ -25,6 +25,9 @@ from helpers.shopify_graphql_client.product_queries import ProductQueries
 from helpers.shopify_graphql_client.product_variants_to_products import (
     ProductVariantsToProducts,
 )
+from helpers.shopify_graphql_client.publication_catch_up import (
+    PublicationCatchUp,
+)
 from helpers.shopify_graphql_client.publications import Publications
 from helpers.shopify_graphql_client.shipping import Shipping
 from helpers.shopify_graphql_client.variants import Variants
@@ -50,6 +53,7 @@ class ShopifyGraphqlClient(
     ProductVariantsToProducts,
     Metafields,
     MergeProductsAsVariants,
+    PublicationCatchUp,
     Publications,
     Shipping,
     Variants,

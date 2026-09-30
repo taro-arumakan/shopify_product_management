@@ -1,7 +1,7 @@
 """Set and clear custom.launch_datetime for a scheduled drop.
 
 The theme hides the add-to-cart button and shows the launch date while this
-metafield is in the future, and helpers.publication_catch_up treats a product
+metafield is in the future, and the publication catch-up treats a product
 with a future one as not yet launched, so it stays off the other sales
 channels until the drop opens.
 
@@ -16,7 +16,7 @@ which is what makes an already-rendered page pick up the change.
 import logging
 
 import utils
-from helpers.publication_catch_up import (
+from helpers.shopify_graphql_client.publication_catch_up import (
     LAUNCH_DATETIME_KEY as KEY,
     LAUNCH_DATETIME_NAMESPACE as NAMESPACE,
 )

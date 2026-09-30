@@ -23,7 +23,7 @@ class Publications:
         which is all most callers want: the set of channels that exist. That
         set is also the only way to tell which channels a product is *not* on,
         since those leave no record in the product's own publication states -
-        see helpers.publication_catch_up.other_channels.
+        see `other_channels`.
         """
         query = """
         query publications{
@@ -240,7 +240,7 @@ class Publications:
 
         So this answers "where is it published", never "where is it missing".
         For that, diff against `publications(include_products=False)` - see
-        helpers.publication_catch_up.other_channels.
+        `other_channels` below.
         """
         query = """
         query productPublications($id: ID!) {
@@ -265,3 +265,43 @@ class Publications:
         if not (product := res.get("product")):
             raise NoProductsFoundException(f"No product found for {product_id}")
         return product["resourcePublicationsV2"]["nodes"]
+
+    @staticmethod
+    def other_channels(states, published, all_publications=None):
+        """Publications besides the Online Store, filtered by publish state.
+
+        `published=True` reads straight off `states`, which is exactly what
+        those records describe.
+
+        `published=False` cannot, and needs `all_publications`. A product's
+        publication states only carry the channels it has a record for:
+        Shopify deletes the ResourcePublication on unpublish, so a channel the
+        product was taken off is absent from `states` altogether rather than
+        present with isPublished false. Read naively, a product that was
+        unpublished from every channel looks like one that is already on all
+        of them - and the sweeper then dequeues it having published nothing,
+        silently. The channels it is missing from are the shop's publications
+        minus the ones it is published to, so that list has to be passed in.
+
+        A record with isPublished false is real too - a publication scheduled
+        and not yet live - and counts as pending just the same.
+        """
+        if published:
+            return [
+                s["publication"]
+                for s in states
+                if s["publication"]["name"] != ONLINE_STORE and s["isPublished"]
+            ]
+        if all_publications is None:
+            raise ValueError(
+                "all_publications is required to find the channels a product "
+                "is not on: absent channels leave no record in its publication "
+                "states"
+            )
+        live_names = {s["publication"]["name"] for s in states if s["isPublished"]}
+        return [
+            publication
+            for publication in all_publications
+            if publication["name"] != ONLINE_STORE
+            and publication["name"] not in live_names
+        ]
