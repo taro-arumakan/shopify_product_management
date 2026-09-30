@@ -355,14 +355,13 @@ class Alvana26AWClient(AlvanaClient):
     than fed an empty string (formatted_size_text_to_html_table raises on one), and
     update_weight already no-ops without a weight."""
 
-    def update_metafields(self, product_id, product_input):
+    def update_size_table(self, product_id, product_input):
+        # only the size table is conditional; overriding update_metafields instead meant
+        # restating the other metafields here, which is how a colourway once came out
+        # without its filter colour
         if product_input.get("size_text"):
-            return super().update_metafields(product_id, product_input)
+            return super().update_size_table(product_id, product_input)
         logger.info(f'no 寸法 for {product_input["title"]} - skipping the size table')
-        self.update_product_care_metafield(
-            product_id, self.text_to_simple_richtext(product_input["product_care"])
-        )
-        self.update_filter_color(product_id, product_input)
 
 
 def load_product_inputs(client):
@@ -496,7 +495,9 @@ def promote(client, product_input, plan, by_sku):
             size_option["stock"] = stock.get(size_option["sku"], 0)
     res = client.add_variants_from_product_input(subset)
     # add_variants_from_product_input does not carry metafields, and the twins never had
-    # a filter colour to begin with, so the storefront filter is set here
+    # a filter colour to begin with, so the storefront filter is set here. The season
+    # metafield is NOT: a promoted colourway belongs to the season it was parked in, which
+    # is whatever the twin was, not the season this run is registering.
     client.update_filter_color(client.product_id_by_title(live_title), subset)
     variant_ids = [
         variant["id"]
@@ -518,14 +519,18 @@ def promote(client, product_input, plan, by_sku):
 
 def add_colourway(client, product_input, plan):
     """A new colour on a product that is already live: variants at 0 stock, its own
-    images, and the storefront filter colour."""
-    subset = colour_subset(product_input, [plan])
+    images, the storefront filter colour and this season's variant season.
+
+    add_variants_from_product_input carries no metafields, so both are set here. The season
+    is this run's: the colourway is new in this sheet even though the product it joins is a
+    carry-over from an earlier one, which is the reason that metafield is per variant.
+    """
+    subset = colour_subset(product_input, [plan], stock=NEW_VARIANT_STOCK)
     subset["title"] = plan.shop_title
-    for colour_option in subset["options"]:
-        for size_option in colour_option["options"]:
-            size_option["stock"] = 0
     res = client.add_variants_from_product_input(subset)
-    client.update_filter_color(client.product_id_by_title(plan.shop_title), subset)
+    product_id = client.product_id_by_title(plan.shop_title)
+    client.update_filter_color(product_id, subset)
+    client.update_product_variant_season(product_id, subset)
     return res
 
 

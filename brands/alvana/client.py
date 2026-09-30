@@ -104,14 +104,39 @@ class AlvanaClient(BrandClientBase):
 
     def update_metafields(self, product_id, product_input):
         logger.info(f'updating metafields for {product_input["title"]}')
+        self.update_size_table(product_id, product_input)
+        product_care = self.text_to_simple_richtext(product_input["product_care"])
+        self.update_product_care_metafield(product_id, product_care)
+        self.update_filter_color(product_id, product_input)
+        self.update_product_variant_season(product_id, product_input)
+
+    def update_size_table(self, product_id, product_input):
         size_table_html = self.get_size_field(product_input)
         if self.to_add_disclaimer_html(product_input["title"]):
             size_table_html += "<br>"
             size_table_html += "<p>注: 製造後に洗い加工を施しているため、記載されているサイズに若干の誤差が生じる場合がございます。</p>"
         self.update_size_table_html_metafield(product_id, size_table_html)
-        product_care = self.text_to_simple_richtext(product_input["product_care"])
-        self.update_product_care_metafield(product_id, product_care)
-        self.update_filter_color(product_id, product_input)
+
+    def update_product_variant_season(self, product_id, product_input):
+        """custom.product_variant_season, per variant rather than per product: a
+        carry-over product holds colourways from more than one season, so the product's
+        own season tag is the wrong answer for the ones added later."""
+        if not self.products_season_tag:
+            logger.warning(
+                f"no products_season_tag set - not setting the season metafield for "
+                f'{product_input["title"]}'
+            )
+            return
+        for color_option in product_input["options"]:
+            for size_option in color_option["options"]:
+                variant_id = self.variant_id_by_sku(size_option["sku"])
+                self.update_variant_metafield(
+                    product_id,
+                    variant_id,
+                    "custom",
+                    "product_variant_season",
+                    self.products_season_tag,
+                )
 
     def to_add_disclaimer_html(self, title):
         return title.startswith("NATURAL TWILL") or title in [
