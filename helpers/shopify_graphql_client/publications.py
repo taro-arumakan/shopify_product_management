@@ -47,6 +47,26 @@ class Publications:
         res = self.run_query(query)
         return res["publications"]["nodes"]
 
+    def publication_ids_and_names(self):
+        """Every publication on the shop, without their products.
+
+        `publications` carries 250 products per publication, which is a lot to
+        drag around when all that is wanted is the set of channels that exist -
+        and that set is what tells you which channels a product is *not* on,
+        since those leave no trace in the product's own publication states.
+        """
+        query = """
+        query publicationIdsAndNames{
+            publications(first:100) {
+                nodes {
+                    id
+                    name
+                }
+            }
+        }
+        """
+        return self.run_query(query)["publications"]["nodes"]
+
     def publication_by_publication_name(self, name):
         publications = self.publications()
         for publication in publications:
@@ -215,12 +235,19 @@ class Publications:
         return res
 
     def product_publication_states(self, product_id):
-        """Every sales channel this product could be on, with its publish state.
+        """The sales channels this product has a publication record for.
 
-        `onlyPublished: false` also returns the channels it is not on, and a
-        publication still waiting for its publishDate comes back with
-        isPublished false and that date - which is how the catch-up tells a
-        scheduled launch from one that has already happened.
+        NOT every channel that exists. `onlyPublished: false` returns the
+        record for a publication that is scheduled but not yet live, with
+        isPublished false and its publishDate - which is how the catch-up
+        tells a scheduled launch from one that has already happened. It does
+        not invent records for channels the product was never on or has been
+        unpublished from: Shopify deletes the ResourcePublication, and the
+        channel then disappears from this response entirely.
+
+        So this answers "where is it published", never "where is it missing".
+        For that, diff against `publication_ids_and_names` - see
+        helpers.publication_catch_up.other_channels.
         """
         query = """
         query productPublications($id: ID!) {
