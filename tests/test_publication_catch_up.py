@@ -50,7 +50,7 @@ class FakeClient:
     def products_by_tag(self, tag):
         return self.products
 
-    def publication_ids_and_names(self):
+    def publications(self, include_products=True):
         return self.all_publications
 
     def product_publication_states(self, product_id):

@@ -145,7 +145,7 @@ def catch_up_other_channels(shop_name, tag, dry_run=False, client=None, now=None
     """
     logging.basicConfig(level=logging.INFO)
     client = _client(shop_name, client)
-    all_publications = client.publication_ids_and_names()
+    all_publications = client.publications(include_products=False)
     published, skipped, up_to_date = {}, {}, []
 
     for product in _products(client, shop_name, tag):
@@ -216,7 +216,7 @@ def sweep_pending_channel_publishes(shop_name, dry_run=False, client=None, now=N
     logging.basicConfig(level=logging.INFO)
     client = _client(shop_name, client)
 
-    all_publications = client.publication_ids_and_names()
+    all_publications = client.publications(include_products=False)
     products = client.products_by_tag(PENDING_CHANNEL_PUBLISH)
     if not products:
         logger.info(f"{shop_name}: nothing queued")
