@@ -82,6 +82,7 @@ class AsheisClient(BrandClientBase):
             material=string.ascii_lowercase.index("g"),
             size_text=string.ascii_lowercase.index("h"),
             made_in=string.ascii_lowercase.index("j"),
+            remarks=string.ascii_lowercase.index("r"),
         )
 
     def option1_attr_column_map(self):
