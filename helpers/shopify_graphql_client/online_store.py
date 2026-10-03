@@ -68,6 +68,35 @@ class OnlineStore:
         res = self.run_query(query)
         return res["themes"]["nodes"][0]["files"]["nodes"]
 
+    def theme_by_name(self, theme_name):
+        themes = self.themes_by_names(theme_name)
+        assert (
+            len(themes) == 1
+        ), f"{'Multiple' if themes else 'No'} themes found for {theme_name!r}"
+        return themes[0]
+
+    def theme_file_content(self, theme, file_name):
+        """Exact-name match: the filenames query is a substring search."""
+        nodes = self.theme_file_by_theme_name_and_file_name(theme["name"], file_name)
+        exact = [n for n in nodes if n["filename"] == file_name]
+        assert exact, f"theme file not found: {file_name!r} in {theme['name']!r}"
+        return exact[0]["body"]["content"]
+
+    @staticmethod
+    def theme_json_blocks(data, section_type=None, block_type=None):
+        """Yield (section_key, block_key, settings) in render order."""
+        sections = data.get("sections") or {}
+        for section_key in data.get("order") or sections:
+            section = sections.get(section_key) or {}
+            if section_type and section.get("type") != section_type:
+                continue
+            blocks = section.get("blocks") or {}
+            for block_key in section.get("block_order") or blocks:
+                block = blocks.get(block_key) or {}
+                if block_type and block.get("type") != block_type:
+                    continue
+                yield section_key, block_key, block.get("settings") or {}
+
     def theme_id_by_theme_name(self, theme_name):
         query = (
             """

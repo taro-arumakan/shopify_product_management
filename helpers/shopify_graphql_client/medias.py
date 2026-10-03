@@ -152,14 +152,7 @@ class Medias:
             if name.rsplit(".", 1)[0] in media["image"]["url"]:
                 return media
 
-    def file_by_file_name(self, file_name):
-        """20251113 FIXME
-        I don't understand why but querying for a single file name did not work for only these two files,
-        out of all 31 files prefixed with the same string.
-        25_Winter_CP_2.jpg
-        25_Winter_CP_25.jpg
-        Relates to how Shopify indexes the files? For now query with relaxed criteria, then filter locally.
-        """
+    def files_by_name_prefix(self, file_name):
         query = (
             """
         query {
@@ -177,18 +170,36 @@ class Medias:
         """
             % file_name.rsplit(".", 1)[0]
         )
-        res = self.run_query(query)
-        res = res["files"]["nodes"]
+        return self.run_query(query)["files"]["nodes"]
+
+    def file_by_file_name(self, file_name):
+        """20251113 FIXME
+        I don't understand why but querying for a single file name did not work for only these two files,
+        out of all 31 files prefixed with the same string.
+        25_Winter_CP_2.jpg
+        25_Winter_CP_25.jpg
+        Relates to how Shopify indexes the files? For now query with relaxed criteria, then filter locally.
+        """
+        res = self.files_by_name_prefix(file_name)
         if len(res) > 1:
-            res = [
-                r
-                for r in res
-                if r["image"]["url"].rsplit("?", 1)[0].endswith(file_name)
-            ]
+            res = [r for r in res if self._file_url(r).endswith(file_name)]
         assert (
             len(res) == 1
         ), f'{"Multiple" if res else "No"} files found for {file_name}: {res}'
         return res[0]
+
+    def image_file_exists(self, name_or_url):
+        """Exact name, extension included - unlike file_by_file_name, which
+        returns a lone prefix match as-is."""
+        file_name = name_or_url.rsplit("/", 1)[-1]
+        return any(
+            self._file_url(r).endswith(f"/{file_name}")
+            for r in self.files_by_name_prefix(file_name)
+        )
+
+    @staticmethod
+    def _file_url(node):
+        return ((node.get("image") or {}).get("url") or "").rsplit("?", 1)[0]
 
     def file_id_by_file_name(self, file_name):
         res = self.file_by_file_name(file_name)
