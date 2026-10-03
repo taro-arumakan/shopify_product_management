@@ -12,10 +12,6 @@ on:
         required: false
         default: true
         type: boolean
-      target_week:
-        description: "週番号を固定指定（空欄 = 現在週 + 1）"
-        required: false
-        type: string
 
 jobs:
   roh-slideshow-weekly:
@@ -72,22 +68,12 @@ jobs:
         env:
           PYTHONPATH: .
           INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
-          INPUT_TARGET_WEEK: ${{ github.event.inputs.target_week }}
         run: |
-          ARGS="--shop-name roh --theme-file templates/index.json"
-
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            uv run .github/actions/roh_slideshow_weekly_rotate.py $ARGS
-            exit 0
-          fi
-
-          if [ -n "$INPUT_TARGET_WEEK" ]; then
-            ARGS="$ARGS --target-week $INPUT_TARGET_WEEK"
-          fi
           if [ "$INPUT_DRY_RUN" = "true" ]; then
-            ARGS="$ARGS --dry-run"
+            uv run .github/actions/roh_slideshow_weekly_rotate.py --dry-run
+          else
+            uv run .github/actions/roh_slideshow_weekly_rotate.py
           fi
-          uv run .github/actions/roh_slideshow_weekly_rotate.py $ARGS
 
       - name: Cleanup
         if: always()

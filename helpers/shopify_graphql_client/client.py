@@ -30,6 +30,7 @@ from helpers.shopify_graphql_client.publication_catch_up import (
 )
 from helpers.shopify_graphql_client.publications import Publications
 from helpers.shopify_graphql_client.shipping import Shipping
+from helpers.shopify_graphql_client.theme_image_rotation import ThemeImageRotation
 from helpers.shopify_graphql_client.variants import Variants
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,7 @@ class ShopifyGraphqlClient(
     PublicationCatchUp,
     Publications,
     Shipping,
+    ThemeImageRotation,
     Variants,
 ):
     def __init__(self, shop_name, access_token):
